@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from automotive_workbench.can_io import BusConfig
-from automotive_workbench.uds_runtime import run_uds_lab
+from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,17 +22,21 @@ class UdsRuntimeTests(unittest.TestCase):
             markdown = (output / "uds-lab-report.md").read_text(encoding="utf-8")
 
         self.assertEqual(result["status"], "passed")
-        self.assertEqual(result["passed_count"], 3)
+        self.assertEqual(result["passed_count"], 4)
         scenarios = {item["scenario"]: item for item in result["scenarios"]}
         self.assertEqual(scenarios["read_vin"]["evidence"]["decoded_value"], "AWBDEMO0123456789")
         self.assertEqual(scenarios["read_vin"]["evidence"]["response_payload_hex"][:6], "62F190")
         self.assertEqual(scenarios["unknown_did_nrc"]["observed"], "RequestOutOfRange")
         self.assertEqual(scenarios["unknown_did_nrc"]["evidence"]["response_payload_hex"], "7F2231")
         self.assertEqual(scenarios["response_timeout"]["observed"], "timeout")
+        malformed = scenarios["malformed_window_position_payload"]
+        self.assertEqual(malformed["status"], "passed")
+        self.assertEqual(malformed["evidence"]["response_payload_hex"], "62F111")
+        self.assertEqual(malformed["evidence"]["findings"][0]["code"], "UDS-MALFORMED-PAYLOAD")
         self.assertEqual(persisted["transport"]["request_id_hex"], "0x700")
         self.assertEqual(persisted["transport"]["response_id_hex"], "0x708")
         self.assertEqual(persisted["backend_probe"]["status"], "available")
-        self.assertEqual(len(persisted["responder_observed_requests"]), 3)
+        self.assertEqual(len(persisted["responder_observed_requests"]), 4)
         self.assertIn("not a DCM", markdown)
 
     def test_blocks_socketcan_uds_lab_when_interface_is_missing(self) -> None:
@@ -44,10 +48,33 @@ class UdsRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["reason"], "interface_missing")
-        self.assertEqual(result["scenario_count"], 3)
+        self.assertEqual(result["scenario_count"], 4)
         self.assertEqual(result["passed_count"], 0)
         self.assertEqual(persisted["backend_probe"]["status"], "blocked")
         self.assertEqual(probe["reason"], "interface_missing")
+
+    def test_probes_uds_backend_dependencies_and_can_backend(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "probe"
+            result = probe_uds_backend(BusConfig("virtual", "workbench-uds-probe"), output)
+            persisted = json.loads((output / "uds-backend-probe.json").read_text(encoding="utf-8"))
+            markdown = (output / "uds-backend-probe.md").read_text(encoding="utf-8")
+
+        self.assertEqual(result["status"], "available")
+        self.assertEqual(result["can_backend_probe"]["status"], "available")
+        self.assertTrue(result["dependencies"]["python_can"]["present"])
+        self.assertTrue(result["dependencies"]["can_isotp"]["present"])
+        self.assertTrue(result["dependencies"]["udsoncan"]["present"])
+        self.assertEqual(persisted["transport_strategy"], result["transport_strategy"])
+        self.assertIn("current lab path uses user-space can-isotp", markdown)
+
+    def test_probes_uds_backend_as_blocked_when_socketcan_interface_is_missing(self) -> None:
+        result = probe_uds_backend(BusConfig("socketcan", "workbench-missing-vcan"))
+
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["reason"], "interface_missing")
+        self.assertEqual(result["can_backend_probe"]["reason"], "interface_missing")
+        self.assertIn("kernel_isotp", result)
 
 
 if __name__ == "__main__":

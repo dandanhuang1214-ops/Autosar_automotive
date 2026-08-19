@@ -53,6 +53,13 @@
       "service": "ReadDataByIdentifier",
       "did": 61841,
       "expected": "timeout"
+    },
+    {
+      "name": "malformed_window_position_payload",
+      "service": "ReadDataByIdentifier",
+      "did": 61713,
+      "expected": "malformed_payload",
+      "response_payload_hex": "62F111"
     }
   ]
 }

@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-19）
 
-当前阶段：`R4e — SocketCAN UDS/ISO-TP 复验入口已落地，等待 vcan0 实机结果`。
+当前阶段：`R4g — UDS malformed payload 证据已落地，等待 vcan0 实机结果`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a 架构已选型；R4b 最小 UDS intent/schema、示例和 inspect 校验已落地；R4c virtual UDS lab 可跑通 positive/NRC/timeout；R4d 已把 backend probe 和 blocked 证据接入诊断 lab；R4e 已新增 SocketCAN UDS 复验入口 |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a 架构已选型；R4b 最小 UDS intent/schema、示例和 inspect 校验已落地；R4c virtual UDS lab 可跑通 positive/NRC/timeout；R4d 已把 backend probe 和 blocked 证据接入诊断 lab；R4e 已新增 SocketCAN UDS 复验入口；R4f 已新增独立 UDS backend probe；R4g 已补 malformed payload Finding |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -231,10 +231,36 @@
 - 入口职责：运行 `probe_socketcan.sh` 归档 host evidence，然后调用 `run-uds-lab --interface socketcan --channel <channel>`。
 - 入口不包含 `sudo`、`modprobe`、`ip link add`、`ip link set` 或包安装；host 准备仍由 `setup_vcan.sh --dry-run/--apply` 显式完成。
 - 输出目录默认 `output/socketcan-uds-smoke`，包含 `socketcan-host-probe.json`、`socketcan-host-probe.config.txt`、`workbench-uds-lab.stdout.json` 和 `workbench-uds-lab/` 下的 probe/lab 报告。
-- 当 `vcan0` 缺失、接口权限不足或 backend 不可打开时，CLI 返回 `status=blocked`，脚本返回 `SOCKETCAN_UDS_LAB_BLOCKED` 和退出码 3。
+- 当 `vcan0` 缺失、接口权限不足或 backend 不可打开时，CLI 返回 `status=blocked`，脚本返回 blocked 标记和退出码 3；R4f 后优先在独立 probe 阶段返回 `SOCKETCAN_UDS_PROBE_BLOCKED`。
 - `docs/socketcan-wsl.md` 已补充 SocketCAN UDS lab 命令、输出清单和 WSL shutdown 后恢复步骤。
 - 新增 `tests/test_linux_scripts.py` 脚本契约测试，确保 UDS 复验入口不会准备或修改 host。
 - 状态：代码与文档完成；等待 `vcan0` 可用时实机运行。
+
+### R4f：UDS backend 独立探测（2026-08-19）
+
+- 新增 CLI：`probe-uds-backend --interface <backend> --channel <channel>`。
+- 探测内容：`python-can`、`can-isotp`、`udsoncan` 可选依赖是否存在，复用 `probe_can_backend()` 的 CAN backend 结果，并记录 Linux kernel ISO-TP module 是否 loaded/file present。
+- 探测结论区分 `available`、`blocked` 和结构化 `reason`；缺少诊断依赖时为 `missing_diag_dependency`，CAN backend 不可用时沿用 `interface_missing` 等 backend reason。
+- 输出：`uds-backend-probe.json` 和 `uds-backend-probe.md`；Markdown 明确当前 lab 走 user-space `can-isotp`，kernel ISO-TP 仅作为后续 Linux 对比证据。
+- `scripts/linux/run_socketcan_uds_lab.sh` 现在先执行独立 `probe-uds-backend`；probe blocked 时返回 `SOCKETCAN_UDS_PROBE_BLOCKED`，不再继续启动 lab。
+- 新增 `tests/test_uds_runtime.py` 覆盖 virtual UDS probe available 和 SocketCAN 接口缺失 blocked。
+- 验证：`probe-uds-backend --interface virtual --channel workbench-uds-probe` 返回 `status=available`，记录 `python-can 4.6.1`、`can-isotp 2.0.7`、`udsoncan 1.26.1`。
+- 验证：`probe-uds-backend --interface socketcan --channel vcan0` 在当前 `vcan0_present=false` 环境返回 `status=blocked`、`reason=interface_missing`，同时记录 `kernel_isotp.module_file_present=true`。
+- 验证：`bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke-r4f` 返回 `SOCKETCAN_UDS_PROBE_BLOCKED` 和退出码 3。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，32 项运行、2 项环境跳过。
+- 状态：代码、文档与 blocked 路径验证完成；等待 `vcan0` 可用时实机运行。
+
+### R4g：UDS malformed payload 证据扩展（2026-08-19）
+
+- `uds-intent-0.1` schema 的 scenario expectation 新增 `malformed_payload`。
+- `examples/window_control/uds_intent.json` 新增 `malformed_window_position_payload` 场景：请求 DID `0xF111`，responder 返回不完整 positive response `62F111`。
+- `diag_intent.load_uds_intent()` 增加 malformed 场景校验：DID 必须已声明，`response_payload_hex` 必须是合法 hex。
+- `run_uds_lab()` 的本地确定性 responder 支持按 DID 注入 malformed response；client 解码失败时场景判定为 `passed`，并输出 `UDS-MALFORMED-PAYLOAD` Finding。
+- 新增/更新 `tests/test_diag_intent.py` 和 `tests/test_uds_runtime.py`，覆盖 malformed intent 校验、runtime 场景结果和 Finding。
+- 验证：`PYTHONPATH=src .venv-linux/bin/python -m unittest tests.test_diag_intent tests.test_uds_runtime -v` 通过，8/8。
+- 验证：`run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab-r4g` 返回 `status=passed`、`scenario_count=4`、`passed_count=4`，并生成 `UDS-MALFORMED-PAYLOAD` Finding。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，33 项运行、2 项环境跳过。
+- 状态：完成；下一步仍是在 `vcan0` 可用时运行 SocketCAN UDS 实机复验。
 
 ### E1：WSL2 与 SocketCAN 基线
 
@@ -310,9 +336,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4e SocketCAN 诊断实机复验
+### 最近一步：R4h SocketCAN UDS 实机复验
 
-基于 R4e 的可重复入口，下一步在 `vcan0` 已恢复时运行 `bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke`，确认 positive/NRC/timeout 三类诊断场景是否能复用同一 intent 和 evidence 契约；若受接口权限、Notifier、ISO-TP timing 或 WSL 网络能力限制，应继续返回结构化 `blocked` 或明确失败类别。
+基于 R4f 的独立 probe、R4e 的可重复入口和 R4g 的四类场景，下一步在 `vcan0` 已恢复时运行 `bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke`，确认 positive/NRC/timeout/malformed payload 四类诊断场景是否能复用同一 intent 和 evidence 契约；若受接口权限、Notifier、ISO-TP timing 或 WSL 网络能力限制，应继续返回结构化 `blocked` 或明确失败类别。
 
 ### 后续升级：R3 OpenBSW POSIX 限时 spike
 

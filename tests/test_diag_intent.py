@@ -24,7 +24,8 @@ class UdsIntentTests(unittest.TestCase):
         self.assertEqual(summary["transport"]["response_id_hex"], "0x708")
         self.assertEqual(summary["did_count"], 2)
         self.assertEqual(summary["dids"][0]["id_hex"], "0xF190")
-        self.assertEqual(summary["scenario_count"], 3)
+        self.assertEqual(summary["scenario_count"], 4)
+        self.assertEqual(summary["scenarios"][3]["expected"], "malformed_payload")
 
     def test_rejects_positive_scenario_with_unknown_did(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
@@ -44,6 +45,16 @@ class UdsIntentTests(unittest.TestCase):
             path = Path(directory) / "uds_intent.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "request_id and response_id must differ"):
+                load_uds_intent(path)
+
+    def test_rejects_malformed_scenario_with_non_hex_payload(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["scenarios"][3]["response_payload_hex"] = "not-hex"
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "uds_intent.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "response_payload_hex must be hexadecimal"):
                 load_uds_intent(path)
 
 

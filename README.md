@@ -14,7 +14,7 @@
 8. 运行周期通信、周期/抖动观测、丢帧超时和恢复状态转换实验。
 9. 录制 can-utils 日志、使用 DBC 离线解码并向 virtual/SocketCAN 后端回放。
 10. 探测 CAN backend 能力，并在 virtual/SocketCAN 上复用同一实验契约。
-11. 使用 UDS intent 在 python-can virtual 上运行 positive/NRC/timeout 诊断场景，并在诊断 lab 中归档 backend probe/blocked 证据。
+11. 使用 UDS intent 在 python-can virtual 上运行 positive/NRC/timeout/malformed payload 诊断场景，并在诊断 lab 中归档 backend probe/blocked 证据。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -40,6 +40,7 @@ python -m automotive_workbench.cli run-log-lab examples/window_control/window_co
 python -m automotive_workbench.cli probe-can-backend --interface socketcan --channel vcan0 --output output/socketcan-probe
 python -m automotive_workbench.cli run-backend-lab examples/window_control/window_control.dbc --interface socketcan --channel vcan0 --output output/socketcan-lab
 python -m automotive_workbench.cli inspect examples/window_control/uds_intent.json
+python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
 python -m unittest discover -s tests -v

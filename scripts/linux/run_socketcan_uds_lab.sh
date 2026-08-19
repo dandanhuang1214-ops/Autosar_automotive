@@ -44,6 +44,27 @@ if [[ ! -x "${python_bin}" ]]; then
 fi
 
 set +e
+PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli probe-uds-backend \
+  --interface socketcan \
+  --channel "${channel}" \
+  --output "${output}/workbench-uds-probe" \
+  > "${output}/workbench-uds-probe.stdout.json"
+probe_rc=$?
+set -e
+
+if [[ "${probe_rc}" -eq 3 ]]; then
+  echo "SOCKETCAN_UDS_PROBE_BLOCKED"
+  echo "Output: ${output}"
+  exit 3
+fi
+
+if [[ "${probe_rc}" -ne 0 ]]; then
+  echo "SOCKETCAN_UDS_PROBE_FAILED"
+  echo "Output: ${output}"
+  exit "${probe_rc}"
+fi
+
+set +e
 PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli run-uds-lab "${intent}" \
   --interface socketcan \
   --channel "${channel}" \

@@ -15,7 +15,7 @@ from automotive_workbench.can_io import BusConfig, capture_log, decode_log, open
 from automotive_workbench.can_backend import probe_can_backend, run_backend_lab
 from automotive_workbench.adapters.openbsw_patch import prepare_openbsw_patch
 from automotive_workbench.diag_intent import summarize_uds_intent
-from automotive_workbench.uds_runtime import run_uds_lab
+from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -95,6 +95,11 @@ def build_parser() -> argparse.ArgumentParser:
     uds_lab_parser.add_argument("--interface", default="virtual")
     uds_lab_parser.add_argument("--channel", default="workbench")
     uds_lab_parser.add_argument("--output", type=Path, default=Path("output") / "uds-lab")
+
+    uds_probe_parser = commands.add_parser("probe-uds-backend", help="Probe UDS/ISO-TP diagnostic runtime dependencies and backend")
+    uds_probe_parser.add_argument("--interface", default="virtual")
+    uds_probe_parser.add_argument("--channel", default="workbench")
+    uds_probe_parser.add_argument("--output", type=Path, default=Path("output") / "uds-backend-probe")
     return parser
 
 
@@ -155,6 +160,8 @@ def main() -> int:
                 BusConfig(args.interface, args.channel),
                 args.output,
             )
+        elif args.command == "probe-uds-backend":
+            result = probe_uds_backend(BusConfig(args.interface, args.channel), args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

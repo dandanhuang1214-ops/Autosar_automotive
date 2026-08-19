@@ -9,7 +9,7 @@ SUPPORTED_SCHEMA_VERSION = "uds-intent-0.1"
 SUPPORTED_ADDRESSING = {"normal_11bit"}
 SUPPORTED_SERVICES = {"ReadDataByIdentifier"}
 SUPPORTED_CODECS = {"ascii", "uint8", "uint16", "uint32", "raw"}
-SUPPORTED_EXPECTATIONS = {"positive", "negative_response", "timeout"}
+SUPPORTED_EXPECTATIONS = {"positive", "negative_response", "timeout", "malformed_payload"}
 
 
 def _require_dict(value: Any, name: str) -> dict[str, Any]:
@@ -87,6 +87,19 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
             raise ValueError(f"Positive UDS scenario references unknown DID: 0x{did_id:04X}")
         if expected == "negative_response":
             _require_string(scenario.get("nrc"), f"scenarios[{index}].nrc")
+        if expected == "malformed_payload":
+            if did_id not in did_ids:
+                raise ValueError(f"Malformed UDS scenario references unknown DID: 0x{did_id:04X}")
+            malformed_hex = _require_string(
+                scenario.get("response_payload_hex"),
+                f"scenarios[{index}].response_payload_hex",
+            )
+            try:
+                bytes.fromhex(malformed_hex)
+            except ValueError as exc:
+                raise ValueError(
+                    f"UDS scenario {name} response_payload_hex must be hexadecimal"
+                ) from exc
 
     return payload
 

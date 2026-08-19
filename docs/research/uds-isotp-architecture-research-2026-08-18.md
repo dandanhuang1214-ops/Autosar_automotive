@@ -260,7 +260,8 @@ R4 should initially prove:
    `0x31 requestOutOfRange`.
 3. `response_timeout`: intentionally no response, classify timeout as expected.
 4. `malformed_payload`: optional second step, inject bad response length and
-   emit a deterministic `Finding`.
+   emit a deterministic `Finding`. Completed in R4g with
+   `UDS-MALFORMED-PAYLOAD`.
 
 ### CLI
 

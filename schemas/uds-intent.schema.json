@@ -43,8 +43,9 @@
           "name": {"type": "string"},
           "service": {"enum": ["ReadDataByIdentifier"]},
           "did": {"type": "integer", "minimum": 0, "maximum": 65535},
-          "expected": {"enum": ["positive", "negative_response", "timeout"]},
-          "nrc": {"type": "string"}
+          "expected": {"enum": ["positive", "negative_response", "timeout", "malformed_payload"]},
+          "nrc": {"type": "string"},
+          "response_payload_hex": {"type": "string"}
         },
         "additionalProperties": true
       }

@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 import logging
+import platform
+import sys
 import threading
 import time
 import uuid
 from datetime import datetime, timezone
+from importlib import metadata
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +31,118 @@ def _diag_libs() -> tuple[Any, Any, Any, Any, Any]:
             'UDS runtime requires the optional dependency: pip install -e ".[diag]"'
         ) from exc
     return can, isotp, AsciiCodec, Client, PythonIsoTpConnection
+
+
+def _package_version(distribution: str) -> str:
+    try:
+        return metadata.version(distribution)
+    except metadata.PackageNotFoundError:
+        return ""
+
+
+def _module_file_exists(pattern: str) -> bool:
+    module_dir = Path("/lib/modules") / platform.release()
+    if not module_dir.is_dir():
+        return False
+    return any(module_dir.rglob(pattern))
+
+
+def _kernel_isotp_probe(config: BusConfig) -> dict[str, Any]:
+    evidence = {
+        "required_for_user_space_stack": False,
+        "platform": sys.platform,
+        "module_loaded": False,
+        "module_file_present": False,
+    }
+    if sys.platform != "linux":
+        return evidence
+    evidence["module_loaded"] = Path("/proc/modules").read_text(
+        encoding="utf-8", errors="replace"
+    ).find("can_isotp ") >= 0 if Path("/proc/modules").is_file() else False
+    evidence["module_file_present"] = _module_file_exists("can-isotp.ko*")
+    evidence["relevant_for_backend"] = config.interface == "socketcan"
+    return evidence
+
+
+def probe_uds_backend(config: BusConfig, output: Path | None = None) -> dict[str, Any]:
+    dependencies = {
+        "python_can": {
+            "module": "can",
+            "present": find_spec("can") is not None,
+            "version": _package_version("python-can"),
+        },
+        "can_isotp": {
+            "module": "isotp",
+            "present": find_spec("isotp") is not None,
+            "version": _package_version("can-isotp"),
+        },
+        "udsoncan": {
+            "module": "udsoncan",
+            "present": find_spec("udsoncan") is not None,
+            "version": _package_version("udsoncan"),
+        },
+    }
+    missing = [name for name, detail in dependencies.items() if not detail["present"]]
+    can_probe = probe_can_backend(config, None)
+    kernel_isotp = _kernel_isotp_probe(config)
+    if missing:
+        status = "blocked"
+        reason = "missing_diag_dependency"
+    elif can_probe["status"] != "available":
+        status = "blocked"
+        reason = can_probe.get("reason") or "can_backend_unavailable"
+    else:
+        status = "available"
+        reason = ""
+    result = {
+        "artifact_type": "uds-backend-capability",
+        "status": status,
+        "reason": reason,
+        "config": {
+            "interface": config.interface,
+            "channel": config.channel,
+            "receive_own_messages": config.receive_own_messages,
+            "fd": config.fd,
+        },
+        "dependencies": dependencies,
+        "missing_dependencies": missing,
+        "can_backend_probe": can_probe,
+        "kernel_isotp": kernel_isotp,
+        "transport_strategy": "udsoncan + can-isotp NotifierBasedCanStack + python-can BusConfig",
+    }
+    if output is not None:
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "uds-backend-probe.json").write_text(
+            json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        markdown = [
+            "# UDS Backend Probe",
+            "",
+            f"- Status: **{status}**",
+            f"- Reason: `{reason or 'none'}`",
+            f"- Interface: `{config.interface}`",
+            f"- Channel: `{config.channel}`",
+            f"- Transport strategy: `{result['transport_strategy']}`",
+            "",
+            "| Dependency | Present | Version |",
+            "|---|---|---|",
+        ]
+        for name, detail in dependencies.items():
+            markdown.append(f"| `{name}` | {detail['present']} | `{detail['version'] or 'unknown'}` |")
+        markdown.extend([
+            "",
+            "## Backend",
+            "",
+            f"- CAN backend status: `{can_probe['status']}`",
+            f"- CAN backend reason: `{can_probe.get('reason') or 'none'}`",
+            f"- Kernel ISO-TP module loaded: `{kernel_isotp['module_loaded']}`",
+            f"- Kernel ISO-TP module file present: `{kernel_isotp['module_file_present']}`",
+            "",
+            "Kernel ISO-TP is recorded for later Linux comparison. The current lab path uses user-space can-isotp over python-can.",
+            "",
+        ])
+        (output / "uds-backend-probe.md").write_text("\n".join(markdown), encoding="utf-8")
+    return result
 
 
 def _request_payload(did: int) -> bytes:
@@ -72,10 +188,17 @@ def _client_codec(did: dict[str, Any], ascii_codec: Any) -> Any:
 
 
 class _UdsResponder:
-    def __init__(self, stack: Any, dids_by_id: dict[int, dict[str, Any]], timeout_dids: set[int]) -> None:
+    def __init__(
+        self,
+        stack: Any,
+        dids_by_id: dict[int, dict[str, Any]],
+        timeout_dids: set[int],
+        malformed_payloads: dict[int, bytes],
+    ) -> None:
         self._stack = stack
         self._dids_by_id = dids_by_id
         self._timeout_dids = timeout_dids
+        self._malformed_payloads = malformed_payloads
         self._stop = threading.Event()
         self.requests: list[dict[str, Any]] = []
         self.responses: list[dict[str, Any]] = []
@@ -102,6 +225,8 @@ class _UdsResponder:
                 response = bytes([0x7F, request[0] if request else 0x00, 0x11])
             elif did in self._timeout_dids:
                 continue
+            elif did in self._malformed_payloads:
+                response = self._malformed_payloads[did]
             elif did in self._dids_by_id:
                 response = _positive_response_payload(self._dids_by_id[did])
             else:
@@ -181,6 +306,26 @@ def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, d
                 duration_ms=duration_ms,
                 findings=[] if passed else [_scenario_finding("UDS-RESPONSE-TIMEOUT", str(exc), intent_path, name)],
             )
+        if expected == "malformed_payload":
+            return _scenario_result(
+                name,
+                "passed",
+                "malformed positive response rejected by client decoder",
+                class_name,
+                did=did,
+                did_hex=f"0x{did:04X}",
+                request_payload_hex=request_hex,
+                response_payload_hex=response_hex,
+                duration_ms=duration_ms,
+                findings=[
+                    _scenario_finding(
+                        "UDS-MALFORMED-PAYLOAD",
+                        f"DID 0x{did:04X} malformed response rejected as {class_name}: {exc}",
+                        intent_path,
+                        name,
+                    )
+                ],
+            )
         return _scenario_result(
             name,
             "failed",
@@ -199,6 +344,27 @@ def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, d
     value = values.get(did)
     expected_value = dids_by_id.get(did, {}).get("value")
     response_hex = response.original_payload.hex().upper()
+    if expected == "malformed_payload":
+        return _scenario_result(
+            name,
+            "failed",
+            "malformed positive response rejected by client decoder",
+            "decoded unexpectedly",
+            did=did,
+            did_hex=f"0x{did:04X}",
+            request_payload_hex=request_hex,
+            response_payload_hex=response_hex,
+            decoded_value=value,
+            duration_ms=duration_ms,
+            findings=[
+                _scenario_finding(
+                    "UDS-MALFORMED-PAYLOAD",
+                    f"DID 0x{did:04X} malformed response decoded unexpectedly",
+                    intent_path,
+                    name,
+                )
+            ],
+        )
     passed = expected == "positive" and value == expected_value
     return _scenario_result(
         name,
@@ -327,6 +493,11 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         for scenario in payload["scenarios"]
         if scenario.get("expected") == "timeout"
     }
+    malformed_payloads = {
+        int(scenario["did"]): bytes.fromhex(str(scenario["response_payload_hex"]))
+        for scenario in payload["scenarios"]
+        if scenario.get("expected") == "malformed_payload"
+    }
     data_identifiers = {
         int(did["id"]): _client_codec(did, ascii_codec)
         for did in payload["dids"]
@@ -353,7 +524,7 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         address=isotp.Address(isotp.AddressingMode.Normal_11bits, txid=response_id, rxid=request_id),
         params=isotp_params,
     )
-    responder = _UdsResponder(server_stack, dids_by_id, timeout_dids)
+    responder = _UdsResponder(server_stack, dids_by_id, timeout_dids, malformed_payloads)
     client_logger = logging.getLogger("UdsClient[workbench-uds-lab]")
     previous_level = client_logger.level
     started = time.perf_counter()

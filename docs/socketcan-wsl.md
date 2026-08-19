@@ -39,6 +39,7 @@ python3 -m venv .venv-linux
 .venv-linux/bin/python -m pip install -e '.[diag]'
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli probe-can-backend --interface socketcan --channel vcan0 --output output/socketcan-probe
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli run-backend-lab examples/window_control/window_control.dbc --interface socketcan --channel vcan0 --output output/socketcan-lab
+PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
 ```
 
@@ -69,11 +70,12 @@ bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke
 This command also does not prepare the host. It records:
 
 - `socketcan-host-probe.json`
+- `workbench-uds-probe/uds-backend-probe.json`
 - `workbench-uds-lab/probe/backend-probe.json`
 - `workbench-uds-lab/uds-lab-report.json`
 - `workbench-uds-lab/uds-lab-report.md`
 
-If `vcan0` is missing, the UDS lab returns `SOCKETCAN_UDS_LAB_BLOCKED` and keeps the blocked report under `workbench-uds-lab/`.
+If `vcan0` is missing, the UDS probe returns `SOCKETCAN_UDS_PROBE_BLOCKED` and keeps the blocked report under `workbench-uds-probe/`.
 
 If WSL is shut down, `vcan0` may disappear. Restore it explicitly:
 
