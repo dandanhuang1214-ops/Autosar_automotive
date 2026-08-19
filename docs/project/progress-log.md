@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-19）
 
-当前阶段：`R4d — UDS/ISO-TP lab 已接入 backend probe，进入 SocketCAN 诊断实机复验`。
+当前阶段：`R4e — SocketCAN UDS/ISO-TP 复验入口已落地，等待 vcan0 实机结果`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a 架构已选型；R4b 最小 UDS intent/schema、示例和 inspect 校验已落地；R4c virtual UDS lab 可跑通 positive/NRC/timeout；R4d 已把 backend probe 和 blocked 证据接入诊断 lab |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a 架构已选型；R4b 最小 UDS intent/schema、示例和 inspect 校验已落地；R4c virtual UDS lab 可跑通 positive/NRC/timeout；R4d 已把 backend probe 和 blocked 证据接入诊断 lab；R4e 已新增 SocketCAN UDS 复验入口 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -225,6 +225,17 @@
 - 验证：`PYTHONPATH=src .venv-linux/bin/python -m unittest tests.test_uds_runtime -v` 通过，2/2。
 - 状态：完成；下一步是在 `vcan0` 可用时运行 `run-uds-lab --interface socketcan --channel vcan0`，确认用户空间 ISO-TP 在 SocketCAN backend 上的表现。
 
+### R4e：SocketCAN UDS 复验入口（2026-08-19）
+
+- 新增 `scripts/linux/run_socketcan_uds_lab.sh`，作为普通用户可运行的非 sudo UDS/ISO-TP 复验入口。
+- 入口职责：运行 `probe_socketcan.sh` 归档 host evidence，然后调用 `run-uds-lab --interface socketcan --channel <channel>`。
+- 入口不包含 `sudo`、`modprobe`、`ip link add`、`ip link set` 或包安装；host 准备仍由 `setup_vcan.sh --dry-run/--apply` 显式完成。
+- 输出目录默认 `output/socketcan-uds-smoke`，包含 `socketcan-host-probe.json`、`socketcan-host-probe.config.txt`、`workbench-uds-lab.stdout.json` 和 `workbench-uds-lab/` 下的 probe/lab 报告。
+- 当 `vcan0` 缺失、接口权限不足或 backend 不可打开时，CLI 返回 `status=blocked`，脚本返回 `SOCKETCAN_UDS_LAB_BLOCKED` 和退出码 3。
+- `docs/socketcan-wsl.md` 已补充 SocketCAN UDS lab 命令、输出清单和 WSL shutdown 后恢复步骤。
+- 新增 `tests/test_linux_scripts.py` 脚本契约测试，确保 UDS 复验入口不会准备或修改 host。
+- 状态：代码与文档完成；等待 `vcan0` 可用时实机运行。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -301,7 +312,7 @@ official_native_baseline=false
 
 ### 最近一步：R4e SocketCAN 诊断实机复验
 
-基于 R4d 的 backend probe 和 blocked 证据，下一步在 `vcan0` 已恢复时运行 SocketCAN UDS lab，确认 positive/NRC/timeout 三类诊断场景是否能复用同一 intent 和 evidence 契约；若受接口权限、Notifier、ISO-TP timing 或 WSL 网络能力限制，应继续返回结构化 `blocked` 或明确失败类别。
+基于 R4e 的可重复入口，下一步在 `vcan0` 已恢复时运行 `bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke`，确认 positive/NRC/timeout 三类诊断场景是否能复用同一 intent 和 evidence 契约；若受接口权限、Notifier、ISO-TP timing 或 WSL 网络能力限制，应继续返回结构化 `blocked` 或明确失败类别。
 
 ### 后续升级：R3 OpenBSW POSIX 限时 spike
 

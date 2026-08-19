@@ -36,6 +36,16 @@ class LinuxScriptContractTests(unittest.TestCase):
         self.assertIn("candump -n 1", script)
         self.assertIn("cansend", script)
 
+    def test_socketcan_uds_lab_entrypoint_does_not_prepare_host(self) -> None:
+        script = (ROOT / "scripts" / "linux" / "run_socketcan_uds_lab.sh").read_text(encoding="utf-8")
+        for mutation in ("sudo ", "modprobe ", "ip link add", "ip link set", "apt "):
+            self.assertNotIn(mutation, script)
+        self.assertIn("probe_socketcan.sh", script)
+        self.assertIn("pip install -e '.[diag]'", script)
+        self.assertIn("run-uds-lab", script)
+        self.assertIn("--interface socketcan", script)
+        self.assertIn("SOCKETCAN_UDS_LAB_BLOCKED", script)
+
     def test_openbsw_probe_is_read_only_and_does_not_claim_ubuntu_24_support(self) -> None:
         script = (ROOT / "scripts" / "linux" / "probe_openbsw.sh").read_text(encoding="utf-8")
         for mutation in ("sudo ", "apt ", "git clone", "docker compose", "cmake --build"):

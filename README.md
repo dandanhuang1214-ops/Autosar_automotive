@@ -41,6 +41,7 @@ python -m automotive_workbench.cli probe-can-backend --interface socketcan --cha
 python -m automotive_workbench.cli run-backend-lab examples/window_control/window_control.dbc --interface socketcan --channel vcan0 --output output/socketcan-lab
 python -m automotive_workbench.cli inspect examples/window_control/uds_intent.json
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
+python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
 python -m unittest discover -s tests -v
 ```
 

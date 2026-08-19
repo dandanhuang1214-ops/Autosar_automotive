@@ -5,6 +5,7 @@
 - [平台升级进度账本](project/progress-log.md)：每次升级必须更新的唯一状态源。
 - [中长期路线](project/roadmap.md)：平台阶段、边界和里程碑。
 - [Windows/WSL 双平面决策](project/windows-wsl-platform-decision.md)：开发环境职责划分。
+- [Git 项目管理常用指令与用法](project/git-workflow-cheatsheet.md)：提交、分支、远端同步、冲突和回滚速查。
 
 ## 环境与学习
 
