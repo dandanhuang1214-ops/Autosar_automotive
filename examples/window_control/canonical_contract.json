@@ -1,0 +1,54 @@
+{
+  "project": {
+    "system_name": "WindowControlPublicSample",
+    "generation_profile": "signal_atomic_davinci",
+    "target_autosar_version": "4-3-0"
+  },
+  "swcs": [],
+  "signals": [
+    {
+      "signal_name": "WindowPosition",
+      "direction": "output",
+      "provider_swc": "WindowControlSwc",
+      "consumer_swc": "BODY_ECU",
+      "value_type": "Value",
+      "data_type": "App_WindowPosition",
+      "internal_data_type": "uint8",
+      "internal_range": "0-100",
+      "physical_range": "0-100",
+      "resolution": "1",
+      "offset": "0",
+      "unit": "%",
+      "init_value": "0",
+      "period_ms": "10",
+      "source": "public window_control.dbc learning sample"
+    },
+    {
+      "signal_name": "RequestedDirection",
+      "direction": "input",
+      "provider_swc": "TESTER",
+      "consumer_swc": "WindowControlSwc",
+      "value_type": "Enum",
+      "data_type": "App_RequestedDirection",
+      "internal_data_type": "uint8",
+      "internal_range": "0-3",
+      "physical_range": "0-3",
+      "resolution": "1",
+      "offset": "0",
+      "unit": "",
+      "enum_values": "0=Stop, 1=Up, 2=Down, 3=Reserved",
+      "init_value": "Stop",
+      "source": "public window_control.dbc learning sample"
+    }
+  ],
+  "data_types": [],
+  "record_elements": [],
+  "services": [],
+  "operation_args": [],
+  "runnables": [],
+  "connectors": [],
+  "open_issues": [],
+  "metadata": {
+    "sample_status": "public-learning-only"
+  }
+}

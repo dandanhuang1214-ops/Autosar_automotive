@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/bsw-intent.schema.json",
+  "title": "Vendor-neutral BSW Communication Intent",
+  "type": "object",
+  "required": ["schema_version", "model_status", "messages", "signals"],
+  "properties": {
+    "schema_version": {"const": "bsw-intent-0.1"},
+    "model_status": {"enum": ["research-intent", "vendor-validated", "unknown"]},
+    "messages": {"type": "array", "items": {"type": "object"}},
+    "signals": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": true
+}
+

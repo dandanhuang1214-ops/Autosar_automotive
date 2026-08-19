@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/test-result.schema.json",
+  "title": "Experiment Test Result",
+  "type": "object",
+  "required": ["run_id", "scenario", "status", "artifacts", "findings"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "scenario": {"type": "string"},
+    "status": {"enum": ["passed", "failed", "blocked"]},
+    "artifacts": {"type": "array", "items": {"type": "string"}},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "started_at": {"type": "string"},
+    "duration_ms": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": true
+}
+

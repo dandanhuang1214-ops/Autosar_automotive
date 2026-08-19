@@ -1,0 +1,10 @@
+
+[can]
+cantools<42,>=41.4
+python-can<5,>=4.6
+
+[diag]
+cantools<42,>=41.4
+python-can<5,>=4.6
+can-isotp<3,>=2.0
+udsoncan<2,>=1.26

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "automotive-workbench"
+version = "0.1.0"
+description = "Artifact-first automotive software engineering workbench."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+can = ["cantools>=41.4,<42", "python-can>=4.6,<5"]
+diag = ["cantools>=41.4,<42", "python-can>=4.6,<5", "can-isotp>=2.0,<3", "udsoncan>=1.26,<2"]
+
+[project.scripts]
+workbench = "automotive_workbench.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

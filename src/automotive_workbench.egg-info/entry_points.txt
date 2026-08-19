@@ -1,0 +1,2 @@
+[console_scripts]
+workbench = automotive_workbench.cli:main

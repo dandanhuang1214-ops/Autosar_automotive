@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/trace.schema.json",
+  "title": "Engineering Trace",
+  "type": "object",
+  "required": ["query", "model_status", "nodes", "unknowns"],
+  "properties": {
+    "query": {"type": "string"},
+    "model_status": {"type": "string"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["layer", "kind", "identity", "source_status"],
+        "properties": {
+          "layer": {"type": "string"},
+          "kind": {"type": "string"},
+          "identity": {"type": "string"},
+          "source_status": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "unknowns": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}
+

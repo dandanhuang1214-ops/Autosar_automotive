@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/finding.schema.json",
+  "title": "Engineering Finding",
+  "type": "object",
+  "required": ["code", "severity", "message", "source_artifact"],
+  "properties": {
+    "code": {"type": "string"},
+    "severity": {"enum": ["INFO", "WARNING", "ERROR", "QUESTION", "UNKNOWN"]},
+    "message": {"type": "string"},
+    "source_artifact": {"type": "string"},
+    "kind": {"type": "string"},
+    "field": {"type": "string"},
+    "location": {"type": "string"},
+    "status": {"type": "string"}
+  },
+  "additionalProperties": false
+}
+

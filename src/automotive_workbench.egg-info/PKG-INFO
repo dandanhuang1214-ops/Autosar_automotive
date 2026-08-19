@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: automotive-workbench
+Version: 0.1.0
+Summary: Artifact-first automotive software engineering workbench.
+Requires-Python: >=3.11
+Provides-Extra: can
+Requires-Dist: cantools<42,>=41.4; extra == "can"
+Requires-Dist: python-can<5,>=4.6; extra == "can"
+Provides-Extra: diag
+Requires-Dist: cantools<42,>=41.4; extra == "diag"
+Requires-Dist: python-can<5,>=4.6; extra == "diag"
+Requires-Dist: can-isotp<3,>=2.0; extra == "diag"
+Requires-Dist: udsoncan<2,>=1.26; extra == "diag"

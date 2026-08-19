@@ -1,0 +1,58 @@
+{
+  "schema_version": "uds-intent-0.1",
+  "model_status": "research-intent",
+  "source": "public window_control diagnostic learning sample",
+  "ecu": "WindowController",
+  "transport": {
+    "addressing": "normal_11bit",
+    "request_id": 1792,
+    "response_id": 1800,
+    "tx_data_length": 8
+  },
+  "dids": [
+    {
+      "id": 61840,
+      "name": "VehicleIdentificationNumber",
+      "codec": "ascii",
+      "length": 17,
+      "value": "AWBDEMO0123456789",
+      "unknowns": [
+        "OEM VIN source of truth",
+        "Production session/security requirements"
+      ]
+    },
+    {
+      "id": 61713,
+      "name": "WindowPositionSnapshot",
+      "codec": "uint8",
+      "length": 1,
+      "canonical_signal": "WindowPosition",
+      "value": 42,
+      "unknowns": [
+        "Actual diagnostic DID assignment",
+        "Snapshot freshness policy"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "read_vin",
+      "service": "ReadDataByIdentifier",
+      "did": 61840,
+      "expected": "positive"
+    },
+    {
+      "name": "unknown_did_nrc",
+      "service": "ReadDataByIdentifier",
+      "did": 4660,
+      "expected": "negative_response",
+      "nrc": "requestOutOfRange"
+    },
+    {
+      "name": "response_timeout",
+      "service": "ReadDataByIdentifier",
+      "did": 61841,
+      "expected": "timeout"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "source_docx": "public_window_delivery.docx",
+  "mode": "signal",
+  "counts": {
+    "swcs": 1,
+    "signals": 1,
+    "open_issues": 1,
+    "validation_errors": 0,
+    "core_findings": 0
+  },
+  "items": [
+    {
+      "kind": "open_issue",
+      "severity": "QUESTION",
+      "code": "CONTRACT-OPEN-ISSUE",
+      "field": "signals.WindowPosition.consumer_swc",
+      "message": "Confirm the consumer SWC for this public sample.",
+      "location": "SignalTable!R2",
+      "status": "open"
+    }
+  ]
+}
+

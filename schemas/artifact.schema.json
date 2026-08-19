@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/artifact.schema.json",
+  "title": "Engineering Artifact",
+  "type": "object",
+  "required": ["artifact_id", "artifact_type", "source", "confidentiality"],
+  "properties": {
+    "artifact_id": {"type": "string", "minLength": 1},
+    "artifact_type": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "confidentiality": {"enum": ["public", "private-local", "company-restricted"]},
+    "producer": {"type": "string"},
+    "schema_version": {"type": "string"}
+  },
+  "additionalProperties": true
+}
+

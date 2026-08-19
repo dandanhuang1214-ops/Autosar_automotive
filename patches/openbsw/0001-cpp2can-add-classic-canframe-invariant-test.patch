@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Automotive Workbench <workbench@example.invalid>
+Date: Tue, 18 Aug 2026 00:00:00 +0800
+Subject: [PATCH] cpp2can: add classic CANFrame invariant test
+
+Add a narrow cpp2can unit test that documents and verifies the classic
+CANFrame assumptions used by downstream SocketCAN adapter research:
+8-byte classic payloads, base and extended raw ID limits, and constructor
+preservation of max raw IDs and payload length.
+---
+ libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp b/libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp
+index 7639ace3..54a100da 100644
+--- a/libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp
++++ b/libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp
+@@ -54,6 +54,26 @@ TEST(CANFrameTest, InitConstructor)
+     }
+ }
+ 
++TEST(CANFrameTest, ClassicCanFrameInvariants)
++{
++    uint8_t payload[CANFrame::MAX_FRAME_LENGTH] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
++
++    ASSERT_EQ(static_cast<uint8_t>(8U), CANFrame::MAX_FRAME_LENGTH);
++    ASSERT_EQ(CanId::MAX_RAW_BASE_ID, CANFrame::MAX_FRAME_ID);
++    ASSERT_EQ(CanId::MAX_RAW_EXTENDED_ID, CANFrame::MAX_FRAME_ID_EXTENDED);
++
++    CANFrame baseFrame(CANFrame::MAX_FRAME_ID, payload, CANFrame::MAX_FRAME_LENGTH, false);
++    ASSERT_TRUE(CanId::isBase(baseFrame.getId()));
++    ASSERT_EQ(CanId::MAX_RAW_BASE_ID, CanId::rawId(baseFrame.getId()));
++    ASSERT_EQ(CANFrame::MAX_FRAME_LENGTH, baseFrame.getPayloadLength());
++
++    CANFrame extendedFrame(
++        CANFrame::MAX_FRAME_ID_EXTENDED, payload, CANFrame::MAX_FRAME_LENGTH, true);
++    ASSERT_TRUE(CanId::isExtended(extendedFrame.getId()));
++    ASSERT_EQ(CanId::MAX_RAW_EXTENDED_ID, CanId::rawId(extendedFrame.getId()));
++    ASSERT_EQ(CANFrame::MAX_FRAME_LENGTH, extendedFrame.getPayloadLength());
++}
++
+ /**
+  * \desc
+  * Test to verify comparison operator of CANFrame
+-- 
+2.43.0
+

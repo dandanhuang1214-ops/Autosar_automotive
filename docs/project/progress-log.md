@@ -1,0 +1,320 @@
+# Automotive Workbench 平台升级进度账本
+
+> 本文是平台进度的唯一主记录。平台代码、技术文档、调研和运行环境记录均统一保存在 `D:\ＬＬＭ\automotive-workbench`。
+
+## 固定更新制度
+
+每次平台升级必须同时完成以下事项，才可标记为“完成”：
+
+1. 记录日期、升级编号、目标和边界；
+2. 记录实际代码或文档变更；
+3. 写明运行过的测试、实验和结果，不把“已编码”等同于“已验证”；
+4. 区分 `完成`、`部分完成`、`等待环境验证` 和 `未开始`；
+5. 写明限制、回退方式和下一步；
+6. 路线改变时同步更新 `roadmap.md`；
+7. 产生新学习内容时同步更新相应 `learning/` 文档。
+
+编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
+
+## 当前总览（2026-08-19）
+
+当前阶段：`R4d — UDS/ISO-TP lab 已接入 backend probe，进入 SocketCAN 诊断实机复验`。
+
+总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
+
+| 能力 | 状态 | 当前证据 |
+|---|---|---|
+| Artifact/Finding/Trace/TestResult | 完成 | schema、CLI、单元测试 |
+| Generate-Arxml 报告适配 | 完成 | `issues.json` → Finding |
+| DBC → BSW intent 静态映射 | 完成 | 公开车窗样例与映射校验 |
+| DBC → canonical contract 校验 | 完成 | 名称、缩放、偏移、单位、范围检查 |
+| 故障注入与证据报告 | 完成 | 基线及多类配置故障 |
+| python-can virtual 实验 | 完成 | 收发、超时、恢复、监督状态 |
+| can-utils 日志解析与回放 | 完成 | capture/decode/replay 与 hash |
+| backend-neutral 实验接口 | 完成 | virtual/SocketCAN 共用契约 |
+| WSL2 Linux 执行环境 | 完成 | Ubuntu 24.04、CAN/VCAN 模块、can-utils、CMake、Ninja 已确认 |
+| `vcan0` 真实收发 | 完成 | `candump` 收到 `123#2A00010000000000` |
+| Workbench SocketCAN 实验 | 完成 | backend probe/lab 通过，含错误 ID 与接收超时 |
+| 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
+| Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
+| OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a 架构已选型；R4b 最小 UDS intent/schema、示例和 inspect 校验已落地；R4c virtual UDS lab 可跑通 positive/NRC/timeout；R4d 已把 backend probe 和 blocked 证据接入诊断 lab |
+| AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
+
+## 已完成升级历史
+
+### P0：平台边界与统一证据模型
+
+- 确立 Windows 工程面、Workbench Core、Linux 执行面三层边界。
+- 建立 Artifact、Finding、Trace、TestResult、Evidence 基础对象。
+- 平台连接 Generate-Arxml、DBC/CAN 与未来 BSW/诊断适配器，不复制商业 AUTOSAR 工具链。
+- 状态：完成。
+
+### P1：DBC、canonical contract 与 BSW intent 竖切
+
+- 读取公开车窗 DBC，输出消息、信号和属性。
+- 建立 DBC Signal → canonical signal → SWC/COM/I-PDU/PduR/CanIf 研究映射。
+- 增加名称、长度、端序、缩放、偏移、单位、范围和引用检查。
+- 对接 Generate-Arxml 报告，不把 Workbench 扩成完整 ECUC generator。
+- 状态：完成。
+
+### P2：确定性故障套件
+
+- 加入正常基线和配置故障注入。
+- 生成 JSON 与 Markdown 双层证据报告。
+- 确立“确定性规则最终判定，AI 不覆盖规则结果”。
+- 状态：完成。
+
+### R0：python-can virtual 运行时
+
+- 双节点收发、DBC 编解码、错误 ID、越界值和接收超时。
+- 周期发送、抖动、丢帧、超时及恢复状态实验。
+- 状态：完成。
+
+### R1：CAN 日志、解码与回放
+
+- 支持 can-utils `.log`、DBC 离线解码和两种时间策略回放。
+- 记录 BusConfig、日志/DBC SHA-256、Finding 和实验报告。
+- 状态：完成。
+
+### R2a：backend 抽象与能力探测
+
+- 增加 backend capability probe 和结构化 blocked reason。
+- virtual 与 SocketCAN 复用同一实验契约。
+- 最近记录：22 项测试通过，1 项因 Windows 无 SocketCAN 条件跳过。
+- 状态：代码完成，Linux 实机验收未完成。
+
+### R2b：SocketCAN 真实闭环（2026-08-17）
+
+- `probe_socketcan.sh` 复核：`can_config_present=true`、`module_dir_present=true`、`vcan_module_present=true`、`vcan0_present=true`、`can_utils_present=true`、`systemd_running=true`。
+- `setup_vcan.sh --dry-run` 先列出幂等操作，随后 `setup_vcan.sh --apply` 创建并拉起 `vcan0`。
+- can-utils 原始验证通过：`candump vcan0` 收到 `vcan0 123 [8] 2A 00 01 00 00 00 00 00`。
+- 建立 Linux 专用虚拟环境 `.venv-linux`，安装 `automotive-workbench 0.1.0`、`cantools 41.4.3`、`python-can 4.6.1`。
+- `probe-can-backend --interface socketcan --channel vcan0` 返回 `status=available`，`open/send/receive/capture/replay=true`。
+- `run-backend-lab --interface socketcan --channel vcan0` 返回 `status=passed`，`captured_count=3`、`decoded_count=3`、`finding_count=0`、`replayed_count=3`、`replay_integrity=true`。
+- backend lab 已补充后端中立故障场景：`wrong_arbitration_id` 检出 `0x101`，`receive_timeout` 检出 30 ms 超时。
+- Linux 测试：`.venv-linux` 下 `PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v`，22 项通过，1 项非 Linux 行为测试跳过。
+- Windows 侧：PowerShell 可调用 `Python 3.14.4`；但当前 WSL→PowerShell 桥接运行 unittest 返回 `WSL ... UtilBindVsockAnyPort ... socket failed 1`，未进入 Python 测试输出。Windows 回归需在原生 PowerShell 或 CI 中复验。
+- 报告路径：`output/socketcan-probe/backend-probe.json`、`output/socketcan-lab/backend-lab-report.json`、`output/socketcan-lab/capture/capture.log`、`output/socketcan-lab/decode/decode-report.json`、`output/socketcan-lab/replay/replay-report.json`。
+- 状态：Linux SocketCAN 闭环完成；Windows 原生回归待复验。
+
+### R2c：可重复 Linux 实验入口（2026-08-17）
+
+- 新增 `scripts/linux/run_socketcan_lab.sh`，作为普通用户可运行的非 sudo lab 入口。
+- 入口职责：运行 `probe_socketcan.sh`、检查 `vcan0`、用 `candump -n 1`/`cansend` 做原始帧 smoke、运行 Workbench `probe-can-backend` 和 `run-backend-lab`。
+- 输出目录默认 `output/socketcan-smoke`，包含 `socketcan-host-probe.json`、`can-utils-smoke.log`、`workbench-probe` 和 `workbench-lab` 报告。
+- 入口不包含 `sudo`、`modprobe`、`ip link add`、`ip link set` 或包安装；host 准备仍由 `setup_vcan.sh --dry-run` 和 `setup_vcan.sh --apply` 显式完成。
+- `docs/socketcan-wsl.md` 已补充一条命令 lab 入口和 WSL shutdown 后恢复 `vcan0` 的步骤。
+- R2c 入口实测通过：`bash scripts/linux/run_socketcan_lab.sh --output output/socketcan-smoke` 返回 `SOCKETCAN_LAB_PASSED`。
+- Linux 测试：`.venv-linux` 下 `PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v`，23 项通过，1 项非 Linux 行为测试跳过。
+- Windows 桥接复验：WSL 中调用 PowerShell 和 `cmd.exe` 运行 Windows unittest 均返回 `WSL ... UtilBindVsockAnyPort ... socket failed 1`，未进入 Python 测试输出。
+- Windows 原生 PowerShell 回归：用户反馈已测试完毕且无问题。
+- 状态：完成。
+
+### R3a：OpenBSW readiness 与路线判断（2026-08-17）
+
+- 增强 `scripts/linux/probe_openbsw.sh`，新增 Docker daemon 状态和 Git/GCC/G++/CMake/Ninja/Python 版本输出，仍保持只读。
+- readiness 结果已保存到 `output/openbsw-readiness/readiness.json`。
+- 新增 readiness 报告：`docs/research/openbsw-r3-readiness-2026-08-17.md`。
+- 当前环境：Ubuntu 24.04、Microsoft WSL2 kernel `6.18.33.2`、`vcan0_present=true`、`git/gcc/g++/make/cmake/ninja/python3` 均存在。
+- Docker 路线：`docker_cli_present=false`、`docker_daemon_available=false`，官方 development container 路线当前不可直接执行。
+- 原生路线：CMake `3.28.3`、Ninja `1.11.1`、GCC/G++ `13.3.0` 可用；但 `official_native_baseline=false`，因为官方原生说明不是 Ubuntu 24.04 baseline。
+- 推荐首次尝试：如用户批准，clone OpenBSW 到 WSL Linux 文件系统例如 `~/work/openbsw`，用 Ubuntu 24.04 原生 CMake 做一次限时 POSIX configure/build，并把失败明确分类。
+- 建议预算：60-90 分钟，WSL Linux 文件系统预留 8-12 GB。
+- 状态：readiness 完成；等待是否批准 native clone/build。
+
+### R3b：OpenBSW POSIX native baseline（2026-08-17）
+
+- Docker 重新复核：`docker_cli_present=true`、`docker_daemon_available=true`，证据保存到 `output/openbsw-readiness/readiness-2026-08-17-docker.json`。
+- OpenBSW 已克隆到 WSL Linux 文件系统：`/home/dev/work/openbsw`。
+- Remote：`https://github.com/eclipse-openbsw/openbsw.git`。
+- Commit：`dbd6e118a9aaa2db36e4461ce76655e8f285598d`。
+- License/NOTICE：根 `LICENSE` 为 Apache License 2.0，根 `NOTICE.md` 声明 `SPDX-License-Identifier: Apache-2.0` 并列出第三方许可证。
+- 官方 Docker development service 已尝试：`DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --build --rm development cmake --preset posix-freertos`。
+- Docker 路线结果：未进入 CMake；官方 `docker/development/Dockerfile` 无跳过交叉工具链的开关，必须下载 ARM GCC、ARM LLVM、treefmt、bazelisk、buildifier、Rust 和 Python 依赖。首轮在 ARM GCC 143 MB 下载约 11% 时中止，分类为 `docker-image-dependency-download-too-heavy-for-first-spike`。
+- 原生 configure：`cmake --preset posix-freertos` 通过，平台为 `POSIX`，RTOS 为 `FREERTOS`，`PLATFORM_SUPPORT_CAN/ETHERNET/MIDDLEWARE/STORAGE/TRANSPORT/UDS` 均为 ON；Doxygen 缺失仅影响文档生成。
+- 原生 build：`cmake --build --preset posix-freertos --parallel` 通过，完成 379 个构建步骤。
+- 产物：`build/posix-freertos/executables/referenceApp/application/Release/app.referenceApp.elf`、`libsocketCanTransceiver.a`、`libcpp2can.a`、`libdocan.a`。
+- 首次运行时 `vcan0_present=false`，referenceApp 报 `SocketCanTransceiver Failed to ioctl socket (node=vcan0)`；随后执行 `bash scripts/linux/setup_vcan.sh --apply` 恢复 `vcan0`。
+- 恢复后 5 秒 smoke：referenceApp 完成 lifecycle 初始化，DoIP/UDS 初始化，CAN demo 发出 `id=0x558,length=4`；`timeout 5s` 返回 124 属于预期终止。
+- TAP Ethernet 报 `TapEthernetDriver start failed!`，暂不纳入本次 CAN/POSIX spike 阻塞项。
+- Workbench 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 在沙箱外权限下通过，23 项通过、1 项非 Linux 行为测试跳过；普通沙箱内因 `socket.if_nameindex()` 读取网络接口权限不足失败，不是代码断言失败。
+- R3 报告：`docs/research/openbsw-r3-posix-spike-2026-08-17.md`。
+- 状态：部分完成；baseline build/run 完成，下一步是源码入口索引固化和最小测试候选，不进入完整 BSW 集成。
+
+### R3c：OpenBSW 源码入口索引与测试 baseline（2026-08-17）
+
+- 已固化源码入口索引：`docs/research/openbsw-r3-source-index-2026-08-17.md`。
+- 索引覆盖 POSIX `main()`/`app_main()`、`platformLifecycleAdd()`、`CanSystem`、`SocketCanTransceiver`、`CanDemoListener`、DoCAN transport 和 unit test 入口。
+- 明确 Workbench SocketCAN lab 与 OpenBSW referenceApp demo traffic 是两条不同语义链：Workbench 继续以公开车窗 DBC 为确定性 baseline，OpenBSW 当前只作为源码和 POSIX runtime 学习底座。
+- `cmake --preset tests-posix-debug` 通过，生成目录为 `/home/dev/work/openbsw/build/tests/posix/Debug`。
+- `cmake --build --preset tests-posix-debug --parallel` 通过，223/223 构建步骤完成。
+- `ctest --preset tests-posix-debug --output-on-failure` 通过，1878/1878 测试通过、0 失败，总耗时 33.79 秒。
+- 相关标签：`cpp2canTest` 33 项、`docanTest` 168 项、`socketCanTransceiverTest` 5 项、`udsTest` 286 项。
+- Workbench 回归：普通沙箱内因 `socket.if_nameindex()` 网络接口权限限制在 `test_can_backend` import 阶段失败；沙箱外重跑 `PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，23 项运行、2 项跳过（当前 `vcan0` 不可用和非 Linux 行为测试）。
+- 最小测试候选调整：后续若改 OpenBSW，优先选择 CANFrame invariant 或 DoCAN addressing/filter 的小测试；暂不修改 referenceApp runtime 行为。
+- 状态：完成。
+
+### R3d：OpenBSW 最小测试候选落地（2026-08-17）
+
+- 在 OpenBSW 本地 clone 中新增最小测试：`/home/dev/work/openbsw/libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp`。
+- 新增测试名：`CANFrameTest.ClassicCanFrameInvariants`。
+- 测试意图：验证 Workbench 读取 OpenBSW 作为 runtime/source reference 时依赖的 classic CAN 假设，包括 `MAX_FRAME_LENGTH == 8`、base ID 上限等于 `CanId::MAX_RAW_BASE_ID`、extended ID 上限等于 `CanId::MAX_RAW_EXTENDED_ID`，并确认 base/extended constructor 保留 raw ID 和 payload length。
+- 作用说明：这是一个窄 guardrail，不是 runtime 功能或 adapter 集成；如果 OpenBSW 后续改变 classic CAN payload、base/extended ID 上限或 ID 编码语义，该测试应提前失败，迫使 Workbench adapter 假设被显式复核。
+- 未修改 OpenBSW runtime、referenceApp、SocketCAN adapter 或 Workbench 代码。
+- 验证：`cmake --build --preset tests-posix-debug --target cpp2canTest --parallel` 通过。
+- 验证：`ctest --preset tests-posix-debug -R CANFrameTest --output-on-failure` 通过，7/7。
+- 验证：`ctest --preset tests-posix-debug -L cpp2canTest --output-on-failure` 通过，34/34。
+- 验证：`ctest --preset tests-posix-debug --output-on-failure` 通过，1879/1879、0 失败、总耗时 34.81 秒。
+- 构建时出现一次 `libgcov profiling error ... overwriting an existing profile data with a different checksum`，原因是 coverage `.gcda` 旧数据与新对象校验不一致；构建退出码为 0，后续 CTest 全量通过。
+- 状态：完成。
+
+### R3e：OpenBSW patch artifact 整理（2026-08-18）
+
+- 保留 OpenBSW 本地 clone 的唯一代码改动：`libs/bsw/cpp2can/test/src/can/canframes/CANFrameTest.cpp` 中的 `CANFrameTest.ClassicCanFrameInvariants`。
+- 在 Workbench 仓库中新增 patch artifact：`patches/openbsw/0001-cpp2can-add-classic-canframe-invariant-test.patch`。
+- 新增 patch 说明：`patches/openbsw/README.md`，记录 base commit、目标文件、测试意图、已完成验证和上游准备状态。
+- 复核 OpenBSW `CONTRIBUTING.md`：PR 前应先通过 issue 与团队沟通；贡献合入需要 Eclipse Contributor Agreement。
+- 当前结论：先把该测试作为 Workbench R3 研究证据和可复用 patch 保留；若要上游化，下一步应先开或加入 OpenBSW issue，说明这是 classic CAN frame contract 的窄 guardrail。
+- 验证：`git diff --check` 在 `/home/dev/work/openbsw` 通过；本次 Workbench 只新增文档/patch artifact，未改运行时代码。
+- 状态：完成。
+
+### R4a：UDS/ISO-TP 架构调研（2026-08-18）
+
+- 新增调研文档：`docs/research/uds-isotp-architecture-research-2026-08-18.md`。
+- 调研对象：`python-can` Bus/virtual backend、`can-isotp` v2.x、`udsoncan` connection/client、Linux kernel SocketCAN ISO-TP。
+- 架构选择：以 `udsoncan Client -> PythonIsoTpConnection -> can-isotp NotifierBasedCanStack -> python-can BusConfig` 作为 R4 主路径。
+- backend 策略：`python-can virtual` 作为 CI-safe 和 Windows/WSL 通用 baseline；Linux kernel ISO-TP socket 作为后续 SocketCAN 集成路径；OpenBSW DoCAN 暂作为源码学习和后续比较路径。
+- 决策原因：最大化复用现有 `BusConfig`、backend probe、JSON/Markdown evidence 和 deterministic Finding 模型；避免手写 ISO-TP/UDS 协议栈。
+- 建议新增 optional dependency group：`diag = ["cantools>=41.4,<42", "python-can>=4.6,<5", "can-isotp>=2.0,<3", "udsoncan>=1.26,<2"]`。
+- 下一步：新增 `schemas/uds-intent.schema.json`、`examples/window_control/uds_intent.json`，再实现 virtual UDS lab 的 positive DID read、NRC 和 timeout 三个场景。
+- 状态：完成。
+
+### R4b：最小 UDS intent/schema（2026-08-18）
+
+- 新增 `schemas/uds-intent.schema.json`，定义 `uds-intent-0.1` 顶层字段、normal 11-bit transport、DID 和 `ReadDataByIdentifier` 场景。
+- 新增 `examples/window_control/uds_intent.json`，包含 `WindowController`、request ID `0x700`、response ID `0x708`、VIN DID `0xF190`、窗口位置快照 DID `0xF111`，以及 positive/NRC/timeout 三个诊断场景。
+- 新增 `src/automotive_workbench/diag_intent.py`，提供 `load_uds_intent()` 和 `summarize_uds_intent()`，做版本、ID范围、request/response ID差异、DID重复、codec、场景引用等确定性校验。
+- `inspect` CLI 已支持 `uds_intent.json` 摘要输出，README 已加入示例命令和边界说明。
+- 新增 `tests/test_diag_intent.py` 覆盖正常加载、positive 场景引用未知 DID、request/response ID 混淆三类行为。
+- 状态：完成。
+
+### R4c：virtual UDS/ISO-TP lab（2026-08-18）
+
+- 新增 `src/automotive_workbench/uds_runtime.py`，实现 `run_uds_lab()`。
+- 运行路径：`udsoncan Client -> PythonIsoTpConnection -> can-isotp NotifierBasedCanStack -> python-can virtual BusConfig`。
+- 实验内置本地确定性 ECU responder，只支持 R4 的最小 `0x22 ReadDataByIdentifier` 场景，不实现完整 DCM/DEM/security/flash。
+- 当前覆盖三个场景：`read_vin` 正响应 `0x62 F190 ...`、`unknown_did_nrc` 负响应 `0x7F 22 31`、`response_timeout` 无响应超时。
+- 新增 CLI：`run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab`。
+- 输出：`uds-lab-report.json` 和 `uds-lab-report.md`，包含 request/response CAN ID、ISO-TP params、raw UDS payload、decoded value、responder observed requests/responses 和 findings。
+- 新增 `tests/test_uds_runtime.py` 覆盖 virtual UDS lab 的三类场景。
+- 新增依赖 extra：`diag = ["cantools>=41.4,<42", "python-can>=4.6,<5", "can-isotp>=2.0,<3", "udsoncan>=1.26,<2"]`。
+- 依赖安装：`.venv-linux/bin/pip install -e '.[diag]'` 完成，安装 `can-isotp 2.0.7` 和 `udsoncan 1.26.1`。
+- 验证：`PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab` 通过，输出 `status=passed`、`scenario_count=3`、`passed_count=3`。
+- 验证：`output/uds-lab/uds-lab-report.json` 和 `output/uds-lab/uds-lab-report.md` 已生成，包含 `0x700 -> 0x708`、`22F190 -> 62F190...`、`221234 -> 7F2231` 和 `22F191` timeout 证据。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，28 项运行、2 项因环境跳过。
+- 状态：完成。
+
+### R4d：UDS backend probe 与 blocked 证据（2026-08-19）
+
+- `run_uds_lab()` 现在在建立 ISO-TP client/responder 前先复用 `probe_can_backend()`。
+- virtual 默认 channel 仍会自动替换为唯一 channel，避免多次运行互相串扰；probe evidence 会随 `uds-lab-report.json` 一起归档。
+- 当 `--interface socketcan --channel <iface>` 不可用时，诊断 lab 返回 `status=blocked` 和结构化 `reason`，例如 `interface_missing`；这类情况不再混同为业务诊断场景失败。
+- blocked 情况会同时写出 `output/.../probe/backend-probe.json` 与 `uds-lab-report.json/md`，便于后续 Linux SocketCAN/ISO-TP 实机复验时留证。
+- 新增 `tests/test_uds_runtime.py` 覆盖 virtual probe evidence 和 SocketCAN 接口缺失 blocked 路径。
+- 验证：`PYTHONPATH=src .venv-linux/bin/python -m unittest tests.test_uds_runtime -v` 通过，2/2。
+- 状态：完成；下一步是在 `vcan0` 可用时运行 `run-uds-lab --interface socketcan --channel vcan0`，确认用户空间 ISO-TP 在 SocketCAN backend 上的表现。
+
+### E1：WSL2 与 SocketCAN 基线
+
+已确认：
+
+- WSL `2.7.11.0`，Ubuntu `24.04.1 LTS`，内核 `6.18.33.2-microsoft-standard-WSL2`；
+- `CONFIG_CAN=m`、`CONFIG_CAN_RAW=m`、`CONFIG_CAN_ISOTP=m`、`CONFIG_CAN_VCAN=m`；
+- 匹配的 CAN/RAW/ISO-TP/VCAN 模块文件存在，不需要自定义 WSL 内核；
+- Git、GCC、G++、Make、Python、ip、modprobe、can-utils、CMake、Ninja 已存在；
+- `vcan0` 已创建并可用；WSL shutdown 后该运行期接口可能消失，需要重新执行 `setup_vcan.sh --apply`。
+
+环境故障与结论：
+
+- `/mnt/d` 曾整体返回 `Input/output error`，不是全角目录 `ＬＬＭ` 单点问题；
+- 执行 `wsl --shutdown` 后 DrvFS 挂载恢复；
+- Windows 路径是 `D:\ＬＬＭ\automotive-workbench`，WSL 路径是 `/mnt/d/ＬＬＭ/automotive-workbench`；
+- PowerShell 使用 Windows 路径，Ubuntu shell 使用 `/mnt/d/...`；
+- `pagefile.sys` 等系统文件 Permission denied 不影响项目。
+
+2026-08-17 探测摘要：
+
+```text
+can_config_present=true
+module_dir_present=true
+vcan_module_present=true
+vcan0_present=false
+can_utils_present=true
+systemd_running=true
+cmake_present=true
+ninja_present=true
+official_native_baseline=false
+```
+
+`official_native_baseline=false` 只表示 OpenBSW 官方原生说明不是以 Ubuntu 24.04 为基线，兼容性需要 spike 验证。
+
+### E2：VS Code/WSL 接入
+
+- 项目已能从 Ubuntu 正常进入并读取。
+- Ubuntu 中 `code .` 尚不可用。
+- 不在 WSL 内安装 Snap 版 VS Code；应使用 Windows VS Code 的 Microsoft WSL 扩展连接 Ubuntu。
+- 状态：等待验证 VS Code 左下角显示 `WSL: Ubuntu-24.04`。
+
+### E3：平台工程文档归仓（2026-08-17）
+
+- 将平台升级账本、路线、Windows/WSL 决策、SocketCAN/OpenBSW/CAN 日志调研及环境学习记录迁入本仓 `docs/`；
+- 建立 `docs/README.md` 作为统一文档入口；
+- `D:\work\improve` 的原路径仅保留迁移提示，不再形成两份可编辑状态源；
+- 明确仓库边界：Workbench 保存平台工程资产，improve 保存职业成长、Sprint、面试与证据索引；
+- 状态：完成（文档迁移，无运行时代码变化，因此不触发代码测试）。
+
+## 当前升级：R3 OpenBSW POSIX 限时 spike
+
+目标：在不破坏 R2 已完成 SocketCAN 闭环的前提下，执行一次受限 OpenBSW POSIX spike，并形成可复现 build/run evidence 与源码入口索引。
+
+执行与验收：
+
+1. 先复核 Docker/工具链/vcan readiness；
+2. clone OpenBSW 到 WSL Linux 文件系统，不在 `/mnt/d` 直接构建大型 C++ 仓库；
+3. 记录 remote URL、commit SHA、`LICENSE`、`NOTICE.md`；
+4. 优先尝试官方 Docker development service；若镜像下载或环境成本超预算，则分类记录并执行 Ubuntu 24.04 原生 POSIX configure/build；
+5. 记录成功、失败类别和下一步，不超过预算继续修环境；
+6. 只构建官方 POSIX reference/demo，不接入商业 AUTOSAR 工具链，不声称 OpenBSW 是完整 Classic BSW 替代品。
+
+完成条件：
+
+- clone commit SHA 和 license evidence 完成；
+- POSIX configure/build 有可复现结果；
+- CAN/POSIX 入口和 unit test 入口形成索引；
+- 成功或失败都有分类报告；
+- 不超过预算扩展 scope。
+
+当前结果：R3a/R3b/R3c/R3d 已完成 readiness、native POSIX baseline、source index、`tests-posix-debug` 执行 baseline 和最小 CANFrame 测试候选；Docker development container 仍保持暂缓，不作为当前阻塞项。
+
+## 下一步方向
+
+### 最近一步：R4e SocketCAN 诊断实机复验
+
+基于 R4d 的 backend probe 和 blocked 证据，下一步在 `vcan0` 已恢复时运行 SocketCAN UDS lab，确认 positive/NRC/timeout 三类诊断场景是否能复用同一 intent 和 evidence 契约；若受接口权限、Notifier、ISO-TP timing 或 WSL 网络能力限制，应继续返回结构化 `blocked` 或明确失败类别。
+
+### 后续升级：R3 OpenBSW POSIX 限时 spike
+
+- 仅在 R2b/R2c 验收后进入；
+- 决定官方开发容器或 Ubuntu 24.04 原生试构建；
+- 设置时间和磁盘预算，只构建官方 POSIX reference/demo；
+- 定位 CAN 入口、Rx/Tx 调用链与测试入口；
+- 做一个小修改和一个补充测试；
+- 若兼容成本超预算，保留 Python virtual ECU，OpenBSW 只作为源码学习底座。
+
+通信链稳定后进入 ISO-TP/UDS，再进入带引用、可拒答的 AI 工程审查。
+
+## 下次必须补录
+
+- 是否整理 OpenBSW patch/PR，或仅保留本地学习证据；
+- Docker development 镜像是否继续完整构建或保持暂缓。
