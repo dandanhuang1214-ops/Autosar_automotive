@@ -3,7 +3,7 @@
   "$id": "https://example.invalid/automotive-workbench/dtc-intent.schema.json",
   "title": "Vendor-neutral DTC Lifecycle Intent",
   "type": "object",
-  "required": ["schema_version", "model_status", "ecu", "dtcs", "experiments", "cycle_experiments", "reset_experiments"],
+  "required": ["schema_version", "model_status", "ecu", "dtcs", "experiments", "cycle_experiments", "reset_experiments", "persistence_fault_experiments"],
   "properties": {
     "schema_version": {"const": "dtc-intent-0.1"},
     "model_status": {"enum": ["research-intent", "vendor-validated", "unknown"]},
@@ -174,6 +174,40 @@
                 "expected_persistent_snapshot_stored": {"type": "boolean"},
                 "expected_runtime_extended_data_stored": {"type": "boolean"},
                 "expected_persistent_extended_data_stored": {"type": "boolean"}
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "persistence_fault_experiments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "dtc", "steps"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "dtc": {"type": "integer", "minimum": 0, "maximum": 16777215},
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["event", "expected_runtime_state", "expected_runtime_status", "expected_persistent_status", "expected_runtime_snapshot_stored", "expected_persistent_snapshot_stored", "expected_runtime_extended_data_stored", "expected_persistent_extended_data_stored", "expected_mirror_integrity", "expected_finding"],
+              "properties": {
+                "event": {"enum": ["operation_cycle_start", "operation_cycle_end", "fault_present", "flush", "inject_flush_failure", "corrupt_mirror", "hard_reset"]},
+                "expected_runtime_state": {"enum": ["absent", "pending", "confirmed"]},
+                "expected_runtime_status": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_persistent_status": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_runtime_snapshot_stored": {"type": "boolean"},
+                "expected_persistent_snapshot_stored": {"type": "boolean"},
+                "expected_runtime_extended_data_stored": {"type": "boolean"},
+                "expected_persistent_extended_data_stored": {"type": "boolean"},
+                "expected_mirror_integrity": {"type": "boolean"},
+                "expected_finding": {"enum": ["", "DTC-PERSISTENCE-FLUSH-FAILED", "DTC-PERSISTENCE-MIRROR-CORRUPTED", "DTC-PERSISTENCE-RESTORE-FAILED"]}
               },
               "additionalProperties": true
             }

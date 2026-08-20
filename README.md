@@ -20,6 +20,7 @@
 14. 显式运行 diagnostic operation cycle，仅在 tested-pass cycle end 累加 aging，并归档/读取/删除 confirmed-trigger DTC snapshot。
 15. 读取 occurrence/aging extended data，并验证未知 DTC、未知 record、非法 cycle 顺序和 malformed snapshot 负面场景。
 16. 区分 DTC 运行态与进程内持久镜像，并通过 UDS hard reset 验证 flush 后恢复、未 flush 丢失和 clear 后不复活。
+17. 对 DTC 持久镜像注入 flush failure 和 checksum corruption，验证 last-good 保留、完整性拒绝和空状态安全回退。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -49,6 +50,7 @@ python -m automotive_workbench.cli inspect examples/window_control/dtc_intent.js
 python -m automotive_workbench.cli run-dtc-lifecycle examples/window_control/dtc_intent.json --output output/dtc-lifecycle
 python -m automotive_workbench.cli run-dtc-aging-lab examples/window_control/dtc_intent.json --output output/dtc-aging
 python -m automotive_workbench.cli run-dtc-reset-lab examples/window_control/dtc_intent.json --output output/dtc-reset
+python -m automotive_workbench.cli run-dtc-persistence-fault-lab examples/window_control/dtc_intent.json --output output/dtc-persistence-fault
 python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab

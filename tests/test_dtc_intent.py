@@ -25,6 +25,9 @@ class DtcIntentTests(unittest.TestCase):
         self.assertEqual(summary["reset_experiment_count"], 2)
         self.assertEqual(summary["reset_experiments"][0]["step_count"], 8)
         self.assertEqual(summary["reset_experiments"][1]["step_count"], 4)
+        self.assertEqual(summary["persistence_fault_experiment_count"], 2)
+        self.assertEqual(summary["persistence_fault_experiments"][0]["step_count"], 6)
+        self.assertEqual(summary["persistence_fault_experiments"][1]["step_count"], 7)
 
     def test_rejects_experiment_with_unknown_dtc(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
@@ -60,6 +63,15 @@ class DtcIntentTests(unittest.TestCase):
             path = Path(directory) / "dtc_intent.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "explicit flush_event"):
+                load_dtc_intent(path)
+
+    def test_rejects_unsupported_persistence_expected_finding(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["persistence_fault_experiments"][0]["steps"][0]["expected_finding"] = "UNKNOWN"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "dtc_intent.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Unsupported DTC persistence expected Finding"):
                 load_dtc_intent(path)
 
 

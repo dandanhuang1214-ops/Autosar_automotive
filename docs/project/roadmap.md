@@ -29,8 +29,9 @@
 - R4k 已完成（2026-08-20）：调研并实现显式 operation-cycle、tested-pass aging/aged-out 和 confirmed-trigger snapshot；UDS `0x19/0x04` snapshot 在 virtual 和 SocketCAN 上均通过，clear 后 snapshot 正确消失。
 - R4l 已完成（2026-08-20）：增加 occurrence/aging extended data、UDS `0x19/0x06`，并覆盖未知 DTC、未知 record、非法 cycle 顺序和 malformed snapshot。
 - R4m 已完成（2026-08-20）：增加运行态/持久镜像对照实验和 UDS `0x11/0x01` hard reset，验证 flush 后恢复、未 flush 丢失和 clear 后不复活。
+- R4n 已完成（2026-08-20）：增加 SHA-256 镜像完整性封套和 flush/corruption 故障注入，验证 last-good 保留与恢复失败安全回退。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：先调研 R4n 持久镜像完整性与失败注入，再决定是否加入 flush failure/corrupt mirror 的分类证据；不实现量产 NvM 或 AI 前端。
+- 当前下一阶段：先调研 R4o 冗余镜像与 generation 仲裁，再决定是否增加一份有效副本恢复和 loss-of-redundancy 证据；不实现量产 NvM 或 AI 前端。
 
 ## 平台目标
 

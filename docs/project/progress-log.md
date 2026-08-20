@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-20）
 
-当前阶段：`R4m — ECU reset 与进程内持久镜像证据已落地`。
+当前阶段：`R4n — 持久镜像完整性与失败注入证据已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4m 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data、hard reset 和持久镜像证据 |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4n 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data、hard reset、持久镜像和完整性故障证据 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -343,6 +343,18 @@
 - 边界：持久镜像只存在于单次进程；不实现 AUTOSAR NvM、flash、断电原子性、真实启动/总线中断或 DCM/BswM/EcuM 集成。
 - 状态：完成。
 
+### R4n：持久镜像完整性与失败注入（2026-08-20）
+
+- 新增 `docs/research/dtc-persistence-integrity-fault-research-2026-08-20.md`，基于 AUTOSAR CP NvM、NV Data Handling Guide 和 Dem 公开规范确定最小故障分类。
+- DTC intent 新增两个 `persistence_fault_experiments`，只允许 flush failure、checksum corruption 和 restore failure 三类预期 Finding。
+- 新增 `dtc_persistence_fault.py`、CLI `run-dtc-persistence-fault-lab` 和 JSON/Markdown 报告；持久镜像使用 canonical JSON payload 的 SHA-256 作为确定性完整性标记。
+- flush failure 产生 `DTC-PERSISTENCE-FLUSH-FAILED`，旧镜像 checksum 与空状态保持有效；随后 hard reset 恢复 last-good 空镜像。
+- corruption 场景在 confirmed 镜像 flush 后篡改 checksum，产生 `DTC-PERSISTENCE-MIRROR-CORRUPTED`；hard reset 拒绝该镜像并产生 `DTC-PERSISTENCE-RESTORE-FAILED`，运行态回退为 `0x00`，损坏镜像保留作证据。
+- fault lab `output/dtc-persistence-fault-r4n/dtc-persistence-fault-report.json` 为 13/13 通过，包含 3 个预期 Finding；R4m reset lab 12/12 和 UDS 目标回归继续通过。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，53 项运行、2 项环境跳过；JSON、Python 编译、shell 语法和 diff 检查通过。
+- 边界：SHA-256 与进程内镜像仅用于确定性实验；不实现 NvM CRC 配置、异步 job、write retry、redundant block、ROM default、flash 或安全认证。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -417,9 +429,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4n 持久镜像完整性与失败注入调研
+### 最近一步：R4o 冗余镜像与 generation 仲裁调研
 
-先定义 flush failure、corrupt mirror 和恢复失败的分类及安全回退，再决定最小故障注入；不直接引入文件数据库或宣称 NvM 完整性实现。
+先定义双副本 generation、有效副本选择和 loss-of-redundancy 分类，再决定最小恢复实验；不直接实现 NvM redundant block 或 flash 管理。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

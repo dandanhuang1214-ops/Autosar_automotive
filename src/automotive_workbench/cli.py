@@ -19,6 +19,7 @@ from automotive_workbench.dtc_intent import summarize_dtc_intent
 from automotive_workbench.dtc_lifecycle import run_dtc_lifecycle
 from automotive_workbench.dtc_aging import run_dtc_aging_lab
 from automotive_workbench.dtc_reset import run_dtc_reset_lab
+from automotive_workbench.dtc_persistence_fault import run_dtc_persistence_fault_lab
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -127,6 +128,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dtc_reset_parser.add_argument("intent", type=Path)
     dtc_reset_parser.add_argument("--output", type=Path, default=Path("output") / "dtc-reset")
+
+    dtc_persistence_fault_parser = commands.add_parser(
+        "run-dtc-persistence-fault-lab",
+        help="Run DTC persistence integrity and flush-failure experiments",
+    )
+    dtc_persistence_fault_parser.add_argument("intent", type=Path)
+    dtc_persistence_fault_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "dtc-persistence-fault"
+    )
     return parser
 
 
@@ -197,6 +207,8 @@ def main() -> int:
             result = run_dtc_aging_lab(args.intent, args.output)
         elif args.command == "run-dtc-reset-lab":
             result = run_dtc_reset_lab(args.intent, args.output)
+        elif args.command == "run-dtc-persistence-fault-lab":
+            result = run_dtc_persistence_fault_lab(args.intent, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

@@ -98,5 +98,32 @@
         {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false}
       ]
     }
+  ],
+  "persistence_fault_experiments": [
+    {
+      "name": "window_obstruction_flush_failure_keeps_last_good_mirror",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "operation_cycle_start", "expected_runtime_state": "absent", "expected_runtime_status": 80, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "pending", "expected_runtime_status": 39, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "operation_cycle_end", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "inject_flush_failure", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": "DTC-PERSISTENCE-FLUSH-FAILED"},
+        {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""}
+      ]
+    },
+    {
+      "name": "window_obstruction_corrupt_mirror_safe_fallback",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "operation_cycle_start", "expected_runtime_state": "absent", "expected_runtime_status": 80, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "pending", "expected_runtime_status": 39, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "operation_cycle_end", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "flush", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 47, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": true, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": true, "expected_mirror_integrity": true, "expected_finding": ""},
+        {"event": "corrupt_mirror", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 47, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": true, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": true, "expected_mirror_integrity": false, "expected_finding": "DTC-PERSISTENCE-MIRROR-CORRUPTED"},
+        {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 47, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": true, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": true, "expected_mirror_integrity": false, "expected_finding": "DTC-PERSISTENCE-RESTORE-FAILED"}
+      ]
+    }
   ]
 }

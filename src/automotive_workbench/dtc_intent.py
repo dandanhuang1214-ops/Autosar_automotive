@@ -25,6 +25,21 @@ SUPPORTED_RESET_EVENTS = {
     "clear_dtc",
 }
 SUPPORTED_RESET_STATES = {"absent", "pending", "confirmed"}
+SUPPORTED_PERSISTENCE_FAULT_EVENTS = {
+    "operation_cycle_start",
+    "operation_cycle_end",
+    "fault_present",
+    "flush",
+    "inject_flush_failure",
+    "corrupt_mirror",
+    "hard_reset",
+}
+SUPPORTED_PERSISTENCE_FINDINGS = {
+    "",
+    "DTC-PERSISTENCE-FLUSH-FAILED",
+    "DTC-PERSISTENCE-MIRROR-CORRUPTED",
+    "DTC-PERSISTENCE-RESTORE-FAILED",
+}
 
 
 def _integer(value: Any, name: str, minimum: int, maximum: int) -> int:
@@ -224,6 +239,52 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
             ):
                 if not isinstance(step.get(field), bool):
                     raise ValueError(f"DTC reset step requires boolean {field}")
+
+    fault_names: set[str] = set()
+    for index, item in enumerate(
+        _list(payload.get("persistence_fault_experiments"), "persistence_fault_experiments")
+    ):
+        if not isinstance(item, dict):
+            raise ValueError(f"DTC intent requires persistence_fault_experiments[{index}] object")
+        name = _string(item.get("name"), f"persistence_fault_experiments[{index}].name")
+        if name in fault_names:
+            raise ValueError(f"Duplicate DTC persistence fault experiment name: {name}")
+        fault_names.add(name)
+        code = _integer(
+            item.get("dtc"), f"persistence_fault_experiments[{index}].dtc", 0, 0xFFFFFF
+        )
+        if code not in codes:
+            raise ValueError(f"DTC persistence fault experiment references unknown code: 0x{code:06X}")
+        for step_index, step in enumerate(
+            _list(item.get("steps"), f"persistence_fault_experiments[{index}].steps")
+        ):
+            if not isinstance(step, dict):
+                raise ValueError(
+                    f"DTC intent requires persistence_fault_experiments[{index}].steps[{step_index}] object"
+                )
+            if step.get("event") not in SUPPORTED_PERSISTENCE_FAULT_EVENTS:
+                raise ValueError(f"Unsupported DTC persistence fault event: {step.get('event')}")
+            if step.get("expected_runtime_state") not in SUPPORTED_RESET_STATES:
+                raise ValueError(
+                    f"Unsupported DTC persistence fault state: {step.get('expected_runtime_state')}"
+                )
+            for field in ("expected_runtime_status", "expected_persistent_status"):
+                status = _integer(step.get(field), field, 0, 0xFF)
+                if status & ~availability_mask:
+                    raise ValueError(f"DTC persistence fault step {field} uses unavailable bits")
+            for field in (
+                "expected_runtime_snapshot_stored",
+                "expected_persistent_snapshot_stored",
+                "expected_runtime_extended_data_stored",
+                "expected_persistent_extended_data_stored",
+                "expected_mirror_integrity",
+            ):
+                if not isinstance(step.get(field), bool):
+                    raise ValueError(f"DTC persistence fault step requires boolean {field}")
+            if step.get("expected_finding") not in SUPPORTED_PERSISTENCE_FINDINGS:
+                raise ValueError(
+                    f"Unsupported DTC persistence expected Finding: {step.get('expected_finding')}"
+                )
     return payload
 
 
@@ -262,5 +323,10 @@ def summarize_dtc_intent(path: Path) -> dict[str, Any]:
         "reset_experiments": [
             {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
             for item in payload["reset_experiments"]
+        ],
+        "persistence_fault_experiment_count": len(payload["persistence_fault_experiments"]),
+        "persistence_fault_experiments": [
+            {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
+            for item in payload["persistence_fault_experiments"]
         ],
     }
