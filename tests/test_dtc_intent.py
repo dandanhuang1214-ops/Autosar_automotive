@@ -20,6 +20,8 @@ class DtcIntentTests(unittest.TestCase):
         self.assertEqual(payload["schema_version"], "dtc-intent-0.1")
         self.assertEqual(summary["dtcs"][0]["code_hex"], "0xC00100")
         self.assertEqual(summary["experiments"][0]["step_count"], 8)
+        self.assertEqual(summary["cycle_experiment_count"], 1)
+        self.assertEqual(summary["cycle_experiments"][0]["step_count"], 12)
 
     def test_rejects_experiment_with_unknown_dtc(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))

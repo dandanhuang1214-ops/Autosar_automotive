@@ -201,6 +201,7 @@ class _UdsResponder:
         timeout_dids: set[int],
         malformed_payloads: dict[int, bytes],
         dtc_statuses: dict[int, int],
+        dtc_snapshots: dict[int, list[dict[str, Any]]],
         status_availability_mask: int,
     ) -> None:
         self._stack = stack
@@ -208,6 +209,7 @@ class _UdsResponder:
         self._timeout_dids = timeout_dids
         self._malformed_payloads = malformed_payloads
         self._dtc_statuses = dtc_statuses.copy()
+        self._dtc_snapshots = {code: records.copy() for code, records in dtc_snapshots.items()}
         self._status_availability_mask = status_availability_mask
         self._stop = threading.Event()
         self.requests: list[dict[str, Any]] = []
@@ -256,12 +258,31 @@ class _UdsResponder:
                         response_data.extend(code.to_bytes(3, "big"))
                         response_data.append(status)
                 response = bytes(response_data)
+            elif service_id == 0x19 and len(request) == 6 and request[1] == 0x04:
+                code = int.from_bytes(request[2:5], "big")
+                record_number = request[5]
+                response_data = bytearray([0x59, 0x04])
+                response_data.extend(code.to_bytes(3, "big"))
+                response_data.append(self._dtc_statuses.get(code, 0))
+                records = [
+                    item
+                    for item in self._dtc_snapshots.get(code, [])
+                    if record_number == 0xFF or int(item["record_number"]) == record_number
+                ]
+                if records:
+                    response_data.extend([int(records[0]["record_number"]), len(records)])
+                    for item in records:
+                        response_data.extend(int(item["did"]).to_bytes(2, "big"))
+                        response_data.extend(bytes(item["data"]))
+                response = bytes(response_data)
             elif service_id == 0x14 and len(request) == 4:
                 group = int.from_bytes(request[1:4], "big")
                 if group == 0xFFFFFF:
                     self._dtc_statuses = {code: 0 for code in self._dtc_statuses}
+                    self._dtc_snapshots = {code: [] for code in self._dtc_snapshots}
                 elif group in self._dtc_statuses:
                     self._dtc_statuses[group] = 0
+                    self._dtc_snapshots[group] = []
                 response = bytes([0x54])
             else:
                 response = bytes([0x7F, request[0] if request else 0x00, 0x11])
@@ -306,6 +327,8 @@ def _scenario_finding(code: str, message: str, intent: Path, scenario: str, seve
 def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, dict[str, Any]], intent_path: Path) -> dict[str, Any]:
     service = str(scenario["service"])
     if service == "ReadDTCInformation":
+        if scenario.get("subfunction") == "reportDTCSnapshotRecordByDTCNumber":
+            return _run_read_snapshot_scenario(client, scenario, intent_path)
         return _run_read_dtc_scenario(client, scenario, intent_path)
     if service == "ClearDiagnosticInformation":
         return _run_clear_dtc_scenario(client, scenario, intent_path)
@@ -535,6 +558,89 @@ def _run_clear_dtc_scenario(client: Any, scenario: dict[str, Any], intent_path: 
     )
 
 
+def _run_read_snapshot_scenario(
+    client: Any,
+    scenario: dict[str, Any],
+    intent_path: Path,
+) -> dict[str, Any]:
+    name = str(scenario["name"])
+    code = int(scenario["dtc"])
+    record_number = int(scenario["record_number"])
+    expected_status = int(scenario["expected_dtc_status"])
+    expected_records = sorted(
+        (record_number, int(item["did"]), item["value"])
+        for item in scenario["expected_snapshot_records"]
+    )
+    request = bytes([0x19, 0x04]) + code.to_bytes(3, "big") + bytes([record_number])
+    started = time.perf_counter()
+    try:
+        response = client.get_dtc_snapshot_by_dtc_number(code, record_number)
+        dtc = response.service_data.dtcs[0]
+        actual_status = int(dtc.status.get_byte_as_int())
+        actual_records = []
+        actual_evidence = []
+        for snapshot in dtc.snapshots:
+            value = snapshot.data
+            if isinstance(value, tuple) and len(value) == 1:
+                value = value[0]
+            actual_records.append((int(snapshot.record_number), int(snapshot.did), value))
+            actual_evidence.append({
+                "record_number": int(snapshot.record_number),
+                "did": int(snapshot.did),
+                "did_hex": f"0x{int(snapshot.did):04X}",
+                "value": value,
+                "payload_hex": bytes(snapshot.raw_data).hex().upper(),
+            })
+        actual_records.sort()
+        actual_evidence.sort(key=lambda item: (item["record_number"], item["did"]))
+        response_hex = response.original_payload.hex().upper()
+    except Exception as exc:
+        return _scenario_result(
+            name,
+            "failed",
+            f"snapshot record 0x{record_number:02X} for DTC 0x{code:06X}",
+            type(exc).__name__,
+            service="ReadDTCInformation",
+            subfunction="reportDTCSnapshotRecordByDTCNumber",
+            dtc=code,
+            dtc_hex=f"0x{code:06X}",
+            record_number=record_number,
+            request_payload_hex=request.hex().upper(),
+            response_payload_hex="",
+            duration_ms=round((time.perf_counter() - started) * 1000),
+            findings=[_scenario_finding("UDS-DTC-SNAPSHOT-READ-ERROR", str(exc), intent_path, name)],
+        )
+    passed = actual_status == expected_status and actual_records == expected_records
+    return _scenario_result(
+        name,
+        "passed" if passed else "failed",
+        f"DTC 0x{code:06X} status 0x{expected_status:02X} snapshot {expected_records}",
+        f"DTC 0x{code:06X} status 0x{actual_status:02X} snapshot {actual_records}",
+        service="ReadDTCInformation",
+        subfunction="reportDTCSnapshotRecordByDTCNumber",
+        dtc=code,
+        dtc_hex=f"0x{code:06X}",
+        expected_dtc_status=expected_status,
+        expected_dtc_status_hex=f"0x{expected_status:02X}",
+        actual_dtc_status=actual_status,
+        actual_dtc_status_hex=f"0x{actual_status:02X}",
+        record_number=record_number,
+        expected_snapshot_records=scenario["expected_snapshot_records"],
+        actual_snapshot_records=actual_evidence,
+        request_payload_hex=request.hex().upper(),
+        response_payload_hex=response_hex,
+        duration_ms=round((time.perf_counter() - started) * 1000),
+        findings=[] if passed else [
+            _scenario_finding(
+                "UDS-DTC-SNAPSHOT-MISMATCH",
+                f"Observed status/snapshot {(actual_status, actual_records)}, expected {(expected_status, expected_records)}",
+                intent_path,
+                name,
+            )
+        ],
+    )
+
+
 def render_uds_markdown(result: dict[str, Any]) -> str:
     lines = [
         "# UDS/ISO-TP Diagnostic Lab Report",
@@ -669,6 +775,17 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         int(item["code"]): int(item["uds_initial_status"])
         for item in (dtc_payload or {}).get("dtcs", [])
     }
+    dtc_snapshots = {
+        int(item["code"]): [
+            {
+                "record_number": int(item["snapshot"]["record_number"]),
+                "did": int(snapshot_did["did"]),
+                "data": bytes([int(snapshot_did["value"])]),
+            }
+            for snapshot_did in item["snapshot"]["dids"]
+        ]
+        for item in (dtc_payload or {}).get("dtcs", [])
+    }
     status_availability_mask = int((dtc_payload or {}).get("status_availability_mask", 0xFF))
 
     client_bus = open_bus(config, client_filters)
@@ -694,6 +811,7 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         timeout_dids,
         malformed_payloads,
         dtc_statuses,
+        dtc_snapshots,
         status_availability_mask,
     )
     client_logger = logging.getLogger("UdsClient[workbench-uds-lab]")

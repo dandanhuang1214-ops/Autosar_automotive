@@ -17,6 +17,7 @@ from automotive_workbench.adapters.openbsw_patch import prepare_openbsw_patch
 from automotive_workbench.diag_intent import summarize_uds_intent
 from automotive_workbench.dtc_intent import summarize_dtc_intent
 from automotive_workbench.dtc_lifecycle import run_dtc_lifecycle
+from automotive_workbench.dtc_aging import run_dtc_aging_lab
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -111,6 +112,13 @@ def build_parser() -> argparse.ArgumentParser:
     dtc_lifecycle_parser.add_argument(
         "--output", type=Path, default=Path("output") / "dtc-lifecycle"
     )
+
+    dtc_aging_parser = commands.add_parser(
+        "run-dtc-aging-lab",
+        help="Run explicit DTC operation-cycle, aging and snapshot experiments",
+    )
+    dtc_aging_parser.add_argument("intent", type=Path)
+    dtc_aging_parser.add_argument("--output", type=Path, default=Path("output") / "dtc-aging")
     return parser
 
 
@@ -177,6 +185,8 @@ def main() -> int:
             result = probe_uds_backend(BusConfig(args.interface, args.channel), args.output)
         elif args.command == "run-dtc-lifecycle":
             result = run_dtc_lifecycle(args.intent, args.output)
+        elif args.command == "run-dtc-aging-lab":
+            result = run_dtc_aging_lab(args.intent, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

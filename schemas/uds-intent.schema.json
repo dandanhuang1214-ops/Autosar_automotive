@@ -44,7 +44,7 @@
           "name": {"type": "string"},
           "service": {"enum": ["ReadDataByIdentifier", "ReadDTCInformation", "ClearDiagnosticInformation"]},
           "did": {"type": "integer", "minimum": 0, "maximum": 65535},
-          "subfunction": {"enum": ["reportDTCByStatusMask"]},
+          "subfunction": {"enum": ["reportDTCByStatusMask", "reportDTCSnapshotRecordByDTCNumber"]},
           "status_mask": {"type": "integer", "minimum": 1, "maximum": 255},
           "expected_dtc_records": {
             "type": "array",
@@ -54,6 +54,21 @@
               "properties": {
                 "code": {"type": "integer", "minimum": 0, "maximum": 16777215},
                 "status": {"type": "integer", "minimum": 0, "maximum": 255}
+              },
+              "additionalProperties": false
+            }
+          },
+          "dtc": {"type": "integer", "minimum": 0, "maximum": 16777215},
+          "record_number": {"type": "integer", "minimum": 1, "maximum": 254},
+          "expected_dtc_status": {"type": "integer", "minimum": 0, "maximum": 255},
+          "expected_snapshot_records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["did", "value"],
+              "properties": {
+                "did": {"type": "integer", "minimum": 0, "maximum": 65535},
+                "value": {}
               },
               "additionalProperties": false
             }

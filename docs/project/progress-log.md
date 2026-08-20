@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-20）
 
-当前阶段：`R4j — 最小 DTC/DEM 生命周期与 UDS 读取/清除已落地`。
+当前阶段：`R4k — operation-cycle、aging 与 snapshot 证据已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN、blocked/isolation 证据和四类 DID 场景；R4j 已增加 DTC intent、确定性生命周期及 UDS `0x19/0x14` 读取/清除 |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j 已完成 DTC 最小生命周期与读取/清除；R4k 已增加显式 operation cycle、aging/aged-out 和 snapshot 证据 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -302,6 +302,21 @@
 - 边界：本阶段不实现量产 DEM operation cycle、aging、displacement、freeze frame、extended data 或 NVRAM。
 - 状态：完成。
 
+### R4k：operation-cycle、aging 与 snapshot 证据（2026-08-20）
+
+- 新增 `docs/research/dtc-operation-cycle-aging-snapshot-research-2026-08-20.md`，基于 AUTOSAR CP Dem 公开规范和 `udsoncan 1.26.1` 源码确定实验边界。
+- 方案：保留 R4j 的 threshold-only `experiments`，在同一 `dtc-intent-0.1` 中新增独立 `cycle_experiments`、`aging_threshold` 和 confirmed-trigger snapshot，不混合两个状态机。
+- 新增 `dtc_aging.py` 和 CLI `run-dtc-aging-lab`；显式处理 `operation_cycle_start/end`，monitor 事件只允许在 active cycle 内上报，否则生成 `DTC-CYCLE-SEQUENCE` Finding。
+- aging 只在 event 已 confirmed、本 cycle 已测试且结果为 pass 时于 cycle end 累加；未测试 cycle 不累加，failed cycle 将 counter 复位。
+- 12 步确定性实验通过：`0x50 -> 0x27 -> 0x2F -> 0x6D -> 0x2C -> 0x28 -> 0x68 -> 0x28 -> 0x00`；第一个 tested-pass cycle 后 aging=1，第二个后 aging=2 并进入 `aged_out`。
+- DTC 首次进入 confirmed 时归档 record `0x01`，包含 DID `0xF111` / value `42`；达到 aging threshold 时 snapshot 被删除。
+- UDS lab 新增 `ReadDTCInformation.reportDTCSnapshotRecordByDTCNumber` (`0x19/0x04`)；清除前 `1904C0010001 -> 5904C00100280101F1112A`，清除后 `1904C0010001 -> 5904C0010000`。
+- virtual 结果：`output/dtc-aging-r4k/dtc-aging-report.json` 12/12 通过；`output/uds-lab-r4k/uds-lab-report.json` 9/9 通过。
+- SocketCAN 实机结果：`output/socketcan-uds-smoke-r4k/workbench-uds-lab/uds-lab-report.json` 中 backend 为 `python-can socketcan`、9/9 通过。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，45 项运行、2 项环境跳过；JSON、Python 编译、shell 语法和 diff 检查通过。
+- 边界：不实现量产 Dem event memory、displacement、NVRAM、combined event、OBD 法规或 OEM snapshot policy。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -376,9 +391,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4k operation-cycle、aging 与 snapshot 证据
+### 最近一步：R4l extended data 与 DTC 负面场景
 
-在 R4j 的有界状态机上新增显式 operation-cycle 边界和 aging counter，区分 healed 与 aged-out；再为首次 confirmed 事件归档最小 snapshot evidence。优先完成纯确定性实验，再决定是否扩展 UDS `0x19` snapshot/extended-data 子功能。
+在 R4k 的 event-related data 契约上增加最小 extended data（例如 occurrence/aging counter）和 UDS `0x19/0x06` 读取；同时覆盖未知 DTC、未知 record、cycle 序列错误和 malformed snapshot 等负面场景。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

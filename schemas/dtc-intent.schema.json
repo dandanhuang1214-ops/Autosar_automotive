@@ -3,7 +3,7 @@
   "$id": "https://example.invalid/automotive-workbench/dtc-intent.schema.json",
   "title": "Vendor-neutral DTC Lifecycle Intent",
   "type": "object",
-  "required": ["schema_version", "model_status", "ecu", "dtcs", "experiments"],
+  "required": ["schema_version", "model_status", "ecu", "dtcs", "experiments", "cycle_experiments"],
   "properties": {
     "schema_version": {"const": "dtc-intent-0.1"},
     "model_status": {"enum": ["research-intent", "vendor-validated", "unknown"]},
@@ -13,13 +13,38 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["code", "name", "failure_threshold", "healing_threshold", "uds_initial_status"],
+        "required": ["code", "name", "failure_threshold", "healing_threshold", "aging_threshold", "uds_initial_status", "snapshot"],
         "properties": {
           "code": {"type": "integer", "minimum": 0, "maximum": 16777215},
           "name": {"type": "string", "minLength": 1},
           "failure_threshold": {"type": "integer", "minimum": 1, "maximum": 255},
           "healing_threshold": {"type": "integer", "minimum": 1, "maximum": 255},
-          "uds_initial_status": {"type": "integer", "minimum": 0, "maximum": 255}
+          "aging_threshold": {"type": "integer", "minimum": 1, "maximum": 255},
+          "uds_initial_status": {"type": "integer", "minimum": 0, "maximum": 255},
+          "snapshot": {
+            "type": "object",
+            "required": ["trigger", "record_number", "dids"],
+            "properties": {
+              "trigger": {"const": "confirmed"},
+              "record_number": {"type": "integer", "minimum": 1, "maximum": 254},
+              "dids": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["did", "codec", "length", "value"],
+                  "properties": {
+                    "did": {"type": "integer", "minimum": 0, "maximum": 65535},
+                    "codec": {"const": "uint8"},
+                    "length": {"const": 1},
+                    "value": {"type": "integer", "minimum": 0, "maximum": 255}
+                  },
+                  "additionalProperties": true
+                }
+              }
+            },
+            "additionalProperties": true
+          }
         },
         "additionalProperties": true
       }
@@ -44,6 +69,36 @@
                 "status_mask": {"type": "integer", "minimum": 1, "maximum": 255},
                 "expected_state": {"enum": ["absent", "pending", "confirmed", "healing", "healed"]},
                 "expected_status": {"type": "integer", "minimum": 0, "maximum": 255}
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "cycle_experiments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "dtc", "steps"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "dtc": {"type": "integer", "minimum": 0, "maximum": 16777215},
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["event", "expected_state", "expected_status", "expected_aging_counter", "expected_snapshot_stored", "expected_cycle_active"],
+              "properties": {
+                "event": {"enum": ["operation_cycle_start", "operation_cycle_end", "fault_present", "fault_absent", "read_snapshot"]},
+                "expected_state": {"enum": ["absent", "pending", "confirmed", "healing", "healed", "aged_out"]},
+                "expected_status": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_aging_counter": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_snapshot_stored": {"type": "boolean"},
+                "expected_cycle_active": {"type": "boolean"}
               },
               "additionalProperties": true
             }

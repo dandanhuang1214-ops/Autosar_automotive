@@ -21,6 +21,7 @@
 - [OpenBSW R3 readiness](research/openbsw-r3-readiness-2026-08-17.md)
 - [OpenBSW R3 POSIX spike](research/openbsw-r3-posix-spike-2026-08-17.md)
 - [UDS/ISO-TP R4 架构调研](research/uds-isotp-architecture-research-2026-08-18.md)
+- [DTC operation-cycle/aging/snapshot R4k 调研](research/dtc-operation-cycle-aging-snapshot-research-2026-08-20.md)
 
 ## 文档职责
 

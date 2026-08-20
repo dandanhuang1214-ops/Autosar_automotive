@@ -73,6 +73,18 @@
       ]
     },
     {
+      "name": "read_obstruction_snapshot",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCSnapshotRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 1,
+      "expected_dtc_status": 40,
+      "expected_snapshot_records": [
+        {"did": 61713, "value": 42}
+      ],
+      "expected": "positive"
+    },
+    {
       "name": "clear_all_dtcs",
       "service": "ClearDiagnosticInformation",
       "group": 16777215,
@@ -85,6 +97,16 @@
       "status_mask": 8,
       "expected": "positive",
       "expected_dtc_records": []
+    },
+    {
+      "name": "read_snapshot_after_clear",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCSnapshotRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 1,
+      "expected_dtc_status": 0,
+      "expected_snapshot_records": [],
+      "expected": "positive"
     }
   ]
 }
