@@ -14,7 +14,12 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.can_backend import probe_can_backend
-from automotive_workbench.can_io import BusConfig, open_bus
+from automotive_workbench.can_io import (
+    BusConfig,
+    bus_isolation_evidence,
+    exact_can_filters,
+    open_bus,
+)
 from automotive_workbench.diag_intent import load_uds_intent
 from automotive_workbench.domain import Finding
 
@@ -430,6 +435,7 @@ def _blocked_result(
     transport: dict[str, Any],
     probe: dict[str, Any],
     timestamp: datetime,
+    isolation: dict[str, Any],
 ) -> dict[str, Any]:
     request_id = int(transport["request_id"])
     response_id = int(transport["response_id"])
@@ -465,6 +471,7 @@ def _blocked_result(
         "responder_sent_responses": [],
         "findings": [],
         "backend_probe": probe,
+        "isolation": isolation,
     }
 
 
@@ -477,9 +484,18 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
     if config.interface == "virtual" and config.channel == "workbench":
         config = BusConfig(config.interface, f"workbench-uds-{uuid.uuid4()}", config.receive_own_messages, config.fd)
 
+    request_id = int(transport["request_id"])
+    response_id = int(transport["response_id"])
+    client_filters = exact_can_filters(response_id)
+    server_filters = exact_can_filters(request_id)
+    isolation = {
+        "client": bus_isolation_evidence(config, client_filters),
+        "server": bus_isolation_evidence(config, server_filters),
+    }
+
     probe = probe_can_backend(config, output / "probe")
     if probe["status"] != "available":
-        result = _blocked_result(intent, payload, config, transport, probe, timestamp)
+        result = _blocked_result(intent, payload, config, transport, probe, timestamp, isolation)
         output.mkdir(parents=True, exist_ok=True)
         (output / "uds-lab-report.json").write_text(
             json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -505,12 +521,10 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
     for scenario in payload["scenarios"]:
         data_identifiers.setdefault(int(scenario["did"]), "B")
 
-    client_bus = open_bus(config)
-    server_bus = open_bus(config)
+    client_bus = open_bus(config, client_filters)
+    server_bus = open_bus(config, server_filters)
     client_notifier = can.Notifier(client_bus, [])
     server_notifier = can.Notifier(server_bus, [])
-    request_id = int(transport["request_id"])
-    response_id = int(transport["response_id"])
     isotp_params = {"tx_data_length": int(transport["tx_data_length"])}
     client_stack = isotp.NotifierBasedCanStack(
         client_bus,
@@ -594,6 +608,7 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         "responder_sent_responses": responder.responses,
         "findings": findings,
         "backend_probe": probe,
+        "isolation": isolation,
     }
     output.mkdir(parents=True, exist_ok=True)
     (output / "uds-lab-report.json").write_text(

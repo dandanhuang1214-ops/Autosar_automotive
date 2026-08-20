@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-08-19）
+## 当前总览（2026-08-20）
 
-当前阶段：`R4g — UDS malformed payload 证据已落地，等待 vcan0 实机结果`。
+当前阶段：`R4i — SocketCAN 实验隔离与污染证据已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a 架构已选型；R4b 最小 UDS intent/schema、示例和 inspect 校验已落地；R4c virtual UDS lab 可跑通 positive/NRC/timeout；R4d 已把 backend probe 和 blocked 证据接入诊断 lab；R4e 已新增 SocketCAN UDS 复验入口；R4f 已新增独立 UDS backend probe；R4g 已补 malformed payload Finding |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4h 已完成架构、intent/schema、virtual/SocketCAN 四类场景和 backend 证据；R4i 已增加精确 CAN ID filters、按 channel 命名的进程锁和 contamination Finding |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -262,6 +262,31 @@
 - 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，33 项运行、2 项环境跳过。
 - 状态：完成；下一步仍是在 `vcan0` 可用时运行 SocketCAN UDS 实机复验。
 
+### R4h：SocketCAN UDS 实机复验（2026-08-19）
+
+- 执行 `bash scripts/linux/probe_socketcan.sh`，初始结果为 `vcan0_present=false`，但 kernel CAN/RAW/BCM/ISO-TP/VCAN 配置和模块文件均存在。
+- 执行 `bash scripts/linux/setup_vcan.sh --dry-run`，确认计划操作为加载 `can/can_raw/vcan`、缺失时创建 `vcan0`、拉起 `vcan0`。
+- 执行 `bash scripts/linux/setup_vcan.sh --apply`，返回 `VCAN_READY`，`vcan0` 状态为 `UP,LOWER_UP`。
+- 普通沙箱内仍无法可靠读取新建网络接口，因此实机复验在非沙箱权限下运行。
+- 首次并行运行 `run_socketcan_lab.sh` 与 `run_socketcan_uds_lab.sh` 时，UDS lab 通过，但 CAN lab 被并行 UDS 帧污染，报告中出现 `actual_frame_id=0x708` 和 `replay_integrity=false`；分类为测试调度污染，不是 SocketCAN backend 不可用。
+- 随后单独重跑 `bash scripts/linux/run_socketcan_lab.sh --output output/socketcan-smoke-r4h-retry`，返回 `SOCKETCAN_LAB_PASSED`。
+- 执行 `bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke-r4h`，返回 `SOCKETCAN_UDS_LAB_PASSED`。
+- UDS SocketCAN 报告路径：`output/socketcan-uds-smoke-r4h/workbench-uds-lab/uds-lab-report.json`。
+- UDS SocketCAN 结果：`status=passed`、`scenario_count=4`、`passed_count=4`，覆盖 positive DID read、NRC、timeout 和 malformed payload；`backend_probe.status=available`，backend 为 `python-can socketcan`。
+- 经验约束：共享 `vcan0` 上的自动化实验应串行运行，或者后续给实验增加 ID/filter 隔离，避免不同 lab 的 CAN frame 互相污染。
+- 状态：完成。
+
+### R4i：SocketCAN 实验隔离与报告稳健性（2026-08-20）
+
+- `open_bus()` 支持显式 `can_filters`；CAN backend lab 的 receiver 仅接收 `0x100/0x101`，UDS client/server 分别仅接收 `0x708/0x700`，均使用 11-bit 精确 mask `0x7FF`。
+- `run_socketcan_lab.sh` 和 `run_socketcan_uds_lab.sh` 在运行前获取同一个按 channel 命名的 `flock`；共享 `vcan0` 的 Workbench 实验会串行，等待 30 秒超时则返回 blocked 退出码 3。
+- CAN backend 报告新增 capture integrity、filter/lock isolation evidence 和 `CAN-CHANNEL-CONTAMINATION` Finding；UDS 报告新增 client/server filter 与 lock evidence。
+- 新增 virtual bus filter 回归，确认 `0x708` 不会进入只接收 `0x100` 的 receiver；新增脚本锁契约和结构化污染 Finding 测试。
+- 恢复 `vcan0` 后同时启动两个 SocketCAN 入口；两者都返回 0，CAN 报告 `capture_integrity=true`、`replay_integrity=true`、`contamination_finding_count=0`，UDS 报告 `status=passed`、4/4 场景通过。
+- 并发复验报告：`output/socketcan-smoke-r4i/workbench-lab/backend-lab-report.json` 和 `output/socketcan-uds-smoke-r4i/workbench-uds-lab/uds-lab-report.json`；两份报告记录同一锁路径 `socketcan-vcan0.lock`。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，35 项运行、2 项环境跳过。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -336,20 +361,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4h SocketCAN UDS 实机复验
+### 最近一步：R4j 最小 DTC/DEM 生命周期实验
 
-基于 R4f 的独立 probe、R4e 的可重复入口和 R4g 的四类场景，下一步在 `vcan0` 已恢复时运行 `bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke`，确认 positive/NRC/timeout/malformed payload 四类诊断场景是否能复用同一 intent 和 evidence 契约；若受接口权限、Notifier、ISO-TP timing 或 WSL 网络能力限制，应继续返回结构化 `blocked` 或明确失败类别。
+先定义 vendor-neutral 的最小 DTC intent 和确定性状态机，覆盖 fault absent → pending → confirmed → healed/cleared，再增加读取和清除 DTC 的 UDS 场景与 Finding。该阶段仅证明研究样例的诊断状态闭环，不声称实现完整量产 DCM/DEM。
 
-### 后续升级：R3 OpenBSW POSIX 限时 spike
+### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
-- 仅在 R2b/R2c 验收后进入；
-- 决定官方开发容器或 Ubuntu 24.04 原生试构建；
-- 设置时间和磁盘预算，只构建官方 POSIX reference/demo；
-- 定位 CAN 入口、Rx/Tx 调用链与测试入口；
-- 做一个小修改和一个补充测试；
-- 若兼容成本超预算，保留 Python virtual ECU，OpenBSW 只作为源码学习底座。
+- R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
+- 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-通信链稳定后进入 ISO-TP/UDS，再进入带引用、可拒答的 AI 工程审查。
+诊断链稳定后再进入带引用、可拒答的 AI 工程审查。
 
 ## 下次必须补录
 

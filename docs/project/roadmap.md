@@ -1,6 +1,6 @@
 # Automotive Software Engineering Workbench 路线v2
 
-## 实施状态（2026-08-13）
+## 实施状态（2026-08-20）
 
 - 已完成：统一 Artifact/Finding/Trace 骨架；Generate-Arxml report adapter；DBC→BSW intent→canonical contract 静态校验。
 - 已完成：基线与五类配置故障注入，JSON/Markdown 证据报告，Windows/Linux CI 定义。
@@ -22,8 +22,11 @@
 - R4a 已完成（2026-08-18）：选定 UDS/ISO-TP 架构为 `udsoncan Client -> PythonIsoTpConnection -> can-isotp NotifierBasedCanStack -> python-can BusConfig`；virtual 作为 deterministic baseline，SocketCAN kernel ISO-TP 和 OpenBSW DoCAN 作为后续集成/比较路径。
 - R4b 已完成（2026-08-18）：新增 `uds-intent-0.1` schema、公开车窗诊断 intent 示例、`diag_intent` loader/summary 和 inspect CLI 支持；下一步进入 virtual UDS lab。
 - R4c 已完成（2026-08-18）：新增 `run_uds_lab()` 和 CLI，使用本地确定性 responder 在 `python-can virtual` 上跑通 ReadDataByIdentifier positive/NRC/timeout 三类诊断场景，并输出 JSON/Markdown 证据。
+- R4d-R4g 已完成（2026-08-19）：诊断 lab 已集成 backend probe/blocked 证据、SocketCAN 复验入口、独立 UDS backend probe 和 malformed payload Finding，virtual baseline 扩展为 4 类场景。
+- R4h 已完成（2026-08-19）：SocketCAN UDS 实机复验 4/4 通过；同时发现共享 `vcan0` 上并行 CAN/UDS lab 会产生帧污染。
+- R4i 已完成（2026-08-20）：CAN/UDS receiver 使用精确 ID filters，SocketCAN 入口使用按 channel 命名的 `flock`，报告记录 isolation evidence 和 contamination Finding；并发实机复验两个 lab 均通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 后续阶段：OpenBSW POSIX 限时 spike；通信闭环稳定后进入 ISO-TP/UDS，不提前引入 AI 前端。
+- 当前下一阶段：R4j 最小 DTC/DEM 生命周期 intent、确定性状态实验和读取/清除 DTC 场景；不提前引入 AI 前端。
 
 ## 平台目标
 

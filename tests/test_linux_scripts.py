@@ -35,6 +35,8 @@ class LinuxScriptContractTests(unittest.TestCase):
         self.assertIn("run-backend-lab", script)
         self.assertIn("candump -n 1", script)
         self.assertIn("cansend", script)
+        self.assertIn("flock -w 30", script)
+        self.assertIn("AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK", script)
 
     def test_socketcan_uds_lab_entrypoint_does_not_prepare_host(self) -> None:
         script = (ROOT / "scripts" / "linux" / "run_socketcan_uds_lab.sh").read_text(encoding="utf-8")
@@ -45,6 +47,8 @@ class LinuxScriptContractTests(unittest.TestCase):
         self.assertIn("run-uds-lab", script)
         self.assertIn("--interface socketcan", script)
         self.assertIn("SOCKETCAN_UDS_LAB_BLOCKED", script)
+        self.assertIn("flock -w 30", script)
+        self.assertIn("AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK", script)
 
     def test_openbsw_probe_is_read_only_and_does_not_claim_ubuntu_24_support(self) -> None:
         script = (ROOT / "scripts" / "linux" / "probe_openbsw.sh").read_text(encoding="utf-8")

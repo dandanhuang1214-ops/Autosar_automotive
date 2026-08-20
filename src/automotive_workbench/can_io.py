@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from automotive_workbench.adapters.dbc import _load_dbc
 from automotive_workbench.can_runtime import _python_can
@@ -22,7 +23,38 @@ class BusConfig:
     fd: bool = False
 
 
-def open_bus(config: BusConfig) -> Any:
+def exact_can_filters(*frame_ids: int) -> list[dict[str, Any]]:
+    return [
+        {"can_id": frame_id, "can_mask": 0x7FF, "extended": False}
+        for frame_id in frame_ids
+    ]
+
+
+def bus_isolation_evidence(
+    config: BusConfig,
+    can_filters: Iterable[dict[str, Any]],
+) -> dict[str, Any]:
+    filters = list(can_filters)
+    lock_path = os.environ.get("AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK", "")
+    return {
+        "frame_filters": [
+            {
+                **item,
+                "can_id_hex": f"0x{int(item['can_id']):03X}",
+                "can_mask_hex": f"0x{int(item['can_mask']):03X}",
+            }
+            for item in filters
+        ],
+        "channel_lock": {
+            "managed": bool(lock_path),
+            "status": "held_by_entrypoint" if lock_path else "not_managed",
+            "path": lock_path,
+        },
+        "channel": config.channel,
+    }
+
+
+def open_bus(config: BusConfig, can_filters: Iterable[dict[str, Any]] | None = None) -> Any:
     can = _python_can()
     kwargs: dict[str, Any] = {
         "interface": config.interface,
@@ -32,6 +64,8 @@ def open_bus(config: BusConfig) -> Any:
     }
     if config.interface != "virtual":
         kwargs["fd"] = config.fd
+    if can_filters is not None:
+        kwargs["can_filters"] = list(can_filters)
     return can.Bus(**kwargs)
 
 

@@ -15,6 +15,7 @@
 9. 录制 can-utils 日志、使用 DBC 离线解码并向 virtual/SocketCAN 后端回放。
 10. 探测 CAN backend 能力，并在 virtual/SocketCAN 上复用同一实验契约。
 11. 使用 UDS intent 在 python-can virtual 上运行 positive/NRC/timeout/malformed payload 诊断场景，并在诊断 lab 中归档 backend probe/blocked 证据。
+12. 使用精确 CAN ID filters 和按 channel 命名的进程锁隔离共享 SocketCAN 实验，并在报告中记录 isolation/contamination 证据。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 

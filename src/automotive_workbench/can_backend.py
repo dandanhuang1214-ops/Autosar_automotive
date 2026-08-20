@@ -9,8 +9,17 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from automotive_workbench.can_io import BusConfig, capture_log, decode_log, open_bus, replay_log
+from automotive_workbench.can_io import (
+    BusConfig,
+    bus_isolation_evidence,
+    capture_log,
+    decode_log,
+    exact_can_filters,
+    open_bus,
+    replay_log,
+)
 from automotive_workbench.can_runtime import _python_can
+from automotive_workbench.domain import Finding
 
 
 def _fault_scenario(name: str, expected: str, observed: str, passed: bool, **evidence: Any) -> dict[str, Any]:
@@ -21,6 +30,22 @@ def _fault_scenario(name: str, expected: str, observed: str, passed: bool, **evi
         "observed": observed,
         "evidence": evidence,
     }
+
+
+def _contamination_findings(config: BusConfig, events: list[str]) -> list[dict[str, Any]]:
+    if not events:
+        return []
+    return [
+        Finding(
+            code="CAN-CHANNEL-CONTAMINATION",
+            severity="ERROR",
+            message="; ".join(events),
+            source_artifact=config.channel,
+            kind="can-channel",
+            field="received_frames",
+            location="backend-lab",
+        ).to_dict()
+    ]
 
 
 def _interface_exists(name: str) -> bool:
@@ -107,6 +132,8 @@ def probe_can_backend(config: BusConfig, output: Path | None = None) -> dict[str
 
 
 def run_backend_lab(dbc_path: Path, config: BusConfig, output: Path) -> dict[str, Any]:
+    frame_filters = exact_can_filters(0x100, 0x101)
+    isolation = bus_isolation_evidence(config, frame_filters)
     probe = probe_can_backend(config, output / "probe")
     if probe["status"] != "available":
         result = {
@@ -114,7 +141,13 @@ def run_backend_lab(dbc_path: Path, config: BusConfig, output: Path) -> dict[str
             "status": "blocked",
             "reason": probe["reason"],
             "probe": probe,
+            "capture_integrity": False,
             "replay_integrity": False,
+            "isolation": isolation,
+            "finding_count": 0,
+            "decode_finding_count": 0,
+            "contamination_finding_count": 0,
+            "findings": [],
         }
         output.mkdir(parents=True, exist_ok=True)
         (output / "backend-lab-report.json").write_text(
@@ -124,7 +157,7 @@ def run_backend_lab(dbc_path: Path, config: BusConfig, output: Path) -> dict[str
 
     can = _python_can()
     sender = open_bus(config)
-    receiver = open_bus(config)
+    receiver = open_bus(config, frame_filters)
     try:
         for value in (60, 61, 62):
             sender.send(can.Message(
@@ -158,6 +191,32 @@ def run_backend_lab(dbc_path: Path, config: BusConfig, output: Path) -> dict[str
         (item["frame_id"], bytes.fromhex(item["payload_hex"]))
         for item in analysis["decoded"]
     ]
+    expected_capture = [
+        (0x100, bytes([value, 0, 0, 0, 0, 0, 0, 0]))
+        for value in (60, 61, 62)
+    ]
+    actual_capture = [
+        (item["frame_id"], bytes.fromhex(item["payload_hex"]))
+        for item in analysis["decoded"]
+    ]
+    capture_integrity = actual_capture == expected_capture
+    contamination_events: list[str] = []
+    if len(actual_capture) == len(expected_capture) and not capture_integrity:
+        contamination_events.append("capture contained an unexpected allowed-ID frame")
+    if all(message is not None for message in replayed) and not replay_integrity:
+        contamination_events.append("replay receive sequence contained an unexpected allowed-ID frame")
+    if wrong_id is not None and (
+        wrong_id.arbitration_id != 0x101 or bytes(wrong_id.data) != bytes(8)
+    ):
+        contamination_events.append(
+            f"wrong-ID phase received 0x{wrong_id.arbitration_id:X} with unexpected payload"
+        )
+    if receive_timeout is not None:
+        contamination_events.append(
+            f"timeout phase received unexpected frame 0x{receive_timeout.arbitration_id:X}"
+        )
+    contamination_findings = _contamination_findings(config, contamination_events)
+    findings = [*analysis["findings"], *contamination_findings]
     fault_scenarios = [
         _fault_scenario(
             "wrong_arbitration_id",
@@ -179,7 +238,9 @@ def run_backend_lab(dbc_path: Path, config: BusConfig, output: Path) -> dict[str
         capture["status"] == "passed"
         and analysis["status"] == "passed"
         and replay["status"] == "passed"
+        and capture_integrity
         and replay_integrity
+        and not findings
         and all(item["status"] == "passed" for item in fault_scenarios)
     )
     result = {
@@ -189,12 +250,17 @@ def run_backend_lab(dbc_path: Path, config: BusConfig, output: Path) -> dict[str
         "probe": probe,
         "captured_count": capture["captured_count"],
         "decoded_count": analysis["decoded_count"],
-        "finding_count": analysis["finding_count"],
+        "finding_count": len(findings),
+        "decode_finding_count": analysis["finding_count"],
+        "capture_integrity": capture_integrity,
         "replayed_count": replay["sent_count"],
         "replay_integrity": replay_integrity,
         "fault_scenarios": fault_scenarios,
         "log_sha256": capture["log_sha256"],
         "dbc_sha256": analysis["dbc_sha256"],
+        "isolation": isolation,
+        "contamination_finding_count": len(contamination_findings),
+        "findings": findings,
     }
     output.mkdir(parents=True, exist_ok=True)
     (output / "backend-lab-report.json").write_text(

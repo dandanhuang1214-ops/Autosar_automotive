@@ -10,6 +10,7 @@ from automotive_workbench.can_io import (
     BusConfig,
     capture_log,
     decode_log,
+    exact_can_filters,
     open_bus,
     replay_log,
     sha256_file,
@@ -22,6 +23,24 @@ DBC = ROOT / "examples" / "window_control" / "window_control.dbc"
 
 
 class CanIoTests(unittest.TestCase):
+    def test_exact_filters_reject_unrelated_frames(self) -> None:
+        can = _python_can()
+        config = BusConfig("virtual", f"can-filter-{uuid.uuid4()}")
+        sender = open_bus(config)
+        receiver = open_bus(config, exact_can_filters(0x100))
+        try:
+            sender.send(can.Message(arbitration_id=0x708, data=bytes(8), is_extended_id=False))
+            sender.send(can.Message(arbitration_id=0x100, data=bytes([1]) * 8, is_extended_id=False))
+            received = receiver.recv(timeout=0.2)
+            filtered = receiver.recv(timeout=0.03)
+        finally:
+            sender.shutdown()
+            receiver.shutdown()
+
+        self.assertIsNotNone(received)
+        self.assertEqual(received.arbitration_id, 0x100)
+        self.assertIsNone(filtered)
+
     def test_capture_decode_and_replay_preserve_frames(self) -> None:
         can = _python_can()
         channel = f"can-io-{uuid.uuid4()}"

@@ -31,6 +31,22 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if ! command -v flock >/dev/null 2>&1; then
+  echo "BLOCKED: flock is required for per-channel experiment isolation" >&2
+  exit 3
+fi
+
+lock_dir="${XDG_RUNTIME_DIR:-/tmp}/automotive-workbench"
+lock_channel="${channel//[^a-zA-Z0-9_.-]/_}"
+mkdir -p "${lock_dir}"
+lock_file="${lock_dir}/socketcan-${lock_channel}.lock"
+exec 9>"${lock_file}"
+if ! flock -w 30 9; then
+  echo "BLOCKED: timed out waiting for SocketCAN channel lock: ${lock_file}" >&2
+  exit 3
+fi
+export AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK="${lock_file}"
+
 mkdir -p "${output}"
 
 bash scripts/linux/probe_socketcan.sh \

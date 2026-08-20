@@ -36,6 +36,14 @@ class UdsRuntimeTests(unittest.TestCase):
         self.assertEqual(persisted["transport"]["request_id_hex"], "0x700")
         self.assertEqual(persisted["transport"]["response_id_hex"], "0x708")
         self.assertEqual(persisted["backend_probe"]["status"], "available")
+        self.assertEqual(
+            persisted["isolation"]["client"]["frame_filters"][0]["can_id_hex"],
+            "0x708",
+        )
+        self.assertEqual(
+            persisted["isolation"]["server"]["frame_filters"][0]["can_id_hex"],
+            "0x700",
+        )
         self.assertEqual(len(persisted["responder_observed_requests"]), 4)
         self.assertIn("not a DCM", markdown)
 
@@ -52,6 +60,10 @@ class UdsRuntimeTests(unittest.TestCase):
         self.assertEqual(result["passed_count"], 0)
         self.assertEqual(persisted["backend_probe"]["status"], "blocked")
         self.assertEqual(probe["reason"], "interface_missing")
+        self.assertEqual(
+            persisted["isolation"]["client"]["frame_filters"][0]["can_id_hex"],
+            "0x708",
+        )
 
     def test_probes_uds_backend_dependencies_and_can_backend(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

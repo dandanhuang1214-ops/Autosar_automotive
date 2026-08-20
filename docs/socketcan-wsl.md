@@ -77,6 +77,8 @@ This command also does not prepare the host. It records:
 
 If `vcan0` is missing, the UDS probe returns `SOCKETCAN_UDS_PROBE_BLOCKED` and keeps the blocked report under `workbench-uds-probe/`.
 
+Both repeatable entrypoints acquire the same `flock` for their SocketCAN channel. Concurrent Workbench labs on `vcan0` therefore run serially; lock acquisition returns blocked after 30 seconds. The CAN lab receiver also filters for `0x100/0x101`, while the UDS client and responder filter for `0x708/0x700`. Filter and lock evidence is persisted under `isolation` in each lab report. Direct CLI commands do not acquire the process lock and report it as `not_managed`.
+
 If WSL is shut down, `vcan0` may disappear. Restore it explicitly:
 
 ```bash
