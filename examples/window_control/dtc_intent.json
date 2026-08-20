@@ -1,0 +1,36 @@
+{
+  "schema_version": "dtc-intent-0.1",
+  "model_status": "research-intent",
+  "source": "public window_control diagnostic learning sample",
+  "ecu": "WindowController",
+  "status_availability_mask": 255,
+  "dtcs": [
+    {
+      "code": 12583168,
+      "name": "WindowObstructionDetected",
+      "failure_threshold": 2,
+      "healing_threshold": 2,
+      "uds_initial_status": 40,
+      "unknowns": [
+        "OEM DTC assignment and failure class",
+        "Production operation-cycle and aging policy"
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "name": "window_obstruction_lifecycle",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "fault_absent", "expected_state": "absent", "expected_status": 0},
+        {"event": "fault_present", "expected_state": "pending", "expected_status": 37},
+        {"event": "fault_present", "expected_state": "confirmed", "expected_status": 45},
+        {"event": "fault_absent", "expected_state": "healing", "expected_status": 44},
+        {"event": "fault_absent", "expected_state": "healed", "expected_status": 40},
+        {"event": "read_dtc", "status_mask": 8, "expected_state": "healed", "expected_status": 40},
+        {"event": "clear_dtc", "expected_state": "absent", "expected_status": 0},
+        {"event": "read_dtc", "status_mask": 8, "expected_state": "absent", "expected_status": 0}
+      ]
+    }
+  ]
+}

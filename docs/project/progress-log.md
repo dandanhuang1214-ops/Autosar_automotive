@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-20）
 
-当前阶段：`R4i — SocketCAN 实验隔离与污染证据已落地`。
+当前阶段：`R4j — 最小 DTC/DEM 生命周期与 UDS 读取/清除已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4h 已完成架构、intent/schema、virtual/SocketCAN 四类场景和 backend 证据；R4i 已增加精确 CAN ID filters、按 channel 命名的进程锁和 contamination Finding |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN、blocked/isolation 证据和四类 DID 场景；R4j 已增加 DTC intent、确定性生命周期及 UDS `0x19/0x14` 读取/清除 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -287,6 +287,21 @@
 - 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，35 项运行、2 项环境跳过。
 - 状态：完成。
 
+### R4j：最小 DTC/DEM 生命周期实验（2026-08-20）
+
+- 新增 `schemas/dtc-intent.schema.json` 和 `examples/window_control/dtc_intent.json`，定义 vendor-neutral DTC code、failure/healing threshold、UDS 初始 status byte 和有序实验步骤。
+- 公开样例 DTC 为 `WindowObstructionDetected` / `0xC00100`；该编号和策略只是 research intent，不是 OEM 分配。
+- 新增 `dtc_intent.py` 严格 loader/summary，校验 code 唯一性、阈值、status availability mask、实验引用、read mask 和期望状态。
+- 新增 `dtc_lifecycle.py` 和 CLI `run-dtc-lifecycle`，确定性覆盖 `absent -> pending -> confirmed -> healing -> healed -> cleared`，输出 JSON/Markdown trace 和 `DTC-LIFECYCLE-MISMATCH` Finding。
+- 8 步生命周期实验通过；关键 status byte 为 pending `0x25`、confirmed `0x2D`、healing `0x2C`、healed `0x28`，清除后 `0x00`。
+- `uds-intent-0.1` 新增对 `dtc_intent.json` 的相对引用，并新增 `ReadDTCInformation.reportDTCByStatusMask` 和 `ClearDiagnosticInformation` 场景契约。
+- UDS responder/client 已通过 `udsoncan` 和 user-space ISO-TP 实际执行 `190208 -> 5902FFC0010028`、`14FFFFFF -> 54`、清除后 `190208 -> 5902FF`；验收同时比对 DTC code 与 status byte。
+- virtual UDS lab 结果：`output/uds-lab-r4j/uds-lab-report.json` 中 `status=passed`、7/7 场景通过。
+- SocketCAN UDS 实机结果：`output/socketcan-uds-smoke-r4j/workbench-uds-lab/uds-lab-report.json` 中 backend 为 `python-can socketcan`、`status=passed`、7/7 场景通过，且持有 `socketcan-vcan0.lock`。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，42 项运行、2 项环境跳过；JSON、Python 编译、shell 语法和 diff 检查通过。
+- 边界：本阶段不实现量产 DEM operation cycle、aging、displacement、freeze frame、extended data 或 NVRAM。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -361,9 +376,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4j 最小 DTC/DEM 生命周期实验
+### 最近一步：R4k operation-cycle、aging 与 snapshot 证据
 
-先定义 vendor-neutral 的最小 DTC intent 和确定性状态机，覆盖 fault absent → pending → confirmed → healed/cleared，再增加读取和清除 DTC 的 UDS 场景与 Finding。该阶段仅证明研究样例的诊断状态闭环，不声称实现完整量产 DCM/DEM。
+在 R4j 的有界状态机上新增显式 operation-cycle 边界和 aging counter，区分 healed 与 aged-out；再为首次 confirmed 事件归档最小 snapshot evidence。优先完成纯确定性实验，再决定是否扩展 UDS `0x19` snapshot/extended-data 子功能。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

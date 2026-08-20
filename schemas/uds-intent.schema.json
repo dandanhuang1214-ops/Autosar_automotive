@@ -8,6 +8,7 @@
     "schema_version": {"const": "uds-intent-0.1"},
     "model_status": {"enum": ["research-intent", "vendor-validated", "unknown"]},
     "ecu": {"type": "string"},
+    "dtc_intent": {"type": "string", "minLength": 1},
     "transport": {
       "type": "object",
       "required": ["addressing", "request_id", "response_id", "tx_data_length"],
@@ -41,8 +42,23 @@
         "required": ["name", "service"],
         "properties": {
           "name": {"type": "string"},
-          "service": {"enum": ["ReadDataByIdentifier"]},
+          "service": {"enum": ["ReadDataByIdentifier", "ReadDTCInformation", "ClearDiagnosticInformation"]},
           "did": {"type": "integer", "minimum": 0, "maximum": 65535},
+          "subfunction": {"enum": ["reportDTCByStatusMask"]},
+          "status_mask": {"type": "integer", "minimum": 1, "maximum": 255},
+          "expected_dtc_records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["code", "status"],
+              "properties": {
+                "code": {"type": "integer", "minimum": 0, "maximum": 16777215},
+                "status": {"type": "integer", "minimum": 0, "maximum": 255}
+              },
+              "additionalProperties": false
+            }
+          },
+          "group": {"type": "integer", "minimum": 0, "maximum": 16777215},
           "expected": {"enum": ["positive", "negative_response", "timeout", "malformed_payload"]},
           "nrc": {"type": "string"},
           "response_payload_hex": {"type": "string"}

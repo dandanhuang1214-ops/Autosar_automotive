@@ -22,6 +22,7 @@ from automotive_workbench.can_io import (
 )
 from automotive_workbench.diag_intent import load_uds_intent
 from automotive_workbench.domain import Finding
+from automotive_workbench.dtc_intent import load_dtc_intent
 
 
 def _diag_libs() -> tuple[Any, Any, Any, Any, Any]:
@@ -199,11 +200,15 @@ class _UdsResponder:
         dids_by_id: dict[int, dict[str, Any]],
         timeout_dids: set[int],
         malformed_payloads: dict[int, bytes],
+        dtc_statuses: dict[int, int],
+        status_availability_mask: int,
     ) -> None:
         self._stack = stack
         self._dids_by_id = dids_by_id
         self._timeout_dids = timeout_dids
         self._malformed_payloads = malformed_payloads
+        self._dtc_statuses = dtc_statuses.copy()
+        self._status_availability_mask = status_availability_mask
         self._stop = threading.Event()
         self.requests: list[dict[str, Any]] = []
         self.responses: list[dict[str, Any]] = []
@@ -224,20 +229,51 @@ class _UdsResponder:
             if payload is None:
                 continue
             request = bytes(payload)
-            did = int.from_bytes(request[1:3], "big") if len(request) >= 3 else -1
-            self.requests.append({"did": did, "payload_hex": request.hex().upper()})
-            if len(request) < 3 or request[0] != 0x22:
-                response = bytes([0x7F, request[0] if request else 0x00, 0x11])
-            elif did in self._timeout_dids:
-                continue
-            elif did in self._malformed_payloads:
-                response = self._malformed_payloads[did]
-            elif did in self._dids_by_id:
-                response = _positive_response_payload(self._dids_by_id[did])
+            service_id = request[0] if request else -1
+            did = int.from_bytes(request[1:3], "big") if service_id == 0x22 and len(request) >= 3 else -1
+            request_evidence = {
+                "service_id": service_id,
+                "service_id_hex": f"0x{service_id:02X}" if service_id >= 0 else "",
+                "payload_hex": request.hex().upper(),
+            }
+            if did >= 0:
+                request_evidence["did"] = did
+            self.requests.append(request_evidence)
+            if service_id == 0x22 and len(request) >= 3:
+                if did in self._timeout_dids:
+                    continue
+                if did in self._malformed_payloads:
+                    response = self._malformed_payloads[did]
+                elif did in self._dids_by_id:
+                    response = _positive_response_payload(self._dids_by_id[did])
+                else:
+                    response = bytes([0x7F, 0x22, 0x31])
+            elif service_id == 0x19 and len(request) == 3 and request[1] == 0x02:
+                status_mask = request[2]
+                response_data = bytearray([0x59, 0x02, self._status_availability_mask])
+                for code, status in sorted(self._dtc_statuses.items()):
+                    if status & status_mask:
+                        response_data.extend(code.to_bytes(3, "big"))
+                        response_data.append(status)
+                response = bytes(response_data)
+            elif service_id == 0x14 and len(request) == 4:
+                group = int.from_bytes(request[1:4], "big")
+                if group == 0xFFFFFF:
+                    self._dtc_statuses = {code: 0 for code in self._dtc_statuses}
+                elif group in self._dtc_statuses:
+                    self._dtc_statuses[group] = 0
+                response = bytes([0x54])
             else:
-                response = bytes([0x7F, 0x22, 0x31])
+                response = bytes([0x7F, request[0] if request else 0x00, 0x11])
             self._stack.send(response)
-            self.responses.append({"did": did, "payload_hex": response.hex().upper()})
+            response_evidence = {
+                "service_id": response[0],
+                "service_id_hex": f"0x{response[0]:02X}",
+                "payload_hex": response.hex().upper(),
+            }
+            if did >= 0:
+                response_evidence["did"] = did
+            self.responses.append(response_evidence)
 
 
 def _scenario_result(
@@ -268,6 +304,11 @@ def _scenario_finding(code: str, message: str, intent: Path, scenario: str, seve
 
 
 def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, dict[str, Any]], intent_path: Path) -> dict[str, Any]:
+    service = str(scenario["service"])
+    if service == "ReadDTCInformation":
+        return _run_read_dtc_scenario(client, scenario, intent_path)
+    if service == "ClearDiagnosticInformation":
+        return _run_clear_dtc_scenario(client, scenario, intent_path)
     did = int(scenario["did"])
     name = str(scenario["name"])
     expected = str(scenario.get("expected", "positive"))
@@ -394,6 +435,106 @@ def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, d
     )
 
 
+def _run_read_dtc_scenario(client: Any, scenario: dict[str, Any], intent_path: Path) -> dict[str, Any]:
+    name = str(scenario["name"])
+    status_mask = int(scenario["status_mask"])
+    expected_records = sorted(
+        (int(item["code"]), int(item["status"]))
+        for item in scenario["expected_dtc_records"]
+    )
+    request_hex = bytes([0x19, 0x02, status_mask]).hex().upper()
+    started = time.perf_counter()
+    try:
+        response = client.get_dtc_by_status_mask(status_mask)
+        actual_records = sorted(
+            (int(dtc.id), int(dtc.status.get_byte_as_int()))
+            for dtc in response.service_data.dtcs
+        )
+        response_hex = response.original_payload.hex().upper()
+    except Exception as exc:
+        return _scenario_result(
+            name,
+            "failed",
+            f"DTC records {[(f'0x{code:06X}', f'0x{status:02X}') for code, status in expected_records]}",
+            type(exc).__name__,
+            service="ReadDTCInformation",
+            status_mask=status_mask,
+            status_mask_hex=f"0x{status_mask:02X}",
+            request_payload_hex=request_hex,
+            response_payload_hex="",
+            duration_ms=round((time.perf_counter() - started) * 1000),
+            findings=[_scenario_finding("UDS-DTC-READ-ERROR", str(exc), intent_path, name)],
+        )
+    passed = actual_records == expected_records
+    expected_evidence = [
+        {"code": code, "code_hex": f"0x{code:06X}", "status": status, "status_hex": f"0x{status:02X}"}
+        for code, status in expected_records
+    ]
+    actual_evidence = [
+        {"code": code, "code_hex": f"0x{code:06X}", "status": status, "status_hex": f"0x{status:02X}"}
+        for code, status in actual_records
+    ]
+    return _scenario_result(
+        name,
+        "passed" if passed else "failed",
+        f"DTC records {[(item['code_hex'], item['status_hex']) for item in expected_evidence]}",
+        f"DTC records {[(item['code_hex'], item['status_hex']) for item in actual_evidence]}",
+        service="ReadDTCInformation",
+        status_mask=status_mask,
+        status_mask_hex=f"0x{status_mask:02X}",
+        expected_dtc_records=expected_evidence,
+        actual_dtc_records=actual_evidence,
+        request_payload_hex=request_hex,
+        response_payload_hex=response_hex,
+        duration_ms=round((time.perf_counter() - started) * 1000),
+        findings=[] if passed else [
+            _scenario_finding(
+                "UDS-DTC-LIST-MISMATCH",
+                f"Observed DTC records {actual_records}, expected {expected_records}",
+                intent_path,
+                name,
+            )
+        ],
+    )
+
+
+def _run_clear_dtc_scenario(client: Any, scenario: dict[str, Any], intent_path: Path) -> dict[str, Any]:
+    name = str(scenario["name"])
+    group = int(scenario["group"])
+    request_hex = bytes([0x14]) + group.to_bytes(3, "big")
+    started = time.perf_counter()
+    try:
+        response = client.clear_dtc(group)
+        response_hex = response.original_payload.hex().upper()
+    except Exception as exc:
+        return _scenario_result(
+            name,
+            "failed",
+            f"clear group 0x{group:06X}",
+            type(exc).__name__,
+            service="ClearDiagnosticInformation",
+            group=group,
+            group_hex=f"0x{group:06X}",
+            request_payload_hex=request_hex.hex().upper(),
+            response_payload_hex="",
+            duration_ms=round((time.perf_counter() - started) * 1000),
+            findings=[_scenario_finding("UDS-DTC-CLEAR-ERROR", str(exc), intent_path, name)],
+        )
+    return _scenario_result(
+        name,
+        "passed",
+        f"clear group 0x{group:06X}",
+        "positive response",
+        service="ClearDiagnosticInformation",
+        group=group,
+        group_hex=f"0x{group:06X}",
+        request_payload_hex=request_hex.hex().upper(),
+        response_payload_hex=response_hex,
+        duration_ms=round((time.perf_counter() - started) * 1000),
+        findings=[],
+    )
+
+
 def render_uds_markdown(result: dict[str, Any]) -> str:
     lines = [
         "# UDS/ISO-TP Diagnostic Lab Report",
@@ -406,13 +547,14 @@ def render_uds_markdown(result: dict[str, Any]) -> str:
         f"- Request CAN ID: `{result['transport']['request_id_hex']}`",
         f"- Response CAN ID: `{result['transport']['response_id_hex']}`",
         "",
-        "| Scenario | Result | DID | Expected | Observed |",
+        "| Scenario | Result | Identifier | Expected | Observed |",
         "|---|---|---:|---|---|",
     ]
     for item in result["scenarios"]:
         evidence = item["evidence"]
+        identifier = evidence.get("did_hex") or evidence.get("status_mask_hex") or evidence.get("group_hex") or "-"
         lines.append(
-            f"| `{item['scenario']}` | {item['status']} | `{evidence['did_hex']}` | {item['expected']} | {item['observed']} |"
+            f"| `{item['scenario']}` | {item['status']} | `{identifier}` | {item['expected']} | {item['observed']} |"
         )
     if result["findings"]:
         lines.extend(["", "## Findings", ""])
@@ -422,7 +564,7 @@ def render_uds_markdown(result: dict[str, Any]) -> str:
         "",
         "## Boundary",
         "",
-        "This lab proves a deterministic UDS client/responder flow over user-space ISO-TP and python-can virtual. It is not a DCM, DEM, security access, flash programming, production timing, or hardware conformance proof.",
+        "This lab proves a deterministic UDS client/responder flow over user-space ISO-TP and the selected python-can backend. It is not a DCM, DEM, security access, flash programming, production timing, or hardware conformance proof.",
         "",
     ])
     return "\n".join(lines)
@@ -479,6 +621,8 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
     can, isotp, ascii_codec, client_cls, connection_cls = _diag_libs()
     payload = load_uds_intent(intent)
     transport = payload["transport"]
+    dtc_path = intent.parent / payload["dtc_intent"] if payload.get("dtc_intent") else None
+    dtc_payload = load_dtc_intent(dtc_path) if dtc_path is not None else None
     timestamp = datetime.now(timezone.utc)
 
     if config.interface == "virtual" and config.channel == "workbench":
@@ -519,7 +663,13 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         for did in payload["dids"]
     }
     for scenario in payload["scenarios"]:
-        data_identifiers.setdefault(int(scenario["did"]), "B")
+        if "did" in scenario:
+            data_identifiers.setdefault(int(scenario["did"]), "B")
+    dtc_statuses = {
+        int(item["code"]): int(item["uds_initial_status"])
+        for item in (dtc_payload or {}).get("dtcs", [])
+    }
+    status_availability_mask = int((dtc_payload or {}).get("status_availability_mask", 0xFF))
 
     client_bus = open_bus(config, client_filters)
     server_bus = open_bus(config, server_filters)
@@ -538,7 +688,14 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         address=isotp.Address(isotp.AddressingMode.Normal_11bits, txid=response_id, rxid=request_id),
         params=isotp_params,
     )
-    responder = _UdsResponder(server_stack, dids_by_id, timeout_dids, malformed_payloads)
+    responder = _UdsResponder(
+        server_stack,
+        dids_by_id,
+        timeout_dids,
+        malformed_payloads,
+        dtc_statuses,
+        status_availability_mask,
+    )
     client_logger = logging.getLogger("UdsClient[workbench-uds-lab]")
     previous_level = client_logger.level
     started = time.perf_counter()
@@ -587,7 +744,7 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         "scenario_count": len(scenarios),
         "passed_count": passed_count,
         "duration_ms": round((time.perf_counter() - started) * 1000),
-        "artifacts": [str(intent)],
+        "artifacts": [str(intent), *([str(dtc_path)] if dtc_path is not None else [])],
         "bus_config": {
             "interface": config.interface,
             "channel": config.channel,

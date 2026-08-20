@@ -3,6 +3,7 @@
   "model_status": "research-intent",
   "source": "public window_control diagnostic learning sample",
   "ecu": "WindowController",
+  "dtc_intent": "dtc_intent.json",
   "transport": {
     "addressing": "normal_11bit",
     "request_id": 1792,
@@ -60,6 +61,30 @@
       "did": 61713,
       "expected": "malformed_payload",
       "response_payload_hex": "62F111"
+    },
+    {
+      "name": "read_healed_obstruction_dtc",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCByStatusMask",
+      "status_mask": 8,
+      "expected": "positive",
+      "expected_dtc_records": [
+        {"code": 12583168, "status": 40}
+      ]
+    },
+    {
+      "name": "clear_all_dtcs",
+      "service": "ClearDiagnosticInformation",
+      "group": 16777215,
+      "expected": "positive"
+    },
+    {
+      "name": "read_dtcs_after_clear",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCByStatusMask",
+      "status_mask": 8,
+      "expected": "positive",
+      "expected_dtc_records": []
     }
   ]
 }

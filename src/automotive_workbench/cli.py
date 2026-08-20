@@ -15,6 +15,8 @@ from automotive_workbench.can_io import BusConfig, capture_log, decode_log, open
 from automotive_workbench.can_backend import probe_can_backend, run_backend_lab
 from automotive_workbench.adapters.openbsw_patch import prepare_openbsw_patch
 from automotive_workbench.diag_intent import summarize_uds_intent
+from automotive_workbench.dtc_intent import summarize_dtc_intent
+from automotive_workbench.dtc_lifecycle import run_dtc_lifecycle
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -100,6 +102,15 @@ def build_parser() -> argparse.ArgumentParser:
     uds_probe_parser.add_argument("--interface", default="virtual")
     uds_probe_parser.add_argument("--channel", default="workbench")
     uds_probe_parser.add_argument("--output", type=Path, default=Path("output") / "uds-backend-probe")
+
+    dtc_lifecycle_parser = commands.add_parser(
+        "run-dtc-lifecycle",
+        help="Run deterministic DTC debounce, healing, read and clear experiments",
+    )
+    dtc_lifecycle_parser.add_argument("intent", type=Path)
+    dtc_lifecycle_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "dtc-lifecycle"
+    )
     return parser
 
 
@@ -111,6 +122,8 @@ def main() -> int:
                 result = inspect_dbc(args.artifact)
             elif args.artifact.name == "uds_intent.json":
                 result = summarize_uds_intent(args.artifact)
+            elif args.artifact.name == "dtc_intent.json":
+                result = summarize_dtc_intent(args.artifact)
             else:
                 result = summarize_issue_report(args.artifact)
         elif args.command == "trace":
@@ -162,6 +175,8 @@ def main() -> int:
             )
         elif args.command == "probe-uds-backend":
             result = probe_uds_backend(BusConfig(args.interface, args.channel), args.output)
+        elif args.command == "run-dtc-lifecycle":
+            result = run_dtc_lifecycle(args.intent, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

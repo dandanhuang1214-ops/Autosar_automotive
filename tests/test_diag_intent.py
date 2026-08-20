@@ -10,6 +10,15 @@ from automotive_workbench.diag_intent import load_uds_intent, summarize_uds_inte
 
 ROOT = Path(__file__).resolve().parents[1]
 INTENT = ROOT / "examples" / "window_control" / "uds_intent.json"
+DTC_INTENT = ROOT / "examples" / "window_control" / "dtc_intent.json"
+
+
+def _write_intent(directory: str, payload: dict[str, object]) -> Path:
+    root = Path(directory)
+    path = root / "uds_intent.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    (root / "dtc_intent.json").write_text(DTC_INTENT.read_text(encoding="utf-8"), encoding="utf-8")
+    return path
 
 
 class UdsIntentTests(unittest.TestCase):
@@ -24,16 +33,17 @@ class UdsIntentTests(unittest.TestCase):
         self.assertEqual(summary["transport"]["response_id_hex"], "0x708")
         self.assertEqual(summary["did_count"], 2)
         self.assertEqual(summary["dids"][0]["id_hex"], "0xF190")
-        self.assertEqual(summary["scenario_count"], 4)
+        self.assertEqual(summary["scenario_count"], 7)
         self.assertEqual(summary["scenarios"][3]["expected"], "malformed_payload")
+        self.assertEqual(summary["scenarios"][4]["status_mask_hex"], "0x08")
+        self.assertEqual(summary["scenarios"][5]["group_hex"], "0xFFFFFF")
 
     def test_rejects_positive_scenario_with_unknown_did(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
         payload["scenarios"][0]["did"] = 0x9999
 
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "uds_intent.json"
-            path.write_text(json.dumps(payload), encoding="utf-8")
+            path = _write_intent(directory, payload)
             with self.assertRaisesRegex(ValueError, "Positive UDS scenario references unknown DID"):
                 load_uds_intent(path)
 
@@ -42,8 +52,7 @@ class UdsIntentTests(unittest.TestCase):
         payload["transport"]["response_id"] = payload["transport"]["request_id"]
 
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "uds_intent.json"
-            path.write_text(json.dumps(payload), encoding="utf-8")
+            path = _write_intent(directory, payload)
             with self.assertRaisesRegex(ValueError, "request_id and response_id must differ"):
                 load_uds_intent(path)
 
@@ -52,9 +61,17 @@ class UdsIntentTests(unittest.TestCase):
         payload["scenarios"][3]["response_payload_hex"] = "not-hex"
 
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "uds_intent.json"
-            path.write_text(json.dumps(payload), encoding="utf-8")
+            path = _write_intent(directory, payload)
             with self.assertRaisesRegex(ValueError, "response_payload_hex must be hexadecimal"):
+                load_uds_intent(path)
+
+    def test_rejects_clear_for_unknown_dtc_group(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["scenarios"][5]["group"] = 0x123456
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = _write_intent(directory, payload)
+            with self.assertRaisesRegex(ValueError, "references unknown group"):
                 load_uds_intent(path)
 
 

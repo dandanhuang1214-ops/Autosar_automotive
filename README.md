@@ -16,6 +16,7 @@
 10. 探测 CAN backend 能力，并在 virtual/SocketCAN 上复用同一实验契约。
 11. 使用 UDS intent 在 python-can virtual 上运行 positive/NRC/timeout/malformed payload 诊断场景，并在诊断 lab 中归档 backend probe/blocked 证据。
 12. 使用精确 CAN ID filters 和按 channel 命名的进程锁隔离共享 SocketCAN 实验，并在报告中记录 isolation/contamination 证据。
+13. 使用 DTC intent 运行 absent/pending/confirmed/healing/healed/clear 确定性生命周期，并通过 UDS `0x19/0x14` 读取和清除 DTC。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -41,6 +42,8 @@ python -m automotive_workbench.cli run-log-lab examples/window_control/window_co
 python -m automotive_workbench.cli probe-can-backend --interface socketcan --channel vcan0 --output output/socketcan-probe
 python -m automotive_workbench.cli run-backend-lab examples/window_control/window_control.dbc --interface socketcan --channel vcan0 --output output/socketcan-lab
 python -m automotive_workbench.cli inspect examples/window_control/uds_intent.json
+python -m automotive_workbench.cli inspect examples/window_control/dtc_intent.json
+python -m automotive_workbench.cli run-dtc-lifecycle examples/window_control/dtc_intent.json --output output/dtc-lifecycle
 python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
@@ -60,6 +63,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 
 - `examples/window_control/bsw_intent.json` 是公开学习样例和vendor-neutral意图，不是量产ECUC。
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。
+- `examples/window_control/dtc_intent.json` 中的 debounce、healing 和 status byte 仅用于可重复研究实验，不是量产 DEM operation-cycle、aging、displacement 或 NVRAM 策略。
 - `run-uds-lab --interface socketcan` 会先探测 CAN backend；缺少接口或权限时返回 `blocked`，不把环境不可用误报为诊断业务失败。
 - SWC、COM、PduR和CanIf对象名是该公开样例的设计名称，不代表OEM或供应商命名规则。
 - 最终正确性仍需规范、供应商BSWMD/generator、运行测试及商业工具验证。

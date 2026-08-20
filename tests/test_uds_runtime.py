@@ -22,7 +22,7 @@ class UdsRuntimeTests(unittest.TestCase):
             markdown = (output / "uds-lab-report.md").read_text(encoding="utf-8")
 
         self.assertEqual(result["status"], "passed")
-        self.assertEqual(result["passed_count"], 4)
+        self.assertEqual(result["passed_count"], 7)
         scenarios = {item["scenario"]: item for item in result["scenarios"]}
         self.assertEqual(scenarios["read_vin"]["evidence"]["decoded_value"], "AWBDEMO0123456789")
         self.assertEqual(scenarios["read_vin"]["evidence"]["response_payload_hex"][:6], "62F190")
@@ -33,6 +33,15 @@ class UdsRuntimeTests(unittest.TestCase):
         self.assertEqual(malformed["status"], "passed")
         self.assertEqual(malformed["evidence"]["response_payload_hex"], "62F111")
         self.assertEqual(malformed["evidence"]["findings"][0]["code"], "UDS-MALFORMED-PAYLOAD")
+        read_dtc = scenarios["read_healed_obstruction_dtc"]
+        self.assertEqual(
+            read_dtc["evidence"]["actual_dtc_records"],
+            [{"code": 12583168, "code_hex": "0xC00100", "status": 40, "status_hex": "0x28"}],
+        )
+        self.assertEqual(read_dtc["evidence"]["response_payload_hex"], "5902FFC0010028")
+        self.assertEqual(scenarios["clear_all_dtcs"]["evidence"]["response_payload_hex"], "54")
+        self.assertEqual(scenarios["read_dtcs_after_clear"]["evidence"]["actual_dtc_records"], [])
+        self.assertEqual(scenarios["read_dtcs_after_clear"]["evidence"]["response_payload_hex"], "5902FF")
         self.assertEqual(persisted["transport"]["request_id_hex"], "0x700")
         self.assertEqual(persisted["transport"]["response_id_hex"], "0x708")
         self.assertEqual(persisted["backend_probe"]["status"], "available")
@@ -44,7 +53,7 @@ class UdsRuntimeTests(unittest.TestCase):
             persisted["isolation"]["server"]["frame_filters"][0]["can_id_hex"],
             "0x700",
         )
-        self.assertEqual(len(persisted["responder_observed_requests"]), 4)
+        self.assertEqual(len(persisted["responder_observed_requests"]), 7)
         self.assertIn("not a DCM", markdown)
 
     def test_blocks_socketcan_uds_lab_when_interface_is_missing(self) -> None:
@@ -56,7 +65,7 @@ class UdsRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["reason"], "interface_missing")
-        self.assertEqual(result["scenario_count"], 4)
+        self.assertEqual(result["scenario_count"], 7)
         self.assertEqual(result["passed_count"], 0)
         self.assertEqual(persisted["backend_probe"]["status"], "blocked")
         self.assertEqual(probe["reason"], "interface_missing")
