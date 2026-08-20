@@ -19,6 +19,13 @@
           {"did": 61713, "codec": "uint8", "length": 1, "value": 42}
         ]
       },
+      "extended_data": {
+        "retention": "until_aged_or_cleared",
+        "records": [
+          {"record_number": 1, "name": "OccurrenceCounter", "source": "occurrence_counter", "length": 1, "uds_initial_value": 1},
+          {"record_number": 2, "name": "AgingCounter", "source": "aging_counter", "length": 1, "uds_initial_value": 1}
+        ]
+      },
       "unknowns": [
         "OEM DTC assignment and failure class",
         "Production operation-cycle and aging policy"

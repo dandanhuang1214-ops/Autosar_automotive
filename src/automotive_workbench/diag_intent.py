@@ -90,8 +90,8 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
         expected = scenario.get("expected", "positive")
         if expected not in SUPPORTED_EXPECTATIONS:
             raise ValueError(f"Unsupported UDS scenario expectation: {expected}")
-        if service != "ReadDataByIdentifier" and expected != "positive":
-            raise ValueError(f"{service} currently supports only positive expectation")
+        if service == "ClearDiagnosticInformation" and expected != "positive":
+            raise ValueError("ClearDiagnosticInformation currently supports only positive expectation")
         if service == "ReadDataByIdentifier":
             did_id = _require_int(scenario.get("did"), f"scenarios[{index}].did", 0, 0xFFFF)
             if expected == "positive" and did_id not in did_ids:
@@ -99,6 +99,8 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
         elif service == "ReadDTCInformation":
             subfunction = scenario.get("subfunction")
             if subfunction == "reportDTCByStatusMask":
+                if expected != "positive":
+                    raise ValueError("reportDTCByStatusMask currently supports only positive expectation")
                 _require_int(scenario.get("status_mask"), f"scenarios[{index}].status_mask", 1, 0xFF)
                 expected_records = _require_list(
                     scenario.get("expected_dtc_records"),
@@ -129,24 +131,49 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
                     )
             elif subfunction == "reportDTCSnapshotRecordByDTCNumber":
                 dtc_code = _require_int(scenario.get("dtc"), f"scenarios[{index}].dtc", 0, 0xFFFFFF)
-                if dtc_code not in dtc_codes:
+                if expected in {"positive", "malformed_payload"} and dtc_code not in dtc_codes:
                     raise ValueError(f"UDS snapshot scenario references unknown DTC: 0x{dtc_code:06X}")
                 _require_int(scenario.get("record_number"), "record_number", 1, 0xFE)
-                _require_int(scenario.get("expected_dtc_status"), "expected_dtc_status", 0, 0xFF)
-                expected_snapshots = _require_list(
-                    scenario.get("expected_snapshot_records"), "expected_snapshot_records"
-                )
-                configured_dtc = next(
-                    item for item in (dtc_payload or {})["dtcs"] if int(item["code"]) == dtc_code
-                )
-                configured_dids = {int(item["did"]) for item in configured_dtc["snapshot"]["dids"]}
-                for record in expected_snapshots:
-                    expected_record = _require_dict(record, "expected_snapshot_record")
-                    did = _require_int(expected_record.get("did"), "snapshot.did", 0, 0xFFFF)
-                    if did not in configured_dids or did not in did_ids:
-                        raise ValueError(f"UDS snapshot scenario references unknown snapshot DID: 0x{did:04X}")
-                    if "value" not in expected_record:
-                        raise ValueError("UDS snapshot scenario requires expected value")
+                if expected == "positive":
+                    _require_int(scenario.get("expected_dtc_status"), "expected_dtc_status", 0, 0xFF)
+                    expected_snapshots = _require_list(
+                        scenario.get("expected_snapshot_records"), "expected_snapshot_records"
+                    )
+                    configured_dtc = next(
+                        item for item in (dtc_payload or {})["dtcs"] if int(item["code"]) == dtc_code
+                    )
+                    configured_dids = {int(item["did"]) for item in configured_dtc["snapshot"]["dids"]}
+                    for record in expected_snapshots:
+                        expected_record = _require_dict(record, "expected_snapshot_record")
+                        did = _require_int(expected_record.get("did"), "snapshot.did", 0, 0xFFFF)
+                        if did not in configured_dids or did not in did_ids:
+                            raise ValueError(f"UDS snapshot scenario references unknown snapshot DID: 0x{did:04X}")
+                        if "value" not in expected_record:
+                            raise ValueError("UDS snapshot scenario requires expected value")
+            elif subfunction == "reportDTCExtendedDataRecordByDTCNumber":
+                dtc_code = _require_int(scenario.get("dtc"), f"scenarios[{index}].dtc", 0, 0xFFFFFF)
+                record_number = _require_int(scenario.get("record_number"), "record_number", 1, 0xFE)
+                if expected == "positive":
+                    if dtc_code not in dtc_codes:
+                        raise ValueError(f"UDS extended data scenario references unknown DTC: 0x{dtc_code:06X}")
+                    configured_dtc = next(
+                        item for item in (dtc_payload or {})["dtcs"] if int(item["code"]) == dtc_code
+                    )
+                    configured_records = {
+                        int(item["record_number"])
+                        for item in configured_dtc["extended_data"]["records"]
+                    }
+                    if record_number not in configured_records:
+                        raise ValueError(
+                            f"Positive UDS extended data scenario references unknown record: 0x{record_number:02X}"
+                        )
+                    _require_int(scenario.get("expected_dtc_status"), "expected_dtc_status", 0, 0xFF)
+                    _require_int(
+                        scenario.get("expected_extended_data_value"),
+                        "expected_extended_data_value",
+                        0,
+                        0xFF,
+                    )
             else:
                 raise ValueError(f"Unsupported ReadDTCInformation subfunction: {subfunction}")
         else:
@@ -158,9 +185,12 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
         if expected == "negative_response":
             _require_string(scenario.get("nrc"), f"scenarios[{index}].nrc")
         if expected == "malformed_payload":
-            did_id = _require_int(scenario.get("did"), f"scenarios[{index}].did", 0, 0xFFFF)
-            if did_id not in did_ids:
-                raise ValueError(f"Malformed UDS scenario references unknown DID: 0x{did_id:04X}")
+            if service == "ReadDataByIdentifier":
+                did_id = _require_int(scenario.get("did"), f"scenarios[{index}].did", 0, 0xFFFF)
+                if did_id not in did_ids:
+                    raise ValueError(f"Malformed UDS scenario references unknown DID: 0x{did_id:04X}")
+            elif service != "ReadDTCInformation":
+                raise ValueError(f"{service} does not support malformed payload expectation")
             malformed_hex = _require_string(
                 scenario.get("response_payload_hex"),
                 f"scenarios[{index}].response_payload_hex",

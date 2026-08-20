@@ -27,8 +27,9 @@
 - R4i 已完成（2026-08-20）：CAN/UDS receiver 使用精确 ID filters，SocketCAN 入口使用按 channel 命名的 `flock`，报告记录 isolation evidence 和 contamination Finding；并发实机复验两个 lab 均通过。
 - R4j 已完成（2026-08-20）：新增 `dtc-intent-0.1`、absent/pending/confirmed/healing/healed/clear 确定性实验和 Finding；UDS `0x19` 读取、`0x14` 清除、清除后复读在 virtual 和 SocketCAN 上均通过。
 - R4k 已完成（2026-08-20）：调研并实现显式 operation-cycle、tested-pass aging/aged-out 和 confirmed-trigger snapshot；UDS `0x19/0x04` snapshot 在 virtual 和 SocketCAN 上均通过，clear 后 snapshot 正确消失。
+- R4l 已完成（2026-08-20）：增加 occurrence/aging extended data、UDS `0x19/0x06`，并覆盖未知 DTC、未知 record、非法 cycle 顺序和 malformed snapshot。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：R4l 最小 extended data/`0x19/0x06` 和 DTC 负面场景；不提前引入 AI 前端。
+- 当前下一阶段：先调研 R4m ECU reset/persistence 生命周期边界，再决定是否引入最小易失/持久化对照实验；不提前实现量产 NVRAM 或 AI 前端。
 
 ## 平台目标
 

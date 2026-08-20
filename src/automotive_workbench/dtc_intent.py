@@ -82,6 +82,35 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
                 raise ValueError("DTC snapshot currently supports only uint8 length=1")
             _integer(did_item.get("value"), "snapshot.value", 0, 0xFF)
 
+        extended_data = item.get("extended_data")
+        if not isinstance(extended_data, dict):
+            raise ValueError(f"DTC intent requires dtcs[{index}].extended_data object")
+        if extended_data.get("retention") != "until_aged_or_cleared":
+            raise ValueError("DTC extended data currently supports only until_aged_or_cleared retention")
+        record_numbers: set[int] = set()
+        sources: set[str] = set()
+        for record_index, record in enumerate(
+            _list(extended_data.get("records"), f"dtcs[{index}].extended_data.records")
+        ):
+            if not isinstance(record, dict):
+                raise ValueError(f"DTC intent requires extended data record object at index {record_index}")
+            record_number = _integer(
+                record.get("record_number"), "extended_data.record_number", 1, 0xFE
+            )
+            if record_number in record_numbers:
+                raise ValueError(f"Duplicate extended data record: 0x{record_number:02X}")
+            record_numbers.add(record_number)
+            _string(record.get("name"), "extended_data.name")
+            source = record.get("source")
+            if source not in {"occurrence_counter", "aging_counter"}:
+                raise ValueError(f"Unsupported extended data source: {source}")
+            if source in sources:
+                raise ValueError(f"Duplicate extended data source: {source}")
+            sources.add(str(source))
+            if record.get("length") != 1:
+                raise ValueError("DTC extended data currently supports only uint8 length=1")
+            _integer(record.get("uds_initial_value"), "extended_data.uds_initial_value", 0, 0xFF)
+
     names: set[str] = set()
     for index, item in enumerate(_list(payload.get("experiments"), "experiments")):
         if not isinstance(item, dict):

@@ -15,6 +15,7 @@ class _CycleState:
     state: str = "absent"
     status: int = 0x50
     aging_counter: int = 0
+    occurrence_counter: int = 0
     failure_count: int = 0
     confirmed_once: bool = False
     cycle_active: bool = False
@@ -76,9 +77,12 @@ def _apply_cycle_event(state: _CycleState, event: str, definition: dict[str, Any
         state.failure_count += 1
         state.status |= 0x27
         if state.failure_count >= int(definition["failure_threshold"]):
+            first_confirmation = not state.confirmed_once
             state.status |= 0x08
             state.state = "confirmed"
             state.confirmed_once = True
+            if first_confirmation:
+                state.occurrence_counter += 1
             _capture_snapshot(state, definition)
         else:
             state.state = "pending"
@@ -145,6 +149,8 @@ def run_dtc_aging_lab(intent: Path, output: Path) -> dict[str, Any]:
                 "observed_dtc_status_hex": f"0x{state.status:02X}",
                 "expected_aging_counter": step["expected_aging_counter"],
                 "observed_aging_counter": state.aging_counter,
+                "observed_occurrence_counter": state.occurrence_counter,
+                "extended_data_stored": state.confirmed_once,
                 "expected_snapshot_stored": step["expected_snapshot_stored"],
                 "snapshot_stored": bool(state.snapshot),
                 "snapshot": state.snapshot.copy(),

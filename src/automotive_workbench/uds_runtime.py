@@ -200,16 +200,26 @@ class _UdsResponder:
         dids_by_id: dict[int, dict[str, Any]],
         timeout_dids: set[int],
         malformed_payloads: dict[int, bytes],
+        malformed_snapshot_payloads: dict[tuple[int, int], bytes],
         dtc_statuses: dict[int, int],
         dtc_snapshots: dict[int, list[dict[str, Any]]],
+        dtc_extended_data: dict[int, dict[int, bytes]],
         status_availability_mask: int,
     ) -> None:
         self._stack = stack
         self._dids_by_id = dids_by_id
         self._timeout_dids = timeout_dids
         self._malformed_payloads = malformed_payloads
+        self._malformed_snapshot_payloads = malformed_snapshot_payloads
         self._dtc_statuses = dtc_statuses.copy()
         self._dtc_snapshots = {code: records.copy() for code, records in dtc_snapshots.items()}
+        self._dtc_snapshot_record_numbers = {
+            code: {int(item["record_number"]) for item in records}
+            for code, records in dtc_snapshots.items()
+        }
+        self._dtc_extended_data = {
+            code: records.copy() for code, records in dtc_extended_data.items()
+        }
         self._status_availability_mask = status_availability_mask
         self._stop = threading.Event()
         self.requests: list[dict[str, Any]] = []
@@ -261,28 +271,51 @@ class _UdsResponder:
             elif service_id == 0x19 and len(request) == 6 and request[1] == 0x04:
                 code = int.from_bytes(request[2:5], "big")
                 record_number = request[5]
-                response_data = bytearray([0x59, 0x04])
-                response_data.extend(code.to_bytes(3, "big"))
-                response_data.append(self._dtc_statuses.get(code, 0))
-                records = [
-                    item
-                    for item in self._dtc_snapshots.get(code, [])
-                    if record_number == 0xFF or int(item["record_number"]) == record_number
-                ]
-                if records:
-                    response_data.extend([int(records[0]["record_number"]), len(records)])
-                    for item in records:
-                        response_data.extend(int(item["did"]).to_bytes(2, "big"))
-                        response_data.extend(bytes(item["data"]))
-                response = bytes(response_data)
+                if (code, record_number) in self._malformed_snapshot_payloads:
+                    response = self._malformed_snapshot_payloads[(code, record_number)]
+                elif (
+                    code not in self._dtc_statuses
+                    or record_number not in self._dtc_snapshot_record_numbers.get(code, set())
+                ):
+                    response = bytes([0x7F, 0x19, 0x31])
+                else:
+                    response_data = bytearray([0x59, 0x04])
+                    response_data.extend(code.to_bytes(3, "big"))
+                    response_data.append(self._dtc_statuses.get(code, 0))
+                    records = [
+                        item
+                        for item in self._dtc_snapshots.get(code, [])
+                        if int(item["record_number"]) == record_number
+                    ]
+                    if records:
+                        response_data.extend([record_number, len(records)])
+                        for item in records:
+                            response_data.extend(int(item["did"]).to_bytes(2, "big"))
+                            response_data.extend(bytes(item["data"]))
+                    response = bytes(response_data)
+            elif service_id == 0x19 and len(request) == 6 and request[1] == 0x06:
+                code = int.from_bytes(request[2:5], "big")
+                record_number = request[5]
+                record = self._dtc_extended_data.get(code, {}).get(record_number)
+                if code not in self._dtc_statuses or record is None:
+                    response = bytes([0x7F, 0x19, 0x31])
+                else:
+                    response = (
+                        bytes([0x59, 0x06])
+                        + code.to_bytes(3, "big")
+                        + bytes([self._dtc_statuses[code], record_number])
+                        + record
+                    )
             elif service_id == 0x14 and len(request) == 4:
                 group = int.from_bytes(request[1:4], "big")
                 if group == 0xFFFFFF:
                     self._dtc_statuses = {code: 0 for code in self._dtc_statuses}
                     self._dtc_snapshots = {code: [] for code in self._dtc_snapshots}
+                    self._dtc_extended_data = {code: {} for code in self._dtc_extended_data}
                 elif group in self._dtc_statuses:
                     self._dtc_statuses[group] = 0
                     self._dtc_snapshots[group] = []
+                    self._dtc_extended_data[group] = {}
                 response = bytes([0x54])
             else:
                 response = bytes([0x7F, request[0] if request else 0x00, 0x11])
@@ -329,6 +362,8 @@ def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, d
     if service == "ReadDTCInformation":
         if scenario.get("subfunction") == "reportDTCSnapshotRecordByDTCNumber":
             return _run_read_snapshot_scenario(client, scenario, intent_path)
+        if scenario.get("subfunction") == "reportDTCExtendedDataRecordByDTCNumber":
+            return _run_read_extended_data_scenario(client, scenario, intent_path)
         return _run_read_dtc_scenario(client, scenario, intent_path)
     if service == "ClearDiagnosticInformation":
         return _run_clear_dtc_scenario(client, scenario, intent_path)
@@ -566,10 +601,11 @@ def _run_read_snapshot_scenario(
     name = str(scenario["name"])
     code = int(scenario["dtc"])
     record_number = int(scenario["record_number"])
-    expected_status = int(scenario["expected_dtc_status"])
+    expected = str(scenario.get("expected", "positive"))
+    expected_status = int(scenario.get("expected_dtc_status", 0))
     expected_records = sorted(
         (record_number, int(item["did"]), item["value"])
-        for item in scenario["expected_snapshot_records"]
+        for item in scenario.get("expected_snapshot_records", [])
     )
     request = bytes([0x19, 0x04]) + code.to_bytes(3, "big") + bytes([record_number])
     started = time.perf_counter()
@@ -595,6 +631,58 @@ def _run_read_snapshot_scenario(
         actual_evidence.sort(key=lambda item: (item["record_number"], item["did"]))
         response_hex = response.original_payload.hex().upper()
     except Exception as exc:
+        response_obj = getattr(exc, "response", None)
+        response_hex = ""
+        if response_obj is not None and getattr(response_obj, "original_payload", None) is not None:
+            response_hex = response_obj.original_payload.hex().upper()
+        class_name = type(exc).__name__
+        if class_name == "NegativeResponseException":
+            code_name = str(getattr(response_obj, "code_name", ""))
+            passed = (
+                expected == "negative_response"
+                and code_name.casefold() == str(scenario.get("nrc", "")).casefold()
+            )
+            return _scenario_result(
+                name,
+                "passed" if passed else "failed",
+                f"NRC {scenario.get('nrc', '')}",
+                code_name,
+                service="ReadDTCInformation",
+                subfunction="reportDTCSnapshotRecordByDTCNumber",
+                dtc=code,
+                dtc_hex=f"0x{code:06X}",
+                record_number=record_number,
+                request_payload_hex=request.hex().upper(),
+                response_payload_hex=response_hex,
+                duration_ms=round((time.perf_counter() - started) * 1000),
+                findings=[] if passed else [
+                    _scenario_finding("UDS-DTC-SNAPSHOT-NEGATIVE-RESPONSE", str(exc), intent_path, name)
+                ],
+            )
+        if expected == "malformed_payload":
+            passed = class_name == "InvalidResponseException"
+            return _scenario_result(
+                name,
+                "passed" if passed else "failed",
+                "malformed snapshot response rejected by client decoder",
+                class_name,
+                service="ReadDTCInformation",
+                subfunction="reportDTCSnapshotRecordByDTCNumber",
+                dtc=code,
+                dtc_hex=f"0x{code:06X}",
+                record_number=record_number,
+                request_payload_hex=request.hex().upper(),
+                response_payload_hex=response_hex,
+                duration_ms=round((time.perf_counter() - started) * 1000),
+                findings=[
+                    _scenario_finding(
+                        "UDS-DTC-SNAPSHOT-MALFORMED",
+                        f"Snapshot response rejected as {class_name}: {exc}",
+                        intent_path,
+                        name,
+                    )
+                ],
+            )
         return _scenario_result(
             name,
             "failed",
@@ -606,11 +694,11 @@ def _run_read_snapshot_scenario(
             dtc_hex=f"0x{code:06X}",
             record_number=record_number,
             request_payload_hex=request.hex().upper(),
-            response_payload_hex="",
+            response_payload_hex=response_hex,
             duration_ms=round((time.perf_counter() - started) * 1000),
             findings=[_scenario_finding("UDS-DTC-SNAPSHOT-READ-ERROR", str(exc), intent_path, name)],
         )
-    passed = actual_status == expected_status and actual_records == expected_records
+    passed = expected == "positive" and actual_status == expected_status and actual_records == expected_records
     return _scenario_result(
         name,
         "passed" if passed else "failed",
@@ -625,7 +713,7 @@ def _run_read_snapshot_scenario(
         actual_dtc_status=actual_status,
         actual_dtc_status_hex=f"0x{actual_status:02X}",
         record_number=record_number,
-        expected_snapshot_records=scenario["expected_snapshot_records"],
+        expected_snapshot_records=scenario.get("expected_snapshot_records", []),
         actual_snapshot_records=actual_evidence,
         request_payload_hex=request.hex().upper(),
         response_payload_hex=response_hex,
@@ -634,6 +722,111 @@ def _run_read_snapshot_scenario(
             _scenario_finding(
                 "UDS-DTC-SNAPSHOT-MISMATCH",
                 f"Observed status/snapshot {(actual_status, actual_records)}, expected {(expected_status, expected_records)}",
+                intent_path,
+                name,
+            )
+        ],
+    )
+
+
+def _run_read_extended_data_scenario(
+    client: Any,
+    scenario: dict[str, Any],
+    intent_path: Path,
+) -> dict[str, Any]:
+    name = str(scenario["name"])
+    code = int(scenario["dtc"])
+    record_number = int(scenario["record_number"])
+    expected = str(scenario.get("expected", "positive"))
+    expected_status = int(scenario.get("expected_dtc_status", 0))
+    expected_value = int(scenario.get("expected_extended_data_value", 0))
+    request = bytes([0x19, 0x06]) + code.to_bytes(3, "big") + bytes([record_number])
+    started = time.perf_counter()
+    try:
+        response = client.get_dtc_extended_data_by_dtc_number(
+            code,
+            record_number=record_number,
+            data_size=1,
+        )
+        dtc = response.service_data.dtcs[0]
+        actual_status = int(dtc.status.get_byte_as_int())
+        record = dtc.extended_data[0]
+        actual_record_number = int(record.record_number)
+        raw_data = bytes(record.raw_data)
+        actual_value = raw_data[0]
+        response_hex = response.original_payload.hex().upper()
+    except Exception as exc:
+        response_obj = getattr(exc, "response", None)
+        response_hex = ""
+        if response_obj is not None and getattr(response_obj, "original_payload", None) is not None:
+            response_hex = response_obj.original_payload.hex().upper()
+        class_name = type(exc).__name__
+        if class_name == "NegativeResponseException":
+            code_name = str(getattr(response_obj, "code_name", ""))
+            passed = (
+                expected == "negative_response"
+                and code_name.casefold() == str(scenario.get("nrc", "")).casefold()
+            )
+            return _scenario_result(
+                name,
+                "passed" if passed else "failed",
+                f"NRC {scenario.get('nrc', '')}",
+                code_name,
+                service="ReadDTCInformation",
+                subfunction="reportDTCExtendedDataRecordByDTCNumber",
+                dtc=code,
+                dtc_hex=f"0x{code:06X}",
+                record_number=record_number,
+                request_payload_hex=request.hex().upper(),
+                response_payload_hex=response_hex,
+                duration_ms=round((time.perf_counter() - started) * 1000),
+                findings=[] if passed else [
+                    _scenario_finding("UDS-DTC-EXTENDED-DATA-NRC", str(exc), intent_path, name)
+                ],
+            )
+        return _scenario_result(
+            name,
+            "failed",
+            expected,
+            class_name,
+            service="ReadDTCInformation",
+            subfunction="reportDTCExtendedDataRecordByDTCNumber",
+            dtc=code,
+            dtc_hex=f"0x{code:06X}",
+            record_number=record_number,
+            request_payload_hex=request.hex().upper(),
+            response_payload_hex=response_hex,
+            duration_ms=round((time.perf_counter() - started) * 1000),
+            findings=[_scenario_finding("UDS-DTC-EXTENDED-DATA-READ-ERROR", str(exc), intent_path, name)],
+        )
+    passed = (
+        expected == "positive"
+        and actual_status == expected_status
+        and actual_record_number == record_number
+        and actual_value == expected_value
+    )
+    return _scenario_result(
+        name,
+        "passed" if passed else "failed",
+        f"DTC 0x{code:06X} record 0x{record_number:02X} value {expected_value}",
+        f"DTC 0x{code:06X} record 0x{actual_record_number:02X} value {actual_value}",
+        service="ReadDTCInformation",
+        subfunction="reportDTCExtendedDataRecordByDTCNumber",
+        dtc=code,
+        dtc_hex=f"0x{code:06X}",
+        record_number=record_number,
+        expected_dtc_status=expected_status,
+        actual_dtc_status=actual_status,
+        expected_extended_data_value=expected_value,
+        actual_extended_data_value=actual_value,
+        extended_data_payload_hex=raw_data.hex().upper(),
+        request_payload_hex=request.hex().upper(),
+        response_payload_hex=response_hex,
+        duration_ms=round((time.perf_counter() - started) * 1000),
+        findings=[] if passed else [
+            _scenario_finding(
+                "UDS-DTC-EXTENDED-DATA-MISMATCH",
+                f"Observed {(actual_status, actual_record_number, actual_value)}, expected {(expected_status, record_number, expected_value)}",
                 intent_path,
                 name,
             )
@@ -763,6 +956,15 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         int(scenario["did"]): bytes.fromhex(str(scenario["response_payload_hex"]))
         for scenario in payload["scenarios"]
         if scenario.get("expected") == "malformed_payload"
+        and scenario.get("service") == "ReadDataByIdentifier"
+    }
+    malformed_snapshot_payloads = {
+        (int(scenario["dtc"]), int(scenario["record_number"])): bytes.fromhex(
+            str(scenario["response_payload_hex"])
+        )
+        for scenario in payload["scenarios"]
+        if scenario.get("expected") == "malformed_payload"
+        and scenario.get("subfunction") == "reportDTCSnapshotRecordByDTCNumber"
     }
     data_identifiers = {
         int(did["id"]): _client_codec(did, ascii_codec)
@@ -784,6 +986,13 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
             }
             for snapshot_did in item["snapshot"]["dids"]
         ]
+        for item in (dtc_payload or {}).get("dtcs", [])
+    }
+    dtc_extended_data = {
+        int(item["code"]): {
+            int(record["record_number"]): bytes([int(record["uds_initial_value"])])
+            for record in item["extended_data"]["records"]
+        }
         for item in (dtc_payload or {}).get("dtcs", [])
     }
     status_availability_mask = int((dtc_payload or {}).get("status_availability_mask", 0xFF))
@@ -810,8 +1019,10 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         dids_by_id,
         timeout_dids,
         malformed_payloads,
+        malformed_snapshot_payloads,
         dtc_statuses,
         dtc_snapshots,
+        dtc_extended_data,
         status_availability_mask,
     )
     client_logger = logging.getLogger("UdsClient[workbench-uds-lab]")

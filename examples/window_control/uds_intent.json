@@ -85,6 +85,53 @@
       "expected": "positive"
     },
     {
+      "name": "read_obstruction_occurrence_counter",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 1,
+      "expected_dtc_status": 40,
+      "expected_extended_data_value": 1,
+      "expected": "positive"
+    },
+    {
+      "name": "read_obstruction_aging_counter",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 2,
+      "expected_dtc_status": 40,
+      "expected_extended_data_value": 1,
+      "expected": "positive"
+    },
+    {
+      "name": "unknown_dtc_extended_data_nrc",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
+      "dtc": 12648447,
+      "record_number": 1,
+      "expected": "negative_response",
+      "nrc": "requestOutOfRange"
+    },
+    {
+      "name": "unknown_extended_data_record_nrc",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 3,
+      "expected": "negative_response",
+      "nrc": "requestOutOfRange"
+    },
+    {
+      "name": "malformed_obstruction_snapshot",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCSnapshotRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 3,
+      "expected": "malformed_payload",
+      "response_payload_hex": "5904C00100"
+    },
+    {
       "name": "clear_all_dtcs",
       "service": "ClearDiagnosticInformation",
       "group": 16777215,
@@ -97,6 +144,15 @@
       "status_mask": 8,
       "expected": "positive",
       "expected_dtc_records": []
+    },
+    {
+      "name": "read_extended_data_after_clear",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 1,
+      "expected": "negative_response",
+      "nrc": "requestOutOfRange"
     },
     {
       "name": "read_snapshot_after_clear",

@@ -33,11 +33,12 @@ class UdsIntentTests(unittest.TestCase):
         self.assertEqual(summary["transport"]["response_id_hex"], "0x708")
         self.assertEqual(summary["did_count"], 2)
         self.assertEqual(summary["dids"][0]["id_hex"], "0xF190")
-        self.assertEqual(summary["scenario_count"], 9)
+        self.assertEqual(summary["scenario_count"], 15)
         self.assertEqual(summary["scenarios"][3]["expected"], "malformed_payload")
         self.assertEqual(summary["scenarios"][4]["status_mask_hex"], "0x08")
         self.assertEqual(summary["scenarios"][5]["dtc_hex"], "0xC00100")
-        self.assertEqual(summary["scenarios"][6]["group_hex"], "0xFFFFFF")
+        self.assertEqual(summary["scenarios"][6]["dtc_hex"], "0xC00100")
+        self.assertEqual(summary["scenarios"][11]["group_hex"], "0xFFFFFF")
 
     def test_rejects_positive_scenario_with_unknown_did(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
@@ -68,11 +69,20 @@ class UdsIntentTests(unittest.TestCase):
 
     def test_rejects_clear_for_unknown_dtc_group(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
-        payload["scenarios"][6]["group"] = 0x123456
+        payload["scenarios"][11]["group"] = 0x123456
 
         with tempfile.TemporaryDirectory() as directory:
             path = _write_intent(directory, payload)
             with self.assertRaisesRegex(ValueError, "references unknown group"):
+                load_uds_intent(path)
+
+    def test_rejects_positive_extended_data_scenario_with_unknown_record(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["scenarios"][6]["record_number"] = 0x44
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = _write_intent(directory, payload)
+            with self.assertRaisesRegex(ValueError, "references unknown record"):
                 load_uds_intent(path)
 
 

@@ -22,7 +22,7 @@ class UdsRuntimeTests(unittest.TestCase):
             markdown = (output / "uds-lab-report.md").read_text(encoding="utf-8")
 
         self.assertEqual(result["status"], "passed")
-        self.assertEqual(result["passed_count"], 9)
+        self.assertEqual(result["passed_count"], 15)
         scenarios = {item["scenario"]: item for item in result["scenarios"]}
         self.assertEqual(scenarios["read_vin"]["evidence"]["decoded_value"], "AWBDEMO0123456789")
         self.assertEqual(scenarios["read_vin"]["evidence"]["response_payload_hex"][:6], "62F190")
@@ -45,9 +45,33 @@ class UdsRuntimeTests(unittest.TestCase):
             snapshot["evidence"]["actual_snapshot_records"],
             [{"record_number": 1, "did": 61713, "did_hex": "0xF111", "value": 42, "payload_hex": "2A"}],
         )
+        occurrence = scenarios["read_obstruction_occurrence_counter"]
+        self.assertEqual(occurrence["evidence"]["response_payload_hex"], "5906C00100280101")
+        self.assertEqual(occurrence["evidence"]["actual_extended_data_value"], 1)
+        aging = scenarios["read_obstruction_aging_counter"]
+        self.assertEqual(aging["evidence"]["response_payload_hex"], "5906C00100280201")
+        self.assertEqual(
+            scenarios["unknown_dtc_extended_data_nrc"]["evidence"]["response_payload_hex"],
+            "7F1931",
+        )
+        self.assertEqual(
+            scenarios["unknown_extended_data_record_nrc"]["observed"],
+            "RequestOutOfRange",
+        )
+        malformed_snapshot = scenarios["malformed_obstruction_snapshot"]
+        self.assertEqual(malformed_snapshot["status"], "passed")
+        self.assertEqual(malformed_snapshot["evidence"]["response_payload_hex"], "5904C00100")
+        self.assertEqual(
+            malformed_snapshot["evidence"]["findings"][0]["code"],
+            "UDS-DTC-SNAPSHOT-MALFORMED",
+        )
         self.assertEqual(scenarios["clear_all_dtcs"]["evidence"]["response_payload_hex"], "54")
         self.assertEqual(scenarios["read_dtcs_after_clear"]["evidence"]["actual_dtc_records"], [])
         self.assertEqual(scenarios["read_dtcs_after_clear"]["evidence"]["response_payload_hex"], "5902FF")
+        self.assertEqual(
+            scenarios["read_extended_data_after_clear"]["evidence"]["response_payload_hex"],
+            "7F1931",
+        )
         snapshot_after_clear = scenarios["read_snapshot_after_clear"]
         self.assertEqual(snapshot_after_clear["evidence"]["actual_snapshot_records"], [])
         self.assertEqual(snapshot_after_clear["evidence"]["response_payload_hex"], "5904C0010000")
@@ -62,7 +86,7 @@ class UdsRuntimeTests(unittest.TestCase):
             persisted["isolation"]["server"]["frame_filters"][0]["can_id_hex"],
             "0x700",
         )
-        self.assertEqual(len(persisted["responder_observed_requests"]), 9)
+        self.assertEqual(len(persisted["responder_observed_requests"]), 15)
         self.assertIn("not a DCM", markdown)
 
     def test_blocks_socketcan_uds_lab_when_interface_is_missing(self) -> None:
@@ -74,7 +98,7 @@ class UdsRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["reason"], "interface_missing")
-        self.assertEqual(result["scenario_count"], 9)
+        self.assertEqual(result["scenario_count"], 15)
         self.assertEqual(result["passed_count"], 0)
         self.assertEqual(persisted["backend_probe"]["status"], "blocked")
         self.assertEqual(probe["reason"], "interface_missing")
