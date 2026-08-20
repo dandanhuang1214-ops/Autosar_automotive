@@ -18,6 +18,7 @@ from automotive_workbench.diag_intent import summarize_uds_intent
 from automotive_workbench.dtc_intent import summarize_dtc_intent
 from automotive_workbench.dtc_lifecycle import run_dtc_lifecycle
 from automotive_workbench.dtc_aging import run_dtc_aging_lab
+from automotive_workbench.dtc_reset import run_dtc_reset_lab
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -119,6 +120,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dtc_aging_parser.add_argument("intent", type=Path)
     dtc_aging_parser.add_argument("--output", type=Path, default=Path("output") / "dtc-aging")
+
+    dtc_reset_parser = commands.add_parser(
+        "run-dtc-reset-lab",
+        help="Run deterministic DTC hard-reset and persistence experiments",
+    )
+    dtc_reset_parser.add_argument("intent", type=Path)
+    dtc_reset_parser.add_argument("--output", type=Path, default=Path("output") / "dtc-reset")
     return parser
 
 
@@ -187,6 +195,8 @@ def main() -> int:
             result = run_dtc_lifecycle(args.intent, args.output)
         elif args.command == "run-dtc-aging-lab":
             result = run_dtc_aging_lab(args.intent, args.output)
+        elif args.command == "run-dtc-reset-lab":
+            result = run_dtc_reset_lab(args.intent, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

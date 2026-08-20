@@ -16,6 +16,15 @@ SUPPORTED_CYCLE_EVENTS = {
     "read_snapshot",
 }
 SUPPORTED_CYCLE_STATES = {*SUPPORTED_STATES, "aged_out"}
+SUPPORTED_RESET_EVENTS = {
+    "operation_cycle_start",
+    "operation_cycle_end",
+    "fault_present",
+    "flush",
+    "hard_reset",
+    "clear_dtc",
+}
+SUPPORTED_RESET_STATES = {"absent", "pending", "confirmed"}
 
 
 def _integer(value: Any, name: str, minimum: int, maximum: int) -> int:
@@ -111,6 +120,18 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
                 raise ValueError("DTC extended data currently supports only uint8 length=1")
             _integer(record.get("uds_initial_value"), "extended_data.uds_initial_value", 0, 0xFF)
 
+        persistence = item.get("persistence")
+        if not isinstance(persistence, dict):
+            raise ValueError(f"DTC intent requires dtcs[{index}].persistence object")
+        if persistence.get("retained_data") != ["status", "snapshot", "extended_data"]:
+            raise ValueError(
+                "DTC persistence currently requires status, snapshot and extended_data retention"
+            )
+        if persistence.get("flush_event") != "explicit":
+            raise ValueError("DTC persistence currently requires explicit flush_event")
+        if persistence.get("clear_updates_persistent_memory") is not True:
+            raise ValueError("DTC persistence requires clear_updates_persistent_memory=true")
+
     names: set[str] = set()
     for index, item in enumerate(_list(payload.get("experiments"), "experiments")):
         if not isinstance(item, dict):
@@ -166,6 +187,43 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
             for field in ("expected_snapshot_stored", "expected_cycle_active"):
                 if not isinstance(step.get(field), bool):
                     raise ValueError(f"DTC cycle step requires boolean {field}")
+
+    reset_names: set[str] = set()
+    for index, item in enumerate(_list(payload.get("reset_experiments"), "reset_experiments")):
+        if not isinstance(item, dict):
+            raise ValueError(f"DTC intent requires reset_experiments[{index}] object")
+        name = _string(item.get("name"), f"reset_experiments[{index}].name")
+        if name in reset_names:
+            raise ValueError(f"Duplicate DTC reset experiment name: {name}")
+        reset_names.add(name)
+        code = _integer(item.get("dtc"), f"reset_experiments[{index}].dtc", 0, 0xFFFFFF)
+        if code not in codes:
+            raise ValueError(f"DTC reset experiment references unknown code: 0x{code:06X}")
+        for step_index, step in enumerate(
+            _list(item.get("steps"), f"reset_experiments[{index}].steps")
+        ):
+            if not isinstance(step, dict):
+                raise ValueError(
+                    f"DTC intent requires reset_experiments[{index}].steps[{step_index}] object"
+                )
+            if step.get("event") not in SUPPORTED_RESET_EVENTS:
+                raise ValueError(f"Unsupported DTC reset event: {step.get('event')}")
+            if step.get("expected_runtime_state") not in SUPPORTED_RESET_STATES:
+                raise ValueError(
+                    f"Unsupported DTC reset state: {step.get('expected_runtime_state')}"
+                )
+            for field in ("expected_runtime_status", "expected_persistent_status"):
+                status = _integer(step.get(field), field, 0, 0xFF)
+                if status & ~availability_mask:
+                    raise ValueError(f"DTC reset step {field} uses unavailable bits")
+            for field in (
+                "expected_runtime_snapshot_stored",
+                "expected_persistent_snapshot_stored",
+                "expected_runtime_extended_data_stored",
+                "expected_persistent_extended_data_stored",
+            ):
+                if not isinstance(step.get(field), bool):
+                    raise ValueError(f"DTC reset step requires boolean {field}")
     return payload
 
 
@@ -199,5 +257,10 @@ def summarize_dtc_intent(path: Path) -> dict[str, Any]:
         "cycle_experiments": [
             {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
             for item in payload["cycle_experiments"]
+        ],
+        "reset_experiment_count": len(payload["reset_experiments"]),
+        "reset_experiments": [
+            {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
+            for item in payload["reset_experiments"]
         ],
     }

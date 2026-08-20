@@ -22,6 +22,9 @@ class DtcIntentTests(unittest.TestCase):
         self.assertEqual(summary["experiments"][0]["step_count"], 8)
         self.assertEqual(summary["cycle_experiment_count"], 1)
         self.assertEqual(summary["cycle_experiments"][0]["step_count"], 12)
+        self.assertEqual(summary["reset_experiment_count"], 2)
+        self.assertEqual(summary["reset_experiments"][0]["step_count"], 8)
+        self.assertEqual(summary["reset_experiments"][1]["step_count"], 4)
 
     def test_rejects_experiment_with_unknown_dtc(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
@@ -48,6 +51,15 @@ class DtcIntentTests(unittest.TestCase):
             path = Path(directory) / "dtc_intent.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "uses unavailable bits"):
+                load_dtc_intent(path)
+
+    def test_rejects_unsupported_persistence_policy(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["dtcs"][0]["persistence"]["flush_event"] = "automatic"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "dtc_intent.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "explicit flush_event"):
                 load_dtc_intent(path)
 
 

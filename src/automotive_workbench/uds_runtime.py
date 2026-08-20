@@ -220,6 +220,13 @@ class _UdsResponder:
         self._dtc_extended_data = {
             code: records.copy() for code, records in dtc_extended_data.items()
         }
+        self._persistent_dtc_statuses = self._dtc_statuses.copy()
+        self._persistent_dtc_snapshots = {
+            code: records.copy() for code, records in self._dtc_snapshots.items()
+        }
+        self._persistent_dtc_extended_data = {
+            code: records.copy() for code, records in self._dtc_extended_data.items()
+        }
         self._status_availability_mask = status_availability_mask
         self._stop = threading.Event()
         self.requests: list[dict[str, Any]] = []
@@ -241,6 +248,7 @@ class _UdsResponder:
             if payload is None:
                 continue
             request = bytes(payload)
+            reset_after_response = False
             service_id = request[0] if request else -1
             did = int.from_bytes(request[1:3], "big") if service_id == 0x22 and len(request) >= 3 else -1
             request_evidence = {
@@ -312,14 +320,37 @@ class _UdsResponder:
                     self._dtc_statuses = {code: 0 for code in self._dtc_statuses}
                     self._dtc_snapshots = {code: [] for code in self._dtc_snapshots}
                     self._dtc_extended_data = {code: {} for code in self._dtc_extended_data}
+                    self._persistent_dtc_statuses = self._dtc_statuses.copy()
+                    self._persistent_dtc_snapshots = {
+                        code: records.copy() for code, records in self._dtc_snapshots.items()
+                    }
+                    self._persistent_dtc_extended_data = {
+                        code: records.copy() for code, records in self._dtc_extended_data.items()
+                    }
                 elif group in self._dtc_statuses:
                     self._dtc_statuses[group] = 0
                     self._dtc_snapshots[group] = []
                     self._dtc_extended_data[group] = {}
+                    self._persistent_dtc_statuses[group] = 0
+                    self._persistent_dtc_snapshots[group] = []
+                    self._persistent_dtc_extended_data[group] = {}
                 response = bytes([0x54])
+            elif service_id == 0x11 and request == bytes([0x11, 0x01]):
+                response = bytes([0x51, 0x01])
+                reset_after_response = True
             else:
                 response = bytes([0x7F, request[0] if request else 0x00, 0x11])
             self._stack.send(response)
+            if reset_after_response:
+                self._dtc_statuses = self._persistent_dtc_statuses.copy()
+                self._dtc_snapshots = {
+                    code: records.copy()
+                    for code, records in self._persistent_dtc_snapshots.items()
+                }
+                self._dtc_extended_data = {
+                    code: records.copy()
+                    for code, records in self._persistent_dtc_extended_data.items()
+                }
             response_evidence = {
                 "service_id": response[0],
                 "service_id_hex": f"0x{response[0]:02X}",
@@ -367,6 +398,8 @@ def _run_scenario(client: Any, scenario: dict[str, Any], dids_by_id: dict[int, d
         return _run_read_dtc_scenario(client, scenario, intent_path)
     if service == "ClearDiagnosticInformation":
         return _run_clear_dtc_scenario(client, scenario, intent_path)
+    if service == "ECUReset":
+        return _run_ecu_reset_scenario(client, scenario, intent_path)
     did = int(scenario["did"])
     name = str(scenario["name"])
     expected = str(scenario.get("expected", "positive"))
@@ -590,6 +623,50 @@ def _run_clear_dtc_scenario(client: Any, scenario: dict[str, Any], intent_path: 
         response_payload_hex=response_hex,
         duration_ms=round((time.perf_counter() - started) * 1000),
         findings=[],
+    )
+
+
+def _run_ecu_reset_scenario(client: Any, scenario: dict[str, Any], intent_path: Path) -> dict[str, Any]:
+    name = str(scenario["name"])
+    request = bytes([0x11, 0x01])
+    started = time.perf_counter()
+    try:
+        response = client.ecu_reset(0x01)
+        response_hex = response.original_payload.hex().upper()
+    except Exception as exc:
+        return _scenario_result(
+            name,
+            "failed",
+            "hardReset positive response",
+            type(exc).__name__,
+            service="ECUReset",
+            reset_type="hardReset",
+            reset_type_value=1,
+            request_payload_hex=request.hex().upper(),
+            response_payload_hex="",
+            duration_ms=round((time.perf_counter() - started) * 1000),
+            findings=[_scenario_finding("UDS-ECU-RESET-ERROR", str(exc), intent_path, name)],
+        )
+    passed = response_hex == "5101"
+    return _scenario_result(
+        name,
+        "passed" if passed else "failed",
+        "hardReset positive response 0x5101",
+        response_hex,
+        service="ECUReset",
+        reset_type="hardReset",
+        reset_type_value=1,
+        request_payload_hex=request.hex().upper(),
+        response_payload_hex=response_hex,
+        duration_ms=round((time.perf_counter() - started) * 1000),
+        findings=[] if passed else [
+            _scenario_finding(
+                "UDS-ECU-RESET-MISMATCH",
+                f"Observed ECUReset response {response_hex}, expected 5101",
+                intent_path,
+                name,
+            )
+        ],
     )
 
 

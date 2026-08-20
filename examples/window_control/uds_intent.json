@@ -105,6 +105,44 @@
       "expected": "positive"
     },
     {
+      "name": "hard_reset_preserves_dtc_memory",
+      "service": "ECUReset",
+      "reset_type": "hardReset",
+      "expected": "positive"
+    },
+    {
+      "name": "read_dtc_after_hard_reset",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCByStatusMask",
+      "status_mask": 8,
+      "expected": "positive",
+      "expected_dtc_records": [
+        {"code": 12583168, "status": 40}
+      ]
+    },
+    {
+      "name": "read_snapshot_after_hard_reset",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCSnapshotRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 1,
+      "expected_dtc_status": 40,
+      "expected_snapshot_records": [
+        {"did": 61713, "value": 42}
+      ],
+      "expected": "positive"
+    },
+    {
+      "name": "read_extended_data_after_hard_reset",
+      "service": "ReadDTCInformation",
+      "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
+      "dtc": 12583168,
+      "record_number": 1,
+      "expected_dtc_status": 40,
+      "expected_extended_data_value": 1,
+      "expected": "positive"
+    },
+    {
       "name": "unknown_dtc_extended_data_nrc",
       "service": "ReadDTCInformation",
       "subfunction": "reportDTCExtendedDataRecordByDTCNumber",
@@ -135,6 +173,12 @@
       "name": "clear_all_dtcs",
       "service": "ClearDiagnosticInformation",
       "group": 16777215,
+      "expected": "positive"
+    },
+    {
+      "name": "hard_reset_preserves_clear",
+      "service": "ECUReset",
+      "reset_type": "hardReset",
       "expected": "positive"
     },
     {

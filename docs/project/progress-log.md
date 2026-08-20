@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-20）
 
-当前阶段：`R4l — extended data 与 DTC 负面场景已落地`。
+当前阶段：`R4m — ECU reset 与进程内持久镜像证据已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4l 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data 和负面场景证据 |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4m 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data、hard reset 和持久镜像证据 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -330,6 +330,19 @@
 - 边界：不实现量产 Dem event memory、NVRAM、displacement、OBD 法规、OEM record layout 或 UDS conformance。
 - 状态：完成。
 
+### R4m：ECU reset 与持久镜像边界（2026-08-20）
+
+- 新增 `docs/research/dtc-reset-persistence-research-2026-08-20.md`，基于 AUTOSAR CP Dem、Mode Management Guide 和本地 `udsoncan 1.26.1` 源码确定 reset/NvM 边界。
+- DTC intent 新增受限 persistence policy 和两个 `reset_experiments`；只支持 `status/snapshot/extended_data`、显式 flush 和 clear 同步更新持久镜像。
+- 新增 `dtc_reset.py`、CLI `run-dtc-reset-lab` 和 JSON/Markdown 报告；12 步覆盖 confirmed 运行态、flush、hard reset 恢复、clear 后 reset，以及 confirmed 但未 flush 时 reset 丢失。
+- UDS intent/runtime 新增 `ECUReset hardReset` (`0x11/0x01`)；responder 发出 `5101` 后从进程内持久镜像重载 DTC 状态。
+- hard reset 后复读 DTC、snapshot、extended data；clear 后再次 hard reset，DTC 仍为空、snapshot 仍为空、extended data 仍返回 `7F1931`。
+- 确定性 reset lab `output/dtc-reset-r4m/dtc-reset-report.json` 为 12/12 通过；virtual UDS `output/uds-lab-r4m/uds-lab-report.json` 为 20/20 通过。
+- SocketCAN 报告 `output/socketcan-uds-smoke-r4m/workbench-uds-lab/uds-lab-report.json` 使用 `python-can socketcan`，20/20 通过，reset 与复读应用 payload 和 virtual 完全一致。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，50 项运行、2 项环境跳过；JSON、Python 编译、shell 语法和 diff 检查通过。
+- 边界：持久镜像只存在于单次进程；不实现 AUTOSAR NvM、flash、断电原子性、真实启动/总线中断或 DCM/BswM/EcuM 集成。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -404,9 +417,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4m ECU reset/persistence 生命周期调研
+### 最近一步：R4n 持久镜像完整性与失败注入调研
 
-先区分 operation cycle、ECU reset 与持久化事件内存的职责，确认 AUTOSAR Dem/NvM 和 UDS reset 后再决定最小实验方案；不直接把当前内存 responder 宣称为 NVRAM 实现。
+先定义 flush failure、corrupt mirror 和恢复失败的分类及安全回退，再决定最小故障注入；不直接引入文件数据库或宣称 NvM 完整性实现。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

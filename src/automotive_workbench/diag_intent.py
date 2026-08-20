@@ -9,7 +9,12 @@ from automotive_workbench.dtc_intent import load_dtc_intent
 
 SUPPORTED_SCHEMA_VERSION = "uds-intent-0.1"
 SUPPORTED_ADDRESSING = {"normal_11bit"}
-SUPPORTED_SERVICES = {"ReadDataByIdentifier", "ReadDTCInformation", "ClearDiagnosticInformation"}
+SUPPORTED_SERVICES = {
+    "ReadDataByIdentifier",
+    "ReadDTCInformation",
+    "ClearDiagnosticInformation",
+    "ECUReset",
+}
 SUPPORTED_CODECS = {"ascii", "uint8", "uint16", "uint32", "raw"}
 SUPPORTED_EXPECTATIONS = {"positive", "negative_response", "timeout", "malformed_payload"}
 
@@ -90,8 +95,8 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
         expected = scenario.get("expected", "positive")
         if expected not in SUPPORTED_EXPECTATIONS:
             raise ValueError(f"Unsupported UDS scenario expectation: {expected}")
-        if service == "ClearDiagnosticInformation" and expected != "positive":
-            raise ValueError("ClearDiagnosticInformation currently supports only positive expectation")
+        if service in {"ClearDiagnosticInformation", "ECUReset"} and expected != "positive":
+            raise ValueError(f"{service} currently supports only positive expectation")
         if service == "ReadDataByIdentifier":
             did_id = _require_int(scenario.get("did"), f"scenarios[{index}].did", 0, 0xFFFF)
             if expected == "positive" and did_id not in did_ids:
@@ -176,12 +181,17 @@ def load_uds_intent(path: Path) -> dict[str, Any]:
                     )
             else:
                 raise ValueError(f"Unsupported ReadDTCInformation subfunction: {subfunction}")
-        else:
+        elif service == "ClearDiagnosticInformation":
             group = _require_int(scenario.get("group"), f"scenarios[{index}].group", 0, 0xFFFFFF)
             if not dtc_codes:
                 raise ValueError("ClearDiagnosticInformation requires dtc_intent")
             if group != 0xFFFFFF and group not in dtc_codes:
                 raise ValueError(f"ClearDiagnosticInformation references unknown group: 0x{group:06X}")
+        else:
+            if scenario.get("reset_type") != "hardReset":
+                raise ValueError("ECUReset currently supports only hardReset")
+            if not dtc_codes:
+                raise ValueError("ECUReset persistence scenario requires dtc_intent")
         if expected == "negative_response":
             _require_string(scenario.get("nrc"), f"scenarios[{index}].nrc")
         if expected == "malformed_payload":
@@ -245,6 +255,7 @@ def summarize_uds_intent(path: Path) -> dict[str, Any]:
                 "did_hex": f"0x{scenario['did']:04X}" if "did" in scenario else "",
                 "status_mask_hex": f"0x{scenario['status_mask']:02X}" if "status_mask" in scenario else "",
                 "group_hex": f"0x{scenario['group']:06X}" if "group" in scenario else "",
+                "reset_type": scenario.get("reset_type", ""),
                 "dtc_hex": f"0x{scenario['dtc']:06X}" if "dtc" in scenario else "",
                 "expected": scenario.get("expected", "positive"),
                 "nrc": scenario.get("nrc", ""),

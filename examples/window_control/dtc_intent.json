@@ -26,6 +26,11 @@
           {"record_number": 2, "name": "AgingCounter", "source": "aging_counter", "length": 1, "uds_initial_value": 1}
         ]
       },
+      "persistence": {
+        "retained_data": ["status", "snapshot", "extended_data"],
+        "flush_event": "explicit",
+        "clear_updates_persistent_memory": true
+      },
       "unknowns": [
         "OEM DTC assignment and failure class",
         "Production operation-cycle and aging policy"
@@ -65,6 +70,32 @@
         {"event": "fault_absent", "expected_state": "healed", "expected_status": 40, "expected_aging_counter": 1, "expected_snapshot_stored": true, "expected_cycle_active": true},
         {"event": "operation_cycle_end", "expected_state": "aged_out", "expected_status": 0, "expected_aging_counter": 2, "expected_snapshot_stored": false, "expected_cycle_active": false},
         {"event": "read_snapshot", "expected_state": "aged_out", "expected_status": 0, "expected_aging_counter": 2, "expected_snapshot_stored": false, "expected_cycle_active": false}
+      ]
+    }
+  ],
+  "reset_experiments": [
+    {
+      "name": "window_obstruction_hard_reset_persistence",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "operation_cycle_start", "expected_runtime_state": "absent", "expected_runtime_status": 80, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false},
+        {"event": "fault_present", "expected_runtime_state": "pending", "expected_runtime_status": 39, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false},
+        {"event": "fault_present", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false},
+        {"event": "operation_cycle_end", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false},
+        {"event": "flush", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 47, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": true, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": true},
+        {"event": "hard_reset", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 47, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": true, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": true},
+        {"event": "clear_dtc", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false},
+        {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false}
+      ]
+    },
+    {
+      "name": "window_obstruction_unflushed_state_is_volatile",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "operation_cycle_start", "expected_runtime_state": "absent", "expected_runtime_status": 80, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false},
+        {"event": "fault_present", "expected_runtime_state": "pending", "expected_runtime_status": 39, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false},
+        {"event": "fault_present", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": true, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": true, "expected_persistent_extended_data_stored": false},
+        {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 0, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": false, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": false}
       ]
     }
   ]

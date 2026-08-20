@@ -42,7 +42,7 @@
         "required": ["name", "service"],
         "properties": {
           "name": {"type": "string"},
-          "service": {"enum": ["ReadDataByIdentifier", "ReadDTCInformation", "ClearDiagnosticInformation"]},
+          "service": {"enum": ["ReadDataByIdentifier", "ReadDTCInformation", "ClearDiagnosticInformation", "ECUReset"]},
           "did": {"type": "integer", "minimum": 0, "maximum": 65535},
           "subfunction": {"enum": ["reportDTCByStatusMask", "reportDTCSnapshotRecordByDTCNumber", "reportDTCExtendedDataRecordByDTCNumber"]},
           "status_mask": {"type": "integer", "minimum": 1, "maximum": 255},
@@ -75,6 +75,7 @@
           },
           "expected_extended_data_value": {"type": "integer", "minimum": 0, "maximum": 255},
           "group": {"type": "integer", "minimum": 0, "maximum": 16777215},
+          "reset_type": {"enum": ["hardReset"]},
           "expected": {"enum": ["positive", "negative_response", "timeout", "malformed_payload"]},
           "nrc": {"type": "string"},
           "response_payload_hex": {"type": "string"}
