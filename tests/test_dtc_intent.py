@@ -31,6 +31,10 @@ class DtcIntentTests(unittest.TestCase):
         self.assertEqual(summary["redundancy_experiment_count"], 2)
         self.assertEqual(summary["redundancy_experiments"][0]["step_count"], 6)
         self.assertEqual(summary["redundancy_experiments"][1]["step_count"], 7)
+        self.assertEqual(summary["redundancy_repair_experiment_count"], 3)
+        self.assertEqual(summary["redundancy_repair_experiments"][0]["step_count"], 7)
+        self.assertEqual(summary["redundancy_repair_experiments"][1]["step_count"], 9)
+        self.assertEqual(summary["redundancy_repair_experiments"][2]["step_count"], 9)
 
     def test_rejects_experiment_with_unknown_dtc(self) -> None:
         payload = json.loads(INTENT.read_text(encoding="utf-8"))
@@ -84,6 +88,19 @@ class DtcIntentTests(unittest.TestCase):
             path = Path(directory) / "dtc_intent.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "Unsupported DTC redundancy selected copy"):
+                load_dtc_intent(path)
+
+    def test_rejects_unsupported_redundancy_repair_outcome(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["redundancy_repair_experiments"][0]["steps"][0][
+            "expected_repair_outcome"
+        ] = "guessed"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "dtc_intent.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError, "Unsupported DTC redundancy repair outcome"
+            ):
                 load_dtc_intent(path)
 
 

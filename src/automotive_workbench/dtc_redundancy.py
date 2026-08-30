@@ -32,11 +32,12 @@ class _Copy:
     state: _CycleState
     generation: int
     checksum: str
+    committed: bool = True
 
     @classmethod
-    def from_state(cls, state: _CycleState, generation: int) -> _Copy:
+    def from_state(cls, state: _CycleState, generation: int, committed: bool = True) -> _Copy:
         copied = copy.deepcopy(state)
-        return cls(copied, generation, _checksum(copied, generation))
+        return cls(copied, generation, _checksum(copied, generation), committed)
 
     def integrity_valid(self) -> bool:
         return self.checksum == _checksum(self.state, self.generation)
@@ -44,9 +45,12 @@ class _Copy:
     def content_key(self) -> str:
         return json.dumps(asdict(self.state), sort_keys=True, separators=(",", ":"))
 
+    def selectable(self) -> bool:
+        return self.committed and self.integrity_valid()
+
 
 def _select_copy(copies: dict[str, _Copy]) -> tuple[str, str, str]:
-    valid = [(name, item) for name, item in copies.items() if item.integrity_valid()]
+    valid = [(name, item) for name, item in copies.items() if item.selectable()]
     if not valid:
         return "", "DTC-REDUNDANCY-RESTORE-FAILED", "No valid redundant copy is available"
     if len(valid) == 1:

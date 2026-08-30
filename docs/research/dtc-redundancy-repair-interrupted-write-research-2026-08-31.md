@@ -25,7 +25,7 @@ Add a deterministic in-process transaction model on top of the R4o copies. An en
 
 1. A staged write targets the non-selected or older copy and uses `max(committed generation) + 1`.
 2. Until commit, the staged copy is not selectable even if its payload checksum is valid.
-3. An interrupted staged write leaves every previously committed copy unchanged.
+3. An interrupted staged write may leave its target uncommitted, but it must not modify the other committed last-good source copy.
 4. Repair is allowed only after restore selected one valid committed source copy.
 5. Repair copies the selected state and generation into the peer, then commits the peer. The resulting envelopes agree exactly.
 6. Repeating repair on two agreeing copies is a no-op, making repair idempotent.
@@ -66,3 +66,7 @@ Each step must compare runtime state, both generations, both integrity results, 
 ## Boundary
 
 R4p will not model MemIf/Fee/Ea jobs, flash programming granularity, erase sectors, wear, retry timing, real power removal, hardware ECC, generation wraparound, concurrency, or safety qualification. A passing experiment only proves the Workbench state machine preserves a committed in-process last-good copy at the modeled interruption points.
+
+## Implementation result
+
+The three experiments were implemented in `dtc_redundancy_repair.py` and exposed through `run-dtc-redundancy-repair-lab`. All 25 trace steps pass, including six expected fault Findings. The implementation also unit-tests refusal without a selected committed source and rejection of an uncommitted newer copy during arbitration.

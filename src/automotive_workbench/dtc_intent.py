@@ -55,6 +55,32 @@ SUPPORTED_REDUNDANCY_FINDINGS = {
     "DTC-REDUNDANCY-ARBITRATION-FAILED",
     "DTC-REDUNDANCY-RESTORE-FAILED",
 }
+SUPPORTED_REDUNDANCY_REPAIR_EVENTS = {
+    "operation_cycle_start",
+    "operation_cycle_end",
+    "fault_present",
+    "flush",
+    "stage_flush",
+    "interrupt_write",
+    "hard_reset",
+    "repair",
+    "stage_repair",
+    "interrupt_repair",
+}
+SUPPORTED_REDUNDANCY_REPAIR_OUTCOMES = {
+    "",
+    "staged",
+    "committed",
+    "no-op",
+    "refused",
+    "interrupted",
+}
+SUPPORTED_REDUNDANCY_REPAIR_FINDINGS = {
+    *SUPPORTED_REDUNDANCY_FINDINGS,
+    "DTC-REDUNDANCY-WRITE-INTERRUPTED",
+    "DTC-REDUNDANCY-REPAIR-INTERRUPTED",
+    "DTC-REDUNDANCY-REPAIR-REFUSED",
+}
 
 
 def _integer(value: Any, name: str, minimum: int, maximum: int) -> int:
@@ -348,6 +374,91 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
                 raise ValueError(
                     f"Unsupported DTC redundancy expected Finding: {step.get('expected_finding')}"
                 )
+
+    repair_names: set[str] = set()
+    for index, item in enumerate(
+        _list(
+            payload.get("redundancy_repair_experiments"),
+            "redundancy_repair_experiments",
+        )
+    ):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"DTC intent requires redundancy_repair_experiments[{index}] object"
+            )
+        name = _string(
+            item.get("name"), f"redundancy_repair_experiments[{index}].name"
+        )
+        if name in repair_names:
+            raise ValueError(f"Duplicate DTC redundancy repair experiment name: {name}")
+        repair_names.add(name)
+        code = _integer(
+            item.get("dtc"),
+            f"redundancy_repair_experiments[{index}].dtc",
+            0,
+            0xFFFFFF,
+        )
+        if code not in codes:
+            raise ValueError(
+                f"DTC redundancy repair experiment references unknown code: 0x{code:06X}"
+            )
+        for step_index, step in enumerate(
+            _list(
+                item.get("steps"),
+                f"redundancy_repair_experiments[{index}].steps",
+            )
+        ):
+            if not isinstance(step, dict):
+                raise ValueError(
+                    "DTC intent requires redundancy_repair_experiments"
+                    f"[{index}].steps[{step_index}] object"
+                )
+            if step.get("event") not in SUPPORTED_REDUNDANCY_REPAIR_EVENTS:
+                raise ValueError(
+                    f"Unsupported DTC redundancy repair event: {step.get('event')}"
+                )
+            if step.get("expected_runtime_state") not in SUPPORTED_RESET_STATES:
+                raise ValueError(
+                    "Unsupported DTC redundancy repair state: "
+                    f"{step.get('expected_runtime_state')}"
+                )
+            for field in (
+                "expected_runtime_status",
+                "expected_copy_a_status",
+                "expected_copy_b_status",
+            ):
+                status = _integer(step.get(field), field, 0, 0xFF)
+                if status & ~availability_mask:
+                    raise ValueError(
+                        f"DTC redundancy repair step {field} uses unavailable bits"
+                    )
+            for field in ("expected_copy_a_generation", "expected_copy_b_generation"):
+                _integer(step.get(field), field, 0, 0x7FFFFFFF)
+            for field in (
+                "expected_copy_a_integrity",
+                "expected_copy_b_integrity",
+                "expected_copy_a_committed",
+                "expected_copy_b_committed",
+            ):
+                if not isinstance(step.get(field), bool):
+                    raise ValueError(
+                        f"DTC redundancy repair step requires boolean {field}"
+                    )
+            if step.get("expected_selected_copy") not in {"", "A", "B"}:
+                raise ValueError(
+                    "Unsupported DTC redundancy repair selected copy: "
+                    f"{step.get('expected_selected_copy')}"
+                )
+            if step.get("expected_repair_outcome") not in SUPPORTED_REDUNDANCY_REPAIR_OUTCOMES:
+                raise ValueError(
+                    "Unsupported DTC redundancy repair outcome: "
+                    f"{step.get('expected_repair_outcome')}"
+                )
+            if step.get("expected_finding") not in SUPPORTED_REDUNDANCY_REPAIR_FINDINGS:
+                raise ValueError(
+                    "Unsupported DTC redundancy repair expected Finding: "
+                    f"{step.get('expected_finding')}"
+                )
     return payload
 
 
@@ -396,5 +507,10 @@ def summarize_dtc_intent(path: Path) -> dict[str, Any]:
         "redundancy_experiments": [
             {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
             for item in payload["redundancy_experiments"]
+        ],
+        "redundancy_repair_experiment_count": len(payload["redundancy_repair_experiments"]),
+        "redundancy_repair_experiments": [
+            {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
+            for item in payload["redundancy_repair_experiments"]
         ],
     }
