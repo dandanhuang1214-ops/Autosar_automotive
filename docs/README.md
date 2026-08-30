@@ -27,6 +27,7 @@
 - [DTC persistence integrity faults R4n 调研](research/dtc-persistence-integrity-fault-research-2026-08-20.md)
 - [DTC redundant mirror/generation R4o 调研](research/dtc-redundant-mirror-generation-research-2026-08-20.md)
 - [DTC redundancy repair/interrupted write R4p 调研](research/dtc-redundancy-repair-interrupted-write-research-2026-08-31.md)
+- [AI engineering review contract R5a 调研](research/ai-engineering-review-contract-research-2026-08-31.md)
 
 ## 文档职责
 

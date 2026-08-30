@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-31）
 
-当前阶段：`R4p — 冗余修复与中断写入证据已落地`。
+当前阶段：`R5a — AI 工程审查契约调研已完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 待开始 | 下一步先定义 retrieval-only、citation、coverage 和拒答契约 |
+| AI 工程审查 | 调研完成 | R5a 已定义 retrieval-only、citation、coverage 和拒答契约；下一步进入本地 JSON 竖切 |
 
 ## 已完成升级历史
 
@@ -380,6 +380,16 @@
 - 边界：不模拟 MemIf/Fee/Ea job、flash 粒度、擦除、磨损、并发或真实断电。
 - 状态：完成。
 
+### R5a：AI 工程审查契约调研（2026-08-31）
+
+- 盘点现有 Artifact/Finding/Trace/TestResult 和各 lab 报告，确认 artifact envelope 未统一、Finding location 非结构化、TestResult findings schema 与实际内联对象不一致、缺少 citation/coverage/refusal 对象四类契约缺口。
+- 新增 `docs/research/ai-engineering-review-contract-research-2026-08-31.md`，定义 ReviewRequest、EvidenceUnit、Citation 和 ReviewResult 的最小字段与验证规则。
+- coverage 使用调用方显式定义的 required checks 计算，不允许依据模型自生成 claims 缩小分母。
+- 定义 `answered/partial/refused` 状态和 missing artifact、hash mismatch、confidentiality denied、no evidence、invalid citation、evidence conflict、coverage below threshold 稳定拒答原因。
+- 确定性 Finding 可以是问题的直接证据，但审查结果不得矛盾、降级或关闭 Finding；未知 Trace 节点和证据冲突必须显式呈现。
+- 决策：R5b 先实现无第三方依赖的本地 JSON Pointer 归一化、词法检索、引用验证、coverage 和拒答，不先做自然语言生成、embedding、向量库或 UI。
+- 状态：调研完成，实现待开始。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -454,9 +464,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5a AI 工程审查契约调研
+### 最近一步：R5b 本地 JSON retrieval-only 竖切
 
-先定义 retrieval-only 的 artifact 输入、引用定位、coverage 计算和证据不足时拒答契约；确定性 Finding 仍是最终判定，不先引入 Web 前端或外部 LLM 依赖。
+实现显式 artifact scope、SHA-256、JSON Pointer EvidenceUnit、确定性词法检索、citation 验证、required-check coverage 与结构化拒答；不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

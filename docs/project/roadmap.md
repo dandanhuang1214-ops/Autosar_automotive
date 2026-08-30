@@ -32,8 +32,9 @@
 - R4n 已完成（2026-08-20）：增加 SHA-256 镜像完整性封套和 flush/corruption 故障注入，验证 last-good 保留与恢复失败安全回退。
 - R4o 已完成（2026-08-20）：增加双副本 generation 仲裁、loss-of-redundancy 分类和损坏新副本后的旧副本回退证据。
 - R4p 已完成（2026-08-31）：实现 committed/staged 副本、幂等 repair、中断普通写入/修复的 last-good 保留和 25 步确定性证据。
+- R5a 调研已完成（2026-08-31）：定义 retrieval-only ReviewRequest/EvidenceUnit/Citation/ReviewResult、基于调用方 checks 的 coverage 和稳定拒答原因。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：进入 R5a 带引用、可拒答的 AI 工程审查契约调研；先定义 retrieval-only 输入/输出、citation 和 coverage，不先做 AI 前端。
+- 当前下一阶段：实现 R5b 本地 JSON retrieval-only 竖切，覆盖显式 artifact scope、JSON Pointer citation、coverage 和 missing/denied/stale/no-evidence 拒答；不引入外部 LLM 或向量库。
 
 ## 平台目标
 
