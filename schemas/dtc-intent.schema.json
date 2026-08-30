@@ -3,7 +3,7 @@
   "$id": "https://example.invalid/automotive-workbench/dtc-intent.schema.json",
   "title": "Vendor-neutral DTC Lifecycle Intent",
   "type": "object",
-  "required": ["schema_version", "model_status", "ecu", "dtcs", "experiments", "cycle_experiments", "reset_experiments", "persistence_fault_experiments"],
+  "required": ["schema_version", "model_status", "ecu", "dtcs", "experiments", "cycle_experiments", "reset_experiments", "persistence_fault_experiments", "redundancy_experiments"],
   "properties": {
     "schema_version": {"const": "dtc-intent-0.1"},
     "model_status": {"enum": ["research-intent", "vendor-validated", "unknown"]},
@@ -208,6 +208,41 @@
                 "expected_persistent_extended_data_stored": {"type": "boolean"},
                 "expected_mirror_integrity": {"type": "boolean"},
                 "expected_finding": {"enum": ["", "DTC-PERSISTENCE-FLUSH-FAILED", "DTC-PERSISTENCE-MIRROR-CORRUPTED", "DTC-PERSISTENCE-RESTORE-FAILED"]}
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "redundancy_experiments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "dtc", "steps"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "dtc": {"type": "integer", "minimum": 0, "maximum": 16777215},
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["event", "expected_runtime_state", "expected_runtime_status", "expected_copy_a_status", "expected_copy_b_status", "expected_copy_a_generation", "expected_copy_b_generation", "expected_copy_a_integrity", "expected_copy_b_integrity", "expected_selected_copy", "expected_finding"],
+              "properties": {
+                "event": {"enum": ["operation_cycle_start", "operation_cycle_end", "fault_present", "flush", "corrupt_copy_a", "hard_reset"]},
+                "expected_runtime_state": {"enum": ["absent", "pending", "confirmed"]},
+                "expected_runtime_status": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_copy_a_status": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_copy_b_status": {"type": "integer", "minimum": 0, "maximum": 255},
+                "expected_copy_a_generation": {"type": "integer", "minimum": 0},
+                "expected_copy_b_generation": {"type": "integer", "minimum": 0},
+                "expected_copy_a_integrity": {"type": "boolean"},
+                "expected_copy_b_integrity": {"type": "boolean"},
+                "expected_selected_copy": {"enum": ["", "A", "B"]},
+                "expected_finding": {"enum": ["", "DTC-REDUNDANCY-LOSS", "DTC-REDUNDANCY-COPY-CORRUPTED", "DTC-REDUNDANCY-ARBITRATION-FAILED", "DTC-REDUNDANCY-RESTORE-FAILED"]}
               },
               "additionalProperties": true
             }

@@ -40,6 +40,21 @@ SUPPORTED_PERSISTENCE_FINDINGS = {
     "DTC-PERSISTENCE-MIRROR-CORRUPTED",
     "DTC-PERSISTENCE-RESTORE-FAILED",
 }
+SUPPORTED_REDUNDANCY_EVENTS = {
+    "operation_cycle_start",
+    "operation_cycle_end",
+    "fault_present",
+    "flush",
+    "corrupt_copy_a",
+    "hard_reset",
+}
+SUPPORTED_REDUNDANCY_FINDINGS = {
+    "",
+    "DTC-REDUNDANCY-LOSS",
+    "DTC-REDUNDANCY-COPY-CORRUPTED",
+    "DTC-REDUNDANCY-ARBITRATION-FAILED",
+    "DTC-REDUNDANCY-RESTORE-FAILED",
+}
 
 
 def _integer(value: Any, name: str, minimum: int, maximum: int) -> int:
@@ -285,6 +300,54 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
                 raise ValueError(
                     f"Unsupported DTC persistence expected Finding: {step.get('expected_finding')}"
                 )
+
+    redundancy_names: set[str] = set()
+    for index, item in enumerate(
+        _list(payload.get("redundancy_experiments"), "redundancy_experiments")
+    ):
+        if not isinstance(item, dict):
+            raise ValueError(f"DTC intent requires redundancy_experiments[{index}] object")
+        name = _string(item.get("name"), f"redundancy_experiments[{index}].name")
+        if name in redundancy_names:
+            raise ValueError(f"Duplicate DTC redundancy experiment name: {name}")
+        redundancy_names.add(name)
+        code = _integer(item.get("dtc"), f"redundancy_experiments[{index}].dtc", 0, 0xFFFFFF)
+        if code not in codes:
+            raise ValueError(f"DTC redundancy experiment references unknown code: 0x{code:06X}")
+        for step_index, step in enumerate(
+            _list(item.get("steps"), f"redundancy_experiments[{index}].steps")
+        ):
+            if not isinstance(step, dict):
+                raise ValueError(
+                    f"DTC intent requires redundancy_experiments[{index}].steps[{step_index}] object"
+                )
+            if step.get("event") not in SUPPORTED_REDUNDANCY_EVENTS:
+                raise ValueError(f"Unsupported DTC redundancy event: {step.get('event')}")
+            if step.get("expected_runtime_state") not in SUPPORTED_RESET_STATES:
+                raise ValueError(
+                    f"Unsupported DTC redundancy state: {step.get('expected_runtime_state')}"
+                )
+            for field in (
+                "expected_runtime_status",
+                "expected_copy_a_status",
+                "expected_copy_b_status",
+            ):
+                status = _integer(step.get(field), field, 0, 0xFF)
+                if status & ~availability_mask:
+                    raise ValueError(f"DTC redundancy step {field} uses unavailable bits")
+            for field in ("expected_copy_a_generation", "expected_copy_b_generation"):
+                _integer(step.get(field), field, 0, 0x7FFFFFFF)
+            for field in ("expected_copy_a_integrity", "expected_copy_b_integrity"):
+                if not isinstance(step.get(field), bool):
+                    raise ValueError(f"DTC redundancy step requires boolean {field}")
+            if step.get("expected_selected_copy") not in {"", "A", "B"}:
+                raise ValueError(
+                    f"Unsupported DTC redundancy selected copy: {step.get('expected_selected_copy')}"
+                )
+            if step.get("expected_finding") not in SUPPORTED_REDUNDANCY_FINDINGS:
+                raise ValueError(
+                    f"Unsupported DTC redundancy expected Finding: {step.get('expected_finding')}"
+                )
     return payload
 
 
@@ -328,5 +391,10 @@ def summarize_dtc_intent(path: Path) -> dict[str, Any]:
         "persistence_fault_experiments": [
             {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
             for item in payload["persistence_fault_experiments"]
+        ],
+        "redundancy_experiment_count": len(payload["redundancy_experiments"]),
+        "redundancy_experiments": [
+            {"name": item["name"], "dtc_hex": f"0x{item['dtc']:06X}", "step_count": len(item["steps"])}
+            for item in payload["redundancy_experiments"]
         ],
     }

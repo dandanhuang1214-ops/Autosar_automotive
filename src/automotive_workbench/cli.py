@@ -20,6 +20,7 @@ from automotive_workbench.dtc_lifecycle import run_dtc_lifecycle
 from automotive_workbench.dtc_aging import run_dtc_aging_lab
 from automotive_workbench.dtc_reset import run_dtc_reset_lab
 from automotive_workbench.dtc_persistence_fault import run_dtc_persistence_fault_lab
+from automotive_workbench.dtc_redundancy import run_dtc_redundancy_lab
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -137,6 +138,15 @@ def build_parser() -> argparse.ArgumentParser:
     dtc_persistence_fault_parser.add_argument(
         "--output", type=Path, default=Path("output") / "dtc-persistence-fault"
     )
+
+    dtc_redundancy_parser = commands.add_parser(
+        "run-dtc-redundancy-lab",
+        help="Run DTC redundant-copy generation and recovery experiments",
+    )
+    dtc_redundancy_parser.add_argument("intent", type=Path)
+    dtc_redundancy_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "dtc-redundancy"
+    )
     return parser
 
 
@@ -209,6 +219,8 @@ def main() -> int:
             result = run_dtc_reset_lab(args.intent, args.output)
         elif args.command == "run-dtc-persistence-fault-lab":
             result = run_dtc_persistence_fault_lab(args.intent, args.output)
+        elif args.command == "run-dtc-redundancy-lab":
+            result = run_dtc_redundancy_lab(args.intent, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

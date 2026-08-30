@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-20）
 
-当前阶段：`R4n — 持久镜像完整性与失败注入证据已落地`。
+当前阶段：`R4o — 冗余镜像与 generation 仲裁证据已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4n 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data、hard reset、持久镜像和完整性故障证据 |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4o 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data、hard reset、持久镜像、完整性故障和冗余恢复证据 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -355,6 +355,18 @@
 - 边界：SHA-256 与进程内镜像仅用于确定性实验；不实现 NvM CRC 配置、异步 job、write retry、redundant block、ROM default、flash 或安全认证。
 - 状态：完成。
 
+### R4o：冗余镜像与 generation 仲裁（2026-08-20）
+
+- 新增 `docs/research/dtc-redundant-mirror-generation-research-2026-08-20.md`，基于 AUTOSAR CP NvM 和 NV Data Handling Guide 区分标准 loss-of-redundancy 语义与 Workbench generation 策略。
+- DTC intent/schema 新增两个 `redundancy_experiments`；每个副本保存独立状态、generation 和覆盖二者的 SHA-256 checksum。
+- 新增 `dtc_redundancy.py`、CLI `run-dtc-redundancy-lab` 和 JSON/Markdown 报告；flush 写入较旧副本并使用 `max(generation) + 1`。
+- 两份有效副本 generation 不同时选择较新副本并产生 `DTC-REDUNDANCY-LOSS`；仅一份有效时恢复该副本并产生同类 Finding。
+- 新副本 A 损坏后，hard reset 选择旧但有效的 B，运行态从 confirmed `0x2F` 回退为空 `0x00`；相同 generation 但内容分歧会产生 `DTC-REDUNDANCY-ARBITRATION-FAILED`，不猜测副本。
+- redundancy lab `output/dtc-redundancy-r4o/dtc-redundancy-report.json` 为 13/13 通过，包含 3 个预期 Finding。
+- 回归：`PYTHONPATH=src .venv-linux/bin/python -m unittest discover -s tests -v` 通过，59 项运行、2 项环境跳过；仲裁边界覆盖双副本一致、同 generation 内容冲突和双副本均无效；JSON、Python 编译和 diff 检查通过。
+- 边界：generation 和 SHA-256 是进程内确定性策略；不实现 NvM job、MemIf/Fee/Ea、configured redundant block、repair、flash atomicity、wraparound、断电时序或安全认证。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -429,9 +441,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4o 冗余镜像与 generation 仲裁调研
+### 最近一步：R4p 冗余修复与中断写入边界调研
 
-先定义双副本 generation、有效副本选择和 loss-of-redundancy 分类，再决定最小恢复实验；不直接实现 NvM redundant block 或 flash 管理。
+先定义降级恢复后的 repair/scrub、写入中断和 commit marker 语义，再决定最小故障实验；不直接实现 NvM redundant block、Fee/Ea 或 flash 管理。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

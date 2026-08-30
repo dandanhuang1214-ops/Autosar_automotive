@@ -125,5 +125,32 @@
         {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_persistent_status": 47, "expected_runtime_snapshot_stored": false, "expected_persistent_snapshot_stored": true, "expected_runtime_extended_data_stored": false, "expected_persistent_extended_data_stored": true, "expected_mirror_integrity": false, "expected_finding": "DTC-PERSISTENCE-RESTORE-FAILED"}
       ]
     }
+  ],
+  "redundancy_experiments": [
+    {
+      "name": "window_obstruction_newest_valid_copy_wins",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "operation_cycle_start", "expected_runtime_state": "absent", "expected_runtime_status": 80, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "pending", "expected_runtime_status": 39, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "operation_cycle_end", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "flush", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 47, "expected_copy_b_status": 0, "expected_copy_a_generation": 1, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "hard_reset", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 47, "expected_copy_b_status": 0, "expected_copy_a_generation": 1, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "A", "expected_finding": "DTC-REDUNDANCY-LOSS"}
+      ]
+    },
+    {
+      "name": "window_obstruction_corrupt_newest_falls_back_to_older_copy",
+      "dtc": 12583168,
+      "steps": [
+        {"event": "operation_cycle_start", "expected_runtime_state": "absent", "expected_runtime_status": 80, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "pending", "expected_runtime_status": 39, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "fault_present", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "operation_cycle_end", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 0, "expected_copy_b_status": 0, "expected_copy_a_generation": 0, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "flush", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 47, "expected_copy_b_status": 0, "expected_copy_a_generation": 1, "expected_copy_b_generation": 0, "expected_copy_a_integrity": true, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": ""},
+        {"event": "corrupt_copy_a", "expected_runtime_state": "confirmed", "expected_runtime_status": 47, "expected_copy_a_status": 47, "expected_copy_b_status": 0, "expected_copy_a_generation": 1, "expected_copy_b_generation": 0, "expected_copy_a_integrity": false, "expected_copy_b_integrity": true, "expected_selected_copy": "", "expected_finding": "DTC-REDUNDANCY-COPY-CORRUPTED"},
+        {"event": "hard_reset", "expected_runtime_state": "absent", "expected_runtime_status": 0, "expected_copy_a_status": 47, "expected_copy_b_status": 0, "expected_copy_a_generation": 1, "expected_copy_b_generation": 0, "expected_copy_a_integrity": false, "expected_copy_b_integrity": true, "expected_selected_copy": "B", "expected_finding": "DTC-REDUNDANCY-LOSS"}
+      ]
+    }
   ]
 }
