@@ -26,6 +26,7 @@
 - [DTC reset/persistence R4m 调研](research/dtc-reset-persistence-research-2026-08-20.md)
 - [DTC persistence integrity faults R4n 调研](research/dtc-persistence-integrity-fault-research-2026-08-20.md)
 - [DTC redundant mirror/generation R4o 调研](research/dtc-redundant-mirror-generation-research-2026-08-20.md)
+- [DTC redundancy repair/interrupted write R4p 调研](research/dtc-redundancy-repair-interrupted-write-research-2026-08-31.md)
 
 ## 文档职责
 

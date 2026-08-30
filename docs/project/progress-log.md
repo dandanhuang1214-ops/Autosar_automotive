@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-08-20）
+## 当前总览（2026-08-31）
 
-当前阶段：`R4o — 冗余镜像与 generation 仲裁证据已落地`。
+当前阶段：`R4p — 冗余修复与中断写入边界调研已完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -38,7 +38,7 @@
 | 可重复 Linux lab 入口 | 完成 | `scripts/linux/run_socketcan_lab.sh` 通过并归档报告 |
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
-| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4o 已完成 DTC 生命周期、operation cycle、aging、snapshot、extended data、hard reset、持久镜像、完整性故障和冗余恢复证据 |
+| ISO-TP/UDS 诊断链 | 部分完成 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4o 已完成 DTC 生命周期到冗余恢复证据；R4p 已完成 repair 与中断写入边界调研 |
 | AI 工程审查 | 未开始 | 确定性通信与诊断闭环后进入 |
 
 ## 已完成升级历史
@@ -367,6 +367,15 @@
 - 边界：generation 和 SHA-256 是进程内确定性策略；不实现 NvM job、MemIf/Fee/Ea、configured redundant block、repair、flash atomicity、wraparound、断电时序或安全认证。
 - 状态：完成。
 
+### R4p：冗余修复与中断写入边界调研（2026-08-31）
+
+- 新增 `docs/research/dtc-redundancy-repair-interrupted-write-research-2026-08-31.md`，核对 AUTOSAR NvM loss-of-redundancy、损坏副本恢复、CRC、写验证和 retry 边界。
+- 明确 generation、scrub 时机和 commit marker 不是引用规范定义的算法，必须保持为 Workbench 确定性策略。
+- 定义 committed/staged 副本选择规则、幂等 repair、无有效源时拒绝 repair，以及中断普通写入/修复不得破坏 last-good 源副本的约束。
+- 定义 3 类最小验收场景：普通写入在 commit 前中断、降级恢复后成功 repair 且二次 reset 无冗余告警、repair 在 commit 前中断仍可从原始源副本恢复。
+- 决策：进入最小实现；不模拟 MemIf/Fee/Ea job、flash 粒度、擦除、磨损、并发或真实断电。
+- 状态：调研完成，实现待开始。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -441,9 +450,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R4p 冗余修复与中断写入边界调研
+### 最近一步：R4p 最小 repair/scrub 与 commit-marker 故障实验
 
-先定义降级恢复后的 repair/scrub、写入中断和 commit marker 语义，再决定最小故障实验；不直接实现 NvM redundant block、Fee/Ea 或 flash 管理。
+按调研定义实现 staged/committed 选择、幂等 repair 和两类 commit 前中断证据；不直接实现 NvM redundant block、Fee/Ea 或 flash 管理。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
