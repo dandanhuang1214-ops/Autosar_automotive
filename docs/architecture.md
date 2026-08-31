@@ -26,3 +26,5 @@ Adapters
 `run-review` 实现第一个 retrieval-only 审查内核：只注册 request 显式列出的本地 JSON artifact，对标量叶子生成 JSON Pointer EvidenceUnit，使用无第三方依赖的词法匹配支持调用方 checks。Citation 同时绑定 source SHA-256、pointer 和 content SHA-256；源文件改变后引用必须失效。`answered/partial/refused` 是证据覆盖结果，不会覆盖或降级确定性 Finding。
 
 R5d 将审查内核扩展到本地 Markdown `line-range`，并通过 `review-request-0.2` assertion 显式声明 `claim_key`、locator 和 `equals/all-equal`。词法重叠不触发冲突；只有可比较观测值不一致时才产生 `REVIEW-EVIDENCE-CONFLICT` 并引用双方。`run-review-eval` 对固定 corpus、gold locator、拒答码、Finding 保真和三次重复运行做精确评分，不使用 LLM judge。
+
+R5e 不改变审查判定逻辑，只扩展评测平面。evaluation case 显式记录 `domain`，结果输出总 check 数、各域 check 数和各域准确率。当前域为 `core/dbc/can/uds/dtc`；`dbc` 引用 DBC-derived canonical contract，其他汽车域直接引用公开 BSW/UDS/DTC intent。所有源文件由 request `expected_sha256` 锁定。

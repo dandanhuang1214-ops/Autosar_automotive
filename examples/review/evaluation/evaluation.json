@@ -1,11 +1,12 @@
 {
-  "schema_version": "review-evaluation-0.1",
-  "evaluation_id": "workbench-review-r5d-gold",
+  "schema_version": "review-evaluation-0.2",
+  "evaluation_id": "workbench-review-r5e-automotive-gold",
   "repeat_runs": 3,
   "repeatability_excluded_fields": ["run_id", "started_at"],
   "cases": [
     {
       "case_id": "single-json-supported",
+      "domain": "core",
       "request": "requests/01-single-json.json",
       "expected_status": "answered",
       "expected_checks": {"finding-present": "supported"},
@@ -28,6 +29,7 @@
     },
     {
       "case_id": "markdown-supported",
+      "domain": "core",
       "request": "requests/02-markdown.json",
       "expected_status": "answered",
       "expected_checks": {"markdown-outcome": "supported"},
@@ -39,6 +41,7 @@
     },
     {
       "case_id": "multi-artifact-agreement",
+      "domain": "core",
       "request": "requests/03-agreement.json",
       "expected_status": "answered",
       "expected_checks": {"reports-agree": "supported"},
@@ -53,6 +56,7 @@
     },
     {
       "case_id": "multi-artifact-conflict",
+      "domain": "core",
       "request": "requests/04-conflict.json",
       "expected_status": "refused",
       "expected_checks": {"reports-conflict": "conflicted"},
@@ -67,6 +71,7 @@
     },
     {
       "case_id": "similar-but-not-comparable",
+      "domain": "core",
       "request": "requests/05-non-comparable.json",
       "expected_status": "answered",
       "expected_checks": {"outcome-mentioned": "supported"},
@@ -78,6 +83,7 @@
     },
     {
       "case_id": "partial-coverage",
+      "domain": "core",
       "request": "requests/06-partial.json",
       "expected_status": "partial",
       "expected_checks": {
@@ -103,6 +109,7 @@
     },
     {
       "case_id": "missing-artifact",
+      "domain": "core",
       "request": "requests/07-missing.json",
       "expected_status": "refused",
       "expected_checks": {"missing-check": "blocked"},
@@ -112,6 +119,7 @@
     },
     {
       "case_id": "confidentiality-denied",
+      "domain": "core",
       "request": "requests/08-denied.json",
       "expected_status": "refused",
       "expected_checks": {"denied-check": "blocked"},
@@ -121,6 +129,7 @@
     },
     {
       "case_id": "invalid-markdown-range",
+      "domain": "core",
       "request": "requests/09-invalid-range.json",
       "expected_status": "refused",
       "expected_checks": {"invalid-range": "blocked"},
@@ -130,6 +139,7 @@
     },
     {
       "case_id": "repeatable-all-equal",
+      "domain": "core",
       "request": "requests/10-repeatability.json",
       "expected_status": "answered",
       "expected_checks": {"all-equal": "supported"},
@@ -139,6 +149,100 @@
         [
           {"artifact_id": "report-a", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}},
           {"artifact_id": "report-b", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}}
+        ]
+      ]
+    },
+    {
+      "case_id": "dbc-contract-facts",
+      "domain": "dbc",
+      "request": "requests/11-dbc-contract.json",
+      "expected_status": "answered",
+      "expected_checks": {
+        "dbc-autosar-version": "supported",
+        "dbc-position-direction": "supported",
+        "dbc-position-range": "supported",
+        "dbc-direction-enum": "supported",
+        "dbc-public-sample-status": "supported"
+      },
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/project/target_autosar_version"}},
+          {"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/signals/0/direction"}},
+          {"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/signals/0/physical_range"}},
+          {"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/signals/1/enum_values"}},
+          {"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/metadata/sample_status"}}
+        ]
+      ]
+    },
+    {
+      "case_id": "can-bsw-intent-facts",
+      "domain": "can",
+      "request": "requests/12-can-bsw-intent.json",
+      "expected_status": "answered",
+      "expected_checks": {
+        "can-window-status-id": "supported",
+        "can-window-command-id": "supported",
+        "can-window-status-dlc": "supported",
+        "can-position-byte-order": "supported",
+        "can-direction-bit-length": "supported"
+      },
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/messages/0/can_id"}},
+          {"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/messages/1/can_id"}},
+          {"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/messages/0/dlc"}},
+          {"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/signals/0/byte_order"}},
+          {"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/signals/1/bit_length"}}
+        ]
+      ]
+    },
+    {
+      "case_id": "uds-intent-facts",
+      "domain": "uds",
+      "request": "requests/13-uds-intent.json",
+      "expected_status": "answered",
+      "expected_checks": {
+        "uds-addressing": "supported",
+        "uds-request-id": "supported",
+        "uds-response-id": "supported",
+        "uds-vin-length": "supported",
+        "uds-unknown-did-nrc": "supported"
+      },
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/addressing"}},
+          {"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/request_id"}},
+          {"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/response_id"}},
+          {"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/dids/0/length"}},
+          {"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/scenarios/1/nrc"}}
+        ]
+      ]
+    },
+    {
+      "case_id": "dtc-intent-facts",
+      "domain": "dtc",
+      "request": "requests/14-dtc-intent.json",
+      "expected_status": "answered",
+      "expected_checks": {
+        "dtc-status-mask": "supported",
+        "dtc-failure-threshold": "supported",
+        "dtc-aging-threshold": "supported",
+        "dtc-clear-persistence": "supported"
+      },
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/status_availability_mask"}},
+          {"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/failure_threshold"}},
+          {"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/aging_threshold"}},
+          {"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/persistence/clear_updates_persistent_memory"}}
         ]
       ]
     }

@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-31）
 
-当前阶段：`R5d — 冲突、Markdown citation 与 gold evaluation 已落地`。
+当前阶段：`R5e — 30-check 汽车工程跨域评测已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5d 已完成基础契约、JSON/Markdown citation、显式冲突和十案例评测；下一步扩展跨域汽车工程评测 |
+| AI 工程审查 | 部分完成 | R5a-R5e 已完成基础契约、引用/冲突和 14 案例 30-check 跨域评测；下一步接入运行时报告与 held-out negative set |
 
 ## 已完成升级历史
 
@@ -424,6 +424,19 @@
 - 边界：当前 gold set 很小且以合成/repair 证据为主；不宣称自然语言语义理解、跨版本适用性推断、来源权威裁决或量产评审准确率。
 - 状态：完成。
 
+### R5e：30-check 汽车工程跨域评测（2026-08-31）
+
+- 保留 R5d 的 10 个 core 案例与 11 个 checks，新增 4 个直接引用仓库公开工程 artifact 的案例，不复制输入文件。
+- DBC 域通过 DBC-derived `canonical_contract.json` 验证 AUTOSAR 版本、信号方向/范围、枚举和公开样例状态 5 项；review 内核仍不直接解析 `.dbc`。
+- CAN 域通过 `bsw_intent.json` 验证两个 CAN ID、DLC、byte order 和 bit length 5 项；UDS 域通过 `uds_intent.json` 验证 addressing、request/response ID、VIN 长度和 NRC 5 项。
+- DTC 域通过 `dtc_intent.json` 验证 status mask、failure/aging threshold 和 clear persistence 4 项；新增 19 项后总计恰好 30 checks。
+- evaluator 升级到 `review-evaluation-0.2`：manifest/case 新增 `domain`，result 新增 `check_count`、`domain_check_counts` 和 `domain_check_accuracy`；loader 继续接受 `0.1` 并默认 legacy case 为 `core`。
+- 所有 17 个实际存在的 evaluation source reference 均携带并由测试复核 `expected_sha256`；缺失 artifact 案例保持未绑定源，用于拒答验证。
+- 评测：14/14 case、30/30 check 通过；`core=11/dbc=5/can=5/uds=5/dtc=4`，五域准确率均 `1.0`；全部原有指标仍为 `1.0`，false conflict `0`。
+- 回归：全量 78 项运行、2 项环境跳过；34 份 schema/example JSON 可解析，Python compileall、R5e whitespace 和 diff check 通过。
+- 边界：新增 19 项使用调用方显式 assertion 和已知 JSON Pointer，只证明当前公开 artifact 的确定性回归，不证明未知问题检索、直接 DBC 审查或量产语义正确性。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -506,16 +519,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5e 汽车工程 artifact 评测扩展
+### 最近一步：R5f 运行时报告与 held-out negative evaluation
 
-将 gold dataset 从十案例扩展到 30 个 DBC/CAN/UDS/DTC checks，优先复用现有公开 lab report 和 Finding；先建立跨域 retrieval/citation/refusal 基线，不先引入 Web 前端、外部 LLM、embedding 或向量库。
+把 CAN/UDS/DTC runner 生成的报告接入 review scope，并将开发用 gold 与 held-out negative cases 分开；验证 producer/source hash、Finding 保真、未知 locator 和跨运行冲突，不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 R5d 确定性冲突与十案例评测，下一阶段扩展真实公开汽车 artifact 覆盖。
+诊断链当前闭环已稳定，AI 工程审查已完成 R5e 的 30-check 跨域静态 artifact 基线，下一阶段接入 run-produced evidence 并增加 held-out negatives。
 
 ## 下次必须补录
 

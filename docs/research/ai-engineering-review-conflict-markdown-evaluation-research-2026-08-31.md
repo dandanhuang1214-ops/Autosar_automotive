@@ -158,3 +158,16 @@ R5d implements the contract in `review.py` and `review_eval.py`:
 - The public evaluation passes all ten cases: every proportional metric is `1.0`, false conflicts are `0`, and all citation validation passes.
 
 The implementation remains local, deterministic, retrieval-only, and dependency-free. The ten synthetic and repair-oriented cases are a regression gate, not evidence of general semantic understanding or production review accuracy.
+
+## R5e automotive-domain evaluation expansion
+
+R5e retains the ten R5d core cases and adds nineteen explicit checks over four existing public Workbench artifacts:
+
+- five DBC-derived contract checks over `canonical_contract.json`;
+- five CAN/BSW mapping checks over `bsw_intent.json`;
+- five transport, DID, and NRC checks over `uds_intent.json`;
+- four lifecycle and persistence-policy checks over `dtc_intent.json`.
+
+The resulting `review-evaluation-0.2` manifest contains fourteen cases and exactly thirty checks. Every referenced source carries `expected_sha256`; evaluation results expose per-domain check counts and accuracy. The loader keeps `0.1` compatibility by assigning legacy cases to `core`. All five domains achieve check-state accuracy `1.0`, all existing global metrics remain `1.0`, and false conflicts remain `0` across three runs per case.
+
+These nineteen checks use caller-authored exact assertions and stable JSON Pointers. They prove deterministic resolution and regression coverage across current public artifacts, not retrieval of unknown questions, DBC parsing inside the review kernel, or semantic correctness beyond the gold contract.

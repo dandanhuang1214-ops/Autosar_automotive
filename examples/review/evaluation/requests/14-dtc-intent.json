@@ -1,0 +1,43 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-dtc-intent",
+  "question": "Which stable DTC lifecycle and persistence facts are present?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {
+      "artifact_id": "dtc-intent",
+      "artifact_type": "dtc-intent",
+      "source": "../../../window_control/dtc_intent.json",
+      "confidentiality": "public",
+      "expected_sha256": "3389e4267c4d3be41ed033b773999076101411c4a010bf6666ada1c143f776a2"
+    }
+  ],
+  "artifact_ids": ["dtc-intent"],
+  "checks": [
+    {
+      "check_id": "dtc-status-mask",
+      "statement": "The DTC status availability mask is 255.",
+      "terms": ["DTC status availability mask 255"],
+      "assertion": {"claim_key": "dtc.status-availability-mask", "operator": "equals", "expected": 255, "observations": [{"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/status_availability_mask"}}]}
+    },
+    {
+      "check_id": "dtc-failure-threshold",
+      "statement": "Window obstruction confirms after two failures.",
+      "terms": ["window obstruction failure threshold 2"],
+      "assertion": {"claim_key": "dtc.window-obstruction.failure-threshold", "operator": "equals", "expected": 2, "observations": [{"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/failure_threshold"}}]}
+    },
+    {
+      "check_id": "dtc-aging-threshold",
+      "statement": "Window obstruction ages out after two tested-pass cycles.",
+      "terms": ["window obstruction aging threshold 2"],
+      "assertion": {"claim_key": "dtc.window-obstruction.aging-threshold", "operator": "equals", "expected": 2, "observations": [{"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/aging_threshold"}}]}
+    },
+    {
+      "check_id": "dtc-clear-persistence",
+      "statement": "Clear updates the modeled persistent memory.",
+      "terms": ["clear persistent memory true"],
+      "assertion": {"claim_key": "dtc.window-obstruction.clear-persistence", "operator": "equals", "expected": true, "observations": [{"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/persistence/clear_updates_persistent_memory"}}]}
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-uds-intent",
+  "question": "Which stable UDS transport and DID facts are present?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {
+      "artifact_id": "uds-intent",
+      "artifact_type": "uds-intent",
+      "source": "../../../window_control/uds_intent.json",
+      "confidentiality": "public",
+      "expected_sha256": "b12f434b3f08b2645ec6baafaeb5209ba909de8594ed122cf9ea81d8f23e360f"
+    }
+  ],
+  "artifact_ids": ["uds-intent"],
+  "checks": [
+    {
+      "check_id": "uds-addressing",
+      "statement": "UDS uses normal 11-bit addressing.",
+      "terms": ["UDS normal 11 bit addressing"],
+      "assertion": {"claim_key": "uds.transport.addressing", "operator": "equals", "expected": "normal_11bit", "observations": [{"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/addressing"}}]}
+    },
+    {
+      "check_id": "uds-request-id",
+      "statement": "The diagnostic request CAN ID is 1792.",
+      "terms": ["diagnostic request ID 1792"],
+      "assertion": {"claim_key": "uds.transport.request-id", "operator": "equals", "expected": 1792, "observations": [{"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/request_id"}}]}
+    },
+    {
+      "check_id": "uds-response-id",
+      "statement": "The diagnostic response CAN ID is 1800.",
+      "terms": ["diagnostic response ID 1800"],
+      "assertion": {"claim_key": "uds.transport.response-id", "operator": "equals", "expected": 1800, "observations": [{"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/response_id"}}]}
+    },
+    {
+      "check_id": "uds-vin-length",
+      "statement": "The VIN DID length is 17 bytes.",
+      "terms": ["VIN DID length 17"],
+      "assertion": {"claim_key": "uds.did.vin.length", "operator": "equals", "expected": 17, "observations": [{"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/dids/0/length"}}]}
+    },
+    {
+      "check_id": "uds-unknown-did-nrc",
+      "statement": "The unknown DID scenario expects requestOutOfRange.",
+      "terms": ["unknown DID requestOutOfRange"],
+      "assertion": {"claim_key": "uds.scenario.unknown-did.nrc", "operator": "equals", "expected": "requestOutOfRange", "observations": [{"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/scenarios/1/nrc"}}]}
+    }
+  ]
+}

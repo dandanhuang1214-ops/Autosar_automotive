@@ -1,0 +1,49 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-dbc-contract",
+  "question": "Which stable DBC-derived signal-contract facts are present?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {
+      "artifact_id": "canonical-contract",
+      "artifact_type": "canonical-signal-contract",
+      "source": "../../../window_control/canonical_contract.json",
+      "confidentiality": "public",
+      "expected_sha256": "c10e341ffe3d6a65d0d7bcdd3668bcfaf90f89837d57860d9af9796c1ec3c809"
+    }
+  ],
+  "artifact_ids": ["canonical-contract"],
+  "checks": [
+    {
+      "check_id": "dbc-autosar-version",
+      "statement": "The public contract targets AUTOSAR 4-3-0.",
+      "terms": ["AUTOSAR version 4 3 0"],
+      "assertion": {"claim_key": "dbc.target-autosar-version", "operator": "equals", "expected": "4-3-0", "observations": [{"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/project/target_autosar_version"}}]}
+    },
+    {
+      "check_id": "dbc-position-direction",
+      "statement": "WindowPosition is an output signal.",
+      "terms": ["WindowPosition output"],
+      "assertion": {"claim_key": "dbc.WindowPosition.direction", "operator": "equals", "expected": "output", "observations": [{"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/signals/0/direction"}}]}
+    },
+    {
+      "check_id": "dbc-position-range",
+      "statement": "WindowPosition has physical range 0-100.",
+      "terms": ["WindowPosition physical range 0 100"],
+      "assertion": {"claim_key": "dbc.WindowPosition.physical-range", "operator": "equals", "expected": "0-100", "observations": [{"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/signals/0/physical_range"}}]}
+    },
+    {
+      "check_id": "dbc-direction-enum",
+      "statement": "RequestedDirection defines Stop, Up, Down, and Reserved.",
+      "terms": ["RequestedDirection Stop Up Down Reserved"],
+      "assertion": {"claim_key": "dbc.RequestedDirection.enum", "operator": "equals", "expected": "0=Stop, 1=Up, 2=Down, 3=Reserved", "observations": [{"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/signals/1/enum_values"}}]}
+    },
+    {
+      "check_id": "dbc-public-sample-status",
+      "statement": "The contract is marked public-learning-only.",
+      "terms": ["public learning only"],
+      "assertion": {"claim_key": "dbc.sample-status", "operator": "equals", "expected": "public-learning-only", "observations": [{"artifact_id": "canonical-contract", "locator": {"type": "json-pointer", "pointer": "/metadata/sample_status"}}]}
+    }
+  ]
+}

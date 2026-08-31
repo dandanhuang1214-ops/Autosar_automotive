@@ -21,7 +21,9 @@ def _locator_key(artifact_id: str, locator: dict[str, Any]) -> str:
 
 def load_evaluation_manifest(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
-    if payload.get("schema_version") != "review-evaluation-0.1":
+    if payload.get("schema_version") not in {
+        "review-evaluation-0.1", "review-evaluation-0.2"
+    }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
     repeat_runs = payload.get("repeat_runs", 3)
@@ -38,6 +40,9 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         if case_id in case_ids:
             raise ValueError(f"Duplicate review evaluation case_id: {case_id}")
         case_ids.add(case_id)
+        if payload["schema_version"] == "review-evaluation-0.1":
+            case.setdefault("domain", "core")
+        _require_string(case.get("domain"), "case domain")
         _require_string(case.get("request"), "case request")
         if case.get("expected_status") not in {"answered", "partial", "refused"}:
             raise ValueError(f"Review evaluation case {case_id} has invalid expected_status")
@@ -105,6 +110,7 @@ def render_evaluation_markdown(result: dict[str, Any]) -> str:
         f"- Evaluation: `{result['evaluation_id']}`",
         f"- Status: **{result['status']}**",
         f"- Cases: {result['case_count']}",
+        f"- Checks: {result['check_count']}",
         f"- Repeat runs: {result['repeat_runs']}",
         "",
         "| Metric | Value | Gate |",
@@ -120,11 +126,23 @@ def render_evaluation_markdown(result: dict[str, Any]) -> str:
         f"| Finding preservation | {metrics['finding_preservation']:.3f} | 1.000 |",
         f"| Repeatability | {metrics['repeatability']:.3f} | 1.000 |",
         "",
+        "## Domain coverage",
+        "",
+        "| Domain | Checks | Check-state accuracy |",
+        "|---|---:|---:|",
+    ]
+    for domain in sorted(result["domain_check_counts"]):
+        lines.append(
+            f"| `{domain}` | {result['domain_check_counts'][domain]} | "
+            f"{result['domain_check_accuracy'][domain]:.3f} |"
+        )
+    lines.extend([
+        "",
         "## Cases",
         "",
         "| Case | Passed | Observed status |",
         "|---|---:|---|",
-    ]
+    ])
     for case in result["cases"]:
         lines.append(
             f"| `{case['case_id']}` | {str(case['passed']).lower()} | {case['observed_status']} |"
@@ -158,6 +176,8 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
     refusal_correct = 0
     finding_correct = 0
     repeatable_cases = 0
+    domain_check_totals: dict[str, int] = {}
+    domain_check_correct: dict[str, int] = {}
     case_results: list[dict[str, Any]] = []
 
     for case in manifest["cases"]:
@@ -167,6 +187,7 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             for index in range(repeat_runs)
         ]
         result = runs[0]
+        domain = case["domain"]
         observed_checks = {
             item["check_id"]: item["status"] for item in result["checks"]
         }
@@ -177,8 +198,10 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             expected_status = expected_checks.get(check_id)
             observed_status = observed_checks.get(check_id)
             check_total += 1
+            domain_check_totals[domain] = domain_check_totals.get(domain, 0) + 1
             correct = observed_status == expected_status
             check_correct += int(correct)
+            domain_check_correct[domain] = domain_check_correct.get(domain, 0) + int(correct)
             if expected_status == "conflicted":
                 expected_conflicts += 1
                 found_conflicts += int(observed_status == "conflicted")
@@ -232,6 +255,7 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         )
         case_results.append({
             "case_id": case["case_id"],
+            "domain": domain,
             "passed": case_passed,
             "observed_status": result["status"],
             "observed_checks": observed_checks,
@@ -241,6 +265,10 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         })
 
     case_count = len(manifest["cases"])
+    domain_check_accuracy = {
+        domain: domain_check_correct.get(domain, 0) / count
+        for domain, count in sorted(domain_check_totals.items())
+    }
     metrics = {
         "status_accuracy": status_correct / case_count,
         "check_state_accuracy": check_correct / check_total,
@@ -268,18 +296,26 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             "repeatability",
         ))
         and metrics["false_conflict_count"] == 0
+        and all(value == 1.0 for value in domain_check_accuracy.values())
         and all(item["passed"] for item in case_results)
     )
     timestamp = datetime.now(timezone.utc)
     evaluation = {
         "artifact_type": "engineering-review-evaluation",
-        "schema_version": "review-evaluation-result-0.1",
+        "schema_version": (
+            "review-evaluation-result-0.2"
+            if manifest["schema_version"] == "review-evaluation-0.2"
+            else "review-evaluation-result-0.1"
+        ),
         "run_id": timestamp.strftime("%Y%m%dT%H%M%SZ"),
         "started_at": timestamp.isoformat(),
         "evaluation_id": manifest["evaluation_id"],
         "status": "passed" if gates_passed else "failed",
         "case_count": case_count,
+        "check_count": check_total,
         "repeat_runs": repeat_runs,
+        "domain_check_counts": dict(sorted(domain_check_totals.items())),
+        "domain_check_accuracy": domain_check_accuracy,
         "metrics": metrics,
         "cases": case_results,
     }
