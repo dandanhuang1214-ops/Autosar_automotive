@@ -6,13 +6,13 @@
   "required": ["artifact_type", "schema_version", "run_id", "started_at", "evaluation_id", "status", "case_count", "repeat_runs", "metrics", "cases"],
   "allOf": [
     {
-      "if": {"properties": {"schema_version": {"const": "review-evaluation-result-0.2"}}},
-      "then": {"required": ["check_count", "domain_check_counts", "domain_check_accuracy"]}
+      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3"]}}},
+      "then": {"required": ["check_count", "domain_check_counts", "domain_check_accuracy", "split_check_counts", "split_check_accuracy"]}
     }
   ],
   "properties": {
     "artifact_type": {"const": "engineering-review-evaluation"},
-    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2"]},
+    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3"]},
     "run_id": {"type": "string", "minLength": 1},
     "started_at": {"type": "string", "minLength": 1},
     "evaluation_id": {"type": "string", "minLength": 1},
@@ -26,6 +26,16 @@
       "additionalProperties": {"type": "integer", "minimum": 1}
     },
     "domain_check_accuracy": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+    },
+    "split_check_counts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "integer", "minimum": 1}
+    },
+    "split_check_accuracy": {
       "type": "object",
       "minProperties": 1,
       "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
@@ -55,12 +65,24 @@
         "properties": {
           "case_id": {"type": "string"},
           "domain": {"type": "string"},
+          "split": {"enum": ["development", "runtime", "held-out"]},
           "passed": {"type": "boolean"},
           "observed_status": {"enum": ["answered", "partial", "refused"]},
           "observed_checks": {"type": "object", "additionalProperties": {"enum": ["supported", "unsupported", "conflicted", "blocked"]}},
           "observed_refusal_codes": {"type": "array", "items": {"type": "string"}},
           "citation_count": {"type": "integer", "minimum": 0},
-          "repeatable": {"type": "boolean"}
+          "repeatable": {"type": "boolean"},
+          "producer": {
+            "type": "object",
+            "required": ["kind", "report", "source_sha256", "status"],
+            "properties": {
+              "kind": {"enum": ["can-lab", "uds-lab", "dtc-lifecycle"]},
+              "report": {"type": "string", "minLength": 1},
+              "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "status": {"const": "passed"}
+            },
+            "additionalProperties": false
+          }
         },
         "additionalProperties": false
       }

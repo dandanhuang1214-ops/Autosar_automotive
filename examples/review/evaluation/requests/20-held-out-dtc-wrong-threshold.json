@@ -1,0 +1,21 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-held-out-dtc-wrong-threshold",
+  "question": "Is the DTC failure threshold five?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [{
+    "artifact_id": "dtc-intent",
+    "artifact_type": "dtc-intent",
+    "source": "../../../window_control/dtc_intent.json",
+    "confidentiality": "public",
+    "expected_sha256": "3389e4267c4d3be41ed033b773999076101411c4a010bf6666ada1c143f776a2"
+  }],
+  "artifact_ids": ["dtc-intent"],
+  "checks": [{
+    "check_id": "held-out-dtc-wrong-threshold",
+    "statement": "The obstruction DTC failure threshold is five.",
+    "terms": ["DTC failure threshold five"],
+    "assertion": {"claim_key": "dtc.failure-threshold", "operator": "equals", "expected": 5, "observations": [{"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/failure_threshold"}}]}
+  }]
+}

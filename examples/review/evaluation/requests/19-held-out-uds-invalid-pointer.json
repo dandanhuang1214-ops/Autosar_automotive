@@ -1,0 +1,21 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-held-out-uds-invalid-pointer",
+  "question": "Can an unregistered UDS transport field be verified?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [{
+    "artifact_id": "uds-intent",
+    "artifact_type": "uds-intent",
+    "source": "../../../window_control/uds_intent.json",
+    "confidentiality": "public",
+    "expected_sha256": "b12f434b3f08b2645ec6baafaeb5209ba909de8594ed122cf9ea81d8f23e360f"
+  }],
+  "artifact_ids": ["uds-intent"],
+  "checks": [{
+    "check_id": "held-out-uds-invalid-pointer",
+    "statement": "An unregistered UDS transport field is present.",
+    "terms": ["unregistered UDS transport field"],
+    "assertion": {"claim_key": "uds.transport.unknown", "operator": "equals", "expected": true, "observations": [{"artifact_id": "uds-intent", "locator": {"type": "json-pointer", "pointer": "/transport/not_registered"}}]}
+  }]
+}

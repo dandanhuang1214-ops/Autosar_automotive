@@ -1,0 +1,21 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-held-out-can-wrong-id",
+  "question": "Does WindowStatus use CAN ID 999?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [{
+    "artifact_id": "bsw-intent",
+    "artifact_type": "bsw-intent",
+    "source": "../../../window_control/bsw_intent.json",
+    "confidentiality": "public",
+    "expected_sha256": "a9a50801be1a8f1867c4415ebb3eb5c4f4ebf35845e317f7d448f5bc9732365f"
+  }],
+  "artifact_ids": ["bsw-intent"],
+  "checks": [{
+    "check_id": "held-out-can-wrong-id",
+    "statement": "WindowStatus uses CAN ID 999.",
+    "terms": ["WindowStatus CAN ID 999"],
+    "assertion": {"claim_key": "can.WindowStatus.id", "operator": "equals", "expected": 999, "observations": [{"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/messages/0/can_id"}}]}
+  }]
+}

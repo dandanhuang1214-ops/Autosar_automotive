@@ -1,0 +1,41 @@
+{
+  "schema_version": "review-evaluation-0.3",
+  "evaluation_id": "workbench-review-r5f-held-out-negative",
+  "repeat_runs": 3,
+  "repeatability_excluded_fields": ["run_id", "started_at"],
+  "cases": [
+    {
+      "case_id": "held-out-can-wrong-id",
+      "domain": "can",
+      "split": "held-out",
+      "request": "requests/18-held-out-can-wrong-id.json",
+      "expected_status": "refused",
+      "expected_checks": {"held-out-can-wrong-id": "unsupported"},
+      "expected_refusal_codes": ["REVIEW-NO-EVIDENCE"],
+      "expected_findings": [],
+      "gold_evidence_sets": [[{"artifact_id": "bsw-intent", "locator": {"type": "json-pointer", "pointer": "/messages/0/can_id"}}]]
+    },
+    {
+      "case_id": "held-out-uds-invalid-pointer",
+      "domain": "uds",
+      "split": "held-out",
+      "request": "requests/19-held-out-uds-invalid-pointer.json",
+      "expected_status": "refused",
+      "expected_checks": {"held-out-uds-invalid-pointer": "blocked"},
+      "expected_refusal_codes": ["REVIEW-OBSERVATION-INVALID"],
+      "expected_findings": [],
+      "gold_evidence_sets": []
+    },
+    {
+      "case_id": "held-out-dtc-wrong-threshold",
+      "domain": "dtc",
+      "split": "held-out",
+      "request": "requests/20-held-out-dtc-wrong-threshold.json",
+      "expected_status": "refused",
+      "expected_checks": {"held-out-dtc-wrong-threshold": "unsupported"},
+      "expected_refusal_codes": ["REVIEW-NO-EVIDENCE"],
+      "expected_findings": [],
+      "gold_evidence_sets": [[{"artifact_id": "dtc-intent", "locator": {"type": "json-pointer", "pointer": "/dtcs/0/failure_threshold"}}]]
+    }
+  ]
+}

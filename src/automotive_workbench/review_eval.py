@@ -1,12 +1,26 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from automotive_workbench.can_io import BusConfig
+from automotive_workbench.can_runtime import run_can_lab
+from automotive_workbench.dtc_lifecycle import run_dtc_lifecycle
 from automotive_workbench.review import run_review
+from automotive_workbench.uds_runtime import run_uds_lab
+
+
+_PRODUCERS = {
+    "can-lab": (run_can_lab, "can-runtime-report.json"),
+    "dtc-lifecycle": (run_dtc_lifecycle, "dtc-lifecycle-report.json"),
+    "uds-lab": (run_uds_lab, "uds-lab-report.json"),
+}
+_PRODUCER_SOURCE = "${producer_report}"
+_PRODUCER_INPUT = "${producer_input}"
 
 
 def _require_string(value: Any, name: str) -> str:
@@ -22,7 +36,7 @@ def _locator_key(artifact_id: str, locator: dict[str, Any]) -> str:
 def load_evaluation_manifest(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if payload.get("schema_version") not in {
-        "review-evaluation-0.1", "review-evaluation-0.2"
+        "review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3"
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -42,8 +56,19 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         case_ids.add(case_id)
         if payload["schema_version"] == "review-evaluation-0.1":
             case.setdefault("domain", "core")
+        if payload["schema_version"] in {"review-evaluation-0.1", "review-evaluation-0.2"}:
+            case.setdefault("split", "development")
         _require_string(case.get("domain"), "case domain")
+        if case.get("split") not in {"development", "runtime", "held-out"}:
+            raise ValueError(f"Review evaluation case {case_id} has invalid split")
         _require_string(case.get("request"), "case request")
+        producer = case.get("producer")
+        if producer is not None:
+            if not isinstance(producer, dict) or set(producer) != {"kind", "input"}:
+                raise ValueError(f"Review evaluation case {case_id} has invalid producer")
+            if producer.get("kind") not in _PRODUCERS:
+                raise ValueError(f"Review evaluation case {case_id} has unsupported producer")
+            _require_string(producer.get("input"), "producer input")
         if case.get("expected_status") not in {"answered", "partial", "refused"}:
             raise ValueError(f"Review evaluation case {case_id} has invalid expected_status")
         expected_checks = case.get("expected_checks")
@@ -95,11 +120,79 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _materialize_request(
+    manifest_path: Path,
+    case: dict[str, Any],
+    case_output: Path,
+) -> tuple[Path, dict[str, Any] | None]:
+    request_path = manifest_path.parent / case["request"]
+    producer = case.get("producer")
+    if producer is None:
+        return request_path, None
+
+    producer_output = case_output / "producer"
+    producer_input = (manifest_path.parent / producer["input"]).resolve()
+    kind = producer["kind"]
+    runner, report_name = _PRODUCERS[kind]
+    if kind == "uds-lab":
+        produced = runner(
+            producer_input, BusConfig("virtual", "workbench"), producer_output
+        )
+    else:
+        produced = runner(producer_input, producer_output)
+    report_path = producer_output / report_name
+    if produced.get("status") != "passed" or not report_path.is_file():
+        raise RuntimeError(f"Review evaluation producer {kind} did not produce a passed report")
+
+    request = json.loads(request_path.read_text(encoding="utf-8-sig"))
+    substitutions = 0
+    report_hash = _sha256(report_path)
+    for artifact in request.get("artifact_registry", []):
+        if artifact.get("source") == _PRODUCER_SOURCE:
+            artifact["source"] = str(report_path.resolve())
+            artifact["expected_sha256"] = report_hash
+            substitutions += 1
+    if substitutions != 1:
+        raise ValueError(
+            f"Review evaluation producer case {case['case_id']} must have exactly one "
+            f"{_PRODUCER_SOURCE} artifact"
+        )
+    materialized = case_output / "materialized-request.json"
+    materialized.parent.mkdir(parents=True, exist_ok=True)
+    materialized.write_text(
+        json.dumps(request, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return materialized, {
+        "kind": kind,
+        "report": report_name,
+        "source_sha256": report_hash,
+        "status": produced["status"],
+    }
+
+
 def _normalized_result(result: dict[str, Any], excluded: list[str]) -> dict[str, Any]:
     normalized = copy.deepcopy(result)
     for field in excluded:
         normalized.pop(field, None)
     return normalized
+
+
+def _expected_findings(
+    case: dict[str, Any], manifest_path: Path
+) -> list[dict[str, Any]]:
+    expected = copy.deepcopy(case.get("expected_findings", []))
+    producer = case.get("producer")
+    if producer is None:
+        return expected
+    source = str((manifest_path.parent / producer["input"]).resolve())
+    for finding in expected:
+        if finding.get("source_artifact") == _PRODUCER_INPUT:
+            finding["source_artifact"] = source
+    return expected
 
 
 def render_evaluation_markdown(result: dict[str, Any]) -> str:
@@ -135,6 +228,18 @@ def render_evaluation_markdown(result: dict[str, Any]) -> str:
         lines.append(
             f"| `{domain}` | {result['domain_check_counts'][domain]} | "
             f"{result['domain_check_accuracy'][domain]:.3f} |"
+        )
+    lines.extend([
+        "",
+        "## Evaluation splits",
+        "",
+        "| Split | Checks | Check-state accuracy |",
+        "|---|---:|---:|",
+    ])
+    for split in sorted(result["split_check_counts"]):
+        lines.append(
+            f"| `{split}` | {result['split_check_counts'][split]} | "
+            f"{result['split_check_accuracy'][split]:.3f} |"
         )
     lines.extend([
         "",
@@ -178,16 +283,22 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
     repeatable_cases = 0
     domain_check_totals: dict[str, int] = {}
     domain_check_correct: dict[str, int] = {}
+    split_check_totals: dict[str, int] = {}
+    split_check_correct: dict[str, int] = {}
     case_results: list[dict[str, Any]] = []
 
     for case in manifest["cases"]:
-        request_path = manifest_path.parent / case["request"]
+        case_output = output / case["case_id"]
+        request_path, producer_evidence = _materialize_request(
+            manifest_path, case, case_output
+        )
         runs = [
-            run_review(request_path, output / case["case_id"] / f"run-{index + 1}")
+            run_review(request_path, case_output / f"run-{index + 1}")
             for index in range(repeat_runs)
         ]
         result = runs[0]
         domain = case["domain"]
+        split = case["split"]
         observed_checks = {
             item["check_id"]: item["status"] for item in result["checks"]
         }
@@ -199,9 +310,11 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             observed_status = observed_checks.get(check_id)
             check_total += 1
             domain_check_totals[domain] = domain_check_totals.get(domain, 0) + 1
+            split_check_totals[split] = split_check_totals.get(split, 0) + 1
             correct = observed_status == expected_status
             check_correct += int(correct)
             domain_check_correct[domain] = domain_check_correct.get(domain, 0) + int(correct)
+            split_check_correct[split] = split_check_correct.get(split, 0) + int(correct)
             if expected_status == "conflicted":
                 expected_conflicts += 1
                 found_conflicts += int(observed_status == "conflicted")
@@ -237,7 +350,7 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             case.get("expected_refusal_codes", [])
         )
         refusal_correct += int(refusal_match)
-        finding_match = result["findings"] == case.get("expected_findings", [])
+        finding_match = result["findings"] == _expected_findings(case, manifest_path)
         finding_correct += int(finding_match)
         normalized_runs = [_normalized_result(item, excluded) for item in runs]
         repeatable = all(item == normalized_runs[0] for item in normalized_runs[1:])
@@ -256,18 +369,24 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         case_results.append({
             "case_id": case["case_id"],
             "domain": domain,
+            "split": split,
             "passed": case_passed,
             "observed_status": result["status"],
             "observed_checks": observed_checks,
             "observed_refusal_codes": observed_refusal_codes,
             "citation_count": len(result["citations"]),
             "repeatable": repeatable,
+            **({"producer": producer_evidence} if producer_evidence else {}),
         })
 
     case_count = len(manifest["cases"])
     domain_check_accuracy = {
         domain: domain_check_correct.get(domain, 0) / count
         for domain, count in sorted(domain_check_totals.items())
+    }
+    split_check_accuracy = {
+        split: split_check_correct.get(split, 0) / count
+        for split, count in sorted(split_check_totals.items())
     }
     metrics = {
         "status_accuracy": status_correct / case_count,
@@ -297,15 +416,16 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         ))
         and metrics["false_conflict_count"] == 0
         and all(value == 1.0 for value in domain_check_accuracy.values())
+        and all(value == 1.0 for value in split_check_accuracy.values())
         and all(item["passed"] for item in case_results)
     )
     timestamp = datetime.now(timezone.utc)
     evaluation = {
         "artifact_type": "engineering-review-evaluation",
         "schema_version": (
-            "review-evaluation-result-0.2"
-            if manifest["schema_version"] == "review-evaluation-0.2"
-            else "review-evaluation-result-0.1"
+            manifest["schema_version"].replace(
+                "review-evaluation-", "review-evaluation-result-"
+            )
         ),
         "run_id": timestamp.strftime("%Y%m%dT%H%M%SZ"),
         "started_at": timestamp.isoformat(),
@@ -316,6 +436,8 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         "repeat_runs": repeat_runs,
         "domain_check_counts": dict(sorted(domain_check_totals.items())),
         "domain_check_accuracy": domain_check_accuracy,
+        "split_check_counts": dict(sorted(split_check_totals.items())),
+        "split_check_accuracy": split_check_accuracy,
         "metrics": metrics,
         "cases": case_results,
     }

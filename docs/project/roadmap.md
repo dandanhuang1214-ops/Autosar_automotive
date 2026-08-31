@@ -37,8 +37,9 @@
 - R5c 调研已完成（2026-08-31）：定义显式 comparable assertion、跨 artifact 冲突优先级、Markdown one-based inclusive line-range locator 和十案例 gold evaluation 契约。
 - R5d 已完成（2026-08-31）：实现 Markdown line-range、`equals/all-equal` 跨 artifact assertion、冲突双方 citation 和十案例三次运行 gold evaluator；全部 gate 通过。
 - R5e 已完成（2026-08-31）：复用公开 canonical contract、BSW、UDS 和 DTC intent，将评测扩展为 14 案例、30 checks，并新增五域 check count/accuracy 证据。
+- R5f 已完成（2026-08-31）：新增白名单 CAN/UDS/DTC producer、运行时报告请求物化与实际 SHA-256 绑定，并将 3 项 runtime checks 和独立 3 项 held-out negative checks 分开计量。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：R5f 接入 run-produced CAN/UDS/DTC 报告并建立 held-out negative set，避免评测只覆盖静态 intent 和已知 pointer；此前不引入外部 LLM。
+- 当前下一阶段：R5g 建立同一 claim 的跨运行报告配对与 drift/conflict negative cases，明确动态时间字段的适用性规则；此前不引入外部 LLM。
 
 ## 平台目标
 

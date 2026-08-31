@@ -1,0 +1,49 @@
+{
+  "schema_version": "review-evaluation-0.3",
+  "evaluation_id": "workbench-review-r5f-runtime",
+  "repeat_runs": 3,
+  "repeatability_excluded_fields": ["run_id", "started_at"],
+  "cases": [
+    {
+      "case_id": "runtime-can-report",
+      "domain": "can",
+      "split": "runtime",
+      "request": "requests/15-runtime-can.json",
+      "producer": {"kind": "can-lab", "input": "../../window_control/window_control.dbc"},
+      "expected_status": "answered",
+      "expected_checks": {"runtime-can-round-trip": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [[{"artifact_id": "can-runtime", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}]]
+    },
+    {
+      "case_id": "runtime-uds-report",
+      "domain": "uds",
+      "split": "runtime",
+      "request": "requests/16-runtime-uds.json",
+      "producer": {"kind": "uds-lab", "input": "../../window_control/uds_intent.json"},
+      "expected_status": "answered",
+      "expected_checks": {"runtime-uds-vin": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"}
+      ],
+      "gold_evidence_sets": [[{"artifact_id": "uds-runtime", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}}]]
+    },
+    {
+      "case_id": "runtime-dtc-report",
+      "domain": "dtc",
+      "split": "runtime",
+      "request": "requests/17-runtime-dtc.json",
+      "producer": {"kind": "dtc-lifecycle", "input": "../../window_control/dtc_intent.json"},
+      "expected_status": "answered",
+      "expected_checks": {"runtime-dtc-confirmed": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [[{"artifact_id": "dtc-runtime", "locator": {"type": "json-pointer", "pointer": "/traces/2/observed_state"}}]]
+    }
+  ]
+}

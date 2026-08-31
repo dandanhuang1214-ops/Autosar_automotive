@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-31）
 
-当前阶段：`R5e — 30-check 汽车工程跨域评测已落地`。
+当前阶段：`R5f — 运行时报告与独立 held-out negative evaluation 已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5e 已完成基础契约、引用/冲突和 14 案例 30-check 跨域评测；下一步接入运行时报告与 held-out negative set |
+| AI 工程审查 | 部分完成 | R5a-R5f 已完成基础契约、引用/冲突、30-check development baseline、CAN/UDS/DTC runtime producer 和独立 held-out negatives；下一步验证跨运行 drift/conflict |
 
 ## 已完成升级历史
 
@@ -437,6 +437,17 @@
 - 边界：新增 19 项使用调用方显式 assertion 和已知 JSON Pointer，只证明当前公开 artifact 的确定性回归，不证明未知问题检索、直接 DBC 审查或量产语义正确性。
 - 状态：完成。
 
+### R5f：运行时报告与 held-out negative evaluation（2026-08-31）
+
+- evaluator 升级到 `review-evaluation-0.3`：case 新增 `split`，result 新增 `split_check_counts/accuracy`，同时保持 `0.1/0.2` manifest 兼容并默认归入 `development`。
+- 新增仅允许 `can-lab`、`uds-lab`、`dtc-lifecycle` 的进程内 producer；不接受 shell 或任意命令。runner 报告生成后，evaluator 将报告绝对路径和实际 SHA-256 注入模板请求，再执行三次 review。
+- runtime manifest 分别从真实生成的 `can-runtime-report.json`、`uds-lab-report.json` 和 `dtc-lifecycle-report.json` 验证 CAN round-trip、UDS VIN decode 与 DTC confirmed state，并精确检查 UDS Finding 保真。
+- 独立 held-out negative manifest 不并入 30-check development baseline，覆盖错误 CAN ID、未知 UDS JSON Pointer 和错误 DTC threshold；三个案例均必须安全拒答。
+- 评测：runtime 3/3 case、3/3 check 通过；held-out negative 3/3 case、3/3 check 通过；全部比例指标均为 `1.0`，false conflict `0`。
+- 回归：全量 81 项运行、2 项环境跳过；47 份 schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：producer 仍使用明确 runner/input 白名单，gold 仍是调用方给定 pointer；本阶段不推断动态时间字段、不自动发现 claim，也不宣称未知自然语言问题能力。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -519,16 +530,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5f 运行时报告与 held-out negative evaluation
+### 最近一步：R5g 跨运行 drift/conflict evaluation
 
-把 CAN/UDS/DTC runner 生成的报告接入 review scope，并将开发用 gold 与 held-out negative cases 分开；验证 producer/source hash、Finding 保真、未知 locator 和跨运行冲突，不先引入 Web 前端、外部 LLM、embedding 或向量库。
+将两个独立 runner 输出按显式 claim/applicability 配对，增加稳定字段 drift、动态时间字段不可比较和真实跨运行冲突案例；不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 R5e 的 30-check 跨域静态 artifact 基线，下一阶段接入 run-produced evidence 并增加 held-out negatives。
+诊断链当前闭环已稳定，AI 工程审查已完成 30-check 静态 development baseline、3-check runtime set 和独立 3-check held-out negative set；下一阶段验证跨运行适用性与 drift/conflict。
 
 ## 下次必须补录
 

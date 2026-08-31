@@ -1,0 +1,25 @@
+{
+  "schema_version": "review-request-0.2",
+  "request_id": "eval-runtime-uds",
+  "question": "Did the generated UDS report decode the expected VIN?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [{
+    "artifact_id": "uds-runtime",
+    "artifact_type": "uds-isotp-lab",
+    "source": "${producer_report}",
+    "confidentiality": "public"
+  }],
+  "artifact_ids": ["uds-runtime"],
+  "checks": [{
+    "check_id": "runtime-uds-vin",
+    "statement": "The generated UDS report decoded the sample VIN.",
+    "terms": ["UDS decoded VIN"],
+    "assertion": {
+      "claim_key": "runtime.uds.decoded-vin",
+      "operator": "equals",
+      "expected": "AWBDEMO0123456789",
+      "observations": [{"artifact_id": "uds-runtime", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}}]
+    }
+  }]
+}

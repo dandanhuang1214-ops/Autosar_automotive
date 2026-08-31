@@ -25,6 +25,7 @@
 19. 使用 staged/committed 标记验证中断写入的 last-good 回退、幂等冗余修复和中断 repair 后的源副本保留。
 20. 对显式本地 JSON artifact 运行 retrieval-only 工程审查，验证 JSON Pointer citation、required-check coverage 和证据不足拒答。
 21. 对显式 JSON/Markdown artifact 执行跨来源 assertion 与 14 案例、30 checks 的 gold evaluation，覆盖 core、DBC-derived contract、CAN/BSW、UDS 和 DTC。
+22. 通过白名单 producer 生成并审查 CAN/UDS/DTC runtime report，运行独立 held-out negative evaluation，并把实际报告 SHA-256 注入审查请求。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -59,6 +60,8 @@ python -m automotive_workbench.cli run-dtc-redundancy-lab examples/window_contro
 python -m automotive_workbench.cli run-dtc-redundancy-repair-lab examples/window_control/dtc_intent.json --output output/dtc-redundancy-repair
 python -m automotive_workbench.cli run-review examples/review/review_request.json --output output/review
 python -m automotive_workbench.cli run-review-eval examples/review/evaluation/evaluation.json --output output/review-evaluation
+python -m automotive_workbench.cli run-review-eval examples/review/evaluation/runtime-evaluation.json --output output/review-runtime-evaluation
+python -m automotive_workbench.cli run-review-eval examples/review/evaluation/held-out-negative.json --output output/review-held-out-negative
 python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
@@ -80,7 +83,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。
 - `examples/window_control/dtc_intent.json` 中的 debounce、operation-cycle、aging、snapshot、extended data、进程内持久镜像、generation、commit marker 和 status byte 仅用于可重复研究实验，不是量产 DEM displacement、NvM、OBD 或 OEM 策略。
 - `run-review` 只读取 request 显式列出的本地 JSON/Markdown；跨 artifact 冲突只比较显式 assertion locator，词法匹配和 coverage 不是语义理解、LLM 结论或安全证明。
-- `run-review-eval` 使用仓库内 gold locator 和结构化期望，不使用 LLM judge；当前 30 checks 以显式 pointer assertion 为主，是跨域回归基线，不代表自由问答或量产评审准确率。
+- `run-review-eval` 使用仓库内 gold locator 和结构化期望，不使用 LLM judge；30-check development baseline、3-check runtime set 和独立 3-check held-out negative set 都是确定性回归证据，不代表自由问答或量产评审准确率。
 - `run-uds-lab --interface socketcan` 会先探测 CAN backend；缺少接口或权限时返回 `blocked`，不把环境不可用误报为诊断业务失败。
 - SWC、COM、PduR和CanIf对象名是该公开样例的设计名称，不代表OEM或供应商命名规则。
 - 最终正确性仍需规范、供应商BSWMD/generator、运行测试及商业工具验证。
