@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/evidence-unit.schema.json",
+  "title": "Addressable Engineering Evidence Unit",
+  "type": "object",
+  "required": ["evidence_id", "artifact_id", "artifact_type", "source", "source_sha256", "confidentiality", "locator", "content", "content_sha256", "finding_codes"],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "artifact_type": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
+    "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "confidentiality": {"enum": ["public", "private-local", "company-restricted"]},
+    "locator": {
+      "type": "object",
+      "required": ["type", "pointer"],
+      "properties": {
+        "type": {"const": "json-pointer"},
+        "pointer": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "content": {"type": "string"},
+    "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "finding_codes": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

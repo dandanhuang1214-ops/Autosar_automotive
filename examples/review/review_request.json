@@ -1,0 +1,28 @@
+{
+  "schema_version": "review-request-0.1",
+  "request_id": "window-control-r5b-review",
+  "question": "What deterministic evidence exists for interrupted and successful DTC redundancy repair?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {
+      "artifact_id": "dtc-repair-sample",
+      "artifact_type": "dtc-redundancy-repair-lab",
+      "source": "engineering_evidence.sample.json",
+      "confidentiality": "public"
+    }
+  ],
+  "artifact_ids": ["dtc-repair-sample"],
+  "checks": [
+    {
+      "check_id": "interrupted-repair-finding",
+      "statement": "Interrupted repair before commit is reported as a deterministic Finding.",
+      "terms": ["DTC-REDUNDANCY-REPAIR-INTERRUPTED", "before commit"]
+    },
+    {
+      "check_id": "successful-repair-state",
+      "statement": "Successful repair commits matching redundant copies.",
+      "terms": ["repair outcome", "committed", "copies agree"]
+    }
+  ]
+}

@@ -22,3 +22,5 @@ Adapters
 日志内核采用双层证据：can-utils `.log` 保存不可被 DBC 覆盖的原始 frame/timestamp；manifest、decode Finding 和 Markdown report 保存派生工程证据。每次分析记录日志与 DBC 的 SHA-256。`BusConfig` 只选择 python-can backend，业务实验不直接依赖 virtual 或 SocketCAN。
 
 核心层不依赖具体GUI、向量数据库或LLM。Adapter只能把外部产物转换成核心对象，不能降低外部Finding严重度，也不能伪造缺失配置。
+
+`run-review` 实现第一个 retrieval-only 审查内核：只注册 request 显式列出的本地 JSON artifact，对标量叶子生成 JSON Pointer EvidenceUnit，使用无第三方依赖的词法匹配支持调用方 checks。Citation 同时绑定 source SHA-256、pointer 和 content SHA-256；源文件改变后引用必须失效。`answered/partial/refused` 是证据覆盖结果，不会覆盖或降级确定性 Finding。

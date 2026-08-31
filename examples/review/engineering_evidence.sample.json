@@ -1,0 +1,24 @@
+{
+  "artifact_type": "dtc-redundancy-repair-lab",
+  "schema_version": "sample-0.1",
+  "status": "passed",
+  "step_count": 25,
+  "passed_count": 25,
+  "repair_summary": {
+    "outcome": "committed",
+    "copies_agree": true,
+    "second_reset_finding": ""
+  },
+  "findings": [
+    {
+      "code": "DTC-REDUNDANCY-REPAIR-INTERRUPTED",
+      "severity": "ERROR",
+      "message": "Interrupted staged repair before commit",
+      "source_artifact": "examples/window_control/dtc_intent.json",
+      "kind": "dtc-redundancy-repair",
+      "field": "",
+      "location": "window_obstruction_interrupted_repair_preserves_source.steps[7]",
+      "status": "open"
+    }
+  ]
+}

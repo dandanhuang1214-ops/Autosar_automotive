@@ -22,6 +22,7 @@ from automotive_workbench.dtc_reset import run_dtc_reset_lab
 from automotive_workbench.dtc_persistence_fault import run_dtc_persistence_fault_lab
 from automotive_workbench.dtc_redundancy import run_dtc_redundancy_lab
 from automotive_workbench.dtc_redundancy_repair import run_dtc_redundancy_repair_lab
+from automotive_workbench.review import run_review
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -157,6 +158,15 @@ def build_parser() -> argparse.ArgumentParser:
     dtc_redundancy_repair_parser.add_argument(
         "--output", type=Path, default=Path("output") / "dtc-redundancy-repair"
     )
+
+    review_parser = commands.add_parser(
+        "run-review",
+        help="Run a local citation-backed retrieval-only engineering review",
+    )
+    review_parser.add_argument("request", type=Path)
+    review_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "review"
+    )
     return parser
 
 
@@ -233,6 +243,8 @@ def main() -> int:
             result = run_dtc_redundancy_lab(args.intent, args.output)
         elif args.command == "run-dtc-redundancy-repair-lab":
             result = run_dtc_redundancy_repair_lab(args.intent, args.output)
+        elif args.command == "run-review":
+            result = run_review(args.request, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,
@@ -243,7 +255,7 @@ def main() -> int:
         print(json.dumps({"status": "error", "message": str(exc)}, ensure_ascii=False, indent=2))
         return 1
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if result.get("status") == "failed":
+    if result.get("status") in {"failed", "partial", "refused"}:
         return 2
     if result.get("status") == "blocked":
         return 3

@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-31）
 
-当前阶段：`R5a — AI 工程审查契约调研已完成`。
+当前阶段：`R5b — 本地 JSON retrieval-only 审查证据已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 调研完成 | R5a 已定义 retrieval-only、citation、coverage 和拒答契约；下一步进入本地 JSON 竖切 |
+| AI 工程审查 | 部分完成 | R5a 已定义契约，R5b 已完成本地 JSON retrieval-only 竖切；下一步是多 artifact 冲突、Markdown citation 和 evaluation |
 
 ## 已完成升级历史
 
@@ -388,7 +388,19 @@
 - 定义 `answered/partial/refused` 状态和 missing artifact、hash mismatch、confidentiality denied、no evidence、invalid citation、evidence conflict、coverage below threshold 稳定拒答原因。
 - 确定性 Finding 可以是问题的直接证据，但审查结果不得矛盾、降级或关闭 Finding；未知 Trace 节点和证据冲突必须显式呈现。
 - 决策：R5b 先实现无第三方依赖的本地 JSON Pointer 归一化、词法检索、引用验证、coverage 和拒答，不先做自然语言生成、embedding、向量库或 UI。
-- 状态：调研完成，实现待开始。
+- 状态：调研完成，R5b 已实现该最小竖切。
+
+### R5b：本地 JSON retrieval-only 审查竖切（2026-08-31）
+
+- 新增 `review.py` 和 CLI `run-review`；review request 显式声明 artifact registry/scope、confidentiality policy、required checks 和 minimum coverage。
+- 新增 ReviewRequest、EvidenceUnit、Citation 和 ReviewResult 四份 schema；JSON 标量叶子转为绑定 artifact/source SHA-256、JSON Pointer 和 content SHA-256 的 EvidenceUnit，并归档到 `evidence-units.json`。
+- 词法检索对调用方显式 terms 做确定性覆盖，使用稳定 tie-break 贪心选择 citation；不使用 LLM、embedding 或向量库。
+- 公开样例对 DTC repair Finding 和成功修复状态达到 coverage `1.0`，产生 4 个可重新解析验证的 JSON Pointer citations。
+- 覆盖 `answered/partial/refused`，missing artifact、confidentiality denied、expected hash mismatch、no evidence，以及源文件或 citation 元数据修改后校验失效。
+- 审查结果原样保留 Finding code/severity/message/source/location/status，不降级或改写确定性结果。
+- 回归：全量 70 项运行、2 项环境跳过；公开 CLI 样例为 `answered`，citation validation 4/4 通过。
+- 边界：当前只支持本地 JSON 和调用方词法 terms；不宣称语义理解、自然语言答案质量、生产权限隔离或安全证明。
+- 状态：完成。
 
 ### E1：WSL2 与 SocketCAN 基线
 
@@ -439,6 +451,14 @@ official_native_baseline=false
 - 明确仓库边界：Workbench 保存平台工程资产，improve 保存职业成长、Sprint、面试与证据索引；
 - 状态：完成（文档迁移，无运行时代码变化，因此不触发代码测试）。
 
+### L1：第四周通信证据链学习计划（2026-08-31）
+
+- 第三周 Day 6 已补充系统描述、ECU Extract、ECUC 及跨模块 PDU identity 的教练参考答案；
+- 第四周只围绕一条 `DataElement → Signal/I-PDU/Frame → COM/PduR/CanIf → SocketCAN` 通信证据链学习；
+- 复用 Workbench 已有 trace、validate、fault suite、supervision 和 SocketCAN lab，不因平台已进入 R5 就跳过个人通信基础验收；
+- 学习计划保存在 `D:\work\improve\learning\week-04\week-plan.md`，平台仓只记录与现有工程资产的对应关系；
+- 状态：计划已发布，等待学习者执行和逐日验收；无平台运行时代码变化。
+
 ## 当前升级：R3 OpenBSW POSIX 限时 spike
 
 目标：在不破坏 R2 已完成 SocketCAN 闭环的前提下，执行一次受限 OpenBSW POSIX spike，并形成可复现 build/run evidence 与源码入口索引。
@@ -464,16 +484,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5b 本地 JSON retrieval-only 竖切
+### 最近一步：R5c 多 artifact 冲突、Markdown citation 与 evaluation 调研
 
-实现显式 artifact scope、SHA-256、JSON Pointer EvidenceUnit、确定性词法检索、citation 验证、required-check coverage 与结构化拒答；不先引入 Web 前端、外部 LLM、embedding 或向量库。
+先定义多 artifact 对同一 check 的支持/冲突规则、Markdown one-based line-range locator 和可重复的最小审查评测集；不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，下一阶段进入带引用、可拒答的 AI 工程审查契约调研。
+诊断链当前闭环已稳定，AI 工程审查已完成本地 JSON retrieval-only 竖切，下一阶段先补多 artifact 冲突、Markdown citation 和 evaluation 契约。
 
 ## 下次必须补录
 

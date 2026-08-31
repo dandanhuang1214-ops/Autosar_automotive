@@ -44,7 +44,7 @@ ReviewRequest
 
 - `request_id`: stable caller identifier.
 - `question`: human-readable engineering question.
-- `checks`: non-empty list of required, caller-defined claims or questions. Coverage is calculated against these checks, never against model-generated claims.
+- `checks`: non-empty list of required, caller-defined claims or questions. Each check provides a stable ID, statement and explicit lexical terms. Coverage is calculated against these checks, never against model-generated claims.
 - `artifact_ids`: explicit review scope; no implicit workspace-wide ingestion.
 - `minimum_coverage`: value in `0..1`, default `1.0` for deterministic review.
 - `allowed_confidentiality`: explicit policy set.
@@ -96,6 +96,7 @@ An `ERROR` Finding is not automatically a refusal: it may be the exact evidence 
 
 - `REVIEW-ARTIFACT-MISSING`
 - `REVIEW-ARTIFACT-HASH-MISMATCH`
+- `REVIEW-ARTIFACT-INVALID`
 - `REVIEW-CONFIDENTIALITY-DENIED`
 - `REVIEW-NO-EVIDENCE`
 - `REVIEW-CITATION-INVALID`
@@ -120,3 +121,16 @@ Refusal is a normal result, not an exception or transport failure.
 ## Boundary
 
 R5a does not define natural-language generation quality, embeddings, reranking, agent autonomy, prompt templates, web search, a vector database, a browser UI, access-control infrastructure, or production secrets handling. The first review result states only what local deterministic evidence supports and explicitly refuses the rest.
+
+## R5b implementation result
+
+R5b implements the local JSON vertical slice in `review.py` and exposes it through `run-review`:
+
+- Four schemas define ReviewRequest, EvidenceUnit, Citation and ReviewResult.
+- Explicit registry scope and confidentiality policy are enforced before artifact content is read.
+- JSON scalar leaves become deterministic JSON Pointer EvidenceUnits bound to source and content SHA-256 values and are persisted in `evidence-units.json`.
+- Caller-provided lexical terms are covered across a deterministic, greedily selected citation set.
+- The public sample is `answered` at coverage `1.0` with four validated citations.
+- Tests cover `partial`, missing/denied/stale/no-evidence refusal, citation invalidation after source or citation-metadata mutation, invalid requests and exact Finding preservation.
+
+The implementation remains retrieval-only and dependency-free. It does not infer semantic equivalence beyond caller-provided lexical terms.
