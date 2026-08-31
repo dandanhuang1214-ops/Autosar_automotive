@@ -1,0 +1,15 @@
+{
+  "schema_version": "review-request-0.1",
+  "request_id": "eval-partial",
+  "question": "Which required checks have evidence?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {"artifact_id": "finding-report", "artifact_type": "repair-report", "source": "../fixtures/finding.json", "confidentiality": "public", "expected_sha256": "8c231f9fae374532359758114306710f427b38d71b9762f899fa7278a80ee5f4"}
+  ],
+  "artifact_ids": ["finding-report"],
+  "checks": [
+    {"check_id": "finding-present", "statement": "The repair Finding is present.", "terms": ["REPAIR-COMMITTED"]},
+    {"check_id": "hardware-proof", "statement": "Physical flash atomicity is certified.", "terms": ["physical flash certification 987654321"]}
+  ]
+}

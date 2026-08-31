@@ -12,13 +12,27 @@
     "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "confidentiality": {"enum": ["public", "private-local", "company-restricted"]},
     "locator": {
-      "type": "object",
-      "required": ["type", "pointer"],
-      "properties": {
-        "type": {"const": "json-pointer"},
-        "pointer": {"type": "string"}
-      },
-      "additionalProperties": false
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "pointer"],
+          "properties": {
+            "type": {"const": "json-pointer"},
+            "pointer": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "start_line", "end_line"],
+          "properties": {
+            "type": {"const": "line-range"},
+            "start_line": {"type": "integer", "minimum": 1},
+            "end_line": {"type": "integer", "minimum": 1}
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "content": {"type": "string"},
     "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

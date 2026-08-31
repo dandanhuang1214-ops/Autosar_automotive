@@ -23,6 +23,7 @@ from automotive_workbench.dtc_persistence_fault import run_dtc_persistence_fault
 from automotive_workbench.dtc_redundancy import run_dtc_redundancy_lab
 from automotive_workbench.dtc_redundancy_repair import run_dtc_redundancy_repair_lab
 from automotive_workbench.review import run_review
+from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 
 
@@ -167,6 +168,15 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument(
         "--output", type=Path, default=Path("output") / "review"
     )
+
+    review_eval_parser = commands.add_parser(
+        "run-review-eval",
+        help="Run the deterministic gold engineering-review evaluation",
+    )
+    review_eval_parser.add_argument("manifest", type=Path)
+    review_eval_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "review-evaluation"
+    )
     return parser
 
 
@@ -245,6 +255,8 @@ def main() -> int:
             result = run_dtc_redundancy_repair_lab(args.intent, args.output)
         elif args.command == "run-review":
             result = run_review(args.request, args.output)
+        elif args.command == "run-review-eval":
+            result = run_review_evaluation(args.manifest, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

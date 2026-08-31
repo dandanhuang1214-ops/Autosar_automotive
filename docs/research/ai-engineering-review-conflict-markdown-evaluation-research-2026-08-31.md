@@ -146,3 +146,15 @@ Ranking measures such as nDCG and Recall@k may be added when the corpus and rank
 ## Boundary
 
 R5c defines a deterministic comparison and evaluation contract, not general fact checking. It does not infer that two artifacts describe the same ECU, variant, software version, calibration, test environment, or time window. It does not decide which conflicting source is authoritative. Those decisions require explicit request metadata or a domain adapter; absent that information, the safe result is unsupported, blocked, or refused.
+
+## R5d implementation result
+
+R5d implements the contract in `review.py` and `review_eval.py`:
+
+- `review-request-0.1` remains backward compatible; `review-request-0.2` adds explicit assertions and emits `review-result-0.2`.
+- Registered `.md` artifacts are normalized as non-empty physical-line EvidenceUnits. Explicit one-based inclusive ranges may span lines and are independently re-resolved during citation validation.
+- `equals` and `all-equal` compare only explicit observations. Conflict citations preserve both `supports` and `contradicts` relations, and relation metadata is independently checked against current source content.
+- The checked-in ten-case manifest pins fixture SHA-256 values, runs every case three times, and measures exact status/check/refusal/Finding results, citation validity/precision/evidence-set recall, conflict recall/false conflicts, and normalized repeatability.
+- The public evaluation passes all ten cases: every proportional metric is `1.0`, false conflicts are `0`, and all citation validation passes.
+
+The implementation remains local, deterministic, retrieval-only, and dependency-free. The ten synthetic and repair-oriented cases are a regression gate, not evidence of general semantic understanding or production review accuracy.

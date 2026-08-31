@@ -1,0 +1,24 @@
+{
+  "schema_version": "review-request-0.1",
+  "request_id": "eval-markdown",
+  "question": "What outcome does the release note report?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {
+      "artifact_id": "release-note",
+      "artifact_type": "release-note",
+      "source": "../fixtures/release-note.md",
+      "confidentiality": "public",
+      "expected_sha256": "5656846482218c9b1adb2358583deb152f11d8d0ab3d077f892fdb176b6e9362"
+    }
+  ],
+  "artifact_ids": ["release-note"],
+  "checks": [
+    {
+      "check_id": "markdown-outcome",
+      "statement": "The release note reports committed.",
+      "terms": ["committed"]
+    }
+  ]
+}

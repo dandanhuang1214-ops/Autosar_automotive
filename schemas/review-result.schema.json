@@ -6,7 +6,7 @@
   "required": ["artifact_type", "schema_version", "run_id", "request_id", "question", "status", "mode", "minimum_coverage", "coverage", "artifact_ids", "evidence_unit_count", "evidence_units_file", "checks", "citations", "findings", "refusal_reasons", "citation_validation"],
   "properties": {
     "artifact_type": {"const": "engineering-review-result"},
-    "schema_version": {"const": "review-result-0.1"},
+    "schema_version": {"enum": ["review-result-0.1", "review-result-0.2"]},
     "run_id": {"type": "string", "minLength": 1},
     "started_at": {"type": "string"},
     "request_id": {"type": "string", "minLength": 1},

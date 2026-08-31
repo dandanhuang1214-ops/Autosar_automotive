@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "findings": [
+    {
+      "code": "REPAIR-COMMITTED",
+      "severity": "INFO",
+      "message": "Repair committed successfully",
+      "source_artifact": "repair-intent.json",
+      "kind": "review-evaluation",
+      "field": "",
+      "location": "repair.outcome",
+      "status": "open"
+    }
+  ]
+}

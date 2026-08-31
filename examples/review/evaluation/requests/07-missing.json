@@ -1,0 +1,14 @@
+{
+  "schema_version": "review-request-0.1",
+  "request_id": "eval-missing",
+  "question": "Can the missing report support the check?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {"artifact_id": "missing-report", "artifact_type": "repair-report", "source": "../fixtures/missing.json", "confidentiality": "public"}
+  ],
+  "artifact_ids": ["missing-report"],
+  "checks": [
+    {"check_id": "missing-check", "statement": "The missing report says committed.", "terms": ["committed"]}
+  ]
+}

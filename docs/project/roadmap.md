@@ -35,8 +35,9 @@
 - R5a 调研已完成（2026-08-31）：定义 retrieval-only ReviewRequest/EvidenceUnit/Citation/ReviewResult、基于调用方 checks 的 coverage 和稳定拒答原因。
 - R5b 已完成（2026-08-31）：实现本地 JSON Pointer EvidenceUnit、词法检索、SHA-256 citation 验证、required-check coverage 和 answered/partial/refused 证据。
 - R5c 调研已完成（2026-08-31）：定义显式 comparable assertion、跨 artifact 冲突优先级、Markdown one-based inclusive line-range locator 和十案例 gold evaluation 契约。
+- R5d 已完成（2026-08-31）：实现 Markdown line-range、`equals/all-equal` 跨 artifact assertion、冲突双方 citation 和十案例三次运行 gold evaluator；全部 gate 通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：实现 R5d 多 artifact 冲突、Markdown line-range citation 和依赖无关 evaluation runner；全部 gold gate 通过前不引入外部 LLM。
+- 当前下一阶段：R5e 将评测扩展到 DBC/CAN/UDS/DTC 真实公开 artifact 和 30 个汽车工程 checks；跨域指标稳定前不引入外部 LLM。
 
 ## 平台目标
 

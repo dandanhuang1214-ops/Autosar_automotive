@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/review-evaluation-result.schema.json",
+  "title": "Deterministic Engineering Review Evaluation Result",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "run_id", "started_at", "evaluation_id", "status", "case_count", "repeat_runs", "metrics", "cases"],
+  "properties": {
+    "artifact_type": {"const": "engineering-review-evaluation"},
+    "schema_version": {"const": "review-evaluation-result-0.1"},
+    "run_id": {"type": "string", "minLength": 1},
+    "started_at": {"type": "string", "minLength": 1},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["passed", "failed"]},
+    "case_count": {"type": "integer", "minimum": 1},
+    "repeat_runs": {"type": "integer", "minimum": 1},
+    "metrics": {
+      "type": "object",
+      "required": ["status_accuracy", "check_state_accuracy", "conflict_recall", "false_conflict_count", "citation_validity", "citation_precision", "citation_evidence_set_recall", "refusal_code_accuracy", "finding_preservation", "repeatability"],
+      "properties": {
+        "status_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "check_state_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "conflict_recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "false_conflict_count": {"type": "integer", "minimum": 0},
+        "citation_validity": {"type": "number", "minimum": 0, "maximum": 1},
+        "citation_precision": {"type": "number", "minimum": 0, "maximum": 1},
+        "citation_evidence_set_recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "refusal_code_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "finding_preservation": {"type": "number", "minimum": 0, "maximum": 1},
+        "repeatability": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["case_id", "passed", "observed_status", "observed_checks", "observed_refusal_codes", "citation_count", "repeatable"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "passed": {"type": "boolean"},
+          "observed_status": {"enum": ["answered", "partial", "refused"]},
+          "observed_checks": {"type": "object", "additionalProperties": {"enum": ["supported", "unsupported", "conflicted", "blocked"]}},
+          "observed_refusal_codes": {"type": "array", "items": {"type": "string"}},
+          "citation_count": {"type": "integer", "minimum": 0},
+          "repeatable": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

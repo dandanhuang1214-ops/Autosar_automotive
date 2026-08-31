@@ -1,0 +1,14 @@
+{
+  "schema_version": "review-request-0.1",
+  "request_id": "eval-denied",
+  "question": "Can denied evidence support the check?",
+  "minimum_coverage": 1.0,
+  "allowed_confidentiality": ["public"],
+  "artifact_registry": [
+    {"artifact_id": "private-report", "artifact_type": "repair-report", "source": "../fixtures/committed.json", "confidentiality": "private-local", "expected_sha256": "7e4b40418c2ed7febce305d7d62127cf64d879442e9db206a3293811e2349aff"}
+  ],
+  "artifact_ids": ["private-report"],
+  "checks": [
+    {"check_id": "denied-check", "statement": "The private report says committed.", "terms": ["committed"]}
+  ]
+}

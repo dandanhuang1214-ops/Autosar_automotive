@@ -1,0 +1,146 @@
+{
+  "schema_version": "review-evaluation-0.1",
+  "evaluation_id": "workbench-review-r5d-gold",
+  "repeat_runs": 3,
+  "repeatability_excluded_fields": ["run_id", "started_at"],
+  "cases": [
+    {
+      "case_id": "single-json-supported",
+      "request": "requests/01-single-json.json",
+      "expected_status": "answered",
+      "expected_checks": {"finding-present": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [
+        {
+          "code": "REPAIR-COMMITTED",
+          "severity": "INFO",
+          "message": "Repair committed successfully",
+          "source_artifact": "repair-intent.json",
+          "kind": "review-evaluation",
+          "field": "",
+          "location": "repair.outcome",
+          "status": "open"
+        }
+      ],
+      "gold_evidence_sets": [
+        [{"artifact_id": "finding-report", "locator": {"type": "json-pointer", "pointer": "/findings/0/code"}}]
+      ]
+    },
+    {
+      "case_id": "markdown-supported",
+      "request": "requests/02-markdown.json",
+      "expected_status": "answered",
+      "expected_checks": {"markdown-outcome": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [{"artifact_id": "release-note", "locator": {"type": "line-range", "start_line": 3, "end_line": 3}}]
+      ]
+    },
+    {
+      "case_id": "multi-artifact-agreement",
+      "request": "requests/03-agreement.json",
+      "expected_status": "answered",
+      "expected_checks": {"reports-agree": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "report-a", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}},
+          {"artifact_id": "report-b", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}}
+        ]
+      ]
+    },
+    {
+      "case_id": "multi-artifact-conflict",
+      "request": "requests/04-conflict.json",
+      "expected_status": "refused",
+      "expected_checks": {"reports-conflict": "conflicted"},
+      "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "report-a", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}},
+          {"artifact_id": "report-b", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}}
+        ]
+      ]
+    },
+    {
+      "case_id": "similar-but-not-comparable",
+      "request": "requests/05-non-comparable.json",
+      "expected_status": "answered",
+      "expected_checks": {"outcome-mentioned": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [{"artifact_id": "variant-a", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}}]
+      ]
+    },
+    {
+      "case_id": "partial-coverage",
+      "request": "requests/06-partial.json",
+      "expected_status": "partial",
+      "expected_checks": {
+        "finding-present": "supported",
+        "hardware-proof": "unsupported"
+      },
+      "expected_refusal_codes": ["REVIEW-COVERAGE-BELOW-THRESHOLD"],
+      "expected_findings": [
+        {
+          "code": "REPAIR-COMMITTED",
+          "severity": "INFO",
+          "message": "Repair committed successfully",
+          "source_artifact": "repair-intent.json",
+          "kind": "review-evaluation",
+          "field": "",
+          "location": "repair.outcome",
+          "status": "open"
+        }
+      ],
+      "gold_evidence_sets": [
+        [{"artifact_id": "finding-report", "locator": {"type": "json-pointer", "pointer": "/findings/0/code"}}]
+      ]
+    },
+    {
+      "case_id": "missing-artifact",
+      "request": "requests/07-missing.json",
+      "expected_status": "refused",
+      "expected_checks": {"missing-check": "blocked"},
+      "expected_refusal_codes": ["REVIEW-ARTIFACT-MISSING"],
+      "expected_findings": [],
+      "gold_evidence_sets": []
+    },
+    {
+      "case_id": "confidentiality-denied",
+      "request": "requests/08-denied.json",
+      "expected_status": "refused",
+      "expected_checks": {"denied-check": "blocked"},
+      "expected_refusal_codes": ["REVIEW-CONFIDENTIALITY-DENIED"],
+      "expected_findings": [],
+      "gold_evidence_sets": []
+    },
+    {
+      "case_id": "invalid-markdown-range",
+      "request": "requests/09-invalid-range.json",
+      "expected_status": "refused",
+      "expected_checks": {"invalid-range": "blocked"},
+      "expected_refusal_codes": ["REVIEW-OBSERVATION-INVALID"],
+      "expected_findings": [],
+      "gold_evidence_sets": []
+    },
+    {
+      "case_id": "repeatable-all-equal",
+      "request": "requests/10-repeatability.json",
+      "expected_status": "answered",
+      "expected_checks": {"all-equal": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [
+        [
+          {"artifact_id": "report-a", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}},
+          {"artifact_id": "report-b", "locator": {"type": "json-pointer", "pointer": "/repair/outcome"}}
+        ]
+      ]
+    }
+  ]
+}

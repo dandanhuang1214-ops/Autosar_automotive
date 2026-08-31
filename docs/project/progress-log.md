@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-31）
 
-当前阶段：`R5c — 冲突、Markdown citation 与 evaluation 契约调研已完成`。
+当前阶段：`R5d — 冲突、Markdown citation 与 gold evaluation 已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a/R5c 已定义基础与扩展契约，R5b 已完成本地 JSON retrieval-only 竖切；下一步实现 R5d |
+| AI 工程审查 | 部分完成 | R5a-R5d 已完成基础契约、JSON/Markdown citation、显式冲突和十案例评测；下一步扩展跨域汽车工程评测 |
 
 ## 已完成升级历史
 
@@ -412,6 +412,18 @@
 - 决策：R5d 实现 Markdown、显式 assertion 和依赖无关 evaluator；继续不引入外部 LLM、embedding、向量库、模糊引用修复或 source-priority 猜测。
 - 状态：调研完成，实现待开始。
 
+### R5d：多 artifact 冲突、Markdown citation 与 gold evaluation（2026-08-31）
+
+- `review.py` 保持 `review-request-0.1` JSON 词法路径兼容，并新增 `review-request-0.2` assertion；显式 `claim_key`、locator 与 `equals/all-equal` 是执行跨 artifact 比较的唯一入口。
+- 新增本地 Markdown 非空物理行 EvidenceUnit 与一基闭区间 `line-range`；source 原始字节和 LF 规范化片段分别绑定 SHA-256，CR/LF/CRLF 可确定性解析。
+- required observations 一致时 supported，不一致时 conflicted；冲突结果 `refused`，双方 citation 分别记录 `supports/contradicts`，citation validator 会重新计算 relation 并拒绝元数据篡改。
+- 新增 `review_eval.py`、CLI `run-review-eval`、manifest/result schema，以及 10 个使用 expected SHA-256 固定 fixture 的 gold 案例；每个案例运行三次并剔除 `run_id/started_at` 后比较完整结果。
+- 案例覆盖单 JSON、Markdown、双 artifact 一致/冲突、相似但不可比、partial、missing、denied、非法 line range 和 all-equal repeatability。
+- 评测：10/10 case 通过；status/check/conflict recall/citation validity/citation precision/evidence-set recall/refusal/Finding/repeatability 全部 `1.0`，false conflict `0`。
+- 回归：全量 76 项运行、2 项环境跳过；30 份 schema/example JSON 可解析，Python compileall 和 diff check 通过。
+- 边界：当前 gold set 很小且以合成/repair 证据为主；不宣称自然语言语义理解、跨版本适用性推断、来源权威裁决或量产评审准确率。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -494,16 +506,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5d 多 artifact 冲突、Markdown citation 与 evaluation 实现
+### 最近一步：R5e 汽车工程 artifact 评测扩展
 
-实现显式 comparable assertion、Markdown one-based inclusive line-range locator、冲突双方 citation 和十案例 gold evaluator；不先引入 Web 前端、外部 LLM、embedding 或向量库。
+将 gold dataset 从十案例扩展到 30 个 DBC/CAN/UDS/DTC checks，优先复用现有公开 lab report 和 Finding；先建立跨域 retrieval/citation/refusal 基线，不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 R5b JSON 竖切和 R5c 扩展契约，下一阶段进入 R5d 确定性实现。
+诊断链当前闭环已稳定，AI 工程审查已完成 R5d 确定性冲突与十案例评测，下一阶段扩展真实公开汽车 artifact 覆盖。
 
 ## 下次必须补录
 

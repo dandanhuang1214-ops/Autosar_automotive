@@ -154,6 +154,7 @@ class ReviewTests(unittest.TestCase):
             "content": "tampered display content",
             "evidence_id": "evidence-tampered",
             "citation_id": "citation-tampered",
+            "relation": "contradicts",
         }
         for field, value in mutations.items():
             with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
@@ -177,6 +178,220 @@ class ReviewTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "requires non-empty terms"):
                 load_review_request(path)
+
+    def test_reviews_markdown_with_validated_one_based_line_range(self) -> None:
+        request = {
+            "schema_version": "review-request-0.1",
+            "request_id": "markdown-review",
+            "question": "What does the release note report?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [{
+                "artifact_id": "release-note",
+                "artifact_type": "release-note",
+                "source": "release.md",
+                "confidentiality": "public",
+            }],
+            "artifact_ids": ["release-note"],
+            "checks": [{
+                "check_id": "repair-result",
+                "statement": "Repair committed successfully.",
+                "terms": ["repair committed successfully"],
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "release.md").write_bytes(
+                b"# Release\r\n\r\nRepair committed successfully.\r\n"
+            )
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            result = run_review(request_path, root / "output")
+
+            self.assertEqual(result["status"], "answered")
+            self.assertEqual(result["citations"][0]["locator"], {
+                "type": "line-range",
+                "start_line": 3,
+                "end_line": 3,
+            })
+            self.assertEqual(result["citation_validation"]["status"], "passed")
+
+            (root / "release.md").write_text(
+                "# Release\n\nRepair failed.\n", encoding="utf-8"
+            )
+            self.assertEqual(
+                validate_citations(request_path, result)["status"], "failed"
+            )
+
+    def test_explicit_assertion_distinguishes_agreement_and_conflict(self) -> None:
+        request = {
+            "schema_version": "review-request-0.2",
+            "request_id": "multi-artifact-review",
+            "question": "Do the reports agree on repair outcome?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [
+                {
+                    "artifact_id": artifact_id,
+                    "artifact_type": "repair-report",
+                    "source": f"{artifact_id}.json",
+                    "confidentiality": "public",
+                }
+                for artifact_id in ("report-a", "report-b")
+            ],
+            "artifact_ids": ["report-a", "report-b"],
+            "checks": [{
+                "check_id": "repair-outcome",
+                "statement": "Both reports say repair committed.",
+                "terms": ["repair outcome committed"],
+                "assertion": {
+                    "claim_key": "repair.outcome",
+                    "operator": "equals",
+                    "expected": "committed",
+                    "observations": [
+                        {
+                            "artifact_id": artifact_id,
+                            "locator": {
+                                "type": "json-pointer",
+                                "pointer": "/repair/outcome",
+                            },
+                        }
+                        for artifact_id in ("report-a", "report-b")
+                    ],
+                },
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "report-a.json").write_text(
+                json.dumps({"repair": {"outcome": "committed"}}), encoding="utf-8"
+            )
+            (root / "report-b.json").write_text(
+                json.dumps({"repair": {"outcome": "committed"}}), encoding="utf-8"
+            )
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+
+            agreed = run_review(request_path, root / "agreed")
+            self.assertEqual(agreed["status"], "answered")
+            self.assertEqual(agreed["checks"][0]["status"], "supported")
+            self.assertEqual(
+                {item["relation"] for item in agreed["citations"]}, {"supports"}
+            )
+
+            (root / "report-b.json").write_text(
+                json.dumps({"repair": {"outcome": "failed"}}), encoding="utf-8"
+            )
+            conflicted = run_review(request_path, root / "conflicted")
+            request["checks"][0]["assertion"]["operator"] = "all-equal"
+            request["checks"][0]["assertion"].pop("expected")
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            all_equal_conflict = run_review(request_path, root / "all-equal-conflict")
+
+        self.assertEqual(conflicted["schema_version"], "review-result-0.2")
+        self.assertEqual(conflicted["status"], "refused")
+        self.assertEqual(conflicted["checks"][0]["status"], "conflicted")
+        self.assertEqual(
+            {item["relation"] for item in conflicted["citations"]},
+            {"supports", "contradicts"},
+        )
+        self.assertIn(
+            "REVIEW-EVIDENCE-CONFLICT",
+            {item["code"] for item in conflicted["refusal_reasons"]},
+        )
+        self.assertEqual(conflicted["citation_validation"]["status"], "passed")
+        self.assertEqual(all_equal_conflict["status"], "refused")
+        self.assertEqual(all_equal_conflict["checks"][0]["status"], "conflicted")
+        self.assertEqual(all_equal_conflict["citation_validation"]["status"], "passed")
+
+    def test_similar_artifacts_without_assertion_do_not_create_conflict(self) -> None:
+        request = {
+            "schema_version": "review-request-0.2",
+            "request_id": "non-comparable-review",
+            "question": "Is repair outcome mentioned?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [
+                {
+                    "artifact_id": artifact_id,
+                    "artifact_type": "repair-report",
+                    "source": f"{artifact_id}.json",
+                    "confidentiality": "public",
+                }
+                for artifact_id in ("variant-a", "variant-b")
+            ],
+            "artifact_ids": ["variant-a", "variant-b"],
+            "checks": [{
+                "check_id": "repair-mentioned",
+                "statement": "A scoped report mentions repair outcome.",
+                "terms": ["repair outcome"],
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for artifact_id, outcome in (("variant-a", "committed"), ("variant-b", "failed")):
+                (root / f"{artifact_id}.json").write_text(
+                    json.dumps({"repair": {"outcome": outcome}}), encoding="utf-8"
+                )
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+
+            result = run_review(request_path, root / "output")
+
+        self.assertEqual(result["status"], "answered")
+        self.assertEqual(result["checks"][0]["status"], "supported")
+        self.assertNotIn(
+            "REVIEW-EVIDENCE-CONFLICT",
+            {item["code"] for item in result["refusal_reasons"]},
+        )
+
+    def test_invalid_assertion_line_range_blocks_review(self) -> None:
+        request = {
+            "schema_version": "review-request-0.2",
+            "request_id": "invalid-range-review",
+            "question": "What does the note say?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [{
+                "artifact_id": "note",
+                "artifact_type": "release-note",
+                "source": "note.md",
+                "confidentiality": "public",
+            }],
+            "artifact_ids": ["note"],
+            "checks": [{
+                "check_id": "note-state",
+                "statement": "The note says committed.",
+                "terms": ["committed"],
+                "assertion": {
+                    "claim_key": "note.state",
+                    "operator": "equals",
+                    "expected": "committed",
+                    "observations": [{
+                        "artifact_id": "note",
+                        "locator": {
+                            "type": "line-range",
+                            "start_line": 3,
+                            "end_line": 3,
+                        },
+                    }],
+                },
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "note.md").write_text("committed\n", encoding="utf-8")
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+
+            result = run_review(request_path, root / "output")
+
+        self.assertEqual(result["status"], "refused")
+        self.assertEqual(result["checks"][0]["status"], "blocked")
+        self.assertIn(
+            "REVIEW-OBSERVATION-INVALID",
+            {item["code"] for item in result["refusal_reasons"]},
+        )
 
 
 if __name__ == "__main__":
