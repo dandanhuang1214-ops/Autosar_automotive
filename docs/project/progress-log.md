@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-08-31）
 
-当前阶段：`R5b — 本地 JSON retrieval-only 审查证据已落地`。
+当前阶段：`R5c — 冲突、Markdown citation 与 evaluation 契约调研已完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a 已定义契约，R5b 已完成本地 JSON retrieval-only 竖切；下一步是多 artifact 冲突、Markdown citation 和 evaluation |
+| AI 工程审查 | 部分完成 | R5a/R5c 已定义基础与扩展契约，R5b 已完成本地 JSON retrieval-only 竖切；下一步实现 R5d |
 
 ## 已完成升级历史
 
@@ -402,6 +402,16 @@
 - 边界：当前只支持本地 JSON 和调用方词法 terms；不宣称语义理解、自然语言答案质量、生产权限隔离或安全证明。
 - 状态：完成。
 
+### R5c：多 artifact 冲突、Markdown citation 与 evaluation 调研（2026-08-31）
+
+- 新增 `docs/research/ai-engineering-review-conflict-markdown-evaluation-research-2026-08-31.md`，核对 W3C Web Annotation/PROV、CommonMark、GitHub line permalink、FEVER、TREC/BEIR 和 NIST relevance judgment 边界。
+- 明确词法重叠只能召回候选，不能判定冲突；只有调用方通过同一 `claim_key`、适用范围、显式 locator 和 `equals/all-equal` operator 声明可比观测时才执行确定性比较。
+- 定义 `blocked > conflicted > supported > unsupported` 优先级；required check 冲突必须 `refused` 并引用双方，不能被 coverage 平均或 Finding severity 覆盖。
+- 定义 Markdown `line-range` 为一基闭区间；原始 source SHA-256 与 LF 规范化片段 SHA-256 双重绑定，保留缩进、尾随空格和 tab，修改后 fail closed。
+- 定义至少十案例的本地 gold evaluation manifest，以及 status/check accuracy、conflict recall、false conflict、citation validity/precision/evidence-set recall、refusal/Finding exact match 和三次运行 repeatability gate。
+- 决策：R5d 实现 Markdown、显式 assertion 和依赖无关 evaluator；继续不引入外部 LLM、embedding、向量库、模糊引用修复或 source-priority 猜测。
+- 状态：调研完成，实现待开始。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -484,16 +494,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5c 多 artifact 冲突、Markdown citation 与 evaluation 调研
+### 最近一步：R5d 多 artifact 冲突、Markdown citation 与 evaluation 实现
 
-先定义多 artifact 对同一 check 的支持/冲突规则、Markdown one-based line-range locator 和可重复的最小审查评测集；不先引入 Web 前端、外部 LLM、embedding 或向量库。
+实现显式 comparable assertion、Markdown one-based inclusive line-range locator、冲突双方 citation 和十案例 gold evaluator；不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成本地 JSON retrieval-only 竖切，下一阶段先补多 artifact 冲突、Markdown citation 和 evaluation 契约。
+诊断链当前闭环已稳定，AI 工程审查已完成 R5b JSON 竖切和 R5c 扩展契约，下一阶段进入 R5d 确定性实现。
 
 ## 下次必须补录
 

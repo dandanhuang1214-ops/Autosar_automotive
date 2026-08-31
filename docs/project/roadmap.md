@@ -34,8 +34,9 @@
 - R4p 已完成（2026-08-31）：实现 committed/staged 副本、幂等 repair、中断普通写入/修复的 last-good 保留和 25 步确定性证据。
 - R5a 调研已完成（2026-08-31）：定义 retrieval-only ReviewRequest/EvidenceUnit/Citation/ReviewResult、基于调用方 checks 的 coverage 和稳定拒答原因。
 - R5b 已完成（2026-08-31）：实现本地 JSON Pointer EvidenceUnit、词法检索、SHA-256 citation 验证、required-check coverage 和 answered/partial/refused 证据。
+- R5c 调研已完成（2026-08-31）：定义显式 comparable assertion、跨 artifact 冲突优先级、Markdown one-based inclusive line-range locator 和十案例 gold evaluation 契约。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：调研 R5c 多 artifact 冲突分类、Markdown line-range citation 和最小 evaluation dataset；在指标与拒答边界稳定前不引入外部 LLM。
+- 当前下一阶段：实现 R5d 多 artifact 冲突、Markdown line-range citation 和依赖无关 evaluation runner；全部 gold gate 通过前不引入外部 LLM。
 
 ## 平台目标
 
