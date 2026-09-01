@@ -1,0 +1,82 @@
+{
+  "schema_version": "review-evaluation-0.4",
+  "evaluation_id": "workbench-review-r5g-cross-run",
+  "repeat_runs": 3,
+  "repeatability_excluded_fields": ["run_id", "started_at"],
+  "cases": [
+    {
+      "case_id": "cross-run-can-stable",
+      "domain": "can",
+      "split": "cross-run",
+      "request": "requests/21-cross-run-can-stable.json",
+      "producer": {"kind": "can-lab", "input": "../../window_control/window_control.dbc", "runs": 2},
+      "expected_status": "answered",
+      "expected_checks": {"cross-run-can-stable": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [[
+        {"artifact_id": "can-run-1", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
+        {"artifact_id": "can-run-2", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
+      ]]
+    },
+    {
+      "case_id": "cross-run-can-drift",
+      "domain": "can",
+      "split": "cross-run",
+      "request": "requests/22-cross-run-can-drift.json",
+      "producer": {
+        "kind": "can-lab",
+        "input": "../../window_control/window_control.dbc",
+        "runs": 2,
+        "mutations": [{"run": 2, "pointer": "/scenarios/0/status", "value": "failed"}]
+      },
+      "expected_status": "refused",
+      "expected_checks": {"cross-run-can-drift": "conflicted"},
+      "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
+      "expected_findings": [],
+      "gold_evidence_sets": [[
+        {"artifact_id": "can-run-1", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
+        {"artifact_id": "can-run-2", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
+      ]]
+    },
+    {
+      "case_id": "cross-run-uds-stable",
+      "domain": "uds",
+      "split": "cross-run",
+      "request": "requests/23-cross-run-uds-stable.json",
+      "producer": {"kind": "uds-lab", "input": "../../window_control/uds_intent.json", "runs": 2},
+      "expected_status": "answered",
+      "expected_checks": {"cross-run-uds-stable": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"}
+      ],
+      "gold_evidence_sets": [[
+        {"artifact_id": "uds-run-1", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}},
+        {"artifact_id": "uds-run-2", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}}
+      ]]
+    },
+    {
+      "case_id": "cross-run-dtc-stable",
+      "domain": "dtc",
+      "split": "cross-run",
+      "request": "requests/24-cross-run-dtc-stable.json",
+      "producer": {"kind": "dtc-lifecycle", "input": "../../window_control/dtc_intent.json", "runs": 2},
+      "expected_status": "answered",
+      "expected_checks": {"cross-run-dtc-stable": "supported"},
+      "expected_refusal_codes": [],
+      "expected_findings": [],
+      "gold_evidence_sets": [[
+        {"artifact_id": "dtc-run-1", "locator": {"type": "json-pointer", "pointer": "/traces/2/observed_state"}},
+        {"artifact_id": "dtc-run-2", "locator": {"type": "json-pointer", "pointer": "/traces/2/observed_state"}}
+      ]]
+    }
+  ]
+}

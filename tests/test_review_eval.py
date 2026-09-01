@@ -20,12 +20,17 @@ RUNTIME_MANIFEST = (
 HELD_OUT_MANIFEST = (
     ROOT / "examples" / "review" / "evaluation" / "held-out-negative.json"
 )
+CROSS_RUN_MANIFEST = (
+    ROOT / "examples" / "review" / "evaluation" / "cross-run-evaluation.json"
+)
 
 
 class ReviewEvaluationTests(unittest.TestCase):
     def test_existing_gold_fixtures_are_sha256_pinned(self) -> None:
         pinned_sources = 0
-        for manifest_path in (MANIFEST, RUNTIME_MANIFEST, HELD_OUT_MANIFEST):
+        for manifest_path in (
+            MANIFEST, RUNTIME_MANIFEST, HELD_OUT_MANIFEST, CROSS_RUN_MANIFEST
+        ):
             manifest = load_evaluation_manifest(manifest_path)
             for case in manifest["cases"]:
                 request_path = manifest_path.parent / case["request"]
@@ -116,6 +121,83 @@ class ReviewEvaluationTests(unittest.TestCase):
             all(case["observed_status"] == "refused" for case in result["cases"])
         )
         self.assertEqual(result["metrics"]["false_conflict_count"], 0)
+
+    def test_cross_run_evaluation_distinguishes_stability_and_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            result = run_review_evaluation(CROSS_RUN_MANIFEST, output)
+
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["schema_version"], "review-evaluation-result-0.4")
+            self.assertEqual(result["case_count"], 4)
+            self.assertEqual(result["check_count"], 4)
+            self.assertEqual(result["split_check_counts"], {"cross-run": 4})
+            self.assertEqual(result["metrics"]["conflict_recall"], 1.0)
+            self.assertEqual(result["metrics"]["false_conflict_count"], 0)
+            for case in result["cases"]:
+                hashes = {
+                    report["source_sha256"]
+                    for report in case["producer"]["reports"]
+                }
+                self.assertEqual(len(hashes), 2)
+            drift = next(
+                case for case in result["cases"]
+                if case["case_id"] == "cross-run-can-drift"
+            )
+            self.assertEqual(drift["observed_status"], "refused")
+            self.assertEqual(
+                drift["observed_checks"], {"cross-run-can-drift": "conflicted"}
+            )
+            self.assertEqual(drift["citation_count"], 2)
+            self.assertEqual(drift["producer"]["runs"], 2)
+            for report_evidence in drift["producer"]["reports"]:
+                report = output / drift["case_id"] / "producer" / report_evidence["report"]
+                self.assertEqual(
+                    report_evidence["source_sha256"],
+                    hashlib.sha256(report.read_bytes()).hexdigest(),
+                )
+            mutated = json.loads(
+                (
+                    output
+                    / drift["case_id"]
+                    / "producer"
+                    / "run-2"
+                    / "can-runtime-report.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(mutated["scenarios"][0]["status"], "failed")
+
+    def test_cross_run_dynamic_fields_are_not_comparable(self) -> None:
+        manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
+        manifest["cases"] = [manifest["cases"][0]]
+        manifest["cases"][0]["request"] = "requests/25-cross-run-dynamic-field.json"
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "evaluation.json"
+            manifest["cases"][0]["request"] = str(
+                (CROSS_RUN_MANIFEST.parent / manifest["cases"][0]["request"]).resolve()
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "dynamic field is not comparable"):
+                run_review_evaluation(manifest_path, Path(directory) / "output")
+
+    def test_rejects_mutation_outside_producer_stable_field_allowlist(self) -> None:
+        manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
+        manifest["cases"][0]["producer"]["mutations"] = [
+            {"run": 2, "pointer": "/run_id", "value": "forged"}
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evaluation.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "unsafe producer mutation"):
+                load_evaluation_manifest(path)
+
+            manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
+            manifest["schema_version"] = "review-evaluation-0.3"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires schema 0.4"):
+                load_evaluation_manifest(path)
 
     def test_rejects_duplicate_evaluation_case(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))

@@ -21,6 +21,12 @@ _PRODUCERS = {
 }
 _PRODUCER_SOURCE = "${producer_report}"
 _PRODUCER_INPUT = "${producer_input}"
+_DYNAMIC_POINTER_TOKENS = {"run_id", "started_at", "duration_ms", "channel"}
+_MUTABLE_POINTERS = {
+    "can-lab": {"/scenarios/0/status"},
+    "dtc-lifecycle": {"/traces/2/observed_state"},
+    "uds-lab": {"/scenarios/0/evidence/decoded_value"},
+}
 
 
 def _require_string(value: Any, name: str) -> str:
@@ -36,7 +42,8 @@ def _locator_key(artifact_id: str, locator: dict[str, Any]) -> str:
 def load_evaluation_manifest(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if payload.get("schema_version") not in {
-        "review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3"
+        "review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3",
+        "review-evaluation-0.4",
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -59,16 +66,44 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         if payload["schema_version"] in {"review-evaluation-0.1", "review-evaluation-0.2"}:
             case.setdefault("split", "development")
         _require_string(case.get("domain"), "case domain")
-        if case.get("split") not in {"development", "runtime", "held-out"}:
+        if case.get("split") not in {
+            "development", "runtime", "held-out", "cross-run"
+        }:
             raise ValueError(f"Review evaluation case {case_id} has invalid split")
         _require_string(case.get("request"), "case request")
         producer = case.get("producer")
         if producer is not None:
-            if not isinstance(producer, dict) or set(producer) != {"kind", "input"}:
+            if not isinstance(producer, dict) or not {"kind", "input"} <= set(producer):
+                raise ValueError(f"Review evaluation case {case_id} has invalid producer")
+            if set(producer) - {"kind", "input", "runs", "mutations"}:
                 raise ValueError(f"Review evaluation case {case_id} has invalid producer")
             if producer.get("kind") not in _PRODUCERS:
                 raise ValueError(f"Review evaluation case {case_id} has unsupported producer")
             _require_string(producer.get("input"), "producer input")
+            runs = producer.get("runs", 1)
+            if not isinstance(runs, int) or isinstance(runs, bool) or runs not in {1, 2}:
+                raise ValueError(f"Review evaluation case {case_id} has invalid producer runs")
+            mutations = producer.get("mutations", [])
+            if not isinstance(mutations, list):
+                raise ValueError(f"Review evaluation case {case_id} has invalid mutations")
+            if (
+                (runs != 1 or mutations)
+                and payload["schema_version"] != "review-evaluation-0.4"
+            ):
+                raise ValueError(
+                    f"Review evaluation case {case_id} paired producer requires schema 0.4"
+                )
+            for mutation in mutations:
+                if (
+                    not isinstance(mutation, dict)
+                    or set(mutation) != {"run", "pointer", "value"}
+                    or mutation.get("run") not in range(1, runs + 1)
+                    or mutation.get("pointer") not in _MUTABLE_POINTERS[producer["kind"]]
+                    or isinstance(mutation.get("value"), (dict, list))
+                ):
+                    raise ValueError(
+                        f"Review evaluation case {case_id} has unsafe producer mutation"
+                    )
         if case.get("expected_status") not in {"answered", "partial", "refused"}:
             raise ValueError(f"Review evaluation case {case_id} has invalid expected_status")
         expected_checks = case.get("expected_checks")
@@ -124,6 +159,51 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _pointer_tokens(pointer: str) -> list[str]:
+    if not pointer.startswith("/"):
+        return []
+    return [
+        item.replace("~1", "/").replace("~0", "~")
+        for item in pointer[1:].split("/")
+    ]
+
+
+def _set_pointer(payload: Any, pointer: str, value: Any) -> None:
+    tokens = _pointer_tokens(pointer)
+    if not tokens:
+        raise ValueError("Producer mutation requires a non-root JSON Pointer")
+    target = payload
+    for token in tokens[:-1]:
+        target = target[int(token)] if isinstance(target, list) else target[token]
+    final = tokens[-1]
+    if isinstance(target, list):
+        target[int(final)] = value
+    else:
+        if final not in target:
+            raise ValueError(f"Producer mutation pointer does not exist: {pointer}")
+        target[final] = value
+
+
+def _validate_comparable_observations(request: dict[str, Any]) -> None:
+    paired_ids = {
+        artifact["artifact_id"]
+        for artifact in request.get("artifact_registry", [])
+        if artifact.get("source") in {"${producer_report_1}", "${producer_report_2}"}
+    }
+    for check in request.get("checks", []):
+        for observation in check.get("assertion", {}).get("observations", []):
+            locator = observation.get("locator", {})
+            if observation.get("artifact_id") not in paired_ids:
+                continue
+            if locator.get("type") != "json-pointer":
+                continue
+            pointer = locator.get("pointer", "")
+            if _DYNAMIC_POINTER_TOKENS & set(_pointer_tokens(pointer)):
+                raise ValueError(
+                    f"Review evaluation dynamic field is not comparable: {pointer}"
+                )
+
+
 def _materialize_request(
     manifest_path: Path,
     case: dict[str, Any],
@@ -134,44 +214,84 @@ def _materialize_request(
     if producer is None:
         return request_path, None
 
+    request = json.loads(request_path.read_text(encoding="utf-8-sig"))
+    _validate_comparable_observations(request)
     producer_output = case_output / "producer"
     producer_input = (manifest_path.parent / producer["input"]).resolve()
     kind = producer["kind"]
     runner, report_name = _PRODUCERS[kind]
-    if kind == "uds-lab":
-        produced = runner(
-            producer_input, BusConfig("virtual", "workbench"), producer_output
+    producer_runs = producer.get("runs", 1)
+    mutations_by_run: dict[int, list[dict[str, Any]]] = {}
+    for mutation in producer.get("mutations", []):
+        mutations_by_run.setdefault(mutation["run"], []).append(mutation)
+    reports: list[dict[str, Any]] = []
+    report_paths: list[Path] = []
+    for run_number in range(1, producer_runs + 1):
+        run_output = (
+            producer_output if producer_runs == 1 else producer_output / f"run-{run_number}"
         )
-    else:
-        produced = runner(producer_input, producer_output)
-    report_path = producer_output / report_name
-    if produced.get("status") != "passed" or not report_path.is_file():
-        raise RuntimeError(f"Review evaluation producer {kind} did not produce a passed report")
+        if kind == "uds-lab":
+            produced = runner(
+                producer_input, BusConfig("virtual", "workbench"), run_output
+            )
+        else:
+            produced = runner(producer_input, run_output)
+        report_path = run_output / report_name
+        if produced.get("status") != "passed" or not report_path.is_file():
+            raise RuntimeError(
+                f"Review evaluation producer {kind} run {run_number} did not "
+                "produce a passed report"
+            )
+        if mutations_by_run.get(run_number):
+            report = json.loads(report_path.read_text(encoding="utf-8-sig"))
+            for mutation in mutations_by_run[run_number]:
+                _set_pointer(report, mutation["pointer"], mutation["value"])
+            report_path.write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        report_paths.append(report_path)
+        reports.append(
+            {
+                "report": (
+                    report_name
+                    if producer_runs == 1
+                    else f"run-{run_number}/{report_name}"
+                ),
+                "source_sha256": _sha256(report_path),
+                "status": produced["status"],
+            }
+        )
 
-    request = json.loads(request_path.read_text(encoding="utf-8-sig"))
     substitutions = 0
-    report_hash = _sha256(report_path)
+    placeholders = (
+        {_PRODUCER_SOURCE: 0}
+        if producer_runs == 1
+        else {"${producer_report_1}": 0, "${producer_report_2}": 1}
+    )
     for artifact in request.get("artifact_registry", []):
-        if artifact.get("source") == _PRODUCER_SOURCE:
-            artifact["source"] = str(report_path.resolve())
-            artifact["expected_sha256"] = report_hash
+        index = placeholders.get(artifact.get("source"))
+        if index is not None:
+            artifact["source"] = str(report_paths[index].resolve())
+            artifact["expected_sha256"] = reports[index]["source_sha256"]
             substitutions += 1
-    if substitutions != 1:
+    if substitutions != producer_runs:
         raise ValueError(
-            f"Review evaluation producer case {case['case_id']} must have exactly one "
-            f"{_PRODUCER_SOURCE} artifact"
+            f"Review evaluation producer case {case['case_id']} requires "
+            f"{producer_runs} producer report artifact(s)"
         )
     materialized = case_output / "materialized-request.json"
     materialized.parent.mkdir(parents=True, exist_ok=True)
     materialized.write_text(
         json.dumps(request, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    return materialized, {
-        "kind": kind,
-        "report": report_name,
-        "source_sha256": report_hash,
-        "status": produced["status"],
-    }
+    evidence: dict[str, Any] = {"kind": kind, "status": "passed"}
+    if producer_runs == 1:
+        evidence.update(reports[0])
+    else:
+        evidence.update({"runs": producer_runs, "reports": reports})
+        if producer.get("mutations"):
+            evidence["mutations"] = copy.deepcopy(producer["mutations"])
+    return materialized, evidence
 
 
 def _normalized_result(result: dict[str, Any], excluded: list[str]) -> dict[str, Any]:

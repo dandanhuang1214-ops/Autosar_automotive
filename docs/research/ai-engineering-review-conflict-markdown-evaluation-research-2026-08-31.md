@@ -179,3 +179,13 @@ R5f adds a narrow producer contract to the evaluator rather than allowing manife
 Evaluation `0.3` records `development`, `runtime`, or `held-out` splits and reports check counts and accuracy for each split. The original 30 checks remain the development baseline. A separate runtime manifest checks one stable output from each generated CAN/UDS/DTC report and preserves all UDS Findings exactly. A separate held-out negative manifest checks consistent contradictions and an unknown JSON Pointer; it is not merged into the development manifest.
 
 This closes the gap between static intent-only evaluation and runner-produced evidence, but it does not solve automatic locator discovery. Report timestamps, run IDs, durations, and virtual channel identifiers remain dynamic and are not treated as comparable claims. Cross-run applicability, stable-field drift, and intentionally conflicting runner outputs remain R5g work. External LLMs and LLM judges remain out of scope.
+
+## R5g cross-run stability and drift
+
+R5g extends the producer contract to exactly two independent runs. Both generated reports are retained and SHA-256 pinned before the review executes. Requests use explicit `all-equal` observations over one stable pointer in each report. The CAN, UDS, and DTC cases demonstrate that different whole-report hashes do not imply a conflict when the selected stable values agree.
+
+Drift injection is deliberately narrower than a generic JSON patch facility. Each runner has a small stable-pointer allowlist, a mutation targets one of the two generated reports, and its replacement must be a scalar. The first R5g conflict case changes only the second CAN report's round-trip status. The review cites both values, classifies the check as conflicted, and refuses with `REVIEW-EVIDENCE-CONFLICT`.
+
+Run IDs, timestamps, durations, and channel identifiers are classified as dynamic pointer tokens. A paired producer request that observes one of these fields is rejected before any runner executes. This is a manifest-contract failure rather than an engineering conflict: normal execution identity and timing variation must not contribute to conflict recall or false-conflict counts.
+
+The `review-evaluation-0.4` cross-run set contains four checks across CAN, UDS, and DTC. All gates pass, including conflict recall and zero false conflicts. Applicability across variants, software or calibration versions, and backends remains caller knowledge; R5h must represent that metadata explicitly before expanding the drift catalog.

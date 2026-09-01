@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-08-31）
+## 当前总览（2026-09-01）
 
-当前阶段：`R5f — 运行时报告与独立 held-out negative evaluation 已落地`。
+当前阶段：`R5g — 跨运行稳定字段与 drift/conflict evaluation 已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5f 已完成基础契约、引用/冲突、30-check development baseline、CAN/UDS/DTC runtime producer 和独立 held-out negatives；下一步验证跨运行 drift/conflict |
+| AI 工程审查 | 部分完成 | R5a-R5g 已完成基础契约、引用/冲突、development/runtime/held-out 基线，以及 CAN/UDS/DTC 双运行稳定性和 drift 冲突评测；下一步增加 applicability profile |
 
 ## 已完成升级历史
 
@@ -448,6 +448,18 @@
 - 边界：producer 仍使用明确 runner/input 白名单，gold 仍是调用方给定 pointer；本阶段不推断动态时间字段、不自动发现 claim，也不宣称未知自然语言问题能力。
 - 状态：完成。
 
+### R5g：跨运行 drift/conflict evaluation（2026-09-01）
+
+- evaluator 升级到 `review-evaluation-0.4`，新增 `cross-run` split；producer 可在同一 case 中生成两份独立报告，每份报告单独记录路径、状态和 SHA-256。
+- CAN、UDS、DTC 各新增一项 `all-equal` 跨运行稳定字段检查。两份原始报告哈希均不同，但 round-trip status、decoded VIN 和 confirmed state 一致，因此不会产生 false conflict。
+- 新增受控 CAN drift case：仅允许在 `can-lab` allowlist 中将第二份报告 `/scenarios/0/status` 改为 `failed`，review 必须判定 `conflicted`、拒答并引用双方。
+- mutation 按 runner/pointer 白名单校验，不能修改 `run_id` 或其他任意字段；manifest 试图越权时在执行 runner 前失败。
+- 配对请求若观察 `run_id`、`started_at`、`duration_ms` 或任意 `channel` 字段，会以 “dynamic field is not comparable” 在物化前失败，避免把正常运行差异计为工程冲突。
+- 评测：cross-run 4/4 case、4/4 check 通过；conflict recall、citation validity/precision/evidence recall、Finding preservation 和 repeatability 均为 `1.0`，false conflict `0`。
+- 回归：全量 84 项运行、2 项环境跳过；53 份 schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：当前稳定字段和动态字段分类是显式 allowlist，不自动推断 variant、software/calibration version 或 backend 适用性，也不提供通用 JSON mutation。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -530,16 +542,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5g 跨运行 drift/conflict evaluation
+### 最近一步：R5h 跨运行 applicability profile
 
-将两个独立 runner 输出按显式 claim/applicability 配对，增加稳定字段 drift、动态时间字段不可比较和真实跨运行冲突案例；不先引入 Web 前端、外部 LLM、embedding 或向量库。
+为跨运行 claim 显式记录 variant、software/calibration version 和 backend，只有 applicability 一致时才比较稳定字段；随后扩展 CAN/UDS/DTC drift catalog。不先引入 Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 30-check 静态 development baseline、3-check runtime set 和独立 3-check held-out negative set；下一阶段验证跨运行适用性与 drift/conflict。
+诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run 四类确定性评测；下一阶段为跨运行比较增加显式适用性契约。
 
 ## 下次必须补录
 
