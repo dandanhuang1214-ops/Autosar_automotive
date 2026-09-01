@@ -35,6 +35,14 @@ class DtcLifecycleTests(unittest.TestCase):
         self.assertEqual(result["traces"][6]["request_payload_hex"], "14FFFFFF")
         self.assertEqual(result["traces"][7]["response_payload_hex"], "5902FF")
         self.assertEqual(persisted["artifact_type"], "dtc-lifecycle-lab")
+        self.assertEqual(
+            persisted["applicability_profile"]["software_version"],
+            "dtc-lifecycle-lab-0.1",
+        )
+        self.assertEqual(
+            persisted["applicability_profile"]["backend"],
+            "deterministic-in-process",
+        )
         self.assertIn("not a production DEM", markdown)
 
     def test_reports_expected_state_mismatch_as_finding(self) -> None:

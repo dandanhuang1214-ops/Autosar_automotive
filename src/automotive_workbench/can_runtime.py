@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from automotive_workbench.applicability import build_runtime_applicability_profile
+
 from automotive_workbench.adapters.dbc import _load_dbc
 
 
@@ -147,6 +149,12 @@ def run_can_lab(dbc: Path, output: Path) -> dict[str, Any]:
         "run_id": timestamp.strftime("%Y%m%dT%H%M%SZ"),
         "started_at": timestamp.isoformat(),
         "backend": "python-can virtual",
+        "applicability_profile": build_runtime_applicability_profile(
+            variant=dbc.stem,
+            software_version="can-lab-0.1",
+            inputs=[dbc],
+            backend="python-can virtual",
+        ),
         "status": "passed" if passed_count == len(scenarios) else "failed",
         "scenario_count": len(scenarios),
         "passed_count": passed_count,

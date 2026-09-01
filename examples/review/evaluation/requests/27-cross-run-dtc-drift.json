@@ -1,7 +1,7 @@
 {
   "schema_version": "review-request-0.4",
-  "request_id": "eval-cross-run-dtc-stable",
-  "question": "Did two independent DTC lifecycle runs reach the same state?",
+  "request_id": "eval-cross-run-dtc-drift",
+  "question": "Did the stable DTC lifecycle state drift between applicable runs?",
   "minimum_coverage": 1.0,
   "allowed_confidentiality": ["public"],
   "artifact_registry": [
@@ -10,8 +10,8 @@
   ],
   "artifact_ids": ["dtc-run-1", "dtc-run-2"],
   "checks": [{
-    "check_id": "cross-run-dtc-stable",
-    "statement": "Both DTC lifecycle runs reached the same confirmed state.",
+    "check_id": "cross-run-dtc-drift",
+    "statement": "Both applicable DTC lifecycle runs reached the same confirmed state.",
     "terms": ["DTC lifecycle runs confirmed state"],
     "assertion": {
       "claim_key": "cross-run.dtc.confirmed-state",

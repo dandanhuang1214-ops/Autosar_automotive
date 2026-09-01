@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from automotive_workbench.applicability import build_runtime_applicability_profile
+
 from automotive_workbench.domain import Finding
 from automotive_workbench.dtc_intent import load_dtc_intent
 
@@ -120,6 +122,12 @@ def run_dtc_lifecycle(intent: Path, output: Path) -> dict[str, Any]:
         "started_at": timestamp.isoformat(),
         "status": "passed" if not findings else "failed",
         "ecu": payload["ecu"],
+        "applicability_profile": build_runtime_applicability_profile(
+            variant=payload["ecu"],
+            software_version="dtc-lifecycle-lab-0.1",
+            inputs=[intent],
+            backend="deterministic-in-process",
+        ),
         "dtc_count": len(dtcs),
         "experiment_count": len(payload["experiments"]),
         "step_count": len(traces),

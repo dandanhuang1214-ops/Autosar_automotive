@@ -4,8 +4,53 @@
   "title": "Evidence-backed Engineering Review Request",
   "type": "object",
   "required": ["schema_version", "request_id", "question", "checks", "artifact_registry", "artifact_ids", "allowed_confidentiality"],
+  "allOf": [
+    {
+      "if": {"properties": {"schema_version": {"const": "review-request-0.3"}}},
+      "then": {
+        "properties": {
+          "checks": {
+            "items": {
+              "properties": {
+                "assertion": {
+                  "properties": {
+                    "observations": {
+                      "items": {"required": ["applicability_profile"]}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"schema_version": {"const": "review-request-0.4"}}},
+      "then": {
+        "properties": {
+          "checks": {
+            "items": {
+              "properties": {
+                "assertion": {
+                  "properties": {
+                    "observations": {
+                      "items": {
+                        "required": ["applicability_locator"],
+                        "not": {"required": ["applicability_profile"]}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "properties": {
-    "schema_version": {"enum": ["review-request-0.1", "review-request-0.2"]},
+    "schema_version": {"enum": ["review-request-0.1", "review-request-0.2", "review-request-0.3", "review-request-0.4"]},
     "request_id": {"type": "string", "minLength": 1},
     "question": {"type": "string", "minLength": 1},
     "minimum_coverage": {"type": "number", "minimum": 0, "maximum": 1, "default": 1},
@@ -66,6 +111,26 @@
                   "required": ["artifact_id", "locator"],
                   "properties": {
                     "artifact_id": {"type": "string", "minLength": 1},
+                    "applicability_profile": {
+                      "type": "object",
+                      "required": ["variant", "software_version", "calibration_version", "backend"],
+                      "properties": {
+                        "variant": {"type": "string", "minLength": 1},
+                        "software_version": {"type": "string", "minLength": 1},
+                        "calibration_version": {"type": "string", "minLength": 1},
+                        "backend": {"type": "string", "minLength": 1}
+                      },
+                      "additionalProperties": false
+                    },
+                    "applicability_locator": {
+                      "type": "object",
+                      "required": ["type", "pointer"],
+                      "properties": {
+                        "type": {"const": "json-pointer"},
+                        "pointer": {"type": "string"}
+                      },
+                      "additionalProperties": false
+                    },
                     "locator": {
                       "oneOf": [
                         {

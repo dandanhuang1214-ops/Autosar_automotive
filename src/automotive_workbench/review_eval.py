@@ -23,7 +23,10 @@ _PRODUCER_SOURCE = "${producer_report}"
 _PRODUCER_INPUT = "${producer_input}"
 _DYNAMIC_POINTER_TOKENS = {"run_id", "started_at", "duration_ms", "channel"}
 _MUTABLE_POINTERS = {
-    "can-lab": {"/scenarios/0/status"},
+    "can-lab": {
+        "/scenarios/0/status",
+        "/applicability_profile/software_version",
+    },
     "dtc-lifecycle": {"/traces/2/observed_state"},
     "uds-lab": {"/scenarios/0/evidence/decoded_value"},
 }
@@ -44,6 +47,8 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
     if payload.get("schema_version") not in {
         "review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3",
         "review-evaluation-0.4",
+        "review-evaluation-0.5",
+        "review-evaluation-0.6",
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -88,10 +93,13 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                 raise ValueError(f"Review evaluation case {case_id} has invalid mutations")
             if (
                 (runs != 1 or mutations)
-                and payload["schema_version"] != "review-evaluation-0.4"
+                and payload["schema_version"] not in {
+                    "review-evaluation-0.4", "review-evaluation-0.5",
+                    "review-evaluation-0.6",
+                }
             ):
                 raise ValueError(
-                    f"Review evaluation case {case_id} paired producer requires schema 0.4"
+                    f"Review evaluation case {case_id} paired producer requires schema 0.4 or newer"
                 )
             for mutation in mutations:
                 if (
@@ -242,12 +250,26 @@ def _materialize_request(
                 f"Review evaluation producer {kind} run {run_number} did not "
                 "produce a passed report"
             )
+        report = json.loads(report_path.read_text(encoding="utf-8-sig"))
         if mutations_by_run.get(run_number):
-            report = json.loads(report_path.read_text(encoding="utf-8-sig"))
             for mutation in mutations_by_run[run_number]:
                 _set_pointer(report, mutation["pointer"], mutation["value"])
             report_path.write_text(
                 json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        applicability_profile = report.get("applicability_profile")
+        if (
+            not isinstance(applicability_profile, dict)
+            or set(applicability_profile) != {
+                "variant", "software_version", "calibration_version", "backend"
+            }
+            or any(
+                not isinstance(value, str) or not value
+                for value in applicability_profile.values()
+            )
+        ):
+            raise ValueError(
+                f"Review evaluation producer {kind} emitted invalid applicability_profile"
             )
         report_paths.append(report_path)
         reports.append(
@@ -259,6 +281,7 @@ def _materialize_request(
                 ),
                 "source_sha256": _sha256(report_path),
                 "status": produced["status"],
+                "applicability_profile": copy.deepcopy(applicability_profile),
             }
         )
 

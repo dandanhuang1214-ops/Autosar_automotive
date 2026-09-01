@@ -11,7 +11,13 @@ from typing import Any
 
 
 SUPPORTED_CONFIDENTIALITY = {"public", "private-local", "company-restricted"}
-SUPPORTED_REQUEST_VERSIONS = {"review-request-0.1", "review-request-0.2"}
+SUPPORTED_REQUEST_VERSIONS = {
+    "review-request-0.1", "review-request-0.2", "review-request-0.3",
+    "review-request-0.4",
+}
+APPLICABILITY_FIELDS = {
+    "variant", "software_version", "calibration_version", "backend"
+}
 TOKEN_PATTERN = re.compile(r"[A-Za-z0-9]+")
 
 
@@ -172,6 +178,16 @@ def _require_string(value: Any, name: str) -> str:
     return value
 
 
+def _validate_applicability_profile(value: Any, name: str) -> dict[str, str]:
+    if not isinstance(value, dict) or set(value) != APPLICABILITY_FIELDS:
+        raise ValueError(
+            f"{name} requires variant, software_version, calibration_version, and backend"
+        )
+    for field in sorted(APPLICABILITY_FIELDS):
+        _require_string(value.get(field), f"{name} {field}")
+    return value
+
+
 def load_review_request(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if payload.get("schema_version") not in SUPPORTED_REQUEST_VERSIONS:
@@ -246,8 +262,10 @@ def load_review_request(path: Path) -> dict[str, Any]:
         assertion = item.get("assertion")
         if assertion is None:
             continue
-        if payload["schema_version"] != "review-request-0.2":
-            raise ValueError("Review assertions require review-request-0.2")
+        if payload["schema_version"] not in {
+            "review-request-0.2", "review-request-0.3", "review-request-0.4"
+        }:
+            raise ValueError("Review assertions require review-request-0.2 or newer")
         if not isinstance(assertion, dict):
             raise ValueError(f"Review check {check_id} assertion must be an object")
         _require_string(assertion.get("claim_key"), "claim_key")
@@ -276,6 +294,33 @@ def load_review_request(path: Path) -> dict[str, Any]:
                 )
             locator = observation.get("locator")
             _validate_locator(locator, f"Review check {check_id} observation")
+            profile = observation.get("applicability_profile")
+            if payload["schema_version"] == "review-request-0.3":
+                _validate_applicability_profile(
+                    profile, f"Review check {check_id} observation applicability_profile"
+                )
+                if observation.get("applicability_locator") is not None:
+                    raise ValueError(
+                        "Review applicability_locator requires review-request-0.4"
+                    )
+            elif payload["schema_version"] == "review-request-0.4":
+                if profile is not None:
+                    raise ValueError(
+                        "Review-request-0.4 applicability must come from artifact evidence"
+                    )
+                applicability_locator = observation.get("applicability_locator")
+                _validate_locator(
+                    applicability_locator,
+                    f"Review check {check_id} observation applicability_locator",
+                )
+                if applicability_locator.get("type") != "json-pointer":
+                    raise ValueError(
+                        "Review applicability_locator requires a JSON Pointer"
+                    )
+            elif profile is not None:
+                raise ValueError(
+                    "Review applicability profiles require review-request-0.3"
+                )
             identity = f"{artifact_id}\0{json.dumps(locator, sort_keys=True)}"
             if identity in seen_observations:
                 raise ValueError(f"Review check {check_id} contains duplicate observation")
@@ -456,6 +501,26 @@ def _comparison_key(value: Any) -> tuple[str, str]:
     return type(value).__name__, _scalar_content(value)
 
 
+def _resolve_observation_applicability(
+    observation: dict[str, Any], source_path: Path
+) -> dict[str, str] | None:
+    profile = observation.get("applicability_profile")
+    if profile is not None:
+        return _validate_applicability_profile(
+            profile, "Review observation applicability_profile"
+        )
+    locator = observation.get("applicability_locator")
+    if locator is None:
+        return None
+    if source_path.suffix.casefold() != ".json":
+        raise ValueError("applicability_locator requires a .json artifact")
+    payload = json.loads(source_path.read_text(encoding="utf-8-sig"))
+    resolved = _resolve_json_pointer(payload, locator["pointer"])
+    return _validate_applicability_profile(
+        resolved, "Resolved observation applicability_profile"
+    )
+
+
 def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, Any]:
     request = load_review_request(request_path)
     registry = {item["artifact_id"]: item for item in request["artifact_registry"]}
@@ -516,6 +581,19 @@ def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, 
             expected_relation = "supports"
             if assertion is not None:
                 observations = assertion["observations"]
+                profiles = []
+                for observation in observations:
+                    profile_item = registry[observation["artifact_id"]]
+                    profile_path = Path(profile_item["source"])
+                    if not profile_path.is_absolute():
+                        profile_path = request_path.parent / profile_path
+                    profiles.append(
+                        _resolve_observation_applicability(observation, profile_path)
+                    )
+                if profiles[0] is not None and any(
+                    profile != profiles[0] for profile in profiles[1:]
+                ):
+                    raise ValueError("assertion observations have mismatched applicability")
                 if not any(
                     observation["artifact_id"] == artifact_id
                     and observation["locator"] == locator
@@ -668,6 +746,50 @@ def run_review(request_path: Path, output: Path) -> dict[str, Any]:
         for check in request["checks"]:
             assertion = check.get("assertion")
             if assertion is not None:
+                profiles: list[dict[str, str] | None] = []
+                applicability_failed = False
+                for observation in assertion["observations"]:
+                    artifact = artifact_map.get(observation["artifact_id"])
+                    try:
+                        if artifact is None:
+                            raise ValueError("artifact is unavailable")
+                        profiles.append(
+                            _resolve_observation_applicability(observation, artifact.path)
+                        )
+                    except (
+                        OSError, UnicodeError, KeyError, IndexError, TypeError,
+                        ValueError, json.JSONDecodeError
+                    ) as exc:
+                        applicability_failed = True
+                        assertion_reasons.append(_reason(
+                            "REVIEW-APPLICABILITY-INVALID",
+                            f"Check {check['check_id']} applicability cannot be resolved: {exc}",
+                            artifact_id=observation["artifact_id"],
+                            check_id=check["check_id"],
+                        ))
+                if applicability_failed:
+                    check_results.append({
+                        "check_id": check["check_id"],
+                        "statement": check["statement"],
+                        "status": "blocked",
+                        "citation_ids": [],
+                    })
+                    continue
+                if profiles[0] is not None and any(
+                    profile != profiles[0] for profile in profiles[1:]
+                ):
+                    assertion_reasons.append(_reason(
+                        "REVIEW-APPLICABILITY-MISMATCH",
+                        f"Observation applicability differs for check {check['check_id']}",
+                        check_id=check["check_id"],
+                    ))
+                    check_results.append({
+                        "check_id": check["check_id"],
+                        "statement": check["statement"],
+                        "status": "blocked",
+                        "citation_ids": [],
+                    })
+                    continue
                 resolved: list[tuple[Any, dict[str, Any]]] = []
                 observation_failed = False
                 for observation in assertion["observations"]:
@@ -780,10 +902,8 @@ def run_review(request_path: Path, output: Path) -> dict[str, Any]:
     timestamp = datetime.now(timezone.utc)
     result = {
         "artifact_type": "engineering-review-result",
-        "schema_version": (
-            "review-result-0.2"
-            if request["schema_version"] == "review-request-0.2"
-            else "review-result-0.1"
+        "schema_version": request["schema_version"].replace(
+            "review-request-", "review-result-"
         ),
         "run_id": timestamp.strftime("%Y%m%dT%H%M%SZ"),
         "started_at": timestamp.isoformat(),

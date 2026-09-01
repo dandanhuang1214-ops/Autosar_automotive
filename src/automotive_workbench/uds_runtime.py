@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.can_backend import probe_can_backend
+from automotive_workbench.applicability import build_runtime_applicability_profile
 from automotive_workbench.can_io import (
     BusConfig,
     bus_isolation_evidence,
@@ -948,6 +949,7 @@ def render_uds_markdown(result: dict[str, Any]) -> str:
 
 def _blocked_result(
     intent: Path,
+    dtc_path: Path | None,
     payload: dict[str, Any],
     config: BusConfig,
     transport: dict[str, Any],
@@ -963,6 +965,12 @@ def _blocked_result(
         "started_at": timestamp.isoformat(),
         "ecu": payload["ecu"],
         "backend": f"python-can {config.interface}",
+        "applicability_profile": build_runtime_applicability_profile(
+            variant=payload["ecu"],
+            software_version="uds-lab-0.1",
+            inputs=[intent, *([dtc_path] if dtc_path is not None else [])],
+            backend=f"python-can {config.interface}",
+        ),
         "status": "blocked",
         "reason": probe.get("reason", "backend_unavailable"),
         "scenario_count": len(payload["scenarios"]),
@@ -1015,7 +1023,9 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
 
     probe = probe_can_backend(config, output / "probe")
     if probe["status"] != "available":
-        result = _blocked_result(intent, payload, config, transport, probe, timestamp, isolation)
+        result = _blocked_result(
+            intent, dtc_path, payload, config, transport, probe, timestamp, isolation
+        )
         output.mkdir(parents=True, exist_ok=True)
         (output / "uds-lab-report.json").write_text(
             json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -1146,6 +1156,12 @@ def run_uds_lab(intent: Path, config: BusConfig, output: Path) -> dict[str, Any]
         "started_at": timestamp.isoformat(),
         "ecu": payload["ecu"],
         "backend": f"python-can {config.interface}",
+        "applicability_profile": build_runtime_applicability_profile(
+            variant=payload["ecu"],
+            software_version="uds-lab-0.1",
+            inputs=[intent, *([dtc_path] if dtc_path is not None else [])],
+            backend=f"python-can {config.interface}",
+        ),
         "status": "passed" if passed_count == len(scenarios) else "failed",
         "scenario_count": len(scenarios),
         "passed_count": passed_count,

@@ -98,6 +98,12 @@ class UdsRuntimeTests(unittest.TestCase):
         self.assertEqual(persisted["transport"]["response_id_hex"], "0x708")
         self.assertEqual(persisted["backend_probe"]["status"], "available")
         self.assertEqual(
+            persisted["applicability_profile"]["software_version"], "uds-lab-0.1"
+        )
+        self.assertEqual(
+            persisted["applicability_profile"]["backend"], "python-can virtual"
+        )
+        self.assertEqual(
             persisted["isolation"]["client"]["frame_filters"][0]["can_id_hex"],
             "0x708",
         )
@@ -118,6 +124,9 @@ class UdsRuntimeTests(unittest.TestCase):
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["reason"], "interface_missing")
         self.assertEqual(result["scenario_count"], 20)
+        self.assertEqual(
+            persisted["applicability_profile"]["backend"], "python-can socketcan"
+        )
         self.assertEqual(result["passed_count"], 0)
         self.assertEqual(persisted["backend_probe"]["status"], "blocked")
         self.assertEqual(probe["reason"], "interface_missing")

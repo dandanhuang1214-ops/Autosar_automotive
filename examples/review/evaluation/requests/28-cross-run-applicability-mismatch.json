@@ -1,7 +1,7 @@
 {
   "schema_version": "review-request-0.4",
-  "request_id": "eval-cross-run-can-drift",
-  "question": "Did the stable CAN round-trip outcome drift between runs?",
+  "request_id": "eval-cross-run-applicability-mismatch",
+  "question": "Can CAN outcomes from different software versions be compared as drift?",
   "minimum_coverage": 1.0,
   "allowed_confidentiality": ["public"],
   "artifact_registry": [
@@ -10,9 +10,9 @@
   ],
   "artifact_ids": ["can-run-1", "can-run-2"],
   "checks": [{
-    "check_id": "cross-run-can-drift",
-    "statement": "Both CAN runs report the same round-trip status.",
-    "terms": ["CAN runs round trip status"],
+    "check_id": "cross-run-applicability-mismatch",
+    "statement": "Both CAN runs are applicable to the same comparison scope.",
+    "terms": ["CAN runs applicability"],
     "assertion": {
       "claim_key": "cross-run.can.round-trip.status",
       "operator": "all-equal",

@@ -1,7 +1,7 @@
 {
   "schema_version": "review-request-0.4",
-  "request_id": "eval-cross-run-uds-stable",
-  "question": "Did two independent UDS runs decode the same VIN?",
+  "request_id": "eval-cross-run-uds-drift",
+  "question": "Did the stable UDS decoded VIN drift between applicable runs?",
   "minimum_coverage": 1.0,
   "allowed_confidentiality": ["public"],
   "artifact_registry": [
@@ -10,8 +10,8 @@
   ],
   "artifact_ids": ["uds-run-1", "uds-run-2"],
   "checks": [{
-    "check_id": "cross-run-uds-stable",
-    "statement": "Both UDS runs decoded the same VIN.",
+    "check_id": "cross-run-uds-drift",
+    "statement": "Both applicable UDS runs decoded the same VIN.",
     "terms": ["UDS runs decoded VIN"],
     "assertion": {
       "claim_key": "cross-run.uds.decoded-vin",

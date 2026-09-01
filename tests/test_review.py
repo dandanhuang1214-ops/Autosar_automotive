@@ -393,6 +393,193 @@ class ReviewTests(unittest.TestCase):
             {item["code"] for item in result["refusal_reasons"]},
         )
 
+    def test_applicability_profile_gates_multi_artifact_comparison(self) -> None:
+        profile = {
+            "variant": "window-control",
+            "software_version": "1.0.0",
+            "calibration_version": "2026.09",
+            "backend": "virtual",
+        }
+        request = {
+            "schema_version": "review-request-0.3",
+            "request_id": "applicability-review",
+            "question": "Are the two applicable run outcomes equal?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [
+                {
+                    "artifact_id": artifact_id,
+                    "artifact_type": "runtime-report",
+                    "source": f"{artifact_id}.json",
+                    "confidentiality": "public",
+                }
+                for artifact_id in ("run-a", "run-b")
+            ],
+            "artifact_ids": ["run-a", "run-b"],
+            "checks": [{
+                "check_id": "outcome",
+                "statement": "Both applicable runs have the same outcome.",
+                "terms": ["run outcome"],
+                "assertion": {
+                    "claim_key": "runtime.outcome",
+                    "operator": "all-equal",
+                    "observations": [
+                        {
+                            "artifact_id": artifact_id,
+                            "applicability_profile": copy.deepcopy(profile),
+                            "locator": {
+                                "type": "json-pointer",
+                                "pointer": "/outcome",
+                            },
+                        }
+                        for artifact_id in ("run-a", "run-b")
+                    ],
+                },
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for artifact_id in ("run-a", "run-b"):
+                (root / f"{artifact_id}.json").write_text(
+                    json.dumps({"outcome": "passed"}), encoding="utf-8"
+                )
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            applicable = run_review(request_path, root / "applicable")
+
+            for field in (
+                "variant", "software_version", "calibration_version", "backend"
+            ):
+                mismatched = copy.deepcopy(request)
+                mismatched["checks"][0]["assertion"]["observations"][1][
+                    "applicability_profile"
+                ][field] += "-other"
+                request_path.write_text(json.dumps(mismatched), encoding="utf-8")
+                validation = validate_citations(request_path, applicable)
+                blocked = run_review(request_path, root / f"blocked-{field}")
+                self.assertEqual(validation["status"], "failed")
+                self.assertEqual(validation["valid_count"], 0)
+                self.assertEqual(blocked["status"], "refused")
+                self.assertEqual(blocked["checks"][0]["status"], "blocked")
+                self.assertEqual(blocked["citations"], [])
+                self.assertIn(
+                    "REVIEW-APPLICABILITY-MISMATCH",
+                    {item["code"] for item in blocked["refusal_reasons"]},
+                )
+
+        self.assertEqual(applicable["schema_version"], "review-result-0.3")
+        self.assertEqual(applicable["status"], "answered")
+        self.assertEqual(applicable["checks"][0]["status"], "supported")
+        self.assertEqual(applicable["citation_validation"]["status"], "passed")
+
+    def test_review_request_03_requires_complete_applicability_profile(self) -> None:
+        request = json.loads(REQUEST.read_text(encoding="utf-8"))
+        request["schema_version"] = "review-request-0.3"
+        request["checks"][0]["assertion"] = {
+            "claim_key": "repair.outcome",
+            "operator": "equals",
+            "expected": "committed",
+            "observations": [{
+                "artifact_id": request["artifact_ids"][0],
+                "locator": {"type": "json-pointer", "pointer": "/repair_summary/outcome"},
+                "applicability_profile": {"variant": "window-control"},
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "request.json"
+            path.write_text(json.dumps(request), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "requires variant"):
+                load_review_request(path)
+
+    def test_applicability_locator_binds_profile_to_artifact(self) -> None:
+        profile = {
+            "variant": "window-control",
+            "software_version": "can-lab-0.1",
+            "calibration_version": "sha256:calibration",
+            "backend": "python-can virtual",
+        }
+        request = {
+            "schema_version": "review-request-0.4",
+            "request_id": "bound-applicability-review",
+            "question": "Are the artifact-bound run outcomes comparable?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [
+                {
+                    "artifact_id": artifact_id,
+                    "artifact_type": "runtime-report",
+                    "source": f"{artifact_id}.json",
+                    "confidentiality": "public",
+                }
+                for artifact_id in ("run-a", "run-b")
+            ],
+            "artifact_ids": ["run-a", "run-b"],
+            "checks": [{
+                "check_id": "outcome",
+                "statement": "Both artifact-bound runs have the same outcome.",
+                "terms": ["run outcome"],
+                "assertion": {
+                    "claim_key": "runtime.outcome",
+                    "operator": "all-equal",
+                    "observations": [
+                        {
+                            "artifact_id": artifact_id,
+                            "applicability_locator": {
+                                "type": "json-pointer",
+                                "pointer": "/applicability_profile",
+                            },
+                            "locator": {
+                                "type": "json-pointer",
+                                "pointer": "/outcome",
+                            },
+                        }
+                        for artifact_id in ("run-a", "run-b")
+                    ],
+                },
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for artifact_id in ("run-a", "run-b"):
+                (root / f"{artifact_id}.json").write_text(json.dumps({
+                    "applicability_profile": profile,
+                    "outcome": "passed",
+                }), encoding="utf-8")
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            applicable = run_review(request_path, root / "applicable")
+
+            mismatched = copy.deepcopy(profile)
+            mismatched["software_version"] = "can-lab-0.2"
+            (root / "run-b.json").write_text(json.dumps({
+                "applicability_profile": mismatched,
+                "outcome": "passed",
+            }), encoding="utf-8")
+            mismatch_result = run_review(request_path, root / "mismatch")
+            stale_validation = validate_citations(request_path, applicable)
+
+            invalid = copy.deepcopy(profile)
+            invalid.pop("backend")
+            (root / "run-b.json").write_text(json.dumps({
+                "applicability_profile": invalid,
+                "outcome": "passed",
+            }), encoding="utf-8")
+            invalid_result = run_review(request_path, root / "invalid")
+
+        self.assertEqual(applicable["schema_version"], "review-result-0.4")
+        self.assertEqual(applicable["status"], "answered")
+        self.assertEqual(mismatch_result["checks"][0]["status"], "blocked")
+        self.assertIn(
+            "REVIEW-APPLICABILITY-MISMATCH",
+            {item["code"] for item in mismatch_result["refusal_reasons"]},
+        )
+        self.assertEqual(stale_validation["status"], "failed")
+        self.assertEqual(invalid_result["checks"][0]["status"], "blocked")
+        self.assertIn(
+            "REVIEW-APPLICABILITY-INVALID",
+            {item["code"] for item in invalid_result["refusal_reasons"]},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -39,8 +39,10 @@
 - R5e 已完成（2026-08-31）：复用公开 canonical contract、BSW、UDS 和 DTC intent，将评测扩展为 14 案例、30 checks，并新增五域 check count/accuracy 证据。
 - R5f 已完成（2026-08-31）：新增白名单 CAN/UDS/DTC producer、运行时报告请求物化与实际 SHA-256 绑定，并将 3 项 runtime checks 和独立 3 项 held-out negative checks 分开计量。
 - R5g 已完成（2026-09-01）：新增两次独立 runner 输出配对、稳定字段 allowlist drift injection、动态字段比较拒绝，以及 CAN/UDS/DTC 跨运行一致性和 CAN drift 冲突评测。
+- R5h 已完成（2026-09-01）：新增 `review-request-0.3` applicability profile，variant、software/calibration version、backend 任一不一致即阻断比较；cross-run catalog 扩展到 CAN/UDS/DTC 三域稳定与 drift，并增加 profile mismatch 拒答案例。
+- R5i 已完成（2026-09-01）：新增 `review-request-0.4` applicability locator；CAN/UDS/DTC runner 将输入哈希、runner contract 和实际 backend 固化为报告内 profile，evaluation 将 profile 与报告 SHA-256 一并归档并从 artifact 解析比较资格。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：R5h 为跨运行 claim 增加显式 applicability profile（variant、software/calibration version、backend），并扩展稳定字段 drift catalog；此前不引入外部 LLM。
+- 当前下一阶段：R5j 定义 baseline/candidate 角色和多运行 cohort 汇总，在保持精确 applicability 门禁的前提下输出结构化 drift catalog；此前不引入外部 LLM。
 
 ## 平台目标
 

@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["schema_version", "evaluation_id", "repeat_runs", "cases"],
   "properties": {
-    "schema_version": {"enum": ["review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3", "review-evaluation-0.4"]},
+    "schema_version": {"enum": ["review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3", "review-evaluation-0.4", "review-evaluation-0.5", "review-evaluation-0.6"]},
     "evaluation_id": {"type": "string", "minLength": 1},
     "repeat_runs": {"type": "integer", "minimum": 3},
     "repeatability_excluded_fields": {

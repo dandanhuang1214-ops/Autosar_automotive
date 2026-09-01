@@ -1,5 +1,5 @@
 {
-  "schema_version": "review-request-0.2",
+  "schema_version": "review-request-0.4",
   "request_id": "eval-cross-run-can-stable",
   "question": "Did two independent CAN runs agree on the round-trip outcome?",
   "minimum_coverage": 1.0,
@@ -17,8 +17,8 @@
       "claim_key": "cross-run.can.round-trip.status",
       "operator": "all-equal",
       "observations": [
-        {"artifact_id": "can-run-1", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
-        {"artifact_id": "can-run-2", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
+        {"artifact_id": "can-run-1", "applicability_locator": {"type": "json-pointer", "pointer": "/applicability_profile"}, "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
+        {"artifact_id": "can-run-2", "applicability_locator": {"type": "json-pointer", "pointer": "/applicability_profile"}, "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
       ]
     }
   }]

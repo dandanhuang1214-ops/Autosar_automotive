@@ -6,13 +6,13 @@
   "required": ["artifact_type", "schema_version", "run_id", "started_at", "evaluation_id", "status", "case_count", "repeat_runs", "metrics", "cases"],
   "allOf": [
     {
-      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4"]}}},
+      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6"]}}},
       "then": {"required": ["check_count", "domain_check_counts", "domain_check_accuracy", "split_check_counts", "split_check_accuracy"]}
     }
   ],
   "properties": {
     "artifact_type": {"const": "engineering-review-evaluation"},
-    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4"]},
+    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6"]},
     "run_id": {"type": "string", "minLength": 1},
     "started_at": {"type": "string", "minLength": 1},
     "evaluation_id": {"type": "string", "minLength": 1},
@@ -83,6 +83,17 @@
               "kind": {"enum": ["can-lab", "uds-lab", "dtc-lifecycle"]},
               "report": {"type": "string", "minLength": 1},
               "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "applicability_profile": {
+                "type": "object",
+                "required": ["variant", "software_version", "calibration_version", "backend"],
+                "properties": {
+                  "variant": {"type": "string", "minLength": 1},
+                  "software_version": {"type": "string", "minLength": 1},
+                  "calibration_version": {"type": "string", "minLength": 1},
+                  "backend": {"type": "string", "minLength": 1}
+                },
+                "additionalProperties": false
+              },
               "status": {"const": "passed"},
               "runs": {"const": 2},
               "reports": {
@@ -95,6 +106,17 @@
                   "properties": {
                     "report": {"type": "string", "minLength": 1},
                     "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "applicability_profile": {
+                      "type": "object",
+                      "required": ["variant", "software_version", "calibration_version", "backend"],
+                      "properties": {
+                        "variant": {"type": "string", "minLength": 1},
+                        "software_version": {"type": "string", "minLength": 1},
+                        "calibration_version": {"type": "string", "minLength": 1},
+                        "backend": {"type": "string", "minLength": 1}
+                      },
+                      "additionalProperties": false
+                    },
                     "status": {"const": "passed"}
                   },
                   "additionalProperties": false

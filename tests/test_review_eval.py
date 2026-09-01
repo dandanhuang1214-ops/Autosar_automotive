@@ -128,10 +128,10 @@ class ReviewEvaluationTests(unittest.TestCase):
             result = run_review_evaluation(CROSS_RUN_MANIFEST, output)
 
             self.assertEqual(result["status"], "passed")
-            self.assertEqual(result["schema_version"], "review-evaluation-result-0.4")
-            self.assertEqual(result["case_count"], 4)
-            self.assertEqual(result["check_count"], 4)
-            self.assertEqual(result["split_check_counts"], {"cross-run": 4})
+            self.assertEqual(result["schema_version"], "review-evaluation-result-0.6")
+            self.assertEqual(result["case_count"], 7)
+            self.assertEqual(result["check_count"], 7)
+            self.assertEqual(result["split_check_counts"], {"cross-run": 7})
             self.assertEqual(result["metrics"]["conflict_recall"], 1.0)
             self.assertEqual(result["metrics"]["false_conflict_count"], 0)
             for case in result["cases"]:
@@ -140,6 +140,15 @@ class ReviewEvaluationTests(unittest.TestCase):
                     for report in case["producer"]["reports"]
                 }
                 self.assertEqual(len(hashes), 2)
+                for report_evidence in case["producer"]["reports"]:
+                    report_path = (
+                        output / case["case_id"] / "producer" / report_evidence["report"]
+                    )
+                    report = json.loads(report_path.read_text(encoding="utf-8"))
+                    self.assertEqual(
+                        report_evidence["applicability_profile"],
+                        report["applicability_profile"],
+                    )
             drift = next(
                 case for case in result["cases"]
                 if case["case_id"] == "cross-run-can-drift"
@@ -166,6 +175,37 @@ class ReviewEvaluationTests(unittest.TestCase):
                 ).read_text(encoding="utf-8")
             )
             self.assertEqual(mutated["scenarios"][0]["status"], "failed")
+            for case_id in ("cross-run-uds-drift", "cross-run-dtc-drift"):
+                domain_drift = next(
+                    case for case in result["cases"] if case["case_id"] == case_id
+                )
+                self.assertEqual(domain_drift["observed_status"], "refused")
+                self.assertEqual(set(domain_drift["observed_checks"].values()), {"conflicted"})
+                self.assertEqual(domain_drift["citation_count"], 2)
+            applicability = next(
+                case for case in result["cases"]
+                if case["case_id"] == "cross-run-applicability-mismatch"
+            )
+            self.assertEqual(applicability["observed_status"], "refused")
+            self.assertEqual(
+                applicability["observed_checks"],
+                {"cross-run-applicability-mismatch": "blocked"},
+            )
+            self.assertEqual(
+                applicability["observed_refusal_codes"],
+                ["REVIEW-APPLICABILITY-MISMATCH"],
+            )
+            self.assertEqual(applicability["citation_count"], 0)
+            profiles = [
+                report["applicability_profile"]
+                for report in applicability["producer"]["reports"]
+            ]
+            self.assertNotEqual(
+                profiles[0]["software_version"], profiles[1]["software_version"]
+            )
+            self.assertEqual(
+                profiles[0]["calibration_version"], profiles[1]["calibration_version"]
+            )
 
     def test_cross_run_dynamic_fields_are_not_comparable(self) -> None:
         manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
@@ -196,7 +236,7 @@ class ReviewEvaluationTests(unittest.TestCase):
             manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
             manifest["schema_version"] = "review-evaluation-0.3"
             path.write_text(json.dumps(manifest), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "requires schema 0.4"):
+            with self.assertRaisesRegex(ValueError, "requires schema 0.4 or newer"):
                 load_evaluation_manifest(path)
 
     def test_rejects_duplicate_evaluation_case(self) -> None:

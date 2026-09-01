@@ -29,6 +29,13 @@ class VirtualCanRuntimeTests(unittest.TestCase):
         self.assertEqual(scenarios["round_trip"]["evidence"]["decoded"]["WindowPosition"], 42)
         self.assertEqual(scenarios["wrong_can_id"]["evidence"]["actual_frame_id"], 0x101)
         self.assertEqual(persisted["backend"], "python-can virtual")
+        self.assertEqual(persisted["applicability_profile"]["variant"], "window_control")
+        self.assertEqual(
+            persisted["applicability_profile"]["software_version"], "can-lab-0.1"
+        )
+        self.assertEqual(
+            persisted["applicability_profile"]["backend"], "python-can virtual"
+        )
         self.assertIn("does not emulate CAN arbitration", markdown)
 
 
