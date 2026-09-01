@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["schema_version", "evaluation_id", "repeat_runs", "cases"],
   "properties": {
-    "schema_version": {"enum": ["review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3", "review-evaluation-0.4", "review-evaluation-0.5", "review-evaluation-0.6"]},
+    "schema_version": {"enum": ["review-evaluation-0.1", "review-evaluation-0.2", "review-evaluation-0.3", "review-evaluation-0.4", "review-evaluation-0.5", "review-evaluation-0.6", "review-evaluation-0.7"]},
     "evaluation_id": {"type": "string", "minLength": 1},
     "repeat_runs": {"type": "integer", "minimum": 3},
     "repeatability_excluded_fields": {
@@ -22,7 +22,7 @@
         "properties": {
           "case_id": {"type": "string", "minLength": 1},
           "domain": {"type": "string", "minLength": 1},
-          "split": {"enum": ["development", "runtime", "held-out", "cross-run"]},
+          "split": {"enum": ["development", "runtime", "held-out", "cross-run", "cohort"]},
           "request": {"type": "string", "minLength": 1},
           "producer": {
             "type": "object",
@@ -30,14 +30,14 @@
             "properties": {
               "kind": {"enum": ["can-lab", "uds-lab", "dtc-lifecycle"]},
               "input": {"type": "string", "minLength": 1},
-              "runs": {"enum": [1, 2]},
+              "runs": {"enum": [1, 2, 3]},
               "mutations": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "required": ["run", "pointer", "value"],
                   "properties": {
-                    "run": {"enum": [1, 2]},
+                    "run": {"enum": [1, 2, 3]},
                     "pointer": {"type": "string", "minLength": 1},
                     "value": {"type": ["string", "number", "boolean", "null"]}
                   },
@@ -60,6 +60,21 @@
           "expected_findings": {
             "type": "array",
             "items": {"$ref": "finding.schema.json"}
+          },
+          "expected_drift_catalog": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["check_id", "claim_key", "baseline_artifact_id", "candidate_artifact_id", "status"],
+              "properties": {
+                "check_id": {"type": "string", "minLength": 1},
+                "claim_key": {"type": "string", "minLength": 1},
+                "baseline_artifact_id": {"type": "string", "minLength": 1},
+                "candidate_artifact_id": {"type": "string", "minLength": 1},
+                "status": {"enum": ["stable", "drifted", "not-comparable"]}
+              },
+              "additionalProperties": false
+            }
           },
           "gold_evidence_sets": {
             "type": "array",

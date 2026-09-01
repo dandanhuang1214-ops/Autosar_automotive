@@ -6,13 +6,13 @@
   "required": ["artifact_type", "schema_version", "run_id", "started_at", "evaluation_id", "status", "case_count", "repeat_runs", "metrics", "cases"],
   "allOf": [
     {
-      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6"]}}},
+      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6", "review-evaluation-result-0.7"]}}},
       "then": {"required": ["check_count", "domain_check_counts", "domain_check_accuracy", "split_check_counts", "split_check_accuracy"]}
     }
   ],
   "properties": {
     "artifact_type": {"const": "engineering-review-evaluation"},
-    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6"]},
+    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6", "review-evaluation-result-0.7"]},
     "run_id": {"type": "string", "minLength": 1},
     "started_at": {"type": "string", "minLength": 1},
     "evaluation_id": {"type": "string", "minLength": 1},
@@ -42,7 +42,7 @@
     },
     "metrics": {
       "type": "object",
-      "required": ["status_accuracy", "check_state_accuracy", "conflict_recall", "false_conflict_count", "citation_validity", "citation_precision", "citation_evidence_set_recall", "refusal_code_accuracy", "finding_preservation", "repeatability"],
+      "required": ["status_accuracy", "check_state_accuracy", "conflict_recall", "false_conflict_count", "citation_validity", "citation_precision", "citation_evidence_set_recall", "refusal_code_accuracy", "finding_preservation", "repeatability", "drift_catalog_accuracy"],
       "properties": {
         "status_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
         "check_state_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
@@ -53,7 +53,8 @@
         "citation_evidence_set_recall": {"type": "number", "minimum": 0, "maximum": 1},
         "refusal_code_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
         "finding_preservation": {"type": "number", "minimum": 0, "maximum": 1},
-        "repeatability": {"type": "number", "minimum": 0, "maximum": 1}
+        "repeatability": {"type": "number", "minimum": 0, "maximum": 1},
+        "drift_catalog_accuracy": {"type": "number", "minimum": 0, "maximum": 1}
       },
       "additionalProperties": false
     },
@@ -65,13 +66,28 @@
         "properties": {
           "case_id": {"type": "string"},
           "domain": {"type": "string"},
-          "split": {"enum": ["development", "runtime", "held-out", "cross-run"]},
+          "split": {"enum": ["development", "runtime", "held-out", "cross-run", "cohort"]},
           "passed": {"type": "boolean"},
           "observed_status": {"enum": ["answered", "partial", "refused"]},
           "observed_checks": {"type": "object", "additionalProperties": {"enum": ["supported", "unsupported", "conflicted", "blocked"]}},
           "observed_refusal_codes": {"type": "array", "items": {"type": "string"}},
           "citation_count": {"type": "integer", "minimum": 0},
           "repeatable": {"type": "boolean"},
+          "observed_drift_catalog": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["check_id", "claim_key", "baseline_artifact_id", "candidate_artifact_id", "status"],
+              "properties": {
+                "check_id": {"type": "string", "minLength": 1},
+                "claim_key": {"type": "string", "minLength": 1},
+                "baseline_artifact_id": {"type": "string", "minLength": 1},
+                "candidate_artifact_id": {"type": "string", "minLength": 1},
+                "status": {"enum": ["stable", "drifted", "not-comparable"]}
+              },
+              "additionalProperties": false
+            }
+          },
           "producer": {
             "type": "object",
             "required": ["kind", "status"],
@@ -95,11 +111,11 @@
                 "additionalProperties": false
               },
               "status": {"const": "passed"},
-              "runs": {"const": 2},
+              "runs": {"enum": [2, 3]},
               "reports": {
                 "type": "array",
                 "minItems": 2,
-                "maxItems": 2,
+                "maxItems": 3,
                 "items": {
                   "type": "object",
                   "required": ["report", "source_sha256", "status"],
@@ -128,7 +144,7 @@
                   "type": "object",
                   "required": ["run", "pointer", "value"],
                   "properties": {
-                    "run": {"enum": [1, 2]},
+                    "run": {"enum": [1, 2, 3]},
                     "pointer": {"type": "string", "minLength": 1},
                     "value": {"type": ["string", "number", "boolean", "null"]}
                   },

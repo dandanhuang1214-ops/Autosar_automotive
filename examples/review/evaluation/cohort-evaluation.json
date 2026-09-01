@@ -1,0 +1,57 @@
+{
+  "schema_version": "review-evaluation-0.7",
+  "evaluation_id": "workbench-review-r5j-can-cohort",
+  "repeat_runs": 3,
+  "repeatability_excluded_fields": ["run_id", "started_at"],
+  "cases": [
+    {
+      "case_id": "cohort-can-stable-and-drift",
+      "domain": "can",
+      "split": "cohort",
+      "request": "requests/29-cohort-can-drift.json",
+      "producer": {
+        "kind": "can-lab",
+        "input": "../../window_control/window_control.dbc",
+        "runs": 3,
+        "mutations": [{"run": 3, "pointer": "/scenarios/0/status", "value": "failed"}]
+      },
+      "expected_status": "refused",
+      "expected_checks": {"cohort-can-round-trip": "conflicted"},
+      "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
+      "expected_findings": [],
+      "expected_drift_catalog": [
+        {"check_id": "cohort-can-round-trip", "claim_key": "cohort.can.round-trip.status", "baseline_artifact_id": "can-baseline", "candidate_artifact_id": "can-candidate-stable", "status": "stable"},
+        {"check_id": "cohort-can-round-trip", "claim_key": "cohort.can.round-trip.status", "baseline_artifact_id": "can-baseline", "candidate_artifact_id": "can-candidate-drift", "status": "drifted"}
+      ],
+      "gold_evidence_sets": [[
+        {"artifact_id": "can-baseline", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
+        {"artifact_id": "can-candidate-stable", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
+        {"artifact_id": "can-candidate-drift", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
+      ]]
+    },
+    {
+      "case_id": "cohort-can-applicability-mismatch",
+      "domain": "can",
+      "split": "cohort",
+      "request": "requests/30-cohort-can-applicability-mismatch.json",
+      "producer": {
+        "kind": "can-lab",
+        "input": "../../window_control/window_control.dbc",
+        "runs": 3,
+        "mutations": [{"run": 3, "pointer": "/applicability_profile/software_version", "value": "can-lab-0.2"}]
+      },
+      "expected_status": "refused",
+      "expected_checks": {"cohort-can-applicability": "blocked"},
+      "expected_refusal_codes": ["REVIEW-APPLICABILITY-MISMATCH"],
+      "expected_findings": [],
+      "expected_drift_catalog": [
+        {"check_id": "cohort-can-applicability", "claim_key": "cohort.can.round-trip.status", "baseline_artifact_id": "can-baseline", "candidate_artifact_id": "can-candidate-stable", "status": "stable"},
+        {"check_id": "cohort-can-applicability", "claim_key": "cohort.can.round-trip.status", "baseline_artifact_id": "can-baseline", "candidate_artifact_id": "can-candidate-mismatch", "status": "not-comparable"}
+      ],
+      "gold_evidence_sets": [[
+        {"artifact_id": "can-baseline", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
+        {"artifact_id": "can-candidate-stable", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
+      ]]
+    }
+  ]
+}

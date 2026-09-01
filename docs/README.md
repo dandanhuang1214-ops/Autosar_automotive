@@ -29,7 +29,7 @@
 - [DTC redundancy repair/interrupted write R4p 调研](research/dtc-redundancy-repair-interrupted-write-research-2026-08-31.md)
 - [AI engineering review contract R5a 调研](research/ai-engineering-review-contract-research-2026-08-31.md)
 - [AI review conflict、Markdown citation 与 evaluation R5c 调研](research/ai-engineering-review-conflict-markdown-evaluation-research-2026-08-31.md)
-  - 同一文档追加 R5d-R5i 实施结果、runtime producer、held-out split、跨运行比较与 artifact-bound applicability profile 边界。
+  - 同一文档追加 R5d-R5j 实施结果、runtime producer、held-out/cross-run/cohort split、artifact-bound applicability 与 drift catalog 边界。
 
 ## 文档职责
 

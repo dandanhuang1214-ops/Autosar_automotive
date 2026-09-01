@@ -14,6 +14,7 @@ SUPPORTED_CONFIDENTIALITY = {"public", "private-local", "company-restricted"}
 SUPPORTED_REQUEST_VERSIONS = {
     "review-request-0.1", "review-request-0.2", "review-request-0.3",
     "review-request-0.4",
+    "review-request-0.5",
 }
 APPLICABILITY_FIELDS = {
     "variant", "software_version", "calibration_version", "backend"
@@ -261,9 +262,12 @@ def load_review_request(path: Path) -> dict[str, Any]:
             raise ValueError(f"Review check {check_id} terms contain no searchable tokens")
         assertion = item.get("assertion")
         if assertion is None:
+            if payload["schema_version"] == "review-request-0.5":
+                raise ValueError("Review-request-0.5 requires cohort assertions")
             continue
         if payload["schema_version"] not in {
-            "review-request-0.2", "review-request-0.3", "review-request-0.4"
+            "review-request-0.2", "review-request-0.3", "review-request-0.4",
+            "review-request-0.5",
         }:
             raise ValueError("Review assertions require review-request-0.2 or newer")
         if not isinstance(assertion, dict):
@@ -303,10 +307,12 @@ def load_review_request(path: Path) -> dict[str, Any]:
                     raise ValueError(
                         "Review applicability_locator requires review-request-0.4"
                     )
-            elif payload["schema_version"] == "review-request-0.4":
+            elif payload["schema_version"] in {
+                "review-request-0.4", "review-request-0.5"
+            }:
                 if profile is not None:
                     raise ValueError(
-                        "Review-request-0.4 applicability must come from artifact evidence"
+                        "Review-request-0.4 or newer applicability must come from artifact evidence"
                     )
                 applicability_locator = observation.get("applicability_locator")
                 _validate_locator(
@@ -325,6 +331,18 @@ def load_review_request(path: Path) -> dict[str, Any]:
             if identity in seen_observations:
                 raise ValueError(f"Review check {check_id} contains duplicate observation")
             seen_observations.add(identity)
+        if payload["schema_version"] == "review-request-0.5":
+            if operator != "all-equal":
+                raise ValueError("Review cohort assertions require all-equal")
+            roles = [observation.get("comparison_role") for observation in observations]
+            if roles.count("baseline") != 1 or roles.count("candidate") < 1:
+                raise ValueError(
+                    f"Review check {check_id} requires one baseline and candidates"
+                )
+            if any(role not in {"baseline", "candidate"} for role in roles):
+                raise ValueError(f"Review check {check_id} has invalid comparison_role")
+        elif any(observation.get("comparison_role") is not None for observation in observations):
+            raise ValueError("Review comparison roles require review-request-0.5")
     return payload
 
 
@@ -521,6 +539,176 @@ def _resolve_observation_applicability(
     )
 
 
+def _evaluate_cohort_assertion(
+    check: dict[str, Any],
+    artifact_map: dict[str, _ArtifactRecord],
+) -> tuple[
+    dict[str, Any],
+    list[dict[str, Any]],
+    list[dict[str, str]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
+    observations = check["assertion"]["observations"]
+    baseline_observation = next(
+        item for item in observations if item["comparison_role"] == "baseline"
+    )
+    candidates = [
+        item for item in observations if item["comparison_role"] == "candidate"
+    ]
+    reasons: list[dict[str, str]] = []
+    catalog: list[dict[str, Any]] = []
+    citations: list[dict[str, Any]] = []
+    new_units: list[dict[str, Any]] = []
+    baseline_artifact = artifact_map.get(baseline_observation["artifact_id"])
+    try:
+        if baseline_artifact is None:
+            raise ValueError("baseline artifact is unavailable")
+        baseline_profile = _resolve_observation_applicability(
+            baseline_observation, baseline_artifact.path
+        )
+        baseline_locator = baseline_observation["locator"]
+        baseline_value = _resolve_source_locator(
+            baseline_artifact.path.read_bytes(),
+            baseline_artifact.path.suffix.casefold(),
+            baseline_locator,
+        )
+        baseline_unit = _make_unit(
+            baseline_artifact, baseline_locator, _scalar_content(baseline_value)
+        )
+    except (
+        OSError, UnicodeError, KeyError, IndexError, TypeError,
+        ValueError, json.JSONDecodeError
+    ) as exc:
+        reasons.append(_reason(
+            "REVIEW-APPLICABILITY-INVALID",
+            f"Check {check['check_id']} baseline cannot be resolved: {exc}",
+            artifact_id=baseline_observation["artifact_id"],
+            check_id=check["check_id"],
+        ))
+        for candidate in candidates:
+            catalog.append({
+                "check_id": check["check_id"],
+                "claim_key": check["assertion"]["claim_key"],
+                "baseline_artifact_id": baseline_observation["artifact_id"],
+                "candidate_artifact_id": candidate["artifact_id"],
+                "status": "not-comparable",
+                "citation_ids": [],
+            })
+        return ({
+            "check_id": check["check_id"],
+            "statement": check["statement"],
+            "status": "blocked",
+            "citation_ids": [],
+        }, citations, reasons, catalog, new_units)
+
+    baseline_citation: dict[str, Any] | None = None
+    has_drift = False
+    has_blocked = False
+    for candidate in candidates:
+        candidate_artifact = artifact_map.get(candidate["artifact_id"])
+        candidate_citation_ids: list[str] = []
+        comparison_status = "not-comparable"
+        try:
+            if candidate_artifact is None:
+                raise ValueError("candidate artifact is unavailable")
+            candidate_profile = _resolve_observation_applicability(
+                candidate, candidate_artifact.path
+            )
+        except (
+            OSError, UnicodeError, KeyError, IndexError, TypeError,
+            ValueError, json.JSONDecodeError
+        ) as exc:
+            has_blocked = True
+            reasons.append(_reason(
+                "REVIEW-APPLICABILITY-INVALID",
+                f"Check {check['check_id']} candidate applicability cannot be resolved: {exc}",
+                artifact_id=candidate["artifact_id"],
+                check_id=check["check_id"],
+            ))
+        else:
+            if candidate_profile != baseline_profile:
+                has_blocked = True
+                reasons.append(_reason(
+                    "REVIEW-APPLICABILITY-MISMATCH",
+                    f"Candidate {candidate['artifact_id']} differs from baseline applicability",
+                    artifact_id=candidate["artifact_id"],
+                    check_id=check["check_id"],
+                ))
+            else:
+                try:
+                    candidate_locator = candidate["locator"]
+                    candidate_value = _resolve_source_locator(
+                        candidate_artifact.path.read_bytes(),
+                        candidate_artifact.path.suffix.casefold(),
+                        candidate_locator,
+                    )
+                    candidate_unit = _make_unit(
+                        candidate_artifact,
+                        candidate_locator,
+                        _scalar_content(candidate_value),
+                    )
+                except (
+                    OSError, UnicodeError, KeyError, IndexError, TypeError,
+                    ValueError, json.JSONDecodeError
+                ) as exc:
+                    has_blocked = True
+                    reasons.append(_reason(
+                        "REVIEW-OBSERVATION-INVALID",
+                        f"Check {check['check_id']} candidate cannot be resolved: {exc}",
+                        artifact_id=candidate["artifact_id"],
+                        check_id=check["check_id"],
+                    ))
+                else:
+                    stable = _comparison_key(candidate_value) == _comparison_key(
+                        baseline_value
+                    )
+                    comparison_status = "stable" if stable else "drifted"
+                    has_drift = has_drift or not stable
+                    if baseline_citation is None:
+                        baseline_citation = _citation(
+                            baseline_unit, check["check_id"], "supports"
+                        )
+                        citations.append(baseline_citation)
+                        new_units.append(baseline_unit)
+                    candidate_citation = _citation(
+                        candidate_unit,
+                        check["check_id"],
+                        "supports" if stable else "contradicts",
+                    )
+                    citations.append(candidate_citation)
+                    new_units.append(candidate_unit)
+                    candidate_citation_ids = [
+                        baseline_citation["citation_id"],
+                        candidate_citation["citation_id"],
+                    ]
+                    if not stable:
+                        reasons.append(_reason(
+                            "REVIEW-EVIDENCE-CONFLICT",
+                            f"Candidate {candidate['artifact_id']} drifted from baseline",
+                            artifact_id=candidate["artifact_id"],
+                            check_id=check["check_id"],
+                        ))
+        catalog.append({
+            "check_id": check["check_id"],
+            "claim_key": check["assertion"]["claim_key"],
+            "baseline_artifact_id": baseline_observation["artifact_id"],
+            "candidate_artifact_id": candidate["artifact_id"],
+            "status": comparison_status,
+            "citation_ids": candidate_citation_ids,
+        })
+
+    check_status = "blocked" if has_blocked else (
+        "conflicted" if has_drift else "supported"
+    )
+    return ({
+        "check_id": check["check_id"],
+        "statement": check["statement"],
+        "status": check_status,
+        "citation_ids": [item["citation_id"] for item in citations],
+    }, citations, reasons, catalog, new_units)
+
+
 def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, Any]:
     request = load_review_request(request_path)
     registry = {item["artifact_id"]: item for item in request["artifact_registry"]}
@@ -581,8 +769,28 @@ def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, 
             expected_relation = "supports"
             if assertion is not None:
                 observations = assertion["observations"]
+                matching_observation = next((
+                    observation for observation in observations
+                    if observation["artifact_id"] == artifact_id
+                    and observation["locator"] == locator
+                ), None)
+                if matching_observation is None:
+                    raise ValueError("citation is not an assertion observation")
+                baseline_observation = (
+                    next(
+                        observation for observation in observations
+                        if observation.get("comparison_role") == "baseline"
+                    )
+                    if request["schema_version"] == "review-request-0.5"
+                    else observations[0]
+                )
+                profile_observations = (
+                    [baseline_observation, matching_observation]
+                    if request["schema_version"] == "review-request-0.5"
+                    else observations
+                )
                 profiles = []
-                for observation in observations:
+                for observation in profile_observations:
                     profile_item = registry[observation["artifact_id"]]
                     profile_path = Path(profile_item["source"])
                     if not profile_path.is_absolute():
@@ -594,12 +802,6 @@ def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, 
                     profile != profiles[0] for profile in profiles[1:]
                 ):
                     raise ValueError("assertion observations have mismatched applicability")
-                if not any(
-                    observation["artifact_id"] == artifact_id
-                    and observation["locator"] == locator
-                    for observation in observations
-                ):
-                    raise ValueError("citation is not an assertion observation")
                 if assertion["operator"] == "equals":
                     expected_relation = (
                         "supports"
@@ -607,7 +809,6 @@ def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, 
                         else "contradicts"
                     )
                 else:
-                    baseline_observation = observations[0]
                     baseline_item = registry[baseline_observation["artifact_id"]]
                     baseline_path = Path(baseline_item["source"])
                     if not baseline_path.is_absolute():
@@ -653,6 +854,76 @@ def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, 
         else:
             seen_citation_ids.add(str(citation["citation_id"]))
             valid_count += 1
+    if request["schema_version"] == "review-request-0.5":
+        try:
+            expected_pairs: set[tuple[str, str, str, str]] = set()
+            for check in request["checks"]:
+                observations = check["assertion"]["observations"]
+                baseline_id = next(
+                    item["artifact_id"] for item in observations
+                    if item["comparison_role"] == "baseline"
+                )
+                expected_pairs.update(
+                    (
+                        check["check_id"], check["assertion"]["claim_key"],
+                        baseline_id, item["artifact_id"],
+                    )
+                    for item in observations
+                    if item["comparison_role"] == "candidate"
+                )
+            catalog = result.get("drift_catalog")
+            if not isinstance(catalog, list):
+                raise ValueError("drift_catalog is missing")
+            actual_pairs: set[tuple[str, str, str, str]] = set()
+            citations_by_id = {
+                item.get("citation_id"): item for item in result.get("citations", [])
+            }
+            for item in catalog:
+                pair = (
+                    item["check_id"], item["claim_key"],
+                    item["baseline_artifact_id"], item["candidate_artifact_id"],
+                )
+                if pair in actual_pairs:
+                    raise ValueError("drift_catalog comparison is duplicated")
+                actual_pairs.add(pair)
+                citation_ids = item.get("citation_ids")
+                if item.get("status") == "not-comparable":
+                    if citation_ids != []:
+                        raise ValueError("not-comparable drift item must not cite values")
+                    continue
+                if (
+                    item.get("status") not in {"stable", "drifted"}
+                    or not isinstance(citation_ids, list)
+                    or len(citation_ids) != 2
+                    or not set(citation_ids) <= seen_citation_ids
+                ):
+                    raise ValueError("drift_catalog citations are invalid")
+                relations = {
+                    citations_by_id[citation_id].get("relation", "supports")
+                    for citation_id in citation_ids
+                }
+                expected_relations = (
+                    {"supports"}
+                    if item["status"] == "stable"
+                    else {"supports", "contradicts"}
+                )
+                if relations != expected_relations:
+                    raise ValueError("drift_catalog status disagrees with citations")
+                cited_artifacts = {
+                    citations_by_id[citation_id].get("artifact_id")
+                    for citation_id in citation_ids
+                }
+                if cited_artifacts != {
+                    item["baseline_artifact_id"], item["candidate_artifact_id"]
+                }:
+                    raise ValueError("drift_catalog citations reference wrong artifacts")
+            if actual_pairs != expected_pairs:
+                raise ValueError("drift_catalog does not cover every candidate exactly once")
+        except (KeyError, TypeError, ValueError) as exc:
+            reasons.append(_reason(
+                "REVIEW-CITATION-INVALID",
+                f"Drift catalog is invalid: {exc}",
+            ))
     return {
         "status": "passed" if not reasons else "failed",
         "citation_count": len(result.get("citations", [])),
@@ -678,6 +949,19 @@ def render_review_markdown(result: dict[str, Any]) -> str:
         lines.append(
             f"| `{check['check_id']}` | {check['status']} | {len(check['citation_ids'])} |"
         )
+    if result.get("drift_catalog"):
+        lines.extend([
+            "",
+            "## Drift catalog",
+            "",
+            "| Claim | Baseline | Candidate | Status |",
+            "|---|---|---|---|",
+        ])
+        for item in result["drift_catalog"]:
+            lines.append(
+                f"| `{item['claim_key']}` | `{item['baseline_artifact_id']}` | "
+                f"`{item['candidate_artifact_id']}` | {item['status']} |"
+            )
     lines.extend(["", "## Refusal reasons", ""])
     if result["refusal_reasons"]:
         for reason in result["refusal_reasons"]:
@@ -734,6 +1018,7 @@ def run_review(request_path: Path, output: Path) -> dict[str, Any]:
     assertion_reasons: list[dict[str, str]] = []
     check_results: list[dict[str, Any]] = []
     citations: list[dict[str, Any]] = []
+    drift_catalog: list[dict[str, Any]] = []
     if blocking_reasons:
         for check in request["checks"]:
             check_results.append({
@@ -746,6 +1031,24 @@ def run_review(request_path: Path, output: Path) -> dict[str, Any]:
         for check in request["checks"]:
             assertion = check.get("assertion")
             if assertion is not None:
+                if request["schema_version"] == "review-request-0.5":
+                    (
+                        cohort_result,
+                        cohort_citations,
+                        cohort_reasons,
+                        cohort_catalog,
+                        cohort_units,
+                    ) = _evaluate_cohort_assertion(check, artifact_map)
+                    check_results.append(cohort_result)
+                    citations.extend(cohort_citations)
+                    assertion_reasons.extend(cohort_reasons)
+                    drift_catalog.extend(cohort_catalog)
+                    for unit in cohort_units:
+                        if not any(
+                            item["evidence_id"] == unit["evidence_id"] for item in units
+                        ):
+                            units.append(unit)
+                    continue
                 profiles: list[dict[str, str] | None] = []
                 applicability_failed = False
                 for observation in assertion["observations"]:
@@ -921,6 +1224,8 @@ def run_review(request_path: Path, output: Path) -> dict[str, Any]:
         "findings": findings,
         "refusal_reasons": refusal_reasons,
     }
+    if request["schema_version"] == "review-request-0.5":
+        result["drift_catalog"] = drift_catalog
     validation = validate_citations(request_path, result)
     result["citation_validation"] = validation
     if validation["status"] == "failed":

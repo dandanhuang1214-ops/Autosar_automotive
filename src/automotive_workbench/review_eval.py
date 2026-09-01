@@ -49,6 +49,7 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         "review-evaluation-0.4",
         "review-evaluation-0.5",
         "review-evaluation-0.6",
+        "review-evaluation-0.7",
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -72,7 +73,7 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
             case.setdefault("split", "development")
         _require_string(case.get("domain"), "case domain")
         if case.get("split") not in {
-            "development", "runtime", "held-out", "cross-run"
+            "development", "runtime", "held-out", "cross-run", "cohort"
         }:
             raise ValueError(f"Review evaluation case {case_id} has invalid split")
         _require_string(case.get("request"), "case request")
@@ -86,8 +87,12 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                 raise ValueError(f"Review evaluation case {case_id} has unsupported producer")
             _require_string(producer.get("input"), "producer input")
             runs = producer.get("runs", 1)
-            if not isinstance(runs, int) or isinstance(runs, bool) or runs not in {1, 2}:
+            if not isinstance(runs, int) or isinstance(runs, bool) or runs not in {1, 2, 3}:
                 raise ValueError(f"Review evaluation case {case_id} has invalid producer runs")
+            if runs == 3 and payload["schema_version"] != "review-evaluation-0.7":
+                raise ValueError(
+                    f"Review evaluation case {case_id} three-run producer requires schema 0.7"
+                )
             mutations = producer.get("mutations", [])
             if not isinstance(mutations, list):
                 raise ValueError(f"Review evaluation case {case_id} has invalid mutations")
@@ -96,6 +101,7 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                 and payload["schema_version"] not in {
                     "review-evaluation-0.4", "review-evaluation-0.5",
                     "review-evaluation-0.6",
+                    "review-evaluation-0.7",
                 }
             ):
                 raise ValueError(
@@ -160,6 +166,32 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                         or not 1 <= start <= end
                     ):
                         raise ValueError(f"Review evaluation case {case_id} has invalid gold range")
+        expected_drift_catalog = case.get("expected_drift_catalog", [])
+        if not isinstance(expected_drift_catalog, list):
+            raise ValueError(
+                f"Review evaluation case {case_id} expected_drift_catalog must be a list"
+            )
+        for item in expected_drift_catalog:
+            if (
+                not isinstance(item, dict)
+                or set(item) != {
+                    "check_id", "claim_key", "baseline_artifact_id",
+                    "candidate_artifact_id", "status",
+                }
+                or any(
+                    not isinstance(item.get(field), str) or not item[field]
+                    for field in (
+                        "check_id", "claim_key", "baseline_artifact_id",
+                        "candidate_artifact_id",
+                    )
+                )
+                or item.get("status") not in {
+                    "stable", "drifted", "not-comparable"
+                }
+            ):
+                raise ValueError(
+                    f"Review evaluation case {case_id} has invalid expected_drift_catalog"
+                )
     return payload
 
 
@@ -196,7 +228,8 @@ def _validate_comparable_observations(request: dict[str, Any]) -> None:
     paired_ids = {
         artifact["artifact_id"]
         for artifact in request.get("artifact_registry", [])
-        if artifact.get("source") in {"${producer_report_1}", "${producer_report_2}"}
+        if isinstance(artifact.get("source"), str)
+        and artifact["source"].startswith("${producer_report_")
     }
     for check in request.get("checks", []):
         for observation in check.get("assertion", {}).get("observations", []):
@@ -289,7 +322,10 @@ def _materialize_request(
     placeholders = (
         {_PRODUCER_SOURCE: 0}
         if producer_runs == 1
-        else {"${producer_report_1}": 0, "${producer_report_2}": 1}
+        else {
+            f"${{producer_report_{index}}}": index - 1
+            for index in range(1, producer_runs + 1)
+        }
     )
     for artifact in request.get("artifact_registry", []):
         index = placeholders.get(artifact.get("source"))
@@ -361,6 +397,7 @@ def render_evaluation_markdown(result: dict[str, Any]) -> str:
         f"| Refusal-code accuracy | {metrics['refusal_code_accuracy']:.3f} | 1.000 |",
         f"| Finding preservation | {metrics['finding_preservation']:.3f} | 1.000 |",
         f"| Repeatability | {metrics['repeatability']:.3f} | 1.000 |",
+        f"| Drift catalog accuracy | {metrics['drift_catalog_accuracy']:.3f} | 1.000 |",
         "",
         "## Domain coverage",
         "",
@@ -424,6 +461,8 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
     refusal_correct = 0
     finding_correct = 0
     repeatable_cases = 0
+    drift_catalog_cases = 0
+    drift_catalog_correct = 0
     domain_check_totals: dict[str, int] = {}
     domain_check_correct: dict[str, int] = {}
     split_check_totals: dict[str, int] = {}
@@ -495,6 +534,18 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         refusal_correct += int(refusal_match)
         finding_match = result["findings"] == _expected_findings(case, manifest_path)
         finding_correct += int(finding_match)
+        observed_drift_catalog = [
+            {key: item[key] for key in (
+                "check_id", "claim_key", "baseline_artifact_id",
+                "candidate_artifact_id", "status",
+            )}
+            for item in result.get("drift_catalog", [])
+        ]
+        expected_drift_catalog = case.get("expected_drift_catalog", [])
+        drift_catalog_match = observed_drift_catalog == expected_drift_catalog
+        if expected_drift_catalog:
+            drift_catalog_cases += 1
+            drift_catalog_correct += int(drift_catalog_match)
         normalized_runs = [_normalized_result(item, excluded) for item in runs]
         repeatable = all(item == normalized_runs[0] for item in normalized_runs[1:])
         repeatable_cases += int(repeatable)
@@ -504,6 +555,7 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             and observed_checks == expected_checks
             and refusal_match
             and finding_match
+            and drift_catalog_match
             and result["citation_validation"]["status"] == "passed"
             and (not gold_sets or any(gold <= emitted for gold in gold_sets))
             and all(item in gold_union for item in emitted)
@@ -519,6 +571,10 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             "observed_refusal_codes": observed_refusal_codes,
             "citation_count": len(result["citations"]),
             "repeatable": repeatable,
+            **(
+                {"observed_drift_catalog": observed_drift_catalog}
+                if observed_drift_catalog else {}
+            ),
             **({"producer": producer_evidence} if producer_evidence else {}),
         })
 
@@ -544,6 +600,10 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         "refusal_code_accuracy": refusal_correct / case_count,
         "finding_preservation": finding_correct / case_count,
         "repeatability": repeatable_cases / case_count,
+        "drift_catalog_accuracy": (
+            drift_catalog_correct / drift_catalog_cases
+            if drift_catalog_cases else 1.0
+        ),
     }
     gates_passed = (
         all(metrics[key] == 1.0 for key in (
@@ -556,6 +616,7 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             "refusal_code_accuracy",
             "finding_preservation",
             "repeatability",
+            "drift_catalog_accuracy",
         ))
         and metrics["false_conflict_count"] == 0
         and all(value == 1.0 for value in domain_check_accuracy.values())

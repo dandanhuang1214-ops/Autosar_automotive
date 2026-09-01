@@ -23,13 +23,17 @@ HELD_OUT_MANIFEST = (
 CROSS_RUN_MANIFEST = (
     ROOT / "examples" / "review" / "evaluation" / "cross-run-evaluation.json"
 )
+COHORT_MANIFEST = (
+    ROOT / "examples" / "review" / "evaluation" / "cohort-evaluation.json"
+)
 
 
 class ReviewEvaluationTests(unittest.TestCase):
     def test_existing_gold_fixtures_are_sha256_pinned(self) -> None:
         pinned_sources = 0
         for manifest_path in (
-            MANIFEST, RUNTIME_MANIFEST, HELD_OUT_MANIFEST, CROSS_RUN_MANIFEST
+            MANIFEST, RUNTIME_MANIFEST, HELD_OUT_MANIFEST, CROSS_RUN_MANIFEST,
+            COHORT_MANIFEST,
         ):
             manifest = load_evaluation_manifest(manifest_path)
             for case in manifest["cases"]:
@@ -221,6 +225,38 @@ class ReviewEvaluationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "dynamic field is not comparable"):
                 run_review_evaluation(manifest_path, Path(directory) / "output")
 
+    def test_three_run_cohort_emits_exact_candidate_drift_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            result = run_review_evaluation(COHORT_MANIFEST, output)
+
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["schema_version"], "review-evaluation-result-0.7")
+        self.assertEqual(result["case_count"], 2)
+        self.assertEqual(result["check_count"], 2)
+        self.assertEqual(result["split_check_counts"], {"cohort": 2})
+        self.assertEqual(result["metrics"]["drift_catalog_accuracy"], 1.0)
+        self.assertTrue(all(case["passed"] for case in result["cases"]))
+        drift = next(
+            case for case in result["cases"]
+            if case["case_id"] == "cohort-can-stable-and-drift"
+        )
+        mismatch = next(
+            case for case in result["cases"]
+            if case["case_id"] == "cohort-can-applicability-mismatch"
+        )
+        self.assertEqual(
+            [item["status"] for item in drift["observed_drift_catalog"]],
+            ["stable", "drifted"],
+        )
+        self.assertEqual(
+            [item["status"] for item in mismatch["observed_drift_catalog"]],
+            ["stable", "not-comparable"],
+        )
+        for case in result["cases"]:
+            self.assertEqual(case["producer"]["runs"], 3)
+            self.assertEqual(len(case["producer"]["reports"]), 3)
+
     def test_rejects_mutation_outside_producer_stable_field_allowlist(self) -> None:
         manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
         manifest["cases"][0]["producer"]["mutations"] = [
@@ -237,6 +273,15 @@ class ReviewEvaluationTests(unittest.TestCase):
             manifest["schema_version"] = "review-evaluation-0.3"
             path.write_text(json.dumps(manifest), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "requires schema 0.4 or newer"):
+                load_evaluation_manifest(path)
+
+    def test_three_run_producer_requires_evaluation_07(self) -> None:
+        manifest = json.loads(COHORT_MANIFEST.read_text(encoding="utf-8"))
+        manifest["schema_version"] = "review-evaluation-0.6"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evaluation.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "three-run producer requires schema 0.7"):
                 load_evaluation_manifest(path)
 
     def test_rejects_duplicate_evaluation_case(self) -> None:

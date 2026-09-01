@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-01）
 
-当前阶段：`R5i — runner 生成、artifact-bound applicability profile 已落地`。
+当前阶段：`R5j — baseline/candidate cohort 与逐候选 drift catalog 已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5i 已完成基础契约、引用/冲突、development/runtime/held-out 基线、三域 drift 评测，以及 runner 生成并绑定报告哈希的 applicability 门禁；下一步定义 baseline/candidate cohort |
+| AI 工程审查 | 部分完成 | R5a-R5j 已完成基础契约、引用/冲突、development/runtime/held-out/cross-run/cohort 评测、artifact-bound applicability，以及 CAN 三运行逐候选 drift catalog；下一步扩展 UDS/DTC cohort |
 
 ## 已完成升级历史
 
@@ -486,6 +486,19 @@
 - 边界：software version 当前是 runner contract 字符串，不从构建系统或 Git provenance 自动获取；calibration identity 表示有效输入内容集合，不推断 SemVer 兼容性或标定继承关系。
 - 状态：完成。
 
+### R5j：baseline/candidate cohort 与 drift catalog（2026-09-01）
+
+- 新增 `review-request-0.5` / `review-result-0.5`；cohort assertion 只接受 `all-equal`，要求恰好一个 `baseline` 和至少一个 `candidate`，baseline 不依赖 observation 数组顺序。
+- 每个 candidate 单独解析 artifact-bound applicability：一致时与 baseline 比较并标记 `stable/drifted`，profile 缺失或不同则标记 `not-comparable`，不会抹去其他 candidate 已验证的结果。
+- ReviewResult 新增结构化 `drift_catalog`，记录 check/claim、baseline、candidate、状态和 citation IDs；Markdown 同步输出候选表。
+- citation validator 新增 catalog 完整性门禁：每个 candidate 必须恰好出现一次，`not-comparable` 不得引用数值，stable/drifted 必须有 baseline/candidate 两个有效引用且 relation 与状态一致。
+- evaluator 升级到 `review-evaluation-0.7`，producer 支持恰好三次运行并通用替换 `${producer_report_1..3}`；旧 schema 不允许三运行，双运行路径保持兼容。
+- 新增独立 `cohort` split 和两项 CAN gold case：baseline + stable candidate + drift candidate，以及 baseline + stable candidate + software-version mismatch candidate。
+- drift catalog evaluation 使用精确结构比对并新增 `drift_catalog_accuracy` gate；2/2 case、2/2 check、4/4 candidate judgment 全部通过。
+- 回归：全量 92 项运行、2 项环境跳过；59 份 schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：当前 cohort 固定最多三次运行且只覆盖 CAN；不进行趋势分析、统计显著性判断、版本兼容性推断或自动 baseline 选择。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -568,16 +581,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5j baseline/candidate cohort
+### 最近一步：R5k 跨域 cohort 汇总
 
-为跨运行评测显式定义 baseline/candidate 角色，并将两两比较扩展为小规模多运行 cohort 汇总；只在 applicability 完全一致的分组内生成 drift catalog，不推断版本兼容性。不先引入 Web 前端、外部 LLM、embedding 或向量库。
+复用 R5j 的三运行契约，将 cohort 扩展到 UDS decoded VIN 与 DTC confirmed state，并在 evaluator 结果中按 domain 汇总 stable/drifted/not-comparable 计数。不先引入趋势推断、Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run 四类确定性评测，并从 runner 报告证据读取 applicability profile 阻止跨版本/variant/backend 误比较；下一阶段定义 baseline/candidate cohort 汇总。
+诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN cohort 已能逐 candidate 区分 stable、drifted 与 not-comparable，下一阶段扩展 UDS/DTC 并增加跨域汇总。
 
 ## 下次必须补录
 

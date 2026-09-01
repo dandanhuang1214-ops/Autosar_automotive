@@ -580,6 +580,150 @@ class ReviewTests(unittest.TestCase):
             {item["code"] for item in invalid_result["refusal_reasons"]},
         )
 
+    def test_cohort_compares_each_candidate_against_explicit_baseline(self) -> None:
+        profile = {
+            "variant": "window-control",
+            "software_version": "can-lab-0.1",
+            "calibration_version": "sha256:calibration",
+            "backend": "python-can virtual",
+        }
+        observations = [
+            ("candidate-stable", "candidate"),
+            ("baseline", "baseline"),
+            ("candidate-drift", "candidate"),
+        ]
+        request = {
+            "schema_version": "review-request-0.5",
+            "request_id": "cohort-review",
+            "question": "Which candidates drifted from the baseline?",
+            "minimum_coverage": 1.0,
+            "allowed_confidentiality": ["public"],
+            "artifact_registry": [
+                {
+                    "artifact_id": artifact_id,
+                    "artifact_type": "runtime-report",
+                    "source": f"{artifact_id}.json",
+                    "confidentiality": "public",
+                }
+                for artifact_id, _ in observations
+            ],
+            "artifact_ids": [artifact_id for artifact_id, _ in observations],
+            "checks": [{
+                "check_id": "cohort-outcome",
+                "statement": "Candidates retain the baseline outcome.",
+                "terms": ["candidate baseline outcome"],
+                "assertion": {
+                    "claim_key": "runtime.outcome",
+                    "operator": "all-equal",
+                    "observations": [
+                        {
+                            "artifact_id": artifact_id,
+                            "comparison_role": role,
+                            "applicability_locator": {
+                                "type": "json-pointer",
+                                "pointer": "/applicability_profile",
+                            },
+                            "locator": {
+                                "type": "json-pointer",
+                                "pointer": "/outcome",
+                            },
+                        }
+                        for artifact_id, role in observations
+                    ],
+                },
+            }],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            outcomes = {
+                "candidate-stable": "passed",
+                "baseline": "passed",
+                "candidate-drift": "failed",
+            }
+            for artifact_id, outcome in outcomes.items():
+                (root / f"{artifact_id}.json").write_text(json.dumps({
+                    "applicability_profile": profile,
+                    "outcome": outcome,
+                }), encoding="utf-8")
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps(request), encoding="utf-8")
+            drifted = run_review(request_path, root / "drifted")
+            drift_markdown = (root / "drifted" / "review-result.md").read_text(
+                encoding="utf-8"
+            )
+            tampered = copy.deepcopy(drifted)
+            tampered["drift_catalog"][0]["citation_ids"] = ["citation-forged"]
+            tampered_validation = validate_citations(request_path, tampered)
+
+            mismatch_profile = copy.deepcopy(profile)
+            mismatch_profile["backend"] = "python-can socketcan"
+            (root / "candidate-drift.json").write_text(json.dumps({
+                "applicability_profile": mismatch_profile,
+                "outcome": "passed",
+            }), encoding="utf-8")
+            mismatched = run_review(request_path, root / "mismatched")
+
+        self.assertEqual(drifted["schema_version"], "review-result-0.5")
+        self.assertEqual(drifted["checks"][0]["status"], "conflicted")
+        self.assertEqual(
+            [item["status"] for item in drifted["drift_catalog"]],
+            ["stable", "drifted"],
+        )
+        self.assertEqual(len(drifted["citations"]), 3)
+        self.assertEqual(drifted["citation_validation"]["status"], "passed")
+        self.assertIn("## Drift catalog", drift_markdown)
+        self.assertEqual(tampered_validation["status"], "failed")
+        self.assertEqual(mismatched["checks"][0]["status"], "blocked")
+        self.assertEqual(
+            [item["status"] for item in mismatched["drift_catalog"]],
+            ["stable", "not-comparable"],
+        )
+        self.assertEqual(len(mismatched["citations"]), 2)
+        self.assertEqual(mismatched["citation_validation"]["status"], "passed")
+        self.assertIn(
+            "REVIEW-APPLICABILITY-MISMATCH",
+            {item["code"] for item in mismatched["refusal_reasons"]},
+        )
+
+    def test_cohort_requires_one_baseline_and_candidate(self) -> None:
+        request = json.loads(REQUEST.read_text(encoding="utf-8"))
+        request["schema_version"] = "review-request-0.5"
+        request["checks"][0]["assertion"] = {
+            "claim_key": "repair.outcome",
+            "operator": "all-equal",
+            "observations": [
+                {
+                    "artifact_id": request["artifact_ids"][0],
+                    "comparison_role": "candidate",
+                    "applicability_locator": {
+                        "type": "json-pointer",
+                        "pointer": "/applicability_profile",
+                    },
+                    "locator": {
+                        "type": "json-pointer",
+                        "pointer": "/repair_summary/outcome",
+                    },
+                },
+                {
+                    "artifact_id": request["artifact_ids"][0],
+                    "comparison_role": "candidate",
+                    "applicability_locator": {
+                        "type": "json-pointer",
+                        "pointer": "/applicability_profile",
+                    },
+                    "locator": {
+                        "type": "json-pointer",
+                        "pointer": "/repair_summary/copies_agree",
+                    },
+                },
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "request.json"
+            path.write_text(json.dumps(request), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "one baseline and candidates"):
+                load_review_request(path)
+
 
 if __name__ == "__main__":
     unittest.main()

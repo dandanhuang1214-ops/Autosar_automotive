@@ -47,10 +47,35 @@
           }
         }
       }
+    },
+    {
+      "if": {"properties": {"schema_version": {"const": "review-request-0.5"}}},
+      "then": {
+        "properties": {
+          "checks": {
+            "items": {
+              "required": ["assertion"],
+              "properties": {
+                "assertion": {
+                  "properties": {
+                    "operator": {"const": "all-equal"},
+                    "observations": {
+                      "items": {
+                        "required": ["applicability_locator", "comparison_role"],
+                        "not": {"required": ["applicability_profile"]}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {
-    "schema_version": {"enum": ["review-request-0.1", "review-request-0.2", "review-request-0.3", "review-request-0.4"]},
+    "schema_version": {"enum": ["review-request-0.1", "review-request-0.2", "review-request-0.3", "review-request-0.4", "review-request-0.5"]},
     "request_id": {"type": "string", "minLength": 1},
     "question": {"type": "string", "minLength": 1},
     "minimum_coverage": {"type": "number", "minimum": 0, "maximum": 1, "default": 1},
@@ -111,6 +136,7 @@
                   "required": ["artifact_id", "locator"],
                   "properties": {
                     "artifact_id": {"type": "string", "minLength": 1},
+                    "comparison_role": {"enum": ["baseline", "candidate"]},
                     "applicability_profile": {
                       "type": "object",
                       "required": ["variant", "software_version", "calibration_version", "backend"],

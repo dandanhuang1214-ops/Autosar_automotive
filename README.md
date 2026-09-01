@@ -64,6 +64,7 @@ python -m automotive_workbench.cli run-review-eval examples/review/evaluation/ev
 python -m automotive_workbench.cli run-review-eval examples/review/evaluation/runtime-evaluation.json --output output/review-runtime-evaluation
 python -m automotive_workbench.cli run-review-eval examples/review/evaluation/held-out-negative.json --output output/review-held-out-negative
 python -m automotive_workbench.cli run-review-eval examples/review/evaluation/cross-run-evaluation.json --output output/review-cross-run
+python -m automotive_workbench.cli run-review-eval examples/review/evaluation/cohort-evaluation.json --output output/review-cohort
 python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
@@ -85,7 +86,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。
 - `examples/window_control/dtc_intent.json` 中的 debounce、operation-cycle、aging、snapshot、extended data、进程内持久镜像、generation、commit marker 和 status byte 仅用于可重复研究实验，不是量产 DEM displacement、NvM、OBD 或 OEM 策略。
 - `run-review` 只读取 request 显式列出的本地 JSON/Markdown；跨 artifact 冲突只比较显式 assertion locator，词法匹配和 coverage 不是语义理解、LLM 结论或安全证明。
-- `run-review-eval` 使用仓库内 gold locator 和结构化期望，不使用 LLM judge；development、runtime、held-out 和 cross-run split 都是确定性回归证据，不代表自由问答或量产评审准确率。双运行比较禁止动态字段，drift injection 仅允许修改 runner 白名单中的稳定字段；`review-request-0.4` 通过 `applicability_locator` 从报告证据读取 runner 生成的 variant、software/calibration version 和 backend，profile 不一致时拒绝比较。
+- `run-review-eval` 使用仓库内 gold locator 和结构化期望，不使用 LLM judge；development、runtime、held-out、cross-run 和 cohort split 都是确定性回归证据，不代表自由问答或量产评审准确率。drift injection 仅允许修改 runner 白名单字段；`review-request-0.5` 在 artifact-bound applicability 基础上显式区分 baseline/candidate，并逐 candidate 输出 `stable/drifted/not-comparable` catalog。
 - `run-uds-lab --interface socketcan` 会先探测 CAN backend；缺少接口或权限时返回 `blocked`，不把环境不可用误报为诊断业务失败。
 - SWC、COM、PduR和CanIf对象名是该公开样例的设计名称，不代表OEM或供应商命名规则。
 - 最终正确性仍需规范、供应商BSWMD/generator、运行测试及商业工具验证。
