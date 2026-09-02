@@ -50,6 +50,7 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         "review-evaluation-0.5",
         "review-evaluation-0.6",
         "review-evaluation-0.7",
+        "review-evaluation-0.8",
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -89,9 +90,11 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
             runs = producer.get("runs", 1)
             if not isinstance(runs, int) or isinstance(runs, bool) or runs not in {1, 2, 3}:
                 raise ValueError(f"Review evaluation case {case_id} has invalid producer runs")
-            if runs == 3 and payload["schema_version"] != "review-evaluation-0.7":
+            if runs == 3 and payload["schema_version"] not in {
+                "review-evaluation-0.7", "review-evaluation-0.8"
+            }:
                 raise ValueError(
-                    f"Review evaluation case {case_id} three-run producer requires schema 0.7"
+                    f"Review evaluation case {case_id} three-run producer requires schema 0.7 or newer"
                 )
             mutations = producer.get("mutations", [])
             if not isinstance(mutations, list):
@@ -102,6 +105,7 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                     "review-evaluation-0.4", "review-evaluation-0.5",
                     "review-evaluation-0.6",
                     "review-evaluation-0.7",
+                    "review-evaluation-0.8",
                 }
             ):
                 raise ValueError(
@@ -432,6 +436,19 @@ def render_evaluation_markdown(result: dict[str, Any]) -> str:
         lines.append(
             f"| `{case['case_id']}` | {str(case['passed']).lower()} | {case['observed_status']} |"
         )
+    if result.get("domain_drift_status_counts"):
+        lines.extend([
+            "",
+            "## Drift catalog summary",
+            "",
+            "| Domain | Stable | Drifted | Not comparable |",
+            "|---|---:|---:|---:|",
+        ])
+        for domain, counts in sorted(result["domain_drift_status_counts"].items()):
+            lines.append(
+                f"| `{domain}` | {counts['stable']} | {counts['drifted']} | "
+                f"{counts['not-comparable']} |"
+            )
     lines.extend([
         "",
         "This evaluation uses checked-in gold locators and exact structural judgments. It does not use an LLM judge.",
@@ -463,6 +480,10 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
     repeatable_cases = 0
     drift_catalog_cases = 0
     drift_catalog_correct = 0
+    drift_status_counts = {
+        "stable": 0, "drifted": 0, "not-comparable": 0
+    }
+    domain_drift_status_counts: dict[str, dict[str, int]] = {}
     domain_check_totals: dict[str, int] = {}
     domain_check_correct: dict[str, int] = {}
     split_check_totals: dict[str, int] = {}
@@ -542,6 +563,13 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
             for item in result.get("drift_catalog", [])
         ]
         expected_drift_catalog = case.get("expected_drift_catalog", [])
+        if observed_drift_catalog:
+            domain_counts = domain_drift_status_counts.setdefault(domain, {
+                "stable": 0, "drifted": 0, "not-comparable": 0
+            })
+            for item in observed_drift_catalog:
+                drift_status_counts[item["status"]] += 1
+                domain_counts[item["status"]] += 1
         drift_catalog_match = observed_drift_catalog == expected_drift_catalog
         if expected_drift_catalog:
             drift_catalog_cases += 1
@@ -642,6 +670,10 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
         "domain_check_accuracy": domain_check_accuracy,
         "split_check_counts": dict(sorted(split_check_totals.items())),
         "split_check_accuracy": split_check_accuracy,
+        "drift_status_counts": (
+            drift_status_counts if domain_drift_status_counts else {}
+        ),
+        "domain_drift_status_counts": dict(sorted(domain_drift_status_counts.items())),
         "metrics": metrics,
         "cases": case_results,
     }

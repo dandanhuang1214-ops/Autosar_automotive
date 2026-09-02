@@ -40,6 +40,23 @@ class DbcAdapterTests(unittest.TestCase):
         self.assertIn("DBC-DLC-MISMATCH", codes)
         self.assertIn("DBC-SIGNAL-PROPERTY-MISMATCH", codes)
 
+    def test_reports_cross_level_pdu_reference_mismatch(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["messages"][0]["canif_pdu"] = "WindowStatus_CanIfRxPdu"
+        with tempfile.TemporaryDirectory() as directory:
+            changed = Path(directory) / "changed_intent.json"
+            changed.write_text(json.dumps(payload), encoding="utf-8")
+            result = validate_dbc_intent(DBC, changed)
+        findings = [
+            finding
+            for finding in result["findings"]
+            if finding["code"] == "INTENT-CROSS-LEVEL-REFERENCE-MISMATCH"
+        ]
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["field"], "canif_pdu")
+        self.assertEqual(findings[0]["location"], "WindowStatus.WindowPosition")
+
 
 if __name__ == "__main__":
     unittest.main()

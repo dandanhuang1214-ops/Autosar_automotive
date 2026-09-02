@@ -6,13 +6,17 @@
   "required": ["artifact_type", "schema_version", "run_id", "started_at", "evaluation_id", "status", "case_count", "repeat_runs", "metrics", "cases"],
   "allOf": [
     {
-      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6", "review-evaluation-result-0.7"]}}},
+      "if": {"properties": {"schema_version": {"enum": ["review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6", "review-evaluation-result-0.7", "review-evaluation-result-0.8"]}}},
       "then": {"required": ["check_count", "domain_check_counts", "domain_check_accuracy", "split_check_counts", "split_check_accuracy"]}
+    },
+    {
+      "if": {"properties": {"schema_version": {"const": "review-evaluation-result-0.8"}}},
+      "then": {"required": ["drift_status_counts", "domain_drift_status_counts"]}
     }
   ],
   "properties": {
     "artifact_type": {"const": "engineering-review-evaluation"},
-    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6", "review-evaluation-result-0.7"]},
+    "schema_version": {"enum": ["review-evaluation-result-0.1", "review-evaluation-result-0.2", "review-evaluation-result-0.3", "review-evaluation-result-0.4", "review-evaluation-result-0.5", "review-evaluation-result-0.6", "review-evaluation-result-0.7", "review-evaluation-result-0.8"]},
     "run_id": {"type": "string", "minLength": 1},
     "started_at": {"type": "string", "minLength": 1},
     "evaluation_id": {"type": "string", "minLength": 1},
@@ -39,6 +43,14 @@
       "type": "object",
       "minProperties": 1,
       "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+    },
+    "drift_status_counts": {
+      "$ref": "#/$defs/driftStatusCounts"
+    },
+    "domain_drift_status_counts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/driftStatusCounts"}
     },
     "metrics": {
       "type": "object",
@@ -157,6 +169,18 @@
         },
         "additionalProperties": false
       }
+    }
+  },
+  "$defs": {
+    "driftStatusCounts": {
+      "type": "object",
+      "required": ["stable", "drifted", "not-comparable"],
+      "properties": {
+        "stable": {"type": "integer", "minimum": 0},
+        "drifted": {"type": "integer", "minimum": 0},
+        "not-comparable": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

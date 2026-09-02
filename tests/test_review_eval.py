@@ -229,13 +229,27 @@ class ReviewEvaluationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             result = run_review_evaluation(COHORT_MANIFEST, output)
+            markdown = (output / "review-evaluation.md").read_text(encoding="utf-8")
 
         self.assertEqual(result["status"], "passed")
-        self.assertEqual(result["schema_version"], "review-evaluation-result-0.7")
-        self.assertEqual(result["case_count"], 2)
-        self.assertEqual(result["check_count"], 2)
-        self.assertEqual(result["split_check_counts"], {"cohort": 2})
+        self.assertEqual(result["schema_version"], "review-evaluation-result-0.8")
+        self.assertEqual(result["case_count"], 4)
+        self.assertEqual(result["check_count"], 4)
+        self.assertEqual(result["split_check_counts"], {"cohort": 4})
+        self.assertEqual(
+            result["drift_status_counts"],
+            {"stable": 4, "drifted": 3, "not-comparable": 1},
+        )
+        self.assertEqual(
+            result["domain_drift_status_counts"],
+            {
+                "can": {"stable": 2, "drifted": 1, "not-comparable": 1},
+                "dtc": {"stable": 1, "drifted": 1, "not-comparable": 0},
+                "uds": {"stable": 1, "drifted": 1, "not-comparable": 0},
+            },
+        )
         self.assertEqual(result["metrics"]["drift_catalog_accuracy"], 1.0)
+        self.assertEqual(result["metrics"]["finding_preservation"], 1.0)
         self.assertTrue(all(case["passed"] for case in result["cases"]))
         drift = next(
             case for case in result["cases"]
@@ -253,9 +267,23 @@ class ReviewEvaluationTests(unittest.TestCase):
             [item["status"] for item in mismatch["observed_drift_catalog"]],
             ["stable", "not-comparable"],
         )
+        for case_id in (
+            "cohort-uds-stable-and-drift",
+            "cohort-dtc-stable-and-drift",
+        ):
+            case = next(
+                item for item in result["cases"] if item["case_id"] == case_id
+            )
+            self.assertEqual(
+                [item["status"] for item in case["observed_drift_catalog"]],
+                ["stable", "drifted"],
+            )
         for case in result["cases"]:
             self.assertEqual(case["producer"]["runs"], 3)
             self.assertEqual(len(case["producer"]["reports"]), 3)
+        self.assertIn("## Drift catalog summary", markdown)
+        self.assertIn("| `uds` | 1 | 1 | 0 |", markdown)
+        self.assertIn("| `dtc` | 1 | 1 | 0 |", markdown)
 
     def test_rejects_mutation_outside_producer_stable_field_allowlist(self) -> None:
         manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))
@@ -281,7 +309,7 @@ class ReviewEvaluationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "evaluation.json"
             path.write_text(json.dumps(manifest), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "three-run producer requires schema 0.7"):
+            with self.assertRaisesRegex(ValueError, "three-run producer requires schema 0.7 or newer"):
                 load_evaluation_manifest(path)
 
     def test_rejects_duplicate_evaluation_case(self) -> None:

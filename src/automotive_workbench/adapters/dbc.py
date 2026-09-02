@@ -91,6 +91,12 @@ def validate_dbc_intent(dbc_path: Path, intent_path: Path) -> dict[str, Any]:
             if expected_value is not None and not _equal(actual_value, expected_value):
                 add(code, f"{name}.{field}: DBC={actual_value!r}, intent={expected_value!r}", "message", field, name)
 
+    intent_messages = {
+        str(message.get("dbc_message") or ""): message
+        for message in intent.get("messages", [])
+        if isinstance(message, dict)
+    }
+
     properties = (
         ("start_bit", "start"),
         ("bit_length", "length"),
@@ -105,6 +111,26 @@ def validate_dbc_intent(dbc_path: Path, intent_path: Path) -> dict[str, Any]:
     for expected in intent["signals"]:
         message_name = str(expected.get("dbc_message") or "")
         signal_name = str(expected.get("dbc_signal") or "")
+        intent_message = intent_messages.get(message_name)
+        if intent_message is not None:
+            for reference_field in ("i_pdu", "canif_pdu"):
+                message_reference = intent_message.get(reference_field)
+                signal_reference = expected.get(reference_field)
+                if (
+                    message_reference is not None
+                    and signal_reference is not None
+                    and message_reference != signal_reference
+                ):
+                    add(
+                        "INTENT-CROSS-LEVEL-REFERENCE-MISMATCH",
+                        (
+                            f"{message_name}.{signal_name}.{reference_field}: "
+                            f"message={message_reference!r}, signal={signal_reference!r}"
+                        ),
+                        "signal",
+                        reference_field,
+                        f"{message_name}.{signal_name}",
+                    )
         message = dbc_messages.get(message_name)
         if message is None:
             continue

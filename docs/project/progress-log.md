@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-01）
 
-当前阶段：`R5j — baseline/candidate cohort 与逐候选 drift catalog 已落地`。
+当前阶段：`R5k — CAN/UDS/DTC 跨域 cohort 汇总已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5j 已完成基础契约、引用/冲突、development/runtime/held-out/cross-run/cohort 评测、artifact-bound applicability，以及 CAN 三运行逐候选 drift catalog；下一步扩展 UDS/DTC cohort |
+| AI 工程审查 | 部分完成 | R5a-R5k 已完成基础契约、引用/冲突、development/runtime/held-out/cross-run/cohort 评测、artifact-bound applicability，以及 CAN/UDS/DTC 三运行逐候选 drift catalog 与分域汇总；下一步接入已存在的固定哈希报告 cohort |
 
 ## 已完成升级历史
 
@@ -499,6 +499,16 @@
 - 边界：当前 cohort 固定最多三次运行且只覆盖 CAN；不进行趋势分析、统计显著性判断、版本兼容性推断或自动 baseline 选择。
 - 状态：完成。
 
+### R5k：CAN/UDS/DTC 跨域 cohort 汇总（2026-09-01）
+
+- 保持 `review-request-0.5` 的唯一 baseline、逐 candidate 判断和三运行上限，将 cohort 从 CAN 扩展到 UDS decoded VIN 与 DTC confirmed state。
+- 新增 UDS/DTC stable+drift gold case；第三次运行只修改各 producer 白名单稳定字段，必须逐候选得到 `stable`、`drifted`，拒答并引用 baseline 与对应 candidate。
+- evaluator 升级到 `review-evaluation-0.8` / result 0.8，新增全局及按 domain 的 drift 状态计数，并在 Markdown 输出跨域摘要表。
+- 评测：4/4 case、4/4 check、8/8 candidate judgment 通过；全局计数为 stable 4、drifted 3、not-comparable 1，CAN/UDS/DTC 分域计数与 gold 完全一致；Finding preservation 与全部既有 gate 均为 `1.0`。
+- 回归：全量 92 项运行、2 项环境跳过；61 份 schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：汇总是确定性样例覆盖计数，不进行趋势分析、统计显著性判断、版本兼容性推断或自动 baseline 选择；当前 evaluator 仍负责现场运行 producer。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -556,6 +566,25 @@ official_native_baseline=false
 - 学习计划保存在 `D:\work\improve\learning\week-04\week-plan.md`，平台仓只记录与现有工程资产的对应关系；
 - 状态：计划已发布，等待学习者执行和逐日验收；无平台运行时代码变化。
 
+### L2：第四周 Day 1 终端语法修正（2026-09-02）
+
+- 学习者在 WSL/Bash 中执行 PowerShell 语法 `$env:PYTHONPATH='src'`，出现 `:PYTHONPATH=src: command not found`；
+- 根因是 shell 语法混用，不是 Workbench、Python 或依赖故障；
+- 第四周计划已拆分 PowerShell 与 WSL/Bash 两套启动命令；
+- WSL 已实际验证 `.venv-linux/bin/python -m automotive_workbench.cli --help` 可成功加载当前 CLI；
+- Day 1 后续统一使用 `.venv-linux/bin/python`，避免误用 Windows Python 或 `improve\.venv`；
+- 状态：文档修正完成，等待 Day 1 三条追踪/校验命令的学习输出。
+
+### P3：BSW intent 跨层 PDU 引用一致性修复（2026-09-02）
+
+- 学习者发现 `WindowStatus` message 层错误写为 `WindowStatus_CanIfRxPdu`，而同一 Signal 的 PduR route 和 CanIf PDU 均为 Tx；
+- 依据公开 DBC 中 `BODY_ECU` 为 `WindowStatus` sender、样例端口为 `PpWindowStatus`，确认本 intent 的该路径采用 BODY_ECU 发送视角；
+- message 层已修正为 `WindowStatus_CanIfTxPdu`；
+- `validate-map` 新增 message/signal 层 `i_pdu`、`canif_pdu` 引用一致性检查，错误码为 `INTENT-CROSS-LEVEL-REFERENCE-MISMATCH`；
+- 新增回归测试，防止仅核对 DBC 属性却遗漏 intent 内部 Rx/Tx 自相矛盾；
+- 同步更新两个引用该公开 intent 的 AI reviewer 评测清单 SHA-256；旧 hash 被测试拒绝，证明来源变更固定机制按设计生效；
+- 边界：校验确认同一 intent 内显式引用一致性，不通过对象名后缀推断量产 ECUC 方向。
+
 ## 当前升级：R3 OpenBSW POSIX 限时 spike
 
 目标：在不破坏 R2 已完成 SocketCAN 闭环的前提下，执行一次受限 OpenBSW POSIX spike，并形成可复现 build/run evidence 与源码入口索引。
@@ -581,16 +610,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5k 跨域 cohort 汇总
+### 最近一步：R5l 固定报告 cohort 导入
 
-复用 R5j 的三运行契约，将 cohort 扩展到 UDS decoded VIN 与 DTC confirmed state，并在 evaluator 结果中按 domain 汇总 stable/drifted/not-comparable 计数。不先引入趋势推断、Web 前端、外部 LLM、embedding 或向量库。
+允许 evaluation case 引用已存在、SHA-256 固定的 CI/外部 runner 报告，在不重新执行 producer 的情况下复用 applicability、citation 与 drift catalog gate。继续限制本地文件、显式 baseline 和小规模 cohort，不先引入趋势推断、Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN cohort 已能逐 candidate 区分 stable、drifted 与 not-comparable，下一阶段扩展 UDS/DTC 并增加跨域汇总。
+诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN/UDS/DTC cohort 已能逐 candidate 区分 stable、drifted 与 not-comparable 并形成分域摘要，下一阶段接入不需要现场重跑 producer 的固定报告 cohort。
 
 ## 下次必须补录
 

@@ -34,3 +34,5 @@ R5h 将跨运行比较升级到 `review-request-0.3`：每个 assertion observat
 R5i 将该边界升级到 `review-request-0.4`。CAN、UDS 和 DTC runner 在报告内生成 `applicability_profile`：variant 来自输入模型、software version 来自 runner 契约、calibration version 是有效输入文件名与内容 SHA-256 的规范化组合哈希、backend 来自实际执行配置。Observation 使用 `applicability_locator` 指向报告内 profile；报告 source SHA-256、profile 与被比较值因此属于同一证据封套。绝对路径不进入 calibration identity，同内容迁移目录不产生假 drift。
 
 R5j 新增 `review-request-0.5` cohort assertion。每个 observation 显式标记唯一 `baseline` 或一个 `candidate`；系统逐 candidate 先比较 artifact-bound applicability，再与 baseline 的稳定字段比较，输出 `stable`、`drifted` 或 `not-comparable`。一个不可比较 candidate 不会抹去其他 candidate 的有效引用；drift catalog validator 会验证候选覆盖、citation ID 和 relation，防止 catalog 与证据不一致。首个 evaluator 0.7 竖切固定为三次 CAN 运行。
+
+R5k 保持三运行和显式 baseline 边界，将 cohort 扩展到 UDS decoded VIN 与 DTC confirmed state。evaluator 0.8 在保留逐 case 精确 catalog gate 的同时输出全局和按 domain 的 `stable/drifted/not-comparable` 计数；这些计数仅是确定性样例覆盖摘要，不构成时间趋势、统计显著性或版本兼容性结论。

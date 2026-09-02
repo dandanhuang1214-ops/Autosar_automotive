@@ -10,7 +10,7 @@
       "sender": "BODY_ECU",
       "receiver": "TESTER",
       "i_pdu": "WindowStatus_IPdu",
-      "canif_pdu": "WindowStatus_CanIfRxPdu"
+      "canif_pdu": "WindowStatus_CanIfTxPdu"
     },
     {
       "dbc_message": "WindowCommand",

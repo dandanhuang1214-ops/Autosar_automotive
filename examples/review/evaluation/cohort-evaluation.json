@@ -1,6 +1,6 @@
 {
-  "schema_version": "review-evaluation-0.7",
-  "evaluation_id": "workbench-review-r5j-can-cohort",
+  "schema_version": "review-evaluation-0.8",
+  "evaluation_id": "workbench-review-r5k-cross-domain-cohort",
   "repeat_runs": 3,
   "repeatability_excluded_fields": ["run_id", "started_at"],
   "cases": [
@@ -51,6 +51,69 @@
       "gold_evidence_sets": [[
         {"artifact_id": "can-baseline", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}},
         {"artifact_id": "can-candidate-stable", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/status"}}
+      ]]
+    },
+    {
+      "case_id": "cohort-uds-stable-and-drift",
+      "domain": "uds",
+      "split": "cohort",
+      "request": "requests/31-cohort-uds-drift.json",
+      "producer": {
+        "kind": "uds-lab",
+        "input": "../../window_control/uds_intent.json",
+        "runs": 3,
+        "mutations": [{"run": 3, "pointer": "/scenarios/0/evidence/decoded_value", "value": "WVWZZZ1JZXW999999"}]
+      },
+      "expected_status": "refused",
+      "expected_checks": {"cohort-uds-decoded-vin": "conflicted"},
+      "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
+      "expected_findings": [
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"},
+        {"code": "UDS-MALFORMED-PAYLOAD", "severity": "ERROR", "message": "DID 0xF111 malformed response rejected as InvalidResponseException: ReadDataByIdentifier service execution returned an invalid response. Value for data identifier 0xf111 was incomplete according to definition in configuration", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_window_position_payload", "status": "open"},
+        {"code": "UDS-DTC-SNAPSHOT-MALFORMED", "severity": "ERROR", "message": "Snapshot response rejected as InvalidResponseException: ReadDTCInformation service execution returned an invalid response. Response must be at least 5 bytes long", "source_artifact": "${producer_input}", "kind": "uds-scenario", "field": "", "location": "malformed_obstruction_snapshot", "status": "open"}
+      ],
+      "expected_drift_catalog": [
+        {"check_id": "cohort-uds-decoded-vin", "claim_key": "cohort.uds.decoded-vin", "baseline_artifact_id": "uds-baseline", "candidate_artifact_id": "uds-candidate-stable", "status": "stable"},
+        {"check_id": "cohort-uds-decoded-vin", "claim_key": "cohort.uds.decoded-vin", "baseline_artifact_id": "uds-baseline", "candidate_artifact_id": "uds-candidate-drift", "status": "drifted"}
+      ],
+      "gold_evidence_sets": [[
+        {"artifact_id": "uds-baseline", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}},
+        {"artifact_id": "uds-candidate-stable", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}},
+        {"artifact_id": "uds-candidate-drift", "locator": {"type": "json-pointer", "pointer": "/scenarios/0/evidence/decoded_value"}}
+      ]]
+    },
+    {
+      "case_id": "cohort-dtc-stable-and-drift",
+      "domain": "dtc",
+      "split": "cohort",
+      "request": "requests/32-cohort-dtc-drift.json",
+      "producer": {
+        "kind": "dtc-lifecycle",
+        "input": "../../window_control/dtc_intent.json",
+        "runs": 3,
+        "mutations": [{"run": 3, "pointer": "/traces/2/observed_state", "value": "pending"}]
+      },
+      "expected_status": "refused",
+      "expected_checks": {"cohort-dtc-confirmed-state": "conflicted"},
+      "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
+      "expected_findings": [],
+      "expected_drift_catalog": [
+        {"check_id": "cohort-dtc-confirmed-state", "claim_key": "cohort.dtc.confirmed-state", "baseline_artifact_id": "dtc-baseline", "candidate_artifact_id": "dtc-candidate-stable", "status": "stable"},
+        {"check_id": "cohort-dtc-confirmed-state", "claim_key": "cohort.dtc.confirmed-state", "baseline_artifact_id": "dtc-baseline", "candidate_artifact_id": "dtc-candidate-drift", "status": "drifted"}
+      ],
+      "gold_evidence_sets": [[
+        {"artifact_id": "dtc-baseline", "locator": {"type": "json-pointer", "pointer": "/traces/2/observed_state"}},
+        {"artifact_id": "dtc-candidate-stable", "locator": {"type": "json-pointer", "pointer": "/traces/2/observed_state"}},
+        {"artifact_id": "dtc-candidate-drift", "locator": {"type": "json-pointer", "pointer": "/traces/2/observed_state"}}
       ]]
     }
   ]
