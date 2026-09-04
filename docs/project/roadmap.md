@@ -43,8 +43,10 @@
 - R5i 已完成（2026-09-01）：新增 `review-request-0.4` applicability locator；CAN/UDS/DTC runner 将输入哈希、runner contract 和实际 backend 固化为报告内 profile，evaluation 将 profile 与报告 SHA-256 一并归档并从 artifact 解析比较资格。
 - R5j 已完成（2026-09-01）：新增 `review-request-0.5` baseline/candidate cohort、逐 candidate drift catalog 和 evaluator 0.7 三运行 producer；CAN cohort 覆盖 stable+drift 与 stable+profile mismatch 两类组合。
 - R5k 已完成（2026-09-01）：三运行 cohort 扩展到 UDS decoded VIN 与 DTC confirmed state；evaluator 0.8 输出全局及 CAN/UDS/DTC 分域 drift 状态计数，全部精确 gate 通过。
+- R5l 已完成（2026-09-03）：新增 evaluator 0.9 `external_reports`，可对 1～3 份已存在的本地 CI/外部 runner JSON 报告逐字节验证 SHA-256 和 applicability profile 后执行 cohort evaluation；与现场 `producer` 互斥，首个 CAN stable+drift 固定报告案例全部 gate 通过。
+- R5m 已完成（2026-09-04）：evaluator 1.0 将固定报告 cohort 扩展到 CAN/UDS/DTC 三域；每份报告必须携带 provider、repository、run、job、commit provenance，验证后以 `hash-bound` 状态归档，三域 stable+drift gate 全部通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：R5l 支持对已存在、SHA-256 固定的 CI/外部 runner 报告执行 cohort evaluation，不要求 evaluator 重新运行 producer；此前不引入外部 LLM。
+- 当前下一阶段：R5n 为固定报告增加调用方显式 provenance expectation，拒绝 repository/job/commit 声明不符；仍只做本地哈希绑定声明匹配，不冒充签名或远端身份认证，此前不引入外部 LLM。
 
 ## 平台目标
 

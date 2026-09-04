@@ -1,0 +1,22 @@
+{
+  "artifact_type": "virtual-can-runtime",
+  "run_id": "ci-481-baseline",
+  "started_at": "2026-09-02T01:00:00+00:00",
+  "applicability_profile": {
+    "variant": "window_control",
+    "software_version": "can-lab-0.1",
+    "calibration_version": "sha256:dbc-demo",
+    "backend": "python-can virtual"
+  },
+  "ci_provenance": {
+    "provider": "example-ci",
+    "repository": "public/window-control-fixture",
+    "run_id": "481",
+    "job_id": "can-baseline",
+    "commit_sha": "1111111111111111111111111111111111111111"
+  },
+  "status": "passed",
+  "scenarios": [
+    {"scenario": "round_trip", "status": "passed"}
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "artifact_type": "dtc-lifecycle-lab",
+  "run_id": "ci-682-stable",
+  "started_at": "2026-09-03T02:05:00+00:00",
+  "applicability_profile": {
+    "variant": "window_control",
+    "software_version": "dtc-lifecycle-0.1",
+    "calibration_version": "sha256:dtc-demo",
+    "backend": "deterministic in-process"
+  },
+  "ci_provenance": {
+    "provider": "example-ci",
+    "repository": "public/window-control-fixture",
+    "run_id": "682",
+    "job_id": "dtc-candidate-stable",
+    "commit_sha": "8888888888888888888888888888888888888888"
+  },
+  "status": "passed",
+  "traces": [
+    {"step": 1, "observed_state": "pending"},
+    {"step": 2, "observed_state": "pending"},
+    {"step": 3, "observed_state": "confirmed"}
+  ]
+}

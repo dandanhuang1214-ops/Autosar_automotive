@@ -1,0 +1,22 @@
+{
+  "artifact_type": "virtual-can-runtime",
+  "run_id": "ci-482-candidate",
+  "started_at": "2026-09-02T02:00:00+00:00",
+  "applicability_profile": {
+    "variant": "window_control",
+    "software_version": "can-lab-0.1",
+    "calibration_version": "sha256:dbc-demo",
+    "backend": "python-can virtual"
+  },
+  "ci_provenance": {
+    "provider": "example-ci",
+    "repository": "public/window-control-fixture",
+    "run_id": "482",
+    "job_id": "can-candidate-stable",
+    "commit_sha": "2222222222222222222222222222222222222222"
+  },
+  "status": "passed",
+  "scenarios": [
+    {"scenario": "round_trip", "status": "passed"}
+  ]
+}

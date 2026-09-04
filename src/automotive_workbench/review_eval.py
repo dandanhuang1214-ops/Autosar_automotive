@@ -21,6 +21,7 @@ _PRODUCERS = {
 }
 _PRODUCER_SOURCE = "${producer_report}"
 _PRODUCER_INPUT = "${producer_input}"
+_EXTERNAL_REPORT_PREFIX = "${external_report_"
 _DYNAMIC_POINTER_TOKENS = {"run_id", "started_at", "duration_ms", "channel"}
 _MUTABLE_POINTERS = {
     "can-lab": {
@@ -51,6 +52,8 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         "review-evaluation-0.6",
         "review-evaluation-0.7",
         "review-evaluation-0.8",
+        "review-evaluation-0.9",
+        "review-evaluation-1.0",
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -79,6 +82,11 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
             raise ValueError(f"Review evaluation case {case_id} has invalid split")
         _require_string(case.get("request"), "case request")
         producer = case.get("producer")
+        external_reports = case.get("external_reports")
+        if producer is not None and external_reports is not None:
+            raise ValueError(
+                f"Review evaluation case {case_id} cannot combine producer and external_reports"
+            )
         if producer is not None:
             if not isinstance(producer, dict) or not {"kind", "input"} <= set(producer):
                 raise ValueError(f"Review evaluation case {case_id} has invalid producer")
@@ -91,7 +99,9 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
             if not isinstance(runs, int) or isinstance(runs, bool) or runs not in {1, 2, 3}:
                 raise ValueError(f"Review evaluation case {case_id} has invalid producer runs")
             if runs == 3 and payload["schema_version"] not in {
-                "review-evaluation-0.7", "review-evaluation-0.8"
+                "review-evaluation-0.7", "review-evaluation-0.8",
+                "review-evaluation-0.9",
+                "review-evaluation-1.0",
             }:
                 raise ValueError(
                     f"Review evaluation case {case_id} three-run producer requires schema 0.7 or newer"
@@ -106,6 +116,8 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                     "review-evaluation-0.6",
                     "review-evaluation-0.7",
                     "review-evaluation-0.8",
+                    "review-evaluation-0.9",
+                    "review-evaluation-1.0",
                 }
             ):
                 raise ValueError(
@@ -121,6 +133,34 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                 ):
                     raise ValueError(
                         f"Review evaluation case {case_id} has unsafe producer mutation"
+                    )
+        if external_reports is not None:
+            if payload["schema_version"] not in {
+                "review-evaluation-0.9", "review-evaluation-1.0"
+            }:
+                raise ValueError(
+                    f"Review evaluation case {case_id} external_reports requires schema 0.9 or newer"
+                )
+            if not isinstance(external_reports, list) or not 1 <= len(external_reports) <= 3:
+                raise ValueError(
+                    f"Review evaluation case {case_id} requires one to three external_reports"
+                )
+            for report in external_reports:
+                if not isinstance(report, dict) or set(report) != {
+                    "source", "expected_sha256"
+                }:
+                    raise ValueError(
+                        f"Review evaluation case {case_id} has invalid external report"
+                    )
+                _require_string(report.get("source"), "external report source")
+                digest = report.get("expected_sha256")
+                if (
+                    not isinstance(digest, str)
+                    or len(digest) != 64
+                    or any(character not in "0123456789abcdef" for character in digest)
+                ):
+                    raise ValueError(
+                        f"Review evaluation case {case_id} has invalid external report SHA-256"
                     )
         if case.get("expected_status") not in {"answered", "partial", "refused"}:
             raise ValueError(f"Review evaluation case {case_id} has invalid expected_status")
@@ -233,7 +273,10 @@ def _validate_comparable_observations(request: dict[str, Any]) -> None:
         artifact["artifact_id"]
         for artifact in request.get("artifact_registry", [])
         if isinstance(artifact.get("source"), str)
-        and artifact["source"].startswith("${producer_report_")
+        and (
+            artifact["source"].startswith("${producer_report_")
+            or artifact["source"].startswith(_EXTERNAL_REPORT_PREFIX)
+        )
     }
     for check in request.get("checks", []):
         for observation in check.get("assertion", {}).get("observations", []):
@@ -251,16 +294,80 @@ def _validate_comparable_observations(request: dict[str, Any]) -> None:
 
 def _materialize_request(
     manifest_path: Path,
+    manifest_version: str,
     case: dict[str, Any],
     case_output: Path,
-) -> tuple[Path, dict[str, Any] | None]:
+) -> tuple[Path, dict[str, Any]]:
     request_path = manifest_path.parent / case["request"]
     producer = case.get("producer")
-    if producer is None:
-        return request_path, None
+    external_reports = case.get("external_reports")
+    if producer is None and external_reports is None:
+        return request_path, {}
 
     request = json.loads(request_path.read_text(encoding="utf-8-sig"))
     _validate_comparable_observations(request)
+    if external_reports is not None:
+        report_paths: list[Path] = []
+        reports: list[dict[str, Any]] = []
+        for index, report_spec in enumerate(external_reports, 1):
+            report_path = (manifest_path.parent / report_spec["source"]).resolve()
+            if not report_path.is_file():
+                raise ValueError(
+                    f"Review evaluation external report does not exist: {report_path}"
+                )
+            actual_sha256 = _sha256(report_path)
+            if actual_sha256 != report_spec["expected_sha256"]:
+                raise ValueError(
+                    f"Review evaluation external report SHA-256 mismatch: {report_path}"
+                )
+            try:
+                report = json.loads(report_path.read_text(encoding="utf-8-sig"))
+            except (OSError, UnicodeError, json.JSONDecodeError) as error:
+                raise ValueError(
+                    f"Review evaluation external report is not valid JSON: {report_path}"
+                ) from error
+            applicability_profile = report.get("applicability_profile")
+            _validate_applicability_profile(
+                applicability_profile, f"external report {index}"
+            )
+            ci_provenance = report.get("ci_provenance")
+            if manifest_version == "review-evaluation-1.0":
+                _validate_ci_provenance(ci_provenance, f"external report {index}")
+            report_paths.append(report_path)
+            report_evidence = {
+                "report": report_spec["source"],
+                "source_sha256": actual_sha256,
+                "status": "verified",
+                "applicability_profile": copy.deepcopy(applicability_profile),
+            }
+            if ci_provenance is not None:
+                report_evidence["ci_provenance"] = {
+                    **copy.deepcopy(ci_provenance),
+                    "status": "hash-bound",
+                }
+            reports.append(report_evidence)
+
+        placeholders = {
+            f"${{external_report_{index}}}": index - 1
+            for index in range(1, len(report_paths) + 1)
+        }
+        substitutions = _substitute_report_artifacts(
+            request, placeholders, report_paths, reports
+        )
+        if substitutions != len(report_paths):
+            raise ValueError(
+                f"Review evaluation external report case {case['case_id']} requires "
+                f"{len(report_paths)} external report artifact(s)"
+            )
+        materialized = _write_materialized_request(case_output, request)
+        return materialized, {
+            "external_reports": {
+                "status": "verified",
+                "report_count": len(reports),
+                "reports": reports,
+            }
+        }
+
     producer_output = case_output / "producer"
     producer_input = (manifest_path.parent / producer["input"]).resolve()
     kind = producer["kind"]
@@ -295,19 +402,7 @@ def _materialize_request(
                 json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
             )
         applicability_profile = report.get("applicability_profile")
-        if (
-            not isinstance(applicability_profile, dict)
-            or set(applicability_profile) != {
-                "variant", "software_version", "calibration_version", "backend"
-            }
-            or any(
-                not isinstance(value, str) or not value
-                for value in applicability_profile.values()
-            )
-        ):
-            raise ValueError(
-                f"Review evaluation producer {kind} emitted invalid applicability_profile"
-            )
+        _validate_applicability_profile(applicability_profile, f"producer {kind}")
         report_paths.append(report_path)
         reports.append(
             {
@@ -322,7 +417,6 @@ def _materialize_request(
             }
         )
 
-    substitutions = 0
     placeholders = (
         {_PRODUCER_SOURCE: 0}
         if producer_runs == 1
@@ -331,22 +425,15 @@ def _materialize_request(
             for index in range(1, producer_runs + 1)
         }
     )
-    for artifact in request.get("artifact_registry", []):
-        index = placeholders.get(artifact.get("source"))
-        if index is not None:
-            artifact["source"] = str(report_paths[index].resolve())
-            artifact["expected_sha256"] = reports[index]["source_sha256"]
-            substitutions += 1
+    substitutions = _substitute_report_artifacts(
+        request, placeholders, report_paths, reports
+    )
     if substitutions != producer_runs:
         raise ValueError(
             f"Review evaluation producer case {case['case_id']} requires "
             f"{producer_runs} producer report artifact(s)"
         )
-    materialized = case_output / "materialized-request.json"
-    materialized.parent.mkdir(parents=True, exist_ok=True)
-    materialized.write_text(
-        json.dumps(request, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    materialized = _write_materialized_request(case_output, request)
     evidence: dict[str, Any] = {"kind": kind, "status": "passed"}
     if producer_runs == 1:
         evidence.update(reports[0])
@@ -354,7 +441,61 @@ def _materialize_request(
         evidence.update({"runs": producer_runs, "reports": reports})
         if producer.get("mutations"):
             evidence["mutations"] = copy.deepcopy(producer["mutations"])
-    return materialized, evidence
+    return materialized, {"producer": evidence}
+
+
+def _validate_applicability_profile(profile: Any, source: str) -> None:
+    if (
+        not isinstance(profile, dict)
+        or set(profile) != {
+            "variant", "software_version", "calibration_version", "backend"
+        }
+        or any(not isinstance(value, str) or not value for value in profile.values())
+    ):
+        raise ValueError(
+            f"Review evaluation {source} emitted invalid applicability_profile"
+        )
+
+
+def _validate_ci_provenance(provenance: Any, source: str) -> None:
+    if (
+        not isinstance(provenance, dict)
+        or set(provenance) != {
+            "provider", "repository", "run_id", "job_id", "commit_sha"
+        }
+        or any(not isinstance(value, str) or not value for value in provenance.values())
+        or len(provenance["commit_sha"]) not in {40, 64}
+        or any(
+            character not in "0123456789abcdef"
+            for character in provenance["commit_sha"]
+        )
+    ):
+        raise ValueError(f"Review evaluation {source} emitted invalid ci_provenance")
+
+
+def _substitute_report_artifacts(
+    request: dict[str, Any],
+    placeholders: dict[str, int],
+    report_paths: list[Path],
+    reports: list[dict[str, Any]],
+) -> int:
+    substitutions = 0
+    for artifact in request.get("artifact_registry", []):
+        index = placeholders.get(artifact.get("source"))
+        if index is not None:
+            artifact["source"] = str(report_paths[index].resolve())
+            artifact["expected_sha256"] = reports[index]["source_sha256"]
+            substitutions += 1
+    return substitutions
+
+
+def _write_materialized_request(case_output: Path, request: dict[str, Any]) -> Path:
+    materialized = case_output / "materialized-request.json"
+    materialized.parent.mkdir(parents=True, exist_ok=True)
+    materialized.write_text(
+        json.dumps(request, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return materialized
 
 
 def _normalized_result(result: dict[str, Any], excluded: list[str]) -> dict[str, Any]:
@@ -492,8 +633,8 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
 
     for case in manifest["cases"]:
         case_output = output / case["case_id"]
-        request_path, producer_evidence = _materialize_request(
-            manifest_path, case, case_output
+        request_path, source_evidence = _materialize_request(
+            manifest_path, manifest["schema_version"], case, case_output
         )
         runs = [
             run_review(request_path, case_output / f"run-{index + 1}")
@@ -603,7 +744,7 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
                 {"observed_drift_catalog": observed_drift_catalog}
                 if observed_drift_catalog else {}
             ),
-            **({"producer": producer_evidence} if producer_evidence else {}),
+            **source_evidence,
         })
 
     case_count = len(manifest["cases"])

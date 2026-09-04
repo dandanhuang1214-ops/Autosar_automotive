@@ -26,6 +26,9 @@ CROSS_RUN_MANIFEST = (
 COHORT_MANIFEST = (
     ROOT / "examples" / "review" / "evaluation" / "cohort-evaluation.json"
 )
+EXTERNAL_COHORT_MANIFEST = (
+    ROOT / "examples" / "review" / "evaluation" / "external-cohort-evaluation.json"
+)
 
 
 class ReviewEvaluationTests(unittest.TestCase):
@@ -33,10 +36,18 @@ class ReviewEvaluationTests(unittest.TestCase):
         pinned_sources = 0
         for manifest_path in (
             MANIFEST, RUNTIME_MANIFEST, HELD_OUT_MANIFEST, CROSS_RUN_MANIFEST,
-            COHORT_MANIFEST,
+            COHORT_MANIFEST, EXTERNAL_COHORT_MANIFEST,
         ):
             manifest = load_evaluation_manifest(manifest_path)
             for case in manifest["cases"]:
+                for report in case.get("external_reports", []):
+                    source = manifest_path.parent / report["source"]
+                    pinned_sources += 1
+                    self.assertEqual(
+                        report["expected_sha256"],
+                        hashlib.sha256(source.read_bytes()).hexdigest(),
+                        f"unpinned or stale external evaluation source: {source}",
+                    )
                 request_path = manifest_path.parent / case["request"]
                 request = json.loads(request_path.read_text(encoding="utf-8"))
                 for artifact in request["artifact_registry"]:
@@ -49,7 +60,7 @@ class ReviewEvaluationTests(unittest.TestCase):
                         hashlib.sha256(source.read_bytes()).hexdigest(),
                         f"unpinned or stale evaluation source: {source}",
                     )
-        self.assertEqual(pinned_sources, 20)
+        self.assertEqual(pinned_sources, 29)
 
     def test_gold_evaluation_meets_every_gate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -284,6 +295,108 @@ class ReviewEvaluationTests(unittest.TestCase):
         self.assertIn("## Drift catalog summary", markdown)
         self.assertIn("| `uds` | 1 | 1 | 0 |", markdown)
         self.assertIn("| `dtc` | 1 | 1 | 0 |", markdown)
+
+    def test_external_cohort_verifies_pinned_reports_without_running_producer(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            result = run_review_evaluation(EXTERNAL_COHORT_MANIFEST, output)
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["schema_version"], "review-evaluation-result-1.0")
+            self.assertEqual(result["drift_status_counts"], {
+                "stable": 3, "drifted": 3, "not-comparable": 0,
+            })
+            self.assertEqual(set(result["domain_drift_status_counts"]), {
+                "can", "uds", "dtc",
+            })
+            for case in result["cases"]:
+                case_output = output / case["case_id"]
+                materialized = json.loads(
+                    (case_output / "materialized-request.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+                self.assertNotIn("producer", case)
+                self.assertEqual(case["external_reports"]["status"], "verified")
+                self.assertEqual(case["external_reports"]["report_count"], 3)
+                self.assertFalse((case_output / "producer").exists())
+                for artifact, report in zip(
+                    materialized["artifact_registry"],
+                    case["external_reports"]["reports"],
+                ):
+                    self.assertEqual(
+                        artifact["expected_sha256"], report["source_sha256"]
+                    )
+                    self.assertEqual(
+                        report["source_sha256"],
+                        hashlib.sha256(Path(artifact["source"]).read_bytes()).hexdigest(),
+                    )
+                    self.assertEqual(report["ci_provenance"]["status"], "hash-bound")
+                    self.assertIn(report["ci_provenance"]["provider"], {"example-ci"})
+
+    def test_external_cross_domain_cohort_requires_ci_provenance(self) -> None:
+        manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
+        fixture = json.loads(
+            (EXTERNAL_COHORT_MANIFEST.parent / "fixtures/external-can-baseline.json")
+            .read_text(encoding="utf-8")
+        )
+        fixture.pop("ci_provenance")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report_path = root / "report.json"
+            report_path.write_text(json.dumps(fixture), encoding="utf-8")
+            manifest["cases"] = [manifest["cases"][0]]
+            case = manifest["cases"][0]
+            case["request"] = str(
+                (EXTERNAL_COHORT_MANIFEST.parent / case["request"]).resolve()
+            )
+            case["external_reports"][0] = {
+                "source": str(report_path),
+                "expected_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+            }
+            for report in case["external_reports"][1:]:
+                report["source"] = str(
+                    (EXTERNAL_COHORT_MANIFEST.parent / report["source"]).resolve()
+                )
+            manifest_path = root / "evaluation.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "invalid ci_provenance"):
+                run_review_evaluation(manifest_path, root / "output")
+
+    def test_external_cohort_fails_closed_on_stale_sha256(self) -> None:
+        manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
+        manifest["cases"][0]["external_reports"][0]["expected_sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "evaluation.json"
+            manifest["cases"][0]["request"] = str(
+                (EXTERNAL_COHORT_MANIFEST.parent / manifest["cases"][0]["request"]).resolve()
+            )
+            for report in manifest["cases"][0]["external_reports"]:
+                report["source"] = str(
+                    (EXTERNAL_COHORT_MANIFEST.parent / report["source"]).resolve()
+                )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "external report SHA-256 mismatch"):
+                run_review_evaluation(manifest_path, Path(directory) / "output")
+
+    def test_external_reports_are_versioned_and_mutually_exclusive_with_producer(self) -> None:
+        manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "evaluation.json"
+            manifest["schema_version"] = "review-evaluation-0.8"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "external_reports requires schema 0.9"):
+                load_evaluation_manifest(manifest_path)
+
+            manifest["schema_version"] = "review-evaluation-0.9"
+            manifest["cases"][0]["producer"] = {
+                "kind": "can-lab",
+                "input": "input.dbc",
+            }
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "cannot combine producer and external_reports"):
+                load_evaluation_manifest(manifest_path)
 
     def test_rejects_mutation_outside_producer_stable_field_allowlist(self) -> None:
         manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))

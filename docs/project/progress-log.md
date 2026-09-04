@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-01）
+## 当前总览（2026-09-04）
 
-当前阶段：`R5k — CAN/UDS/DTC 跨域 cohort 汇总已落地`。
+当前阶段：`R5m — 固定报告跨域与 CI provenance 已落地`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5k 已完成基础契约、引用/冲突、development/runtime/held-out/cross-run/cohort 评测、artifact-bound applicability，以及 CAN/UDS/DTC 三运行逐候选 drift catalog 与分域汇总；下一步接入已存在的固定哈希报告 cohort |
+| AI 工程审查 | 部分完成 | R5a-R5m 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、CAN/UDS/DTC 固定报告导入与哈希绑定 CI provenance；下一步增加显式 provenance expectation |
 
 ## 已完成升级历史
 
@@ -509,6 +509,28 @@
 - 边界：汇总是确定性样例覆盖计数，不进行趋势分析、统计显著性判断、版本兼容性推断或自动 baseline 选择；当前 evaluator 仍负责现场运行 producer。
 - 状态：完成。
 
+### R5l：固定哈希 CI/外部报告 cohort 导入（2026-09-03）
+
+- evaluator 升级到 `review-evaluation-0.9` / result 0.9；case 可声明 1～3 个 `external_reports`，并通过 `${external_report_1..3}` 装配既有报告。
+- `external_reports` 与 `producer` 明确互斥；外部路径只作为本地只读输入，不执行 shell、下载报告或调用 runner，也不允许 mutation。
+- 每份报告在 review 前先验证 manifest 固定的 64 位小写 SHA-256、UTF-8 JSON 和完整四字段 `applicability_profile`；任一不符立即 fail closed。
+- materialized request 使用解析后的绝对路径和实际 SHA-256；evaluation result 归档每份来源相对路径、已验证哈希、profile 和 `verified` 状态，且不会创建 `producer/` 输出目录。
+- 新增 CAN CI baseline + stable candidate + drift candidate 固定 fixture；1/1 case、1/1 check、2/2 candidate judgment 通过，drift catalog 为 stable 1、drifted 1、not-comparable 0。
+- 回归：全量 96 项通过、2 项环境跳过；66 份 schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：首个固定报告案例只覆盖 CAN；SHA-256 证明本地字节未偏离 manifest，不证明报告由指定 CI 身份产生，也不是签名、远端下载或供应链证明。
+- 状态：完成。
+
+### R5m：固定报告跨域与 CI provenance（2026-09-04）
+
+- evaluator 升级到 `review-evaluation-1.0` / result 1.0；外部固定报告 cohort 从 CAN 扩展到 CAN、UDS decoded VIN 和 DTC confirmed state 三域。
+- 新增 6 份 UDS/DTC baseline、stable candidate、drift candidate fixture，与已有 CAN fixture 共同形成 3 case、9 report 的本地固定 cohort。
+- 1.0 报告必须携带非空 provider、repository、run ID、job ID，以及 40/64 位小写十六进制 commit SHA；缺失、字段越界或非法 SHA 均 fail closed。
+- evaluation result 在已验证 source SHA-256 和 applicability profile 旁归档 `ci_provenance.status=hash-bound`；该状态表示声明存在于被固定的报告字节中，不表示 provider 身份已认证。
+- 三域各得到 stable 1、drifted 1、not-comparable 0，引用、冲突、drift catalog 与 repeatability gate 全部通过，且不创建 `producer/` 目录。
+- 回归：全量 97 项通过、2 项环境跳过；74 份 schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：fixture provenance 是公开合成审计数据；当前不下载 CI artifact、不查询 provider API、不校验 workflow identity、签名或透明日志，也不将声明相等视为供应链证明。
+- 状态：完成。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -585,6 +607,13 @@ official_native_baseline=false
 - 同步更新两个引用该公开 intent 的 AI reviewer 评测清单 SHA-256；旧 hash 被测试拒绝，证明来源变更固定机制按设计生效；
 - 边界：校验确认同一 intent 内显式引用一致性，不通过对象名后缀推断量产 ECUC 方向。
 
+### L3：第四周 Day 1 概念验收（2026-09-03）
+
+- 学习者已能区分 DBC 的网络传输定义、canonical contract 的 ASW 交付语义及 BSW intent 的连接作用；
+- 已正确识别 factor 不一致会造成 raw-to-physical 语义冲突；
+- 初答对确定性比较项覆盖不足，已补充 CAN ID、DLC、位布局、端序、符号以及 research intent/量产 ECUC 边界；
+- Day 1 状态：基本理解，补充后通过；仍建议不看文档复述一次修正版。
+
 ## 当前升级：R3 OpenBSW POSIX 限时 spike
 
 目标：在不破坏 R2 已完成 SocketCAN 闭环的前提下，执行一次受限 OpenBSW POSIX spike，并形成可复现 build/run evidence 与源码入口索引。
@@ -610,16 +639,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5l 固定报告 cohort 导入
+### 最近一步：R5n 显式 provenance expectation
 
-允许 evaluation case 引用已存在、SHA-256 固定的 CI/外部 runner 报告，在不重新执行 producer 的情况下复用 applicability、citation 与 drift catalog gate。继续限制本地文件、显式 baseline 和小规模 cohort，不先引入趋势推断、Web 前端、外部 LLM、embedding 或向量库。
+允许调用方对固定报告声明期望的 repository、job 和 commit，并在 review 运行前 fail closed；继续限制本地文件、显式 baseline 和小规模 cohort。provenance expectation 仍是哈希绑定声明匹配，不冒充签名或远端身份认证，也不先引入趋势推断、Web 前端、外部 LLM、embedding 或向量库。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN/UDS/DTC cohort 已能逐 candidate 区分 stable、drifted 与 not-comparable 并形成分域摘要，下一阶段接入不需要现场重跑 producer 的固定报告 cohort。
+诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN/UDS/DTC 的现场 producer 与固定报告 cohort 均能逐 candidate 区分 stable、drifted 与 not-comparable，固定报告还归档哈希绑定的 CI provenance，下一阶段增加调用方显式 provenance expectation。
 
 ## 下次必须补录
 

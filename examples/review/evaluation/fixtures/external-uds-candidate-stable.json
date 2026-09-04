@@ -1,0 +1,24 @@
+{
+  "artifact_type": "uds-isotp-lab",
+  "run_id": "ci-582-stable",
+  "started_at": "2026-09-03T01:05:00+00:00",
+  "applicability_profile": {
+    "variant": "window_control",
+    "software_version": "uds-lab-0.1",
+    "calibration_version": "sha256:uds-demo",
+    "backend": "python-can virtual"
+  },
+  "ci_provenance": {
+    "provider": "example-ci",
+    "repository": "public/window-control-fixture",
+    "run_id": "582",
+    "job_id": "uds-candidate-stable",
+    "commit_sha": "5555555555555555555555555555555555555555"
+  },
+  "status": "passed",
+  "scenarios": [{
+    "scenario": "read_vin",
+    "status": "passed",
+    "evidence": {"decoded_value": "WVWZZZ1JZXW000001"}
+  }]
+}

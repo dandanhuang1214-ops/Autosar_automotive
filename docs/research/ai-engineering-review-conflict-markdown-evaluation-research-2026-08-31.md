@@ -189,3 +189,19 @@ Drift injection is deliberately narrower than a generic JSON patch facility. Eac
 Run IDs, timestamps, durations, and channel identifiers are classified as dynamic pointer tokens. A paired producer request that observes one of these fields is rejected before any runner executes. This is a manifest-contract failure rather than an engineering conflict: normal execution identity and timing variation must not contribute to conflict recall or false-conflict counts.
 
 The `review-evaluation-0.4` cross-run set contains four checks across CAN, UDS, and DTC. All gates pass, including conflict recall and zero false conflicts. Applicability across variants, software or calibration versions, and backends remains caller knowledge; R5h must represent that metadata explicitly before expanding the drift catalog.
+
+## R5l fixed external report cohort import
+
+R5l separates evidence production from deterministic evaluation. A `review-evaluation-0.9` case may declare one to three existing local `external_reports`; each entry provides a path and an exact lowercase SHA-256. The request refers to those bytes with `${external_report_1..3}` placeholders. The evaluator resolves the files relative to the manifest, verifies the digest before parsing, requires valid UTF-8 JSON and the complete artifact-bound applicability profile, then materializes an immutable review request with absolute paths and verified hashes.
+
+`external_reports` and `producer` are mutually exclusive. Import never invokes a runner, executes a command, downloads an artifact, or mutates report content. Result evidence records the declared source, verified digest, applicability profile, and verification state separately from producer evidence. A checked-in CAN CI-style baseline plus stable and drifted candidates proves that the same citation and drift-catalog gates work without a `producer/` directory; the candidate judgments are exactly one stable and one drifted.
+
+This contract establishes byte identity and local deterministic replay only. A matching digest does not authenticate the CI system, repository, workflow, job, commit, or human who supplied the manifest. It is not a signature or attestation. UDS/DTC fixed-report coverage and explicit CI provenance remain follow-on work; remote artifact fetching and trust-policy enforcement remain out of scope.
+
+## R5m cross-domain fixed reports and CI provenance
+
+R5m upgrades the external cohort contract to `review-evaluation-1.0`. The checked-in cohort now contains CAN, UDS, and DTC cases, each with an explicit baseline, a stable candidate, and a drifted candidate. The selected stable fields are CAN round-trip status, decoded VIN, and DTC confirmed state. All three domains produce one stable and one drifted candidate judgment without invoking a producer.
+
+Every 1.0 external report must contain a `ci_provenance` object with provider, repository, run ID, job ID, and a 40- or 64-character lowercase hexadecimal commit SHA. The evaluator validates this closed shape only after the report bytes match the manifest SHA-256, then archives the fields with `status=hash-bound`. Missing or malformed provenance fails before request materialization.
+
+`hash-bound` is deliberately weaker than `verified` identity. It means the provenance declaration was inside the exact report bytes consumed by the evaluator. The sample values are synthetic, and the evaluator does not contact a CI provider, confirm repository ownership, inspect a workflow, validate a signature, or compare the declaration with an independently supplied expectation. R5n may add explicit local expectation matching; remote attestation and trust policy remain outside this deterministic baseline.
