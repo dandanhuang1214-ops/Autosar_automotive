@@ -19,9 +19,17 @@ jobs:
       - name: Install CAN and diagnostic adapter dependencies
         run: python -m pip install -e ".[diag]"
       - name: Run core tests
+        id: core_tests
         env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -v
+        run: python scripts/run_ci_tests.py --output output/test-results
+      - name: Upload core test evidence
+        if: ${{ always() && steps.core_tests.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-test-results-${{ runner.os }}
+          path: output/test-results/
+          if-no-files-found: error
       - name: Smoke-test signal trace
         env:
           PYTHONPATH: src
