@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -122,14 +123,17 @@ class UdsRuntimeTests(unittest.TestCase):
             probe = json.loads((output / "probe" / "backend-probe.json").read_text(encoding="utf-8"))
 
         self.assertEqual(result["status"], "blocked")
-        self.assertEqual(result["reason"], "interface_missing")
+        expected_reason = (
+            "interface_missing" if sys.platform == "linux" else "unsupported_platform"
+        )
+        self.assertEqual(result["reason"], expected_reason)
         self.assertEqual(result["scenario_count"], 20)
         self.assertEqual(
             persisted["applicability_profile"]["backend"], "python-can socketcan"
         )
         self.assertEqual(result["passed_count"], 0)
         self.assertEqual(persisted["backend_probe"]["status"], "blocked")
-        self.assertEqual(probe["reason"], "interface_missing")
+        self.assertEqual(probe["reason"], expected_reason)
         self.assertEqual(
             persisted["isolation"]["client"]["frame_filters"][0]["can_id_hex"],
             "0x708",
@@ -153,9 +157,12 @@ class UdsRuntimeTests(unittest.TestCase):
     def test_probes_uds_backend_as_blocked_when_socketcan_interface_is_missing(self) -> None:
         result = probe_uds_backend(BusConfig("socketcan", "workbench-missing-vcan"))
 
+        expected_reason = (
+            "interface_missing" if sys.platform == "linux" else "unsupported_platform"
+        )
         self.assertEqual(result["status"], "blocked")
-        self.assertEqual(result["reason"], "interface_missing")
-        self.assertEqual(result["can_backend_probe"]["reason"], "interface_missing")
+        self.assertEqual(result["reason"], expected_reason)
+        self.assertEqual(result["can_backend_probe"]["reason"], expected_reason)
         self.assertIn("kernel_isotp", result)
 
 
