@@ -1,6 +1,6 @@
 # Automotive Software Engineering Workbench 路线v2
 
-## 实施状态（2026-09-01）
+## 实施状态（2026-09-07）
 
 - 已完成：统一 Artifact/Finding/Trace 骨架；Generate-Arxml report adapter；DBC→BSW intent→canonical contract 静态校验。
 - 已完成：基线与五类配置故障注入，JSON/Markdown 证据报告，Windows/Linux CI 定义。
@@ -45,8 +45,12 @@
 - R5k 已完成（2026-09-01）：三运行 cohort 扩展到 UDS decoded VIN 与 DTC confirmed state；evaluator 0.8 输出全局及 CAN/UDS/DTC 分域 drift 状态计数，全部精确 gate 通过。
 - R5l 已完成（2026-09-03）：新增 evaluator 0.9 `external_reports`，可对 1～3 份已存在的本地 CI/外部 runner JSON 报告逐字节验证 SHA-256 和 applicability profile 后执行 cohort evaluation；与现场 `producer` 互斥，首个 CAN stable+drift 固定报告案例全部 gate 通过。
 - R5m 已完成（2026-09-04）：evaluator 1.0 将固定报告 cohort 扩展到 CAN/UDS/DTC 三域；每份报告必须携带 provider、repository、run、job、commit provenance，验证后以 `hash-bound` 状态归档，三域 stable+drift gate 全部通过。
+- R5n 已完成（2026-09-04）：evaluator 1.1 要求每份固定报告由调用方独立声明 repository/job/commit expectation，逐字段匹配后记录 `matched`；缺失、非法或不符均在 materialization 前 fail closed，九份 CAN/UDS/DTC 报告全部覆盖。
+- R5o 已完成（2026-09-04）：evaluator 1.2 新增 case 级 repository + allowed job IDs policy，在逐报告 expectation 之后、materialization 之前拦截跨仓库和越权 job；结果以 `enforced` 状态归档，1.0/1.1 保持兼容。
+- R5p 已完成（2026-09-06）：evaluator 1.3 为外部报告 integrity、provenance、expectation 和 policy 预检失败生成闭合的最小 rejection artifact，保持非零退出且不物化 request；双平台 CI 已配置无论成败都上传评测输出。
+- R5q 本地实现与验证已完成（2026-09-07）：新增跨平台可控 SHA-256 mismatch 演练，CI 直接观察 CLI failure 后校验 rejection artifact、无 request/result 物化，并独立上传拒绝证据；GitHub Actions Windows/Ubuntu 远端运行仍待凭据恢复后验收。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：R5n 为固定报告增加调用方显式 provenance expectation，拒绝 repository/job/commit 声明不符；仍只做本地哈希绑定声明匹配，不冒充签名或远端身份认证，此前不引入外部 LLM。
+- 当前下一阶段：完成 R5q GitHub Actions 正常与可控拒绝两条 artifact 上传路径的远端验收；验收前不放宽 materialization 门槛，也不引入远端 artifact 下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 

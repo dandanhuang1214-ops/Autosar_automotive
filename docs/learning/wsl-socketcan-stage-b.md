@@ -27,9 +27,9 @@ wsl -l -v
 如果发行版存在，再使用实际名称运行；下面的 `Ubuntu-22.04` 只是示例：
 
 ```powershell
-wsl -d Ubuntu-22.04 -- uname -a
-wsl -d Ubuntu-22.04 -- sh -lc "cat /etc/os-release"
-wsl -d Ubuntu-22.04 -- sh -lc "command -v python3; command -v git; command -v cmake; command -v ninja; command -v ip; command -v modprobe"
+wsl -d Ubuntu-24.04 -- uname -a
+wsl -d Ubuntu-24.04 -- sh -lc "cat /etc/os-release"
+wsl -d Ubuntu-24.04 -- sh -lc "command -v python3; command -v git; command -v cmake; command -v ninja; command -v ip; command -v modprobe"
 ```
 
 ## Stage B1：检查现有 CAN 能力
@@ -37,9 +37,9 @@ wsl -d Ubuntu-22.04 -- sh -lc "command -v python3; command -v git; command -v cm
 只有 B0 成功后才运行：
 
 ```powershell
-wsl -d Ubuntu-22.04 -- sh -lc "zgrep -E 'CONFIG_CAN(=|_)|CONFIG_VCAN' /proc/config.gz 2>/dev/null || grep -E 'CONFIG_CAN(=|_)|CONFIG_VCAN' /boot/config-$(uname -r) 2>/dev/null || true"
-wsl -d Ubuntu-22.04 -- sh -lc "lsmod | grep -E '(^can|vcan)' || true"
-wsl -d Ubuntu-22.04 -- sh -lc "ip -details link show type vcan 2>/dev/null || true"
+wsl -d Ubuntu-24.04 -- sh -lc "zgrep -E 'CONFIG_CAN(=|_)|CONFIG_VCAN' /proc/config.gz 2>/dev/null || grep -E 'CONFIG_CAN(=|_)|CONFIG_VCAN' /boot/config-$(uname -r) 2>/dev/null || true"
+wsl -d Ubuntu-24.04 -- sh -lc "lsmod | grep -E '(^can|vcan)' || true"
+wsl -d Ubuntu-24.04 -- sh -lc "ip -details link show type vcan 2>/dev/null || true"
 ```
 
 结果解释：

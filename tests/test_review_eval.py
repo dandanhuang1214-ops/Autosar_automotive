@@ -32,6 +32,37 @@ EXTERNAL_COHORT_MANIFEST = (
 
 
 class ReviewEvaluationTests(unittest.TestCase):
+    def assert_preflight_rejection(
+        self,
+        output: Path,
+        *,
+        code: str,
+        stage: str,
+        field: str | None = None,
+    ) -> None:
+        rejection_path = output / "review-evaluation-rejection.json"
+        rejection = json.loads(rejection_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            set(rejection),
+            {
+                "artifact_type", "schema_version", "run_id", "started_at",
+                "evaluation_id", "case_id", "status", "phase", "reason",
+            },
+        )
+        self.assertEqual(rejection["status"], "rejected")
+        self.assertEqual(rejection["phase"], "external-report-preflight")
+        self.assertEqual(rejection["reason"]["code"], code)
+        self.assertEqual(rejection["reason"]["stage"], stage)
+        self.assertEqual(rejection["reason"]["report_index"], 1)
+        self.assertEqual(rejection["reason"].get("field"), field)
+        self.assertFalse((output / "review-evaluation.json").exists())
+        serialized = json.dumps(rejection)
+        for forbidden in (
+            "materialized-request", "external_reports", "expected_sha256",
+            "ci_provenance", "provenance_expectation", "provenance_policy",
+        ):
+            self.assertNotIn(forbidden, serialized)
+
     def test_existing_gold_fixtures_are_sha256_pinned(self) -> None:
         pinned_sources = 0
         for manifest_path in (
@@ -301,7 +332,7 @@ class ReviewEvaluationTests(unittest.TestCase):
             output = Path(directory)
             result = run_review_evaluation(EXTERNAL_COHORT_MANIFEST, output)
             self.assertEqual(result["status"], "passed")
-            self.assertEqual(result["schema_version"], "review-evaluation-result-1.0")
+            self.assertEqual(result["schema_version"], "review-evaluation-result-1.3")
             self.assertEqual(result["drift_status_counts"], {
                 "stable": 3, "drifted": 3, "not-comparable": 0,
             })
@@ -318,6 +349,9 @@ class ReviewEvaluationTests(unittest.TestCase):
                 self.assertNotIn("producer", case)
                 self.assertEqual(case["external_reports"]["status"], "verified")
                 self.assertEqual(case["external_reports"]["report_count"], 3)
+                policy = case["external_reports"]["provenance_policy"]
+                self.assertEqual(policy["status"], "enforced")
+                self.assertEqual(policy["repository"], "public/window-control-fixture")
                 self.assertFalse((case_output / "producer").exists())
                 for artifact, report in zip(
                     materialized["artifact_registry"],
@@ -332,6 +366,20 @@ class ReviewEvaluationTests(unittest.TestCase):
                     )
                     self.assertEqual(report["ci_provenance"]["status"], "hash-bound")
                     self.assertIn(report["ci_provenance"]["provider"], {"example-ci"})
+                    self.assertEqual(
+                        report["ci_provenance"]["repository"], policy["repository"]
+                    )
+                    self.assertIn(
+                        report["ci_provenance"]["job_id"], policy["allowed_job_ids"]
+                    )
+                    self.assertEqual(
+                        report["provenance_expectation"]["status"], "matched"
+                    )
+                    for field in ("repository", "job_id", "commit_sha"):
+                        self.assertEqual(
+                            report["provenance_expectation"][field],
+                            report["ci_provenance"][field],
+                        )
 
     def test_external_cross_domain_cohort_requires_ci_provenance(self) -> None:
         manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
@@ -349,9 +397,11 @@ class ReviewEvaluationTests(unittest.TestCase):
             case["request"] = str(
                 (EXTERNAL_COHORT_MANIFEST.parent / case["request"]).resolve()
             )
+            expectation = case["external_reports"][0]["provenance_expectation"]
             case["external_reports"][0] = {
                 "source": str(report_path),
                 "expected_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+                "provenance_expectation": expectation,
             }
             for report in case["external_reports"][1:]:
                 report["source"] = str(
@@ -362,6 +412,120 @@ class ReviewEvaluationTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "invalid ci_provenance"):
                 run_review_evaluation(manifest_path, root / "output")
+            self.assert_preflight_rejection(
+                root / "output",
+                code="invalid-ci-provenance",
+                stage="provenance",
+            )
+
+    def test_external_cohort_requires_explicit_provenance_expectation(self) -> None:
+        manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
+        manifest["cases"][0]["external_reports"][0].pop("provenance_expectation")
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "evaluation.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "invalid external report"):
+                load_evaluation_manifest(manifest_path)
+
+    def test_external_cohort_fails_closed_on_provenance_expectation_mismatch(self) -> None:
+        mismatches = {
+            "repository": "unexpected/repository",
+            "job_id": "unexpected-job",
+            "commit_sha": "f" * 40,
+        }
+        for field, value in mismatches.items():
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                manifest = json.loads(
+                    EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8")
+                )
+                manifest["cases"] = [manifest["cases"][0]]
+                case = manifest["cases"][0]
+                case["request"] = str(
+                    (EXTERNAL_COHORT_MANIFEST.parent / case["request"]).resolve()
+                )
+                for report in case["external_reports"]:
+                    report["source"] = str(
+                        (EXTERNAL_COHORT_MANIFEST.parent / report["source"]).resolve()
+                    )
+                case["external_reports"][0]["provenance_expectation"][field] = value
+                manifest_path = root / "evaluation.json"
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+                with self.assertRaisesRegex(
+                    ValueError, f"provenance expectation mismatch: {field}"
+                ):
+                    run_review_evaluation(manifest_path, root / "output")
+                self.assertFalse(
+                    (root / "output" / case["case_id"] / "materialized-request.json").exists()
+                )
+                self.assert_preflight_rejection(
+                    root / "output",
+                    code="provenance-expectation-mismatch",
+                    stage="expectation",
+                    field=field,
+                )
+
+    def test_external_cohort_requires_valid_provenance_policy(self) -> None:
+        invalid_policies = (
+            None,
+            {"repository": "public/window-control-fixture", "allowed_job_ids": []},
+            {
+                "repository": "public/window-control-fixture",
+                "allowed_job_ids": ["can-baseline", "can-baseline"],
+            },
+        )
+        for policy in invalid_policies:
+            with self.subTest(policy=policy), tempfile.TemporaryDirectory() as directory:
+                manifest = json.loads(
+                    EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8")
+                )
+                if policy is None:
+                    manifest["cases"][0].pop("provenance_policy")
+                else:
+                    manifest["cases"][0]["provenance_policy"] = policy
+                manifest_path = Path(directory) / "evaluation.json"
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "invalid provenance_policy"):
+                    load_evaluation_manifest(manifest_path)
+
+    def test_external_cohort_fails_closed_on_provenance_policy_violation(self) -> None:
+        violations = {
+            "repository": {"repository": "unexpected/repository"},
+            "job_id": {"allowed_job_ids": ["can-candidate-stable"]},
+        }
+        for field, update in violations.items():
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                manifest = json.loads(
+                    EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8")
+                )
+                manifest["cases"] = [manifest["cases"][0]]
+                case = manifest["cases"][0]
+                case["request"] = str(
+                    (EXTERNAL_COHORT_MANIFEST.parent / case["request"]).resolve()
+                )
+                for report in case["external_reports"]:
+                    report["source"] = str(
+                        (EXTERNAL_COHORT_MANIFEST.parent / report["source"]).resolve()
+                    )
+                case["provenance_policy"].update(update)
+                manifest_path = root / "evaluation.json"
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+                with self.assertRaisesRegex(
+                    ValueError, f"violates provenance policy: {field}"
+                ):
+                    run_review_evaluation(manifest_path, root / "output")
+                self.assertFalse(
+                    (root / "output" / case["case_id"] / "materialized-request.json").exists()
+                )
+                self.assert_preflight_rejection(
+                    root / "output",
+                    code="provenance-policy-violation",
+                    stage="policy",
+                    field=field,
+                )
 
     def test_external_cohort_fails_closed_on_stale_sha256(self) -> None:
         manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
@@ -379,6 +543,11 @@ class ReviewEvaluationTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "external report SHA-256 mismatch"):
                 run_review_evaluation(manifest_path, Path(directory) / "output")
+            self.assert_preflight_rejection(
+                Path(directory) / "output",
+                code="sha256-mismatch",
+                stage="integrity",
+            )
 
     def test_external_reports_are_versioned_and_mutually_exclusive_with_producer(self) -> None:
         manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
@@ -397,6 +566,30 @@ class ReviewEvaluationTests(unittest.TestCase):
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "cannot combine producer and external_reports"):
                 load_evaluation_manifest(manifest_path)
+
+    def test_external_report_10_11_and_12_manifests_remain_backward_compatible(self) -> None:
+        manifest = json.loads(EXTERNAL_COHORT_MANIFEST.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "evaluation.json"
+            manifest["schema_version"] = "review-evaluation-1.2"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            loaded = load_evaluation_manifest(manifest_path)
+            self.assertEqual(loaded["schema_version"], "review-evaluation-1.2")
+
+            for case in manifest["cases"]:
+                case.pop("provenance_policy")
+            manifest["schema_version"] = "review-evaluation-1.1"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            loaded = load_evaluation_manifest(manifest_path)
+            self.assertEqual(loaded["schema_version"], "review-evaluation-1.1")
+
+            manifest["schema_version"] = "review-evaluation-1.0"
+            for case in manifest["cases"]:
+                for report in case["external_reports"]:
+                    report.pop("provenance_expectation")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            loaded = load_evaluation_manifest(manifest_path)
+            self.assertEqual(loaded["schema_version"], "review-evaluation-1.0")
 
     def test_rejects_mutation_outside_producer_stable_field_allowlist(self) -> None:
         manifest = json.loads(CROSS_RUN_MANIFEST.read_text(encoding="utf-8"))

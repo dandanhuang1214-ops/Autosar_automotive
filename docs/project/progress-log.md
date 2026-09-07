@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-04）
+## 当前总览（2026-09-07）
 
-当前阶段：`R5m — 固定报告跨域与 CI provenance 已落地`。
+当前阶段：`R5q — CI rejection contract 本地闭环，等待远端双平台验收`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5m 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、CAN/UDS/DTC 固定报告导入与哈希绑定 CI provenance；下一步增加显式 provenance expectation |
+| AI 工程审查 | 部分完成 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与本地 CI 拒绝演练；远端双平台 artifact 验收待完成 |
 
 ## 已完成升级历史
 
@@ -531,6 +531,50 @@
 - 边界：fixture provenance 是公开合成审计数据；当前不下载 CI artifact、不查询 provider API、不校验 workflow identity、签名或透明日志，也不将声明相等视为供应链证明。
 - 状态：完成。
 
+### R5n：显式 provenance expectation（2026-09-04）
+
+- evaluator 升级到 `review-evaluation-1.1` / result 1.1；每个 external report 必须由 manifest 独立声明 repository、job ID 和 commit SHA expectation。
+- 先验证固定报告 SHA-256 与报告内 `ci_provenance`，再逐字段匹配调用方 expectation；缺失、非法或任一字段不符均在生成 materialized request 和执行 review 前 fail closed。
+- result 分别记录 `ci_provenance.status=hash-bound` 与 `provenance_expectation.status=matched`，不把报告字节绑定和调用方意图匹配混为同一种信任结论。
+- CAN/UDS/DTC 三域共 9 份固定报告均显式声明 expectation；正向 cohort 维持 stable 3、drifted 3、not-comparable 0，repository/job/commit 三类负例均确认不会生成 materialized request。
+- 定向回归：`tests.test_review_eval` 19 项通过；全量 100 项通过、2 项环境跳过；schema/example JSON 可解析，Python compileall、whitespace 和 diff check 通过。
+- 边界：仍不认证 provider 身份、不查询 CI API、不下载远端 artifact、不验证签名、attestation、透明日志或 repository ownership；`matched` 只代表本地 manifest 声明与已哈希固定报告中的声明相等。
+- 状态：完成。
+
+### R5o：cohort provenance policy（2026-09-04）
+
+- evaluator 升级到 `review-evaluation-1.2` / result 1.2；external cohort case 必须声明唯一非空 repository 与 `allowed_job_ids` 白名单。
+- 在报告 SHA-256、报告内 provenance 和逐报告 expectation 全部通过后执行 cohort policy；跨 repository 或 job 不在白名单时，在 artifact substitution、materialized request 和 review 运行前 fail closed。
+- result 在逐报告 `hash-bound`、`matched` 证据之外，以 `provenance_policy.status=enforced` 归档实际生效的 repository 和 job allowlist。
+- CAN/UDS/DTC 三域 policy 分别覆盖各自 baseline、stable candidate 和 drift candidate job；正向 cohort 仍为 stable 3、drifted 3、not-comparable 0。
+- 负例覆盖 policy 缺失、空 job list、重复 job、跨仓库和越权 job；1.0 无 expectation/policy 与 1.1 有 expectation/无 policy 两种旧 manifest 均可继续加载。
+- 定向回归：`tests.test_review_eval` 21 项通过；全量 102 项通过、2 项环境跳过；74 份 schema/example JSON 可解析，Python compileall、CLI 实际 cohort、whitespace 和 diff check 通过。
+- 边界：policy 仅做精确本地 allowlist，不支持 wildcard、repository alias、branch/workflow/provider policy、commit ancestry、签名或 attestation，不声称供应链身份认证。
+- 状态：完成。
+
+### R5p：preflight rejection evidence（2026-09-06）
+
+- evaluator 升级到 `review-evaluation-1.3` / result 1.3；外部报告预检失败仍抛出异常并保持 CLI 非零退出，同时在评测根目录生成 `review-evaluation-rejection.json`。
+- rejection artifact 使用独立闭合 schema，仅记录 evaluation/case ID、时间、固定 phase、报告序号、stage、稳定 reason code 和可选字段名。
+- 拒绝件不写报告路径、期望/实际哈希、provenance/policy 值、request/report 内容或 artifact registry，也不生成 `materialized-request.json` 或将拒绝计入评测分数。
+- 负例覆盖 SHA-256 integrity、报告 provenance shape、调用方 expectation 和 cohort policy 四类拒绝；1.0、1.1、1.2 manifest 继续可加载。
+- GitHub Actions 在 Windows/Ubuntu 双平台运行固定报告 cohort，并通过 `always()` 上传输出目录，因此正常评测或 preflight rejection 都可留存。
+- 定向回归：`tests.test_review_eval` 21 项通过；全量 102 项通过、2 项环境跳过；75 份 schema/example JSON 可解析，Python compileall、CLI 实际 cohort、whitespace 和 diff check 通过。
+- 边界：rejection artifact 只是本地失败可观测性证据，不是部分 review result，不认证被拒报告；manifest 结构错误及外部报告预检之外的失败仍只走原异常路径。
+- 状态：完成。
+
+### R5q：CI rejection contract 演练（2026-09-07）
+
+- 新增 `scripts/review_rejection_exercise.py`，`prepare` 将固定 cohort 的路径解析为绝对路径并只把首份报告 SHA-256 改为全零，形成确定、可移植且不修改 checked-in fixture 的拒绝输入。
+- `check` 要求 GitHub Actions 记录的 CLI step outcome 必须为 `failure`，并校验 rejection artifact 的闭合字段、`sha256-mismatch/integrity/report 1` 原因、无敏感 provenance/policy 字段、无 materialized request 和正式 evaluation result。
+- 校验通过后生成独立 `review-rejection-exercise.json`，明确记录 CLI failure 已被观察和两类旁路产物均不存在；该摘要不改变 evaluator 的 rejection schema。
+- GitHub Actions Windows/Ubuntu matrix 新增 prepare、`continue-on-error` 的真实 CLI 拒绝、强制 check 和 `always()` artifact upload；正常 cohort 与拒绝演练使用独立 artifact 名称和目录。
+- 新增 `tests/test_review_rejection_exercise.py`，覆盖 staged manifest、真实 evaluator preflight failure、拒绝证据检查和“CLI 意外成功必须使检查失败”。
+- 本地定向验证：`tests.test_review_rejection_exercise tests.test_review_eval` 共 23 项通过。
+- 本地命令链验证：受控 CLI 返回退出码 1，检查摘要为 `status=passed`、`cli_outcome=failure`、`reason_code=sha256-mismatch`，且 request/result 均未物化。
+- 边界：脚本只在 CI 工作目录生成临时 manifest，不修改或伪造 checked-in 报告；`continue-on-error` 仅用于让后续检查与上传执行，若 CLI 意外成功或 rejection 不合约，验证步骤仍使 job 失败。
+- 状态：本地实现与验证完成；等待推送后检查 GitHub Actions 的 Windows/Ubuntu 正常与拒绝 artifact。
+
 ### E1：WSL2 与 SocketCAN 基线
 
 已确认：
@@ -614,6 +658,23 @@ official_native_baseline=false
 - 初答对确定性比较项覆盖不足，已补充 CAN ID、DLC、位布局、端序、符号以及 research intent/量产 ECUC 边界；
 - Day 1 状态：基本理解，补充后通过；仍建议不看文档复述一次修正版。
 
+### L4：第四周 Day 4 运行时故障任务校正（2026-09-04）
+
+- 原学习计划把 `run-suite` 与“运行时错误 CAN ID”混在一起；实际 `run-suite` 覆盖 DLC/start bit/scale/unit/range 等静态 artifact 漂移；
+- Day 4 主命令修正为 `run-can-lab` 和 `run-can-supervision`；
+- 前者覆盖正常收发、错误 ID、接收超时和越界物理值，后者覆盖周期观测及 `RECEIVING → TIMEOUT → RECOVERED`；
+- 增加 WSL 命令、报告路径和“故障场景 passed 表示故障被检出”的解释；
+- 状态：任务说明修正完成，无运行时代码变化。
+
+### L4：第四周 Day 2 分层图参考答案（2026-09-04）
+
+- 使用学习者提供的 ASW/System/ECU Extract/ECUC/Runtime 分层图回答 Day 2 三题；
+- 明确 ECU Extract 是目标 ECU 相关系统事实的裁剪与配置输入，不是 COM ECUC 的同义词；
+- 梳理必须在 ECUC、供应商 BSWMD、硬件和集成决策层确定的 COM/PduR/CanIf/Driver 参数；
+- 给出系统描述正确但 ECU 仍收不到或上层读不到数据时，从总线到 Runnable 的证据优先定位顺序；
+- 修正教学图边界：不把 RTE 直接画到 I-PDU 当作严格引用，也不把 Extract 到 ECUC 理解成无条件自动生成；
+- 状态：教练参考答案已发布，等待学习者不看答案复述后完成个人验收。
+
 ## 当前升级：R3 OpenBSW POSIX 限时 spike
 
 目标：在不破坏 R2 已完成 SocketCAN 闭环的前提下，执行一次受限 OpenBSW POSIX spike，并形成可复现 build/run evidence 与源码入口索引。
@@ -639,16 +700,16 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5n 显式 provenance expectation
+### 最近一步：R5q CI rejection contract 远端验收
 
-允许调用方对固定报告声明期望的 repository、job 和 commit，并在 review 运行前 fail closed；继续限制本地文件、显式 baseline 和小规模 cohort。provenance expectation 仍是哈希绑定声明匹配，不冒充签名或远端身份认证，也不先引入趋势推断、Web 前端、外部 LLM、embedding 或向量库。
+推送当前实现后，在 GitHub Actions 实际运行中确认 Windows/Ubuntu 的正常 cohort artifact 和可控 SHA-256 rejection artifact 均上传；检查 `review-rejection-exercise.json` 已观察到 CLI failure 且 request/result 未物化。未完成远端验收前，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
 - 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
 
-诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN/UDS/DTC 的现场 producer 与固定报告 cohort 均能逐 candidate 区分 stable、drifted 与 not-comparable，固定报告还归档哈希绑定的 CI provenance，下一阶段增加调用方显式 provenance expectation。
+诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN/UDS/DTC 的现场 producer 与固定报告 cohort 均能逐 candidate 区分 stable、drifted 与 not-comparable，固定报告同时归档哈希绑定 provenance、已匹配的调用方 expectation 和已执行的 cohort repository/job policy；preflight 失败现可在不物化请求的前提下留存最小拒绝证据。
 
 ## 下次必须补录
 

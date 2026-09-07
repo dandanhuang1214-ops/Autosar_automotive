@@ -205,3 +205,35 @@ R5m upgrades the external cohort contract to `review-evaluation-1.0`. The checke
 Every 1.0 external report must contain a `ci_provenance` object with provider, repository, run ID, job ID, and a 40- or 64-character lowercase hexadecimal commit SHA. The evaluator validates this closed shape only after the report bytes match the manifest SHA-256, then archives the fields with `status=hash-bound`. Missing or malformed provenance fails before request materialization.
 
 `hash-bound` is deliberately weaker than `verified` identity. It means the provenance declaration was inside the exact report bytes consumed by the evaluator. The sample values are synthetic, and the evaluator does not contact a CI provider, confirm repository ownership, inspect a workflow, validate a signature, or compare the declaration with an independently supplied expectation. R5n may add explicit local expectation matching; remote attestation and trust policy remain outside this deterministic baseline.
+
+## R5n explicit provenance expectation
+
+R5n upgrades the fixed-report contract to `review-evaluation-1.1`. Every external report entry now carries a caller-owned `provenance_expectation` containing repository, job ID, and a 40- or 64-character lowercase hexadecimal commit SHA. These fields are deliberately outside the report bytes and therefore provide an independent local statement of which checked-in report the caller intends to review.
+
+The evaluator first checks the pinned report SHA-256 and parses its closed `ci_provenance` object, then compares the three expected fields exactly. A missing expectation, malformed commit, or repository/job/commit mismatch fails closed before `materialized-request.json` is written or any repeated review run begins. Successful result evidence keeps `ci_provenance.status=hash-bound` and separately records `provenance_expectation.status=matched`, so byte binding and caller-intent matching are not conflated.
+
+The cross-domain CAN/UDS/DTC cohort declares expectations for all nine reports. Positive evaluation preserves the existing six stable/drifted candidate judgments; negative tests independently alter repository, job, and commit and verify that all three paths stop before request materialization. This still does not authenticate a CI provider, fetch an artifact, validate a signature or attestation, or prove repository ownership. It is deterministic local declaration matching only.
+
+## R5o cohort provenance policy
+
+R5o upgrades the evaluation contract to `review-evaluation-1.2` and adds a case-level `provenance_policy` for external cohorts. The deliberately small policy contains one required repository and a unique, non-empty `allowed_job_ids` list. Per-report expectations continue to bind exact repository/job/commit tuples; the policy adds a second layer that constrains which repository and jobs may participate in the cohort as a whole.
+
+Policy enforcement occurs after the report digest, closed provenance shape, and per-report expectation match, but before artifact substitution or request materialization. A report from another repository or a job outside the allowlist fails closed. Successful evaluation evidence records the effective policy with `status=enforced`, while each report retains the separate `hash-bound` and `matched` states. Tests cover missing, empty, and duplicate policies plus repository and job violations, and preserve 1.0/1.1 manifest compatibility.
+
+This is an exact local allowlist, not a general policy language. It does not interpret repository aliases, wildcard jobs, branches, workflow names, provider identities, commit ancestry, signatures, or attestations. Keeping those out avoids implying supply-chain guarantees that the evaluator cannot establish from local fixture bytes.
+
+## R5p preflight rejection evidence
+
+R5p upgrades the external-report evaluation contract to `review-evaluation-1.3`. A digest mismatch, malformed report provenance, caller expectation mismatch, or cohort repository/job policy violation still raises an error and keeps the CLI exit status non-zero, but now also writes `review-evaluation-rejection.json` at the evaluation output root. This gives CI a deterministic artifact even though review execution never begins.
+
+The rejection artifact is deliberately smaller than an evaluation result. It records only evaluation and case identifiers, a timestamp, the fixed `external-report-preflight` phase, report index, stage, stable reason code, and—where useful—the mismatched field name. It does not contain a report path, expected or actual digest, provenance value, policy value, request body, report body, or materialized artifact registry. The schema is closed, and negative tests cover integrity, provenance shape, expectation, and policy rejection categories.
+
+This evidence improves failure observability without weakening fail-closed behavior. It is not a partial review result, does not authenticate the rejected artifact, and does not convert invalid input into a scored evaluation case. Manifest-structure errors and failures outside external-report preflight continue to use the existing exception path without a rejection artifact.
+## R5q CI rejection contract 演练补充（2026-09-07）
+
+- CI 必须观察 evaluator CLI 的真实非零退出，不能只调用内部函数并把“抛异常”当作远端流程已经正确连接。
+- `continue-on-error` 只负责保留后续校验和 artifact 上传机会；独立检查步骤要求 outcome 为 `failure`，因此 CLI 意外成功仍会令 job 失败。
+- 演练输入从已固定 cohort manifest 派生，只注入确定的 SHA-256 mismatch；原 fixture、gold manifest 和报告字节保持不变。
+- 正常 cohort 与拒绝证据使用不同输出目录和 artifact 名称，避免失败件被误认为正式 evaluation result。
+- 拒绝验收同时检查最小字段、稳定 reason code、敏感字段不泄漏，以及 materialized request / evaluation result 不存在。
+- 当前只验证 GitHub-hosted Windows/Ubuntu runner 上的工作流连接和 artifact 留存，不扩大到 provider API 下载、身份认证、签名或 attestation。

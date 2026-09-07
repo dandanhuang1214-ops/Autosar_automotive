@@ -57,5 +57,35 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m automotive_workbench.cli run-backend-lab examples/window_control/window_control.dbc --interface virtual --channel ci-lab --output output/backend-lab
+      - name: Run fixed-report engineering review cohort
+        id: fixed_report_review
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli run-review-eval examples/review/evaluation/external-cohort-evaluation.json --output output/review-external-cohort
+      - name: Upload fixed-report review evidence
+        if: ${{ always() && steps.fixed_report_review.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-external-cohort-${{ runner.os }}
+          path: output/review-external-cohort/
+          if-no-files-found: error
+      - name: Prepare controlled review rejection
+        run: python scripts/review_rejection_exercise.py prepare examples/review/evaluation/external-cohort-evaluation.json output/review-external-rejection-input/manifest.json
+      - name: Run controlled review rejection
+        id: controlled_review_rejection
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli run-review-eval output/review-external-rejection-input/manifest.json --output output/review-external-rejection
+      - name: Verify controlled review rejection
+        if: ${{ always() }}
+        run: python scripts/review_rejection_exercise.py check output/review-external-rejection --cli-outcome ${{ steps.controlled_review_rejection.outcome }}
+      - name: Upload controlled review rejection evidence
+        if: ${{ always() && steps.controlled_review_rejection.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-external-rejection-${{ runner.os }}
+          path: output/review-external-rejection/
+          if-no-files-found: error
       - name: Validate checked-in JSON
         run: python scripts/check_json.py

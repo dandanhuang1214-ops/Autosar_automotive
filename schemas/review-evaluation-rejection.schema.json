@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/review-evaluation-rejection.schema.json",
+  "title": "Engineering Review Evaluation Preflight Rejection",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "run_id", "started_at", "evaluation_id", "case_id", "status", "phase", "reason"],
+  "properties": {
+    "artifact_type": {"const": "engineering-review-evaluation-rejection"},
+    "schema_version": {"const": "review-evaluation-rejection-1.0"},
+    "run_id": {"type": "string", "minLength": 1},
+    "started_at": {"type": "string", "minLength": 1},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "status": {"const": "rejected"},
+    "phase": {"const": "external-report-preflight"},
+    "reason": {
+      "type": "object",
+      "required": ["code", "stage", "report_index"],
+      "properties": {
+        "code": {
+          "enum": [
+            "external-report-not-found",
+            "sha256-mismatch",
+            "invalid-json",
+            "invalid-applicability-profile",
+            "invalid-ci-provenance",
+            "provenance-expectation-mismatch",
+            "provenance-policy-violation"
+          ]
+        },
+        "stage": {"enum": ["locate", "integrity", "parse", "applicability", "provenance", "expectation", "policy"]},
+        "report_index": {"type": "integer", "minimum": 1, "maximum": 3},
+        "field": {"enum": ["repository", "job_id", "commit_sha", "multiple"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

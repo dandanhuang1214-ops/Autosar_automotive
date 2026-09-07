@@ -33,6 +33,23 @@ _MUTABLE_POINTERS = {
 }
 
 
+class ReviewEvaluationPreflightError(ValueError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str,
+        stage: str,
+        report_index: int,
+        field: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.stage = stage
+        self.report_index = report_index
+        self.field = field
+
+
 def _require_string(value: Any, name: str) -> str:
     if not isinstance(value, str) or not value:
         raise ValueError(f"Review evaluation manifest requires non-empty {name}")
@@ -54,6 +71,9 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         "review-evaluation-0.8",
         "review-evaluation-0.9",
         "review-evaluation-1.0",
+        "review-evaluation-1.1",
+        "review-evaluation-1.2",
+        "review-evaluation-1.3",
     }:
         raise ValueError("Unsupported or missing review evaluation schema_version")
     _require_string(payload.get("evaluation_id"), "evaluation_id")
@@ -83,6 +103,7 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
         _require_string(case.get("request"), "case request")
         producer = case.get("producer")
         external_reports = case.get("external_reports")
+        provenance_policy = case.get("provenance_policy")
         if producer is not None and external_reports is not None:
             raise ValueError(
                 f"Review evaluation case {case_id} cannot combine producer and external_reports"
@@ -102,6 +123,9 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                 "review-evaluation-0.7", "review-evaluation-0.8",
                 "review-evaluation-0.9",
                 "review-evaluation-1.0",
+                "review-evaluation-1.1",
+                "review-evaluation-1.2",
+                "review-evaluation-1.3",
             }:
                 raise ValueError(
                     f"Review evaluation case {case_id} three-run producer requires schema 0.7 or newer"
@@ -118,6 +142,9 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                     "review-evaluation-0.8",
                     "review-evaluation-0.9",
                     "review-evaluation-1.0",
+                    "review-evaluation-1.1",
+                    "review-evaluation-1.2",
+                    "review-evaluation-1.3",
                 }
             ):
                 raise ValueError(
@@ -136,7 +163,9 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                     )
         if external_reports is not None:
             if payload["schema_version"] not in {
-                "review-evaluation-0.9", "review-evaluation-1.0"
+                "review-evaluation-0.9", "review-evaluation-1.0",
+                "review-evaluation-1.1", "review-evaluation-1.2",
+                "review-evaluation-1.3",
             }:
                 raise ValueError(
                     f"Review evaluation case {case_id} external_reports requires schema 0.9 or newer"
@@ -146,9 +175,13 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                     f"Review evaluation case {case_id} requires one to three external_reports"
                 )
             for report in external_reports:
-                if not isinstance(report, dict) or set(report) != {
-                    "source", "expected_sha256"
+                expected_fields = {"source", "expected_sha256"}
+                if payload["schema_version"] in {
+                    "review-evaluation-1.1", "review-evaluation-1.2",
+                    "review-evaluation-1.3",
                 }:
+                    expected_fields.add("provenance_expectation")
+                if not isinstance(report, dict) or set(report) != expected_fields:
                     raise ValueError(
                         f"Review evaluation case {case_id} has invalid external report"
                     )
@@ -162,6 +195,28 @@ def load_evaluation_manifest(path: Path) -> dict[str, Any]:
                     raise ValueError(
                         f"Review evaluation case {case_id} has invalid external report SHA-256"
                     )
+                if payload["schema_version"] in {
+                    "review-evaluation-1.1", "review-evaluation-1.2",
+                    "review-evaluation-1.3",
+                }:
+                    _validate_provenance_expectation(
+                        report.get("provenance_expectation"),
+                        f"case {case_id} external report",
+                    )
+            if payload["schema_version"] in {
+                "review-evaluation-1.2", "review-evaluation-1.3"
+            }:
+                _validate_provenance_policy(
+                    provenance_policy, f"case {case_id}"
+                )
+            elif provenance_policy is not None:
+                raise ValueError(
+                    f"Review evaluation case {case_id} provenance_policy requires schema 1.2"
+                )
+        elif provenance_policy is not None:
+            raise ValueError(
+                f"Review evaluation case {case_id} provenance_policy requires external_reports"
+            )
         if case.get("expected_status") not in {"answered", "partial", "refused"}:
             raise ValueError(f"Review evaluation case {case_id} has invalid expected_status")
         expected_checks = case.get("expected_checks")
@@ -312,27 +367,73 @@ def _materialize_request(
         for index, report_spec in enumerate(external_reports, 1):
             report_path = (manifest_path.parent / report_spec["source"]).resolve()
             if not report_path.is_file():
-                raise ValueError(
-                    f"Review evaluation external report does not exist: {report_path}"
+                raise ReviewEvaluationPreflightError(
+                    f"Review evaluation external report does not exist: {report_path}",
+                    code="external-report-not-found",
+                    stage="locate",
+                    report_index=index,
                 )
             actual_sha256 = _sha256(report_path)
             if actual_sha256 != report_spec["expected_sha256"]:
-                raise ValueError(
-                    f"Review evaluation external report SHA-256 mismatch: {report_path}"
+                raise ReviewEvaluationPreflightError(
+                    f"Review evaluation external report SHA-256 mismatch: {report_path}",
+                    code="sha256-mismatch",
+                    stage="integrity",
+                    report_index=index,
                 )
             try:
                 report = json.loads(report_path.read_text(encoding="utf-8-sig"))
             except (OSError, UnicodeError, json.JSONDecodeError) as error:
-                raise ValueError(
-                    f"Review evaluation external report is not valid JSON: {report_path}"
+                raise ReviewEvaluationPreflightError(
+                    f"Review evaluation external report is not valid JSON: {report_path}",
+                    code="invalid-json",
+                    stage="parse",
+                    report_index=index,
                 ) from error
             applicability_profile = report.get("applicability_profile")
-            _validate_applicability_profile(
-                applicability_profile, f"external report {index}"
-            )
+            try:
+                _validate_applicability_profile(
+                    applicability_profile, f"external report {index}"
+                )
+            except ValueError as error:
+                raise ReviewEvaluationPreflightError(
+                    str(error),
+                    code="invalid-applicability-profile",
+                    stage="applicability",
+                    report_index=index,
+                ) from error
             ci_provenance = report.get("ci_provenance")
-            if manifest_version == "review-evaluation-1.0":
-                _validate_ci_provenance(ci_provenance, f"external report {index}")
+            if manifest_version in {
+                "review-evaluation-1.0", "review-evaluation-1.1",
+                "review-evaluation-1.2", "review-evaluation-1.3",
+            }:
+                try:
+                    _validate_ci_provenance(ci_provenance, f"external report {index}")
+                except ValueError as error:
+                    raise ReviewEvaluationPreflightError(
+                        str(error),
+                        code="invalid-ci-provenance",
+                        stage="provenance",
+                        report_index=index,
+                    ) from error
+            provenance_expectation = report_spec.get("provenance_expectation")
+            if manifest_version in {
+                "review-evaluation-1.1", "review-evaluation-1.2",
+                "review-evaluation-1.3",
+            }:
+                _match_provenance_expectation(
+                    ci_provenance,
+                    provenance_expectation,
+                    f"external report {index}",
+                    index,
+                )
+            if manifest_version in {
+                "review-evaluation-1.2", "review-evaluation-1.3"
+            }:
+                _enforce_provenance_policy(
+                    ci_provenance, case["provenance_policy"],
+                    f"external report {index}", index,
+                )
             report_paths.append(report_path)
             report_evidence = {
                 "report": report_spec["source"],
@@ -344,6 +445,11 @@ def _materialize_request(
                 report_evidence["ci_provenance"] = {
                     **copy.deepcopy(ci_provenance),
                     "status": "hash-bound",
+                }
+            if provenance_expectation is not None:
+                report_evidence["provenance_expectation"] = {
+                    **copy.deepcopy(provenance_expectation),
+                    "status": "matched",
                 }
             reports.append(report_evidence)
 
@@ -365,6 +471,17 @@ def _materialize_request(
                 "status": "verified",
                 "report_count": len(reports),
                 "reports": reports,
+                **(
+                    {
+                        "provenance_policy": {
+                            **copy.deepcopy(case["provenance_policy"]),
+                            "status": "enforced",
+                        }
+                    }
+                    if manifest_version in {
+                        "review-evaluation-1.2", "review-evaluation-1.3"
+                    } else {}
+                ),
             }
         }
 
@@ -473,6 +590,82 @@ def _validate_ci_provenance(provenance: Any, source: str) -> None:
         raise ValueError(f"Review evaluation {source} emitted invalid ci_provenance")
 
 
+def _validate_provenance_expectation(expectation: Any, source: str) -> None:
+    if (
+        not isinstance(expectation, dict)
+        or set(expectation) != {"repository", "job_id", "commit_sha"}
+        or any(not isinstance(value, str) or not value for value in expectation.values())
+        or len(expectation["commit_sha"]) not in {40, 64}
+        or any(
+            character not in "0123456789abcdef"
+            for character in expectation["commit_sha"]
+        )
+    ):
+        raise ValueError(f"Review evaluation {source} has invalid provenance expectation")
+
+
+def _match_provenance_expectation(
+    provenance: dict[str, Any],
+    expectation: dict[str, Any],
+    source: str,
+    report_index: int,
+) -> None:
+    mismatches = [
+        field for field in ("repository", "job_id", "commit_sha")
+        if provenance[field] != expectation[field]
+    ]
+    if mismatches:
+        raise ReviewEvaluationPreflightError(
+            f"Review evaluation {source} provenance expectation mismatch: "
+            f"{', '.join(mismatches)}",
+            code="provenance-expectation-mismatch",
+            stage="expectation",
+            report_index=report_index,
+            field=mismatches[0] if len(mismatches) == 1 else "multiple",
+        )
+
+
+def _validate_provenance_policy(policy: Any, source: str) -> None:
+    if (
+        not isinstance(policy, dict)
+        or set(policy) != {"repository", "allowed_job_ids"}
+        or not isinstance(policy.get("repository"), str)
+        or not policy["repository"]
+        or not isinstance(policy.get("allowed_job_ids"), list)
+        or not 1 <= len(policy["allowed_job_ids"]) <= 16
+        or any(
+            not isinstance(job_id, str) or not job_id
+            for job_id in policy["allowed_job_ids"]
+        )
+        or len(set(policy["allowed_job_ids"])) != len(policy["allowed_job_ids"])
+    ):
+        raise ValueError(f"Review evaluation {source} has invalid provenance_policy")
+
+
+def _enforce_provenance_policy(
+    provenance: dict[str, Any],
+    policy: dict[str, Any],
+    source: str,
+    report_index: int,
+) -> None:
+    if provenance["repository"] != policy["repository"]:
+        raise ReviewEvaluationPreflightError(
+            f"Review evaluation {source} violates provenance policy: repository",
+            code="provenance-policy-violation",
+            stage="policy",
+            report_index=report_index,
+            field="repository",
+        )
+    if provenance["job_id"] not in policy["allowed_job_ids"]:
+        raise ReviewEvaluationPreflightError(
+            f"Review evaluation {source} violates provenance policy: job_id",
+            code="provenance-policy-violation",
+            stage="policy",
+            report_index=report_index,
+            field="job_id",
+        )
+
+
 def _substitute_report_artifacts(
     request: dict[str, Any],
     placeholders: dict[str, int],
@@ -496,6 +689,37 @@ def _write_materialized_request(case_output: Path, request: dict[str, Any]) -> P
         json.dumps(request, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return materialized
+
+
+def _write_preflight_rejection(
+    output: Path,
+    manifest: dict[str, Any],
+    case: dict[str, Any],
+    error: ReviewEvaluationPreflightError,
+) -> None:
+    timestamp = datetime.now(timezone.utc)
+    reason: dict[str, Any] = {
+        "code": error.code,
+        "stage": error.stage,
+        "report_index": error.report_index,
+    }
+    if error.field is not None:
+        reason["field"] = error.field
+    rejection = {
+        "artifact_type": "engineering-review-evaluation-rejection",
+        "schema_version": "review-evaluation-rejection-1.0",
+        "run_id": timestamp.strftime("%Y%m%dT%H%M%SZ"),
+        "started_at": timestamp.isoformat(),
+        "evaluation_id": manifest["evaluation_id"],
+        "case_id": case["case_id"],
+        "status": "rejected",
+        "phase": "external-report-preflight",
+        "reason": reason,
+    }
+    output.mkdir(parents=True, exist_ok=True)
+    (output / "review-evaluation-rejection.json").write_text(
+        json.dumps(rejection, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def _normalized_result(result: dict[str, Any], excluded: list[str]) -> dict[str, Any]:
@@ -633,9 +857,14 @@ def run_review_evaluation(manifest_path: Path, output: Path) -> dict[str, Any]:
 
     for case in manifest["cases"]:
         case_output = output / case["case_id"]
-        request_path, source_evidence = _materialize_request(
-            manifest_path, manifest["schema_version"], case, case_output
-        )
+        try:
+            request_path, source_evidence = _materialize_request(
+                manifest_path, manifest["schema_version"], case, case_output
+            )
+        except ReviewEvaluationPreflightError as error:
+            if manifest["schema_version"] == "review-evaluation-1.3":
+                _write_preflight_rejection(output, manifest, case, error)
+            raise
         runs = [
             run_review(request_path, case_output / f"run-{index + 1}")
             for index in range(repeat_runs)

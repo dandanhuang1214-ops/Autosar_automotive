@@ -1,6 +1,6 @@
 {
-  "schema_version": "review-evaluation-1.0",
-  "evaluation_id": "workbench-review-r5m-external-cross-domain-cohort",
+  "schema_version": "review-evaluation-1.3",
+  "evaluation_id": "workbench-review-r5p-preflight-rejection-evidence",
   "repeat_runs": 3,
   "repeatability_excluded_fields": ["run_id", "started_at"],
   "cases": [
@@ -10,10 +10,11 @@
       "split": "cohort",
       "request": "requests/33-external-can-cohort.json",
       "external_reports": [
-        {"source": "fixtures/external-can-baseline.json", "expected_sha256": "7bbf117d4e88085eaf15d725807ce2b4609607a71e8353531cc00cc3989f9620"},
-        {"source": "fixtures/external-can-candidate-stable.json", "expected_sha256": "8afb3cdd7f4b3c05c090cc4514858fb7eda72a02bf168772c95b2ab11a52d473"},
-        {"source": "fixtures/external-can-candidate-drift.json", "expected_sha256": "12e205ecc5e236b804a84184cc224f58fcc89494dadf9e141d9a70bc2f941a5a"}
+        {"source": "fixtures/external-can-baseline.json", "expected_sha256": "7bbf117d4e88085eaf15d725807ce2b4609607a71e8353531cc00cc3989f9620", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "can-baseline", "commit_sha": "1111111111111111111111111111111111111111"}},
+        {"source": "fixtures/external-can-candidate-stable.json", "expected_sha256": "8afb3cdd7f4b3c05c090cc4514858fb7eda72a02bf168772c95b2ab11a52d473", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "can-candidate-stable", "commit_sha": "2222222222222222222222222222222222222222"}},
+        {"source": "fixtures/external-can-candidate-drift.json", "expected_sha256": "12e205ecc5e236b804a84184cc224f58fcc89494dadf9e141d9a70bc2f941a5a", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "can-candidate-drift", "commit_sha": "3333333333333333333333333333333333333333"}}
       ],
+      "provenance_policy": {"repository": "public/window-control-fixture", "allowed_job_ids": ["can-baseline", "can-candidate-stable", "can-candidate-drift"]},
       "expected_status": "refused",
       "expected_checks": {"external-can-round-trip": "conflicted"},
       "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
@@ -34,10 +35,11 @@
       "split": "cohort",
       "request": "requests/34-external-uds-cohort.json",
       "external_reports": [
-        {"source": "fixtures/external-uds-baseline.json", "expected_sha256": "a8a6261d48cc07a95f86b19e241ac682d44ff224bb9c2d74e56f354338e7901e"},
-        {"source": "fixtures/external-uds-candidate-stable.json", "expected_sha256": "aab0d7ea4931ed936558d8dd0c29f0098b9ecfb95f6bd7744f87cbd5f4ef517e"},
-        {"source": "fixtures/external-uds-candidate-drift.json", "expected_sha256": "c135ded26774ad9abb72e2a0edcd3aad245672f541a2f1d1f7b4095018ae0246"}
+        {"source": "fixtures/external-uds-baseline.json", "expected_sha256": "a8a6261d48cc07a95f86b19e241ac682d44ff224bb9c2d74e56f354338e7901e", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "uds-baseline", "commit_sha": "4444444444444444444444444444444444444444"}},
+        {"source": "fixtures/external-uds-candidate-stable.json", "expected_sha256": "aab0d7ea4931ed936558d8dd0c29f0098b9ecfb95f6bd7744f87cbd5f4ef517e", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "uds-candidate-stable", "commit_sha": "5555555555555555555555555555555555555555"}},
+        {"source": "fixtures/external-uds-candidate-drift.json", "expected_sha256": "c135ded26774ad9abb72e2a0edcd3aad245672f541a2f1d1f7b4095018ae0246", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "uds-candidate-drift", "commit_sha": "6666666666666666666666666666666666666666"}}
       ],
+      "provenance_policy": {"repository": "public/window-control-fixture", "allowed_job_ids": ["uds-baseline", "uds-candidate-stable", "uds-candidate-drift"]},
       "expected_status": "refused",
       "expected_checks": {"external-uds-decoded-vin": "conflicted"},
       "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
@@ -58,10 +60,11 @@
       "split": "cohort",
       "request": "requests/35-external-dtc-cohort.json",
       "external_reports": [
-        {"source": "fixtures/external-dtc-baseline.json", "expected_sha256": "6c4eb4a603d7f4b75738015b19eecbf060de4dfa90c77676270cffd9e5d8cfb3"},
-        {"source": "fixtures/external-dtc-candidate-stable.json", "expected_sha256": "02724c1b3e240b83c40db05c65ffc88e1b816a53256468ef88f76a3ebb83f7ec"},
-        {"source": "fixtures/external-dtc-candidate-drift.json", "expected_sha256": "11cd05a8bd2fa8b0b76e8bd35208c5a43baf049c79c0fc88561afb9bfe272c0e"}
+        {"source": "fixtures/external-dtc-baseline.json", "expected_sha256": "6c4eb4a603d7f4b75738015b19eecbf060de4dfa90c77676270cffd9e5d8cfb3", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "dtc-baseline", "commit_sha": "7777777777777777777777777777777777777777"}},
+        {"source": "fixtures/external-dtc-candidate-stable.json", "expected_sha256": "02724c1b3e240b83c40db05c65ffc88e1b816a53256468ef88f76a3ebb83f7ec", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "dtc-candidate-stable", "commit_sha": "8888888888888888888888888888888888888888"}},
+        {"source": "fixtures/external-dtc-candidate-drift.json", "expected_sha256": "11cd05a8bd2fa8b0b76e8bd35208c5a43baf049c79c0fc88561afb9bfe272c0e", "provenance_expectation": {"repository": "public/window-control-fixture", "job_id": "dtc-candidate-drift", "commit_sha": "9999999999999999999999999999999999999999"}}
       ],
+      "provenance_policy": {"repository": "public/window-control-fixture", "allowed_job_ids": ["dtc-baseline", "dtc-candidate-stable", "dtc-candidate-drift"]},
       "expected_status": "refused",
       "expected_checks": {"external-dtc-confirmed-state": "conflicted"},
       "expected_refusal_codes": ["REVIEW-EVIDENCE-CONFLICT"],
