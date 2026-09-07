@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-07）
 
-当前阶段：`R5q — CI rejection contract 本地闭环，等待远端双平台验收`。
+当前阶段：`R5q — CI rejection contract 双平台验收完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -39,7 +39,7 @@
 | Windows 原生回归 | 完成 | 用户在 PowerShell 复验通过 |
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
-| AI 工程审查 | 部分完成 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与本地 CI 拒绝演练；远端双平台 artifact 验收待完成 |
+| AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
 
 ## 已完成升级历史
 
@@ -577,9 +577,11 @@
 - 第二次远端 run `34079650707` 中 Ubuntu 全链通过并上传正常/rejection 两类 artifact；Windows 依赖安装成功但 core tests 仍有一个平台差异失败。为避免公开仓库匿名 API 只能看到退出码而看不到 test ID，新增 CI test summary artifact 和 GitHub error annotation，下一次运行将直接暴露失败用例并保留结构化摘要。
 - CI test runner 显式把仓库根加入 `sys.path`，保持与原 `python -m unittest` 的模块发现语义一致；否则从 `scripts/` 直接启动时会使测试无法导入同目录包。
 - 第三次远端 run `34089594966` 的 annotations 定位出两类 Windows 基线差异：checkout 的 CRLF 转换破坏按字节固定的 JSON/Markdown SHA-256；两个 SocketCAN blocked 测试把 Linux `interface_missing` 错当成所有平台的唯一结果。
-- 新增 `.gitattributes` 固定文本 checkout 为 LF，保持跨平台 artifact hash；UDS 测试现在在非 Linux 明确期待 `unsupported_platform`。同时把 checkout/setup-python/upload-artifact 升级到各自 Node 24 major，消除 runner 的 Node 20 弃用警告。
+- 新增 `.gitattributes` 固定文本 checkout 为 LF，保持跨平台 artifact hash；UDS 测试现在在非 Linux 明确期待 `unsupported_platform`。同时把 checkout/setup-python 升级到 Node 24 major；run #10 确认 `upload-artifact@v5` 仍为 Node 20 后继续升级至官方 v7。
+- 最终业务验收 run `34093452072`（#10）整体成功，Ubuntu/Windows 两个 job 均完成；六个 artifact 均上传：`core-test-results-{Linux,Windows}`、`review-external-cohort-{Linux,Windows}`、`review-external-rejection-{Linux,Windows}`。
+- run #10 的两个受控拒绝 step 各自按预期产生退出码 1，后续 verify step 通过，因此 job 与 workflow 保持绿色；这同时证明失败没有被静默吞掉，且 rejection evidence 在两个平台均可上传。
 - 边界：脚本只在 CI 工作目录生成临时 manifest，不修改或伪造 checked-in 报告；`continue-on-error` 仅用于让后续检查与上传执行，若 CLI 意外成功或 rejection 不合约，验证步骤仍使 job 失败。
-- 状态：本地实现与验证完成；等待推送后检查 GitHub Actions 的 Windows/Ubuntu 正常与拒绝 artifact。
+- 状态：完成。
 
 ### E1：WSL2 与 SocketCAN 基线
 
@@ -706,9 +708,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5q CI rejection contract 远端验收
+### 最近一步：R5q CI rejection contract 已完成
 
-推送当前实现后，在 GitHub Actions 实际运行中确认 Windows/Ubuntu 的正常 cohort artifact 和可控 SHA-256 rejection artifact 均上传；检查 `review-rejection-exercise.json` 已观察到 CLI failure 且 request/result 未物化。未完成远端验收前，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+Windows/Ubuntu 已实际确认正常 cohort artifact 和可控 SHA-256 rejection artifact 均上传；检查器观察到 CLI failure 且 request/result 未物化。下一步先冻结 R5 评测契约并选择新的窄里程碑，不直接扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

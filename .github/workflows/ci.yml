@@ -25,7 +25,7 @@ jobs:
         run: python scripts/run_ci_tests.py --output output/test-results
       - name: Upload core test evidence
         if: ${{ always() && steps.core_tests.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: core-test-results-${{ runner.os }}
           path: output/test-results/
@@ -73,7 +73,7 @@ jobs:
         run: python -m automotive_workbench.cli run-review-eval examples/review/evaluation/external-cohort-evaluation.json --output output/review-external-cohort
       - name: Upload fixed-report review evidence
         if: ${{ always() && steps.fixed_report_review.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: review-external-cohort-${{ runner.os }}
           path: output/review-external-cohort/
@@ -91,7 +91,7 @@ jobs:
         run: python scripts/review_rejection_exercise.py check output/review-external-rejection --cli-outcome ${{ steps.controlled_review_rejection.outcome }}
       - name: Upload controlled review rejection evidence
         if: ${{ always() && steps.controlled_review_rejection.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: review-external-rejection-${{ runner.os }}
           path: output/review-external-rejection/
