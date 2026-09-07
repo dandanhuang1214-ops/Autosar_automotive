@@ -572,6 +572,8 @@
 - 新增 `tests/test_review_rejection_exercise.py`，覆盖 staged manifest、真实 evaluator preflight failure、拒绝证据检查和“CLI 意外成功必须使检查失败”。
 - 本地定向验证：`tests.test_review_rejection_exercise tests.test_review_eval` 共 23 项通过。
 - 本地命令链验证：受控 CLI 返回退出码 1，检查摘要为 `status=passed`、`cli_outcome=failure`、`reason_code=sha256-mismatch`，且 request/result 均未物化。
+- 首次远端 run `34074617940` 在 Ubuntu `Run core tests` 提前失败；原因是历史 CI 只安装 `.[can]`，而全量测试已经包含需要 `can-isotp`/`udsoncan` 的诊断运行用例。matrix 默认 fail-fast 同时取消了 Windows，拒绝演练没有获得执行机会。
+- CI 基线随即修正为安装 `.[diag]`（包含 CAN 与诊断依赖）并设置 `fail-fast: false`；拒绝检查只在受控 CLI step 实际执行后运行，避免更早的无关失败被二次伪装为 rejection contract failure。
 - 边界：脚本只在 CI 工作目录生成临时 manifest，不修改或伪造 checked-in 报告；`continue-on-error` 仅用于让后续检查与上传执行，若 CLI 意外成功或 rejection 不合约，验证步骤仍使 job 失败。
 - 状态：本地实现与验证完成；等待推送后检查 GitHub Actions 的 Windows/Ubuntu 正常与拒绝 artifact。
 

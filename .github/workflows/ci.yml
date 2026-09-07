@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
@@ -15,8 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install CAN adapter dependencies
-        run: python -m pip install -e ".[can]"
+      - name: Install CAN and diagnostic adapter dependencies
+        run: python -m pip install -e ".[diag]"
       - name: Run core tests
         env:
           PYTHONPATH: src
@@ -78,7 +79,7 @@ jobs:
           PYTHONPATH: src
         run: python -m automotive_workbench.cli run-review-eval output/review-external-rejection-input/manifest.json --output output/review-external-rejection
       - name: Verify controlled review rejection
-        if: ${{ always() }}
+        if: ${{ always() && steps.controlled_review_rejection.outcome != 'skipped' }}
         run: python scripts/review_rejection_exercise.py check output/review-external-rejection --cli-outcome ${{ steps.controlled_review_rejection.outcome }}
       - name: Upload controlled review rejection evidence
         if: ${{ always() && steps.controlled_review_rejection.outcome != 'skipped' }}
