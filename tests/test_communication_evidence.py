@@ -8,6 +8,8 @@ from pathlib import Path
 
 from automotive_workbench.adapters.dbc import validate_dbc_intent
 from automotive_workbench.can_runtime import run_can_lab
+from automotive_workbench.can_io import BusConfig
+from automotive_workbench.communication_runtime import run_communication_runtime
 from automotive_workbench.communication_evidence import (
     bind_communication_evidence,
     run_communication_chain,
@@ -39,7 +41,50 @@ class CommunicationEvidenceTests(unittest.TestCase):
         bindings = {item["identity"]: item for item in result["bindings"]}
         self.assertEqual(bindings["WindowStatus.WindowPosition"]["runtime_observation"]["direction"], "tx")
         self.assertEqual(bindings["WindowCommand.RequestedDirection"]["runtime_observation"]["direction"], "rx")
-        self.assertEqual(persisted["schema_version"], "communication-evidence-0.1")
+        self.assertEqual(persisted["schema_version"], "communication-evidence-0.2")
+        self.assertEqual(persisted["runtime_backend"], "python-can virtual")
+        self.assertEqual(
+            [item["can_id_hex"] for item in persisted["isolation"]["frame_filters"]],
+            ["0x100", "0x200"],
+        )
+        self.assertEqual(persisted["source_artifacts"][2]["artifact_type"], "can-communication-runtime")
+
+    def test_backend_neutral_runtime_uses_selected_virtual_channel(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            result = run_communication_runtime(
+                DBC, BusConfig("virtual", "communication-contract-test"), output
+            )
+
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["bus_config"]["channel"], "communication-contract-test")
+        self.assertEqual(result["backend_probe"]["status"], "available")
+        self.assertEqual(result["scenario_count"], 2)
+        self.assertEqual(
+            {(item["evidence"]["message_name"], item["evidence"]["direction"]) for item in result["scenarios"]},
+            {("WindowStatus", "tx"), ("WindowCommand", "rx")},
+        )
+
+    def test_missing_socketcan_channel_produces_structured_blocked_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            result = run_communication_chain(
+                DBC,
+                INTENT,
+                output,
+                BusConfig("socketcan", "workbench-definitely-missing"),
+            )
+            runtime = json.loads(
+                (output / "runtime" / "can-runtime-report.json").read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn(result["reason"], {"interface_missing", "unsupported_platform"})
+        self.assertEqual(result["runtime_status"], "blocked")
+        self.assertEqual(result["finding_count"], 0)
+        self.assertEqual({item["status"] for item in result["bindings"]}, {"blocked"})
+        self.assertEqual(runtime["backend_probe"]["status"], "blocked")
+        self.assertEqual(runtime["scenario_count"], 0)
 
     def test_fails_closed_when_runtime_identity_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

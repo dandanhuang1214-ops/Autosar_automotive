@@ -17,7 +17,7 @@ Adapters
 
 `run-can-lab` 使用 python-can virtual backend 建立两个进程内节点，通过 cantools 完成 DBC 编解码。0.2 契约分别执行 BODY_ECU 发送 `WindowStatus` 和接收 `WindowCommand`，在运行证据中保留 message identity、direction、frame ID、payload 和 decoded signals。它是 Windows/CI 可运行的最低成本运行时底座，后续 SocketCAN/OpenBSW adapter 应复用报告契约，而不是重写实验语义。
 
-`run-communication-chain` 编排 P4 静态与运行时闭环：先运行 DBC/BSW intent 校验，再执行 CAN lab，最后以 `DBC message + signal` 为稳定 identity，对比静态/运行方向和 frame ID。报告固定 DBC、intent 与实际 runtime JSON 的 SHA-256；任一静态失败、runtime lab 失败、identity 缺失、frame ID 或方向漂移均使整份证据失败。
+`run-communication-chain` 编排 P4/P6 静态与运行时闭环：先运行 DBC/BSW intent 校验，再以 `BusConfig` 在 virtual 或 SocketCAN 上执行双向 CAN 通信，最后以 `DBC message + signal` 为稳定 identity，对比静态/运行方向和 frame ID。通信 runtime 对 `0x100/0x200` 使用精确过滤，并保存 backend probe 与入口锁证据。报告固定 DBC、intent 与实际 runtime JSON 的 SHA-256；任一静态失败、runtime 失败、identity 缺失、frame ID 或方向漂移均使证据失败，backend 不可用则独立返回 `blocked`。
 
 P5a 的 `index-evidence` 在报告生成之后建立只读 bundle inventory。artifact identity 使用 bundle 内 POSIX 相对路径；JSON 文件保留自身声明的 artifact type/schema，其他文件按媒体类型分类。若 JSON 报告携带 `source_artifacts`，索引器会把来源解析为 bundle 内 artifact 或 portable base 下的 external dependency，并逐字节核对声明哈希。manifest 写在 bundle 外，避免自引用。
 

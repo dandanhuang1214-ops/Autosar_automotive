@@ -39,6 +39,7 @@ python3 -m venv .venv-linux
 .venv-linux/bin/python -m pip install -e '.[diag]'
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli probe-can-backend --interface socketcan --channel vcan0 --output output/socketcan-probe
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli run-backend-lab examples/window_control/window_control.dbc --interface socketcan --channel vcan0 --output output/socketcan-lab
+PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --interface socketcan --channel vcan0 --output output/socketcan-communication-chain
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 PYTHONPATH=src .venv-linux/bin/python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
 ```
@@ -67,7 +68,15 @@ For the UDS/ISO-TP diagnostic path, run:
 bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke
 ```
 
-This command also does not prepare the host. It records:
+For the complete static-to-runtime communication chain and its local bundle verification, run:
+
+```bash
+bash scripts/linux/run_socketcan_communication_chain.sh --output output/socketcan-communication-chain
+```
+
+This entrypoint records the host probe, acquires the shared per-channel lock, runs filtered Tx/Rx communication, then indexes and verifies the resulting bundle. It returns `SOCKETCAN_COMMUNICATION_CHAIN_BLOCKED` with exit code 3 when the interface is unavailable, while retaining a structured blocked chain and a successfully verified evidence bundle.
+
+The UDS entrypoint also does not prepare the host. It records:
 
 - `socketcan-host-probe.json`
 - `workbench-uds-probe/uds-backend-probe.json`
@@ -77,7 +86,7 @@ This command also does not prepare the host. It records:
 
 If `vcan0` is missing, the UDS probe returns `SOCKETCAN_UDS_PROBE_BLOCKED` and keeps the blocked report under `workbench-uds-probe/`.
 
-Both repeatable entrypoints acquire the same `flock` for their SocketCAN channel. Concurrent Workbench labs on `vcan0` therefore run serially; lock acquisition returns blocked after 30 seconds. The CAN lab receiver also filters for `0x100/0x101`, while the UDS client and responder filter for `0x708/0x700`. Filter and lock evidence is persisted under `isolation` in each lab report. Direct CLI commands do not acquire the process lock and report it as `not_managed`.
+All three repeatable entrypoints acquire the same `flock` for their SocketCAN channel. Concurrent Workbench labs on `vcan0` therefore run serially; lock acquisition returns blocked after 30 seconds. The backend CAN lab filters for `0x100/0x101`, the communication chain filters for `0x100/0x200`, and the UDS client/responder filter for `0x708/0x700`. Filter and lock evidence is persisted under `isolation` in each lab report. Direct CLI commands do not acquire the process lock and report it as `not_managed`.
 
 If WSL is shut down, `vcan0` may disappear. Restore it explicitly:
 
@@ -85,6 +94,7 @@ If WSL is shut down, `vcan0` may disappear. Restore it explicitly:
 bash scripts/linux/setup_vcan.sh --dry-run
 bash scripts/linux/setup_vcan.sh --apply
 bash scripts/linux/run_socketcan_lab.sh --output output/socketcan-smoke
+bash scripts/linux/run_socketcan_communication_chain.sh --output output/socketcan-communication-chain
 bash scripts/linux/run_socketcan_uds_lab.sh --output output/socketcan-uds-smoke
 ```
 

@@ -50,6 +50,20 @@ class LinuxScriptContractTests(unittest.TestCase):
         self.assertIn("flock -w 30", script)
         self.assertIn("AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK", script)
 
+    def test_socketcan_communication_entrypoint_is_locked_and_non_mutating(self) -> None:
+        script = (ROOT / "scripts" / "linux" / "run_socketcan_communication_chain.sh").read_text(
+            encoding="utf-8"
+        )
+        for mutation in ("sudo ", "modprobe ", "ip link add", "ip link set", "apt "):
+            self.assertNotIn(mutation, script)
+        self.assertIn("probe_socketcan.sh", script)
+        self.assertIn("run-communication-chain", script)
+        self.assertIn("--interface socketcan", script)
+        self.assertIn("index-evidence", script)
+        self.assertIn("verify-evidence", script)
+        self.assertIn("flock -w 30", script)
+        self.assertIn("AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK", script)
+
     def test_openbsw_probe_is_read_only_and_does_not_claim_ubuntu_24_support(self) -> None:
         script = (ROOT / "scripts" / "linux" / "probe_openbsw.sh").read_text(encoding="utf-8")
         for mutation in ("sudo ", "apt ", "git clone", "docker compose", "cmake --build"):

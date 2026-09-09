@@ -51,14 +51,14 @@ class EvidenceBundleTests(unittest.TestCase):
         self.assertEqual(manifest["bundle_id"], "communication-demo")
         paths = [artifact["relative_path"] for artifact in manifest["artifacts"]]
         self.assertEqual(paths, sorted(paths))
-        self.assertEqual(manifest["artifact_count"], 5)
+        self.assertEqual(manifest["artifact_count"], 7)
         combined = next(
             artifact
             for artifact in manifest["artifacts"]
             if artifact["relative_path"] == "communication-evidence-report.json"
         )
         self.assertEqual(combined["artifact_type"], "communication-chain-evidence")
-        self.assertEqual(combined["schema_version"], "communication-evidence-0.1")
+        self.assertEqual(combined["schema_version"], "communication-evidence-0.2")
         self.assertEqual(
             {(item["kind"], item["ref"]) for item in combined["depends_on"]},
             {
@@ -154,7 +154,7 @@ class EvidenceBundleTests(unittest.TestCase):
             )
 
         self.assertEqual(result["status"], "passed")
-        self.assertEqual(result["verified_artifact_count"], 5)
+        self.assertEqual(result["verified_artifact_count"], 7)
         self.assertEqual((result["verified_dependency_count"], result["dependency_count"]), (3, 3))
         self.assertEqual(result["findings"], [])
 

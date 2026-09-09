@@ -53,6 +53,7 @@ python -m automotive_workbench.cli run-suite examples/window_control/window_cont
 python -m automotive_workbench.cli run-can-lab examples/window_control/window_control.dbc --output output/latest
 python -m automotive_workbench.cli run-can-supervision examples/window_control/window_control.dbc --output output/latest
 python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --output output/communication-chain
+python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --interface socketcan --channel vcan0 --output output/socketcan-communication-chain
 python -m automotive_workbench.cli index-evidence output/communication-chain --producer "workbench run-communication-chain" --base . --manifest output/evidence-manifests/communication-chain.json
 python -m automotive_workbench.cli verify-evidence output/communication-chain output/evidence-manifests/communication-chain.json --base . --output output/evidence-verification
 python -m automotive_workbench.cli capture-log --interface socketcan --channel vcan0 --count 10 --output output/capture
@@ -95,7 +96,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 
 - `examples/window_control/bsw_intent.json` 是公开学习样例和vendor-neutral意图，不是量产ECUC。
 - `bsw-intent-0.2` 的 `local_ecu` 和 `direction` 是显式研究契约；校验方向来自 DBC sender/receiver，不通过 PduR/CanIf 对象名中的 `Tx`/`Rx` 后缀推断配置语义。
-- `run-communication-chain` 绑定的是同次运行生成的 `python-can virtual` 报告，并固定 DBC、intent、runtime report 的 SHA-256；它不证明目标 ECU、RTE、控制器、电气总线或量产 ECUC 行为。
+- `run-communication-chain` 以同一个 `BusConfig` 在 virtual 或 SocketCAN 上执行双向通信，并固定 DBC、intent、runtime report 的 SHA-256。SocketCAN 不可用时输出 `blocked` 证据和退出码 3，不把宿主缺失误报为通信失败；它仍不证明目标 ECU、RTE、控制器、电气总线或量产 ECUC 行为。
 - `index-evidence` 只读取指定目录与报告显式声明的本地依赖；manifest 必须写在 bundle 外，不跟随符号链接，不下载或复制来源，也不承担 P5b 的事后篡改验证职责。
 - `verify-evidence` 对合法 manifest 产生闭合 verification result；bundle 状态变化返回 `status=failed` 和退出码 2，manifest 结构错误返回 CLI error。它验证本地字节完整性，不认证 producer 身份或供应链来源。
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。

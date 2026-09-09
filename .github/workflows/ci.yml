@@ -62,6 +62,35 @@ jobs:
           name: communication-chain-${{ runner.os }}
           path: output/communication-chain/
           if-no-files-found: error
+      - name: Exercise unavailable SocketCAN communication backend
+        id: blocked_communication_chain
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --interface socketcan --channel workbench-definitely-missing --output output/communication-chain-blocked
+      - name: Verify unavailable backend is structurally blocked
+        if: ${{ always() && steps.blocked_communication_chain.outcome != 'skipped' }}
+        run: python scripts/communication_backend_blocked_exercise.py output/communication-chain-blocked --cli-outcome ${{ steps.blocked_communication_chain.outcome }}
+      - name: Index blocked communication evidence bundle
+        if: ${{ always() && steps.blocked_communication_chain.outcome != 'skipped' }}
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli index-evidence output/communication-chain-blocked --producer "workbench run-communication-chain socketcan unavailable" --base . --manifest output/evidence-manifests/communication-chain-blocked.json
+      - name: Verify blocked communication evidence bundle
+        if: ${{ always() && steps.blocked_communication_chain.outcome != 'skipped' }}
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-evidence output/communication-chain-blocked output/evidence-manifests/communication-chain-blocked.json --base . --output output/evidence-verification-blocked
+      - name: Upload blocked communication evidence
+        if: ${{ always() && steps.blocked_communication_chain.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: communication-chain-blocked-${{ runner.os }}
+          path: |
+            output/communication-chain-blocked/
+            output/evidence-manifests/communication-chain-blocked.json
+            output/evidence-verification-blocked/
+          if-no-files-found: error
       - name: Index communication evidence bundle
         env:
           PYTHONPATH: src

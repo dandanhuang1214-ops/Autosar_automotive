@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/can-communication-runtime.schema.json",
+  "title": "Backend-neutral CAN Communication Runtime Evidence",
+  "type": "object",
+  "required": [
+    "artifact_type", "schema_version", "run_id", "started_at", "backend",
+    "bus_config", "applicability_profile", "status", "reason", "scenario_count",
+    "passed_count", "duration_ms", "artifacts", "backend_probe", "isolation", "scenarios"
+  ],
+  "properties": {
+    "artifact_type": {"const": "can-communication-runtime"},
+    "schema_version": {"const": "can-communication-runtime-0.1"},
+    "run_id": {"type": "string", "minLength": 1},
+    "started_at": {"type": "string", "format": "date-time"},
+    "backend": {"type": "string", "minLength": 1},
+    "bus_config": {"type": "object"},
+    "applicability_profile": {"type": "object"},
+    "status": {"enum": ["passed", "failed", "blocked"]},
+    "reason": {"type": "string"},
+    "scenario_count": {"type": "integer", "minimum": 0},
+    "passed_count": {"type": "integer", "minimum": 0},
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "artifacts": {"type": "array", "items": {"type": "string"}},
+    "backend_probe": {"type": "object"},
+    "isolation": {"type": "object"},
+    "scenarios": {"type": "array"}
+  },
+  "additionalProperties": false
+}

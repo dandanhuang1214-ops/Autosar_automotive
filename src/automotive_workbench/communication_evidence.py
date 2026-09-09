@@ -7,7 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.adapters.dbc import validate_dbc_intent
-from automotive_workbench.can_runtime import run_can_lab
+from automotive_workbench.can_io import BusConfig
+from automotive_workbench.communication_runtime import (
+    default_communication_config,
+    run_communication_runtime,
+)
 from automotive_workbench.domain import Finding
 
 
@@ -43,7 +47,8 @@ def bind_communication_evidence(
                 "static_validation",
             )
         )
-    if runtime_report.get("status") != "passed":
+    runtime_status = runtime_report.get("status")
+    if runtime_status not in {"passed", "blocked"}:
         findings.append(
             _finding(
                 "COMMUNICATION-RUNTIME-LAB-FAILED",
@@ -80,9 +85,10 @@ def bind_communication_evidence(
         observation = observations.get((message_name, signal_name))
         binding_findings: list[str] = []
         if observation is None:
-            code = "COMMUNICATION-RUNTIME-EVIDENCE-MISSING"
-            findings.append(_finding(code, f"No decoded runtime evidence for {identity}", identity))
-            binding_findings.append(code)
+            if runtime_status != "blocked":
+                code = "COMMUNICATION-RUNTIME-EVIDENCE-MISSING"
+                findings.append(_finding(code, f"No decoded runtime evidence for {identity}", identity))
+                binding_findings.append(code)
         else:
             if observation["frame_id"] != path.get("frame_id"):
                 code = "COMMUNICATION-FRAME-ID-MISMATCH"
@@ -111,10 +117,15 @@ def bind_communication_evidence(
                 )
                 binding_findings.append(code)
 
+        binding_status = (
+            "blocked"
+            if runtime_status == "blocked" and observation is None
+            else "bound" if not binding_findings else "failed"
+        )
         bindings.append(
             {
                 "identity": identity,
-                "status": "bound" if not binding_findings else "failed",
+                "status": binding_status,
                 "static_path": path,
                 "runtime_observation": observation,
                 "finding_codes": binding_findings,
@@ -132,26 +143,33 @@ def bind_communication_evidence(
 
     bound_count = sum(binding["status"] == "bound" for binding in bindings)
     timestamp = datetime.now(timezone.utc)
+    result_status = "failed" if findings else (
+        "blocked" if runtime_status == "blocked" else
+        "passed" if bound_count == len(bindings) else "failed"
+    )
     return {
         "artifact_type": "communication-chain-evidence",
-        "schema_version": "communication-evidence-0.1",
+        "schema_version": "communication-evidence-0.2",
         "run_id": timestamp.strftime("%Y%m%dT%H%M%SZ"),
         "started_at": timestamp.isoformat(),
-        "status": "passed" if not findings and bound_count == len(bindings) else "failed",
+        "status": result_status,
+        "reason": runtime_report.get("reason", ""),
         "local_ecu": bindings[0]["static_path"].get("local_ecu") if bindings else None,
         "source_artifacts": [
             {"artifact_type": "dbc", "source": str(dbc), "sha256": _sha256_file(dbc)},
             {"artifact_type": "bsw-intent", "source": str(intent), "sha256": _sha256_file(intent)},
             {
-                "artifact_type": "virtual-can-runtime",
+                "artifact_type": runtime_report.get("artifact_type", "can-runtime-report"),
                 "source": str(runtime_report_path),
                 "sha256": _sha256_file(runtime_report_path),
             },
         ],
         "static_validation_status": static_validation.get("status"),
-        "runtime_status": runtime_report.get("status"),
+        "runtime_status": runtime_status,
         "runtime_backend": runtime_report.get("backend"),
         "runtime_applicability_profile": runtime_report.get("applicability_profile"),
+        "backend_probe": runtime_report.get("backend_probe"),
+        "isolation": runtime_report.get("isolation"),
         "path_count": len(bindings),
         "bound_count": bound_count,
         "finding_count": len(findings),
@@ -185,17 +203,26 @@ def _render_markdown(result: dict[str, Any]) -> str:
             "",
             "## Boundary",
             "",
-            "This report binds explicit DBC/intent identities to deterministic python-can virtual observations. It does not prove production ECUC generation, RTE behavior, controller configuration, electrical CAN behavior, or target-hardware integration.",
+            "This report binds explicit DBC/intent identities to filtered observations on the selected python-can backend. A blocked result records backend unavailability without treating it as a communication mismatch. It does not prove production ECUC generation, RTE behavior, controller configuration, electrical CAN behavior, or target-hardware integration.",
             "",
         ]
     )
     return "\n".join(lines)
 
 
-def run_communication_chain(dbc: Path, intent: Path, output: Path) -> dict[str, Any]:
+def run_communication_chain(
+    dbc: Path,
+    intent: Path,
+    output: Path,
+    config: BusConfig | None = None,
+) -> dict[str, Any]:
     static_validation = validate_dbc_intent(dbc, intent)
     runtime_output = output / "runtime"
-    run_can_lab(dbc, runtime_output)
+    run_communication_runtime(
+        dbc,
+        config or default_communication_config(),
+        runtime_output,
+    )
     result = bind_communication_evidence(
         static_validation,
         runtime_output / "can-runtime-report.json",

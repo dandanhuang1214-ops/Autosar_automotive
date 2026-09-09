@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/communication-backend-blocked-exercise.schema.json",
+  "title": "Communication Backend Blocked Exercise",
+  "type": "object",
+  "required": [
+    "artifact_type", "schema_version", "status", "cli_outcome",
+    "blocked_reason", "runtime_backend", "binding_count"
+  ],
+  "properties": {
+    "artifact_type": {"const": "communication-backend-blocked-exercise"},
+    "schema_version": {"const": "communication-backend-blocked-exercise-0.1"},
+    "status": {"const": "passed"},
+    "cli_outcome": {"const": "failure"},
+    "blocked_reason": {"enum": ["interface_missing", "unsupported_platform"]},
+    "runtime_backend": {"const": "python-can socketcan"},
+    "binding_count": {"type": "integer", "minimum": 1}
+  },
+  "additionalProperties": false
+}

@@ -26,6 +26,7 @@ from automotive_workbench.review import run_review
 from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 from automotive_workbench.communication_evidence import run_communication_chain
+from automotive_workbench.communication_runtime import default_communication_config
 from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
     verify_evidence_bundle,
@@ -189,6 +190,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     communication_parser.add_argument("dbc", type=Path)
     communication_parser.add_argument("intent", type=Path)
+    communication_parser.add_argument("--interface", default="virtual")
+    communication_parser.add_argument("--channel")
     communication_parser.add_argument(
         "--output", type=Path, default=Path("output") / "communication-chain"
     )
@@ -294,7 +297,12 @@ def main() -> int:
         elif args.command == "run-review-eval":
             result = run_review_evaluation(args.manifest, args.output)
         elif args.command == "run-communication-chain":
-            result = run_communication_chain(args.dbc, args.intent, args.output)
+            result = run_communication_chain(
+                args.dbc,
+                args.intent,
+                args.output,
+                default_communication_config(args.interface, args.channel),
+            )
         elif args.command == "index-evidence":
             manifest_path = args.manifest or (
                 args.bundle.parent / f"{args.bundle.name}.evidence-manifest.json"
