@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P7 — 一键通信证据交付已完成本地实现，待 Windows/Ubuntu 验收`。
+当前阶段：`P7 — 一键通信证据交付及 Windows/Ubuntu 验收完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -42,7 +42,7 @@
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
 | 完整通信证据链 | 完成当前闭环 | P4 完成静态/virtual 绑定；P6 以同一契约支持 virtual/SocketCAN、精确过滤、锁证据、结构化 blocked 和双平台 artifact 验收 |
 | 本地 Artifact Registry | 完成当前闭环 | P5a manifest、P5b 事后验证与 P5c Windows/Ubuntu 正常/篡改拒绝证据均通过 |
-| 通信证据交付 | 本地完成 | P7 一条 CLI 交付 bundle/manifest/verification/receipt，双平台 CI 待验收 |
+| 通信证据交付 | 完成 | P7 一条 CLI 交付 bundle/manifest/verification/receipt，Windows/Ubuntu CI 均通过 |
 
 ## 已完成升级历史
 
@@ -155,8 +155,9 @@
 - 拒绝符号链接、非目录或非空输出，不自动删除用户文件，避免重跑时将 stale artifact 混入新 manifest。
 - Linux SocketCAN 入口改为调用新交付命令，保留 host probe、channel `flock` 和无 host mutation 边界；CI 新增独立 `communication-delivery-{OS}` artifact。
 - 定向验证：19 项通过，覆盖 virtual 7/7 artifact、3/3 dependency 正向交付、failed/blocked 状态传播、非空目录拒绝及 P5/P6 回归；全量 131 项通过、2 项环境跳过。
+- 提交 `e5e4503` 推送后，GitHub Actions run `34365685454` 的 Ubuntu job `102513662936` 与 Windows job `102513663311` 均成功；两平台的一键交付和 `communication-delivery-{OS}` 上传步骤均为 success。
 - 边界：receipt 是单次本地编排和字节绑定证据，不是签名、attestation、远程 provenance、producer 身份认证或目标 ECU 证明。
-- 状态：本地实现完成，待 Windows/Ubuntu CI 远程验收。
+- 状态：完成，Windows/Ubuntu 双平台验收通过；P7 契约冻结。
 
 ### R0：python-can virtual 运行时
 
@@ -803,7 +804,7 @@ official_native_baseline=false
 
 ### 最近一步：P7 一键通信证据交付
 
-P7 将 P6 通信链与 P5 索引/验证组合为单个本地命令，交付目录同时保存 bundle、manifest、verification 和 receipt。receipt 区分业务结果与字节完整性，并固定后两者的 SHA-256。本地验收完成，待双平台 CI 验收；R5 评测契约继续冻结。
+P7 将 P6 通信链与 P5 索引/验证组合为单个本地命令，交付目录同时保存 bundle、manifest、verification 和 receipt。receipt 区分业务结果与字节完整性，并固定后两者的 SHA-256。本地与双平台 CI 验收均完成；下一步选择新的窄里程碑，R5 评测契约继续冻结。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
