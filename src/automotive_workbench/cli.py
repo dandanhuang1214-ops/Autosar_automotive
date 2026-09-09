@@ -32,6 +32,7 @@ from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
     verify_evidence_bundle,
 )
+from automotive_workbench.evidence_capsule import export_evidence_capsule
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -230,6 +231,16 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_verify_parser.add_argument(
         "--output", type=Path, default=Path("output") / "evidence-verification"
     )
+
+    capsule_parser = commands.add_parser(
+        "export-evidence-capsule",
+        help="Export a verified communication delivery with local dependency copies",
+    )
+    capsule_parser.add_argument("delivery", type=Path)
+    capsule_parser.add_argument("--base", type=Path, default=Path.cwd())
+    capsule_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "evidence-capsule"
+    )
     return parser
 
 
@@ -340,6 +351,12 @@ def main() -> int:
             result = verify_evidence_bundle(
                 args.bundle,
                 args.manifest,
+                args.output,
+                base=args.base,
+            )
+        elif args.command == "export-evidence-capsule":
+            result = export_evidence_capsule(
+                args.delivery,
                 args.output,
                 base=args.base,
             )

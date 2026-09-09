@@ -74,6 +74,14 @@ PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli run-communication-del
 chain_rc=$?
 set -e
 
+if [[ "${chain_rc}" -eq 0 || "${chain_rc}" -eq 3 ]]; then
+  PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli export-evidence-capsule \
+    "${output}/workbench-communication-delivery" \
+    --base . \
+    --output "${output}/workbench-evidence-capsule" \
+    > "${output}/workbench-evidence-capsule.stdout.json"
+fi
+
 if [[ "${chain_rc}" -eq 0 ]]; then
   echo "SOCKETCAN_COMMUNICATION_CHAIN_PASSED"
   echo "Output: ${output}"

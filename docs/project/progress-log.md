@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P7 — 一键通信证据交付及 Windows/Ubuntu 验收完成`。
+当前阶段：`P8 — 自包含证据胶囊实现与验收`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -43,6 +43,7 @@
 | 完整通信证据链 | 完成当前闭环 | P4 完成静态/virtual 绑定；P6 以同一契约支持 virtual/SocketCAN、精确过滤、锁证据、结构化 blocked 和双平台 artifact 验收 |
 | 本地 Artifact Registry | 完成当前闭环 | P5a manifest、P5b 事后验证与 P5c Windows/Ubuntu 正常/篡改拒绝证据均通过 |
 | 通信证据交付 | 完成 | P7 一条 CLI 交付 bundle/manifest/verification/receipt，Windows/Ubuntu CI 均通过 |
+| 自包含证据胶囊 | 本地实现中 | P8 按 manifest 白名单复制外部依赖，支持移出原 base 后离线复验 |
 
 ## 已完成升级历史
 
@@ -158,6 +159,19 @@
 - 提交 `e5e4503` 推送后，GitHub Actions run `34365685454` 的 Ubuntu job `102513662936` 与 Windows job `102513663311` 均成功；两平台的一键交付和 `communication-delivery-{OS}` 上传步骤均为 success。
 - 边界：receipt 是单次本地编排和字节绑定证据，不是签名、attestation、远程 provenance、producer 身份认证或目标 ECU 证明。
 - 状态：完成，Windows/Ubuntu 双平台验收通过；P7 契约冻结。
+
+### P8：自包含 Evidence Capsule（2026-09-09）
+
+- 新增 `export-evidence-capsule <delivery> --base <base> --output <capsule>`，接受 P7 交付目录，不修改已冻结的 P5 manifest 或 P7 receipt 契约。
+- 导出前交叉验证 receipt/manifest/source verification SHA-256、计数和 bundle 内 communication chain 状态，并用原 portable base 重跑一次 P5 verifier。
+- 导出只复制 manifest 白名单中的 bundle artifact 和去重后 external dependency；拒绝路径逃逸、布局冲突、符号链接、哈希漂移、输出重叠和非空输出。
+- capsule 内保存原 bundle、manifest、JSON receipt/source verification、外部输入及新的 offline verification；`evidence-capsule-0.1` report 固定四份核心文件哈希和外部依赖列表。
+- capsule export 自身的 `status=passed` 与原交付 `passed/failed/blocked` 分开；已验证的 blocked 环境证据也可完整搬运，不被改写为业务成功。
+- Linux SocketCAN 入口在 passed/blocked 后自动导出 capsule；Windows/Ubuntu CI 新增 export、目录迁移、以迁移后根目录为 base 离线复验和独立 artifact 上传。
+- 定向验证：P8 专属 5 项及 P5/P7/Linux 入口回归通过；全量 136 项通过、2 项环境跳过；JSON、compileall、Bash 语法和 whitespace 检查通过。
+- 实际 CLI：将 capsule 导出至原工作区外的 `/tmp` 目录后，只以 capsule 根目录为 base 复验，7/7 artifacts、3/3 dependencies、0 Finding。
+- 边界：capsule 是目录结构和本地字节搬运契约，不是压缩归档、签名、attestation、producer 身份或供应链认证。
+- 状态：本地实现与验收完成，待 Windows/Ubuntu CI 远程验收。
 
 ### R0：python-can virtual 运行时
 
@@ -802,9 +816,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：P7 一键通信证据交付
+### 最近一步：P8 自包含 Evidence Capsule
 
-P7 将 P6 通信链与 P5 索引/验证组合为单个本地命令，交付目录同时保存 bundle、manifest、verification 和 receipt。receipt 区分业务结果与字节完整性，并固定后两者的 SHA-256。本地与双平台 CI 验收均完成；下一步选择新的窄里程碑，R5 评测契约继续冻结。
+P8 用已有 P5 manifest 作为唯一复制白名单，将 P7 交付与外部 DBC/intent 组合为可搬运目录，并以新根目录完成离线完整性复验。本地验收已完成，待双平台 CI 验收；P5/P6/P7 和 R5 契约继续冻结。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

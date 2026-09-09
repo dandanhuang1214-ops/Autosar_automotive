@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/evidence-capsule.schema.json",
+  "title": "Self-contained Local Evidence Capsule",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "created_at", "status", "source_delivery_status", "bundle_id", "bundle_path", "manifest_path", "receipt_path", "source_verification_path", "offline_verification_path", "manifest_sha256", "receipt_sha256", "source_verification_sha256", "offline_verification_sha256", "artifact_count", "verified_artifact_count", "dependency_count", "verified_dependency_count", "external_dependency_count", "copied_external_dependency_count", "external_dependencies"],
+  "properties": {
+    "artifact_type": {"const": "evidence-capsule"},
+    "schema_version": {"const": "evidence-capsule-0.1"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "passed"},
+    "source_delivery_status": {"enum": ["passed", "failed", "blocked"]},
+    "bundle_id": {"type": "string", "minLength": 1},
+    "bundle_path": {"const": "bundle"},
+    "manifest_path": {"const": "manifest.json"},
+    "receipt_path": {"const": "communication-evidence-delivery.json"},
+    "source_verification_path": {"const": "verification/evidence-bundle-verification.json"},
+    "offline_verification_path": {"const": "offline-verification/evidence-bundle-verification.json"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_verification_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "offline_verification_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_count": {"type": "integer", "minimum": 1},
+    "verified_artifact_count": {"type": "integer", "minimum": 0},
+    "dependency_count": {"type": "integer", "minimum": 0},
+    "verified_dependency_count": {"type": "integer", "minimum": 0},
+    "external_dependency_count": {"type": "integer", "minimum": 0},
+    "copied_external_dependency_count": {"type": "integer", "minimum": 0},
+    "external_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ref", "sha256"],
+        "properties": {
+          "ref": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -74,6 +74,26 @@ jobs:
           name: communication-delivery-${{ runner.os }}
           path: output/communication-delivery/
           if-no-files-found: error
+      - name: Export self-contained evidence capsule
+        id: evidence_capsule
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli export-evidence-capsule output/communication-delivery --base . --output output/evidence-capsule
+      - name: Relocate evidence capsule
+        run: python -c "import shutil; shutil.copytree('output/evidence-capsule', 'output/evidence-capsule-relocated')"
+      - name: Verify relocated evidence capsule offline
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-evidence output/evidence-capsule-relocated/bundle output/evidence-capsule-relocated/manifest.json --base output/evidence-capsule-relocated --output output/evidence-capsule-relocated-recheck
+      - name: Upload self-contained evidence capsule
+        if: ${{ always() && steps.evidence_capsule.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidence-capsule-${{ runner.os }}
+          path: |
+            output/evidence-capsule/
+            output/evidence-capsule-relocated-recheck/
+          if-no-files-found: error
       - name: Exercise unavailable SocketCAN communication backend
         id: blocked_communication_chain
         continue-on-error: true
