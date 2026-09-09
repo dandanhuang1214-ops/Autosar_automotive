@@ -16,7 +16,7 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-08）
+## 当前总览（2026-09-09）
 
 当前阶段：`P4b — 静态到运行时完整通信证据链完成`。
 
@@ -89,9 +89,10 @@
 - 定向验证：P4 intent/DBC/CAN/binding 共 14 项通过；实际 `run-communication-chain` 返回 `status=passed`、`bound_count=2/2`、`finding_count=0`，Tx/Rx frame ID 分别为 `0x100/0x200`。
 - 首轮全量回归 111 项中有 2 项 R5 applicability mismatch gold 失败：CAN runner 已升级为 0.2，而 fixture 仍将 candidate 变异成同一个 0.2，因此不再构成 mismatch；改为显式 `can-lab-incompatible-fixture` 后两项定向 gate 恢复。
 - 最终回归：全量 111 项通过、2 项环境跳过；全部 checked-in JSON 可解析，Python compileall、CLI help、communication schema/report 闭合字段和 whitespace check 通过。
-- CI 定义已覆盖 Windows/Ubuntu smoke 与 artifact upload；本地不能代替远端 runner 验收，待提交推送后观察首次双平台运行。
+- 提交 `e549f19` 推送后，GitHub Actions run `34299638224` 的 Windows `102303615374` 与 Ubuntu `102303615611` job 均成功；两个 job 的完整通信链运行和上传步骤均为 success。
+- 远端已上传 `communication-chain-Windows`（3914 bytes）与 `communication-chain-Linux`（3879 bytes），同时保留两平台 core test、正常 review cohort 和受控 rejection artifacts，共 8 份且均未过期。
 - 边界：本阶段完成公开样例在 `python-can virtual` 上的确定性静态—运行闭环，不证明 SocketCAN/OpenBSW/目标 ECU、RTE/COM API、控制器、电气总线或量产 ECUC。
-- 状态：本地实现与验证完成；远端双平台 CI 验收等待提交推送。
+- 状态：完成，Windows/Ubuntu 双平台验收通过。
 
 ### R0：python-can virtual 运行时
 
@@ -738,7 +739,7 @@ official_native_baseline=false
 
 ### 最近一步：P4 完整通信证据链已实现
 
-公开车窗 BSW intent 已显式固定 BODY_ECU 视角和 Tx/Rx，CAN lab 覆盖两个方向，组合入口以稳定 identity、direction 和 frame ID 绑定静态路径与同次 runtime report。本地统一验证已完成，P4 进入冻结；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+公开车窗 BSW intent 已显式固定 BODY_ECU 视角和 Tx/Rx，CAN lab 覆盖两个方向，组合入口以稳定 identity、direction 和 frame ID 绑定静态路径与同次 runtime report。Windows/Ubuntu 远端验收通过，P4 进入冻结。下一步进入 P5a 本地 evidence bundle manifest；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

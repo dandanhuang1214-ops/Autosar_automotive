@@ -1,6 +1,6 @@
 # Automotive Software Engineering Workbench 路线v2
 
-## 实施状态（2026-09-08）
+## 实施状态（2026-09-09）
 
 - 已完成：统一 Artifact/Finding/Trace 骨架；Generate-Arxml report adapter；DBC→BSW intent→canonical contract 静态校验。
 - 已完成：基线与五类配置故障注入，JSON/Markdown 证据报告，Windows/Linux CI 定义。
@@ -51,8 +51,9 @@
 - R5q 已完成（2026-09-07）：新增跨平台可控 SHA-256 mismatch 演练，CI 直接观察 CLI failure 后校验 rejection artifact、无 request/result 物化，并独立上传拒绝证据；远端验收修复诊断 extra、matrix fail-fast、CRLF hash 漂移与 blocked reason 平台断言，run #10 Windows/Ubuntu 双 job 成功并上传六份测试/正常/拒绝 artifact。
 - P4a 已完成（2026-09-08）：`bsw-intent-0.2` 显式声明本地 ECU 与 message/signal Tx/Rx；DBC sender/receiver、跨层方向和 sender/receiver 负例均可确定性检出，`validate-map` 输出两条完整通信路径证据。
 - P4b 已完成（2026-09-08）：CAN lab 0.2 覆盖 BODY_ECU Tx/Rx；`run-communication-chain` 以 message/signal identity、direction 和 frame ID 将两条静态路径绑定到同次 virtual CAN 报告，并固定三份来源 SHA-256。
+- P4 远端验收完成（2026-09-09）：GitHub Actions run `34299638224` 的 Windows/Ubuntu job 均成功，并分别上传 `communication-chain-Windows/Linux` artifact。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：冻结 P4a-P4b 完整通信证据链并选择下一个窄里程碑；不扩张为 ECUC generator，也不直接引入远端 artifact 下载、签名/attestation、外部 LLM 或向量库。
+- 当前下一阶段：P5a 建立纯本地 evidence bundle manifest，登记相对路径、artifact type、schema、producer、SHA-256 和依赖关系；不移动原报告，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 
