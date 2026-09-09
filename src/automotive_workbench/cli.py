@@ -26,7 +26,10 @@ from automotive_workbench.review import run_review
 from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 from automotive_workbench.communication_evidence import run_communication_chain
-from automotive_workbench.evidence_bundle import create_evidence_bundle_manifest
+from automotive_workbench.evidence_bundle import (
+    create_evidence_bundle_manifest,
+    verify_evidence_bundle,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -199,6 +202,17 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_index_parser.add_argument("--bundle-id")
     evidence_index_parser.add_argument("--base", type=Path, default=Path.cwd())
     evidence_index_parser.add_argument("--manifest", type=Path)
+
+    evidence_verify_parser = commands.add_parser(
+        "verify-evidence",
+        help="Verify a local evidence bundle against an existing manifest",
+    )
+    evidence_verify_parser.add_argument("bundle", type=Path)
+    evidence_verify_parser.add_argument("manifest", type=Path)
+    evidence_verify_parser.add_argument("--base", type=Path, default=Path.cwd())
+    evidence_verify_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "evidence-verification"
+    )
     return parser
 
 
@@ -290,6 +304,13 @@ def main() -> int:
                 manifest_path,
                 args.producer,
                 bundle_id=args.bundle_id,
+                base=args.base,
+            )
+        elif args.command == "verify-evidence":
+            result = verify_evidence_bundle(
+                args.bundle,
+                args.manifest,
+                args.output,
                 base=args.base,
             )
         else:

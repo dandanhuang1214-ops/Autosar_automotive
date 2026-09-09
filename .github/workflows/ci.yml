@@ -72,6 +72,34 @@ jobs:
           name: evidence-bundle-manifest-${{ runner.os }}
           path: output/evidence-manifests/communication-chain.json
           if-no-files-found: error
+      - name: Verify unchanged evidence bundle
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-evidence output/communication-chain output/evidence-manifests/communication-chain.json --base . --output output/evidence-verification-normal
+      - name: Upload normal evidence verification
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidence-verification-normal-${{ runner.os }}
+          path: output/evidence-verification-normal/
+          if-no-files-found: error
+      - name: Prepare controlled evidence tamper
+        run: python scripts/evidence_bundle_tamper_exercise.py prepare output/communication-chain output/communication-chain-tampered
+      - name: Run controlled evidence tamper rejection
+        id: controlled_evidence_tamper
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-evidence output/communication-chain-tampered output/evidence-manifests/communication-chain.json --base . --output output/evidence-verification-rejection
+      - name: Verify controlled evidence tamper rejection
+        if: ${{ always() && steps.controlled_evidence_tamper.outcome != 'skipped' }}
+        run: python scripts/evidence_bundle_tamper_exercise.py check output/evidence-verification-rejection --cli-outcome ${{ steps.controlled_evidence_tamper.outcome }}
+      - name: Upload evidence tamper rejection
+        if: ${{ always() && steps.controlled_evidence_tamper.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidence-verification-rejection-${{ runner.os }}
+          path: output/evidence-verification-rejection/
+          if-no-files-found: error
       - name: Run periodic communication supervision
         env:
           PYTHONPATH: src

@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P5a — 本地 Evidence Bundle Manifest 双平台验收完成`。
+当前阶段：`P5b/P5c — Evidence Bundle 事后验证与受控篡改演练`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -41,7 +41,7 @@
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
 | 完整通信证据链 | 完成当前闭环 | P4a 绑定本地 ECU、DBC sender/receiver 与跨层 Tx/Rx；P4b 将两条静态路径绑定到同次 virtual CAN frame/decode evidence |
-| 本地 Artifact Registry | 部分完成 | P5a 已实现 portable bundle manifest 与依赖关系；P5b 事后完整性验证尚未开始 |
+| 本地 Artifact Registry | 部分完成 | P5a manifest 已双平台验收；P5b/P5c 验证与 CI 篡改演练已实现，等待验收 |
 
 ## 已完成升级历史
 
@@ -109,6 +109,21 @@
 - 远端已上传 `evidence-bundle-manifest-Windows`（960 bytes）与 `evidence-bundle-manifest-Linux`（957 bytes），连同 communication chain、core test、review cohort/rejection evidence 共 10 份且均未过期。
 - 边界：P5a 不复制/移动 artifact，不重新验证已有 manifest，不检测生成后的篡改，不下载远端文件，也不提供签名或 attestation；这些验证能力留给 P5b。
 - 状态：完成，Windows/Ubuntu 双平台验收通过；下一步 P5b。
+
+### P5b/P5c：事后完整性验证与受控篡改演练（2026-09-09）
+
+- 新增 closed manifest loader，验证顶层/artifact/dependency 字段、portable path、排序唯一性、汇总计数、内部依赖引用和哈希自洽；非法 manifest 走 CLI error/退出码 1。
+- 新增 `verify-evidence <bundle> <manifest> --base <base> --output <output>`；合法 manifest 下的 missing、unexpected、size/SHA tamper、unsafe file 和 internal/external dependency failure 生成闭合 JSON/Markdown，状态 failed/退出码 2。
+- verification result 固定 manifest SHA-256，分别记录 expected/actual/verified artifact 及 dependency count，不写文件内容或绝对 bundle root。
+- 新增受控演练脚本：复制正常通信 bundle，只向固定 runtime JSON 追加换行；检查器要求真实 CLI step outcome=failure、closed failed verification 和固定 `EVIDENCE-SIZE-MISMATCH`。
+- Windows/Ubuntu CI 新增正常验证、受控拒绝检查及独立 `evidence-verification-normal/rejection-{OS}` uploads；不修改原通信 bundle 或 checked-in fixture。
+- 新增 verification schema、tamper exercise schema，以及 unchanged、missing/unexpected/same-size tamper、external dependency drift、unsafe manifest 和 CI exercise 测试。
+- 定向验证：P5a/P5b/P5c 共 11 项通过；unchanged、missing/unexpected/same-size tamper、external dependency drift、unsafe manifest 和受控 CLI failure 均覆盖。
+- 实际正常 CLI：5/5 artifacts、3/3 dependencies verified，`status=passed`、0 Finding。
+- 实际受控演练：追加换行后 `verify-evidence` 返回退出码 2，4/5 artifacts、2/3 dependencies verified；产生 `EVIDENCE-SIZE-MISMATCH` 与 `EVIDENCE-DEPENDENCY-FAILED`，检查摘要为 passed。
+- 回归：全量 122 项通过、2 项环境跳过；全部 checked-in JSON 可解析，Python compileall、verification/tamper schema 闭合字段、whitespace check 通过。
+- 边界：只验证本地字节和 manifest 声明，不认证 producer、CI identity 或 repository ownership，不下载远端 artifact，不提供签名/attestation。
+- 状态：本地实现与验证完成，等待 Windows/Ubuntu 双平台验收。
 
 ### R0：python-can virtual 运行时
 
@@ -755,7 +770,7 @@ official_native_baseline=false
 
 ### 最近一步：P4 完整通信证据链已实现
 
-P4 已冻结，P5a 本地 evidence bundle manifest 也已通过 Windows/Ubuntu 验收。下一步 P5b 对已有 manifest 执行事后完整性验证，确定性区分 missing、unexpected、tampered 和 dependency failure，并生成闭合拒绝证据。R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+P4 已冻结，P5a 已双平台验收。当前完成 P5b/P5c 事后验证和受控篡改演练的实现，统一验证通过后推送进行 Windows/Ubuntu 验收并冻结 P5。R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

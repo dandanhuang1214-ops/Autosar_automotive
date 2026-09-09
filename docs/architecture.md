@@ -21,6 +21,8 @@ Adapters
 
 P5a 的 `index-evidence` 在报告生成之后建立只读 bundle inventory。artifact identity 使用 bundle 内 POSIX 相对路径；JSON 文件保留自身声明的 artifact type/schema，其他文件按媒体类型分类。若 JSON 报告携带 `source_artifacts`，索引器会把来源解析为 bundle 内 artifact 或 portable base 下的 external dependency，并逐字节核对声明哈希。manifest 写在 bundle 外，避免自引用。
 
+P5b 的 `verify-evidence` 将 manifest 结构有效性与 bundle 完整性分层：非法/不闭合 manifest 直接拒绝；合法 manifest 对应的缺失、额外、大小/哈希变化、符号链接及外部依赖变化进入 `evidence-bundle-verification-0.1`。P5c 在 CI 复制正常 bundle 后只向固定 runtime JSON 追加一个换行，要求真实 CLI 返回非零，并用独立检查器确认 `EVIDENCE-SIZE-MISMATCH` 后再上传拒绝证据。
+
 `run-can-supervision` 在同一底座上增加周期观测与通信监督状态。平台只把 `RECEIVING → TIMEOUT → RECOVERED` 视为可移植业务证据；Windows 主机测得的周期和抖动只用于回归观察，不宣称硬实时性能。
 
 日志内核采用双层证据：can-utils `.log` 保存不可被 DBC 覆盖的原始 frame/timestamp；manifest、decode Finding 和 Markdown report 保存派生工程证据。每次分析记录日志与 DBC 的 SHA-256。`BusConfig` 只选择 python-can backend，业务实验不直接依赖 virtual 或 SocketCAN。

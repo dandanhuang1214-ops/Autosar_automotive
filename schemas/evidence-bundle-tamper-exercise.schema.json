@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/evidence-bundle-tamper-exercise.schema.json",
+  "title": "Controlled Evidence Bundle Tamper Exercise",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "status", "cli_outcome", "reason_code", "tampered_path", "verification_status"],
+  "properties": {
+    "artifact_type": {"const": "evidence-bundle-tamper-exercise"},
+    "schema_version": {"const": "evidence-bundle-tamper-exercise-0.1"},
+    "status": {"const": "passed"},
+    "cli_outcome": {"const": "failure"},
+    "reason_code": {"const": "EVIDENCE-SIZE-MISMATCH"},
+    "tampered_path": {"const": "runtime/can-runtime-report.json"},
+    "verification_status": {"const": "failed"}
+  },
+  "additionalProperties": false
+}

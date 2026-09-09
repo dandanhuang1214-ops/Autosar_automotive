@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/evidence-bundle-verification.schema.json",
+  "title": "Local Evidence Bundle Verification",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "bundle_id", "verified_at", "manifest_sha256", "status", "expected_artifact_count", "actual_artifact_count", "verified_artifact_count", "dependency_count", "verified_dependency_count", "finding_count", "findings"],
+  "properties": {
+    "artifact_type": {"const": "evidence-bundle-verification"},
+    "schema_version": {"const": "evidence-bundle-verification-0.1"},
+    "bundle_id": {"type": "string", "minLength": 1},
+    "verified_at": {"type": "string", "format": "date-time"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["passed", "failed"]},
+    "expected_artifact_count": {"type": "integer", "minimum": 1},
+    "actual_artifact_count": {"type": "integer", "minimum": 0},
+    "verified_artifact_count": {"type": "integer", "minimum": 0},
+    "dependency_count": {"type": "integer", "minimum": 0},
+    "verified_dependency_count": {"type": "integer", "minimum": 0},
+    "finding_count": {"type": "integer", "minimum": 0},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "category", "path", "message"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "category": {"enum": ["missing", "unexpected", "tampered", "dependency", "unsafe-file"]},
+          "path": {"type": "string", "minLength": 1},
+          "message": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -7,7 +7,11 @@ import unittest
 from pathlib import Path
 
 from automotive_workbench.communication_evidence import run_communication_chain
-from automotive_workbench.evidence_bundle import create_evidence_bundle_manifest
+from automotive_workbench.evidence_bundle import (
+    create_evidence_bundle_manifest,
+    load_evidence_bundle_manifest,
+    verify_evidence_bundle,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +20,18 @@ INTENT = ROOT / "examples" / "window_control" / "bsw_intent.json"
 
 
 class EvidenceBundleTests(unittest.TestCase):
+    def _communication_bundle(self, root: Path) -> tuple[Path, Path]:
+        bundle = root / "communication"
+        run_communication_chain(DBC, INTENT, bundle)
+        manifest_path = root / "manifest.json"
+        create_evidence_bundle_manifest(
+            bundle,
+            manifest_path,
+            "workbench run-communication-chain",
+            base=ROOT,
+        )
+        return bundle, manifest_path
+
     def test_indexes_communication_bundle_with_portable_dependencies(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -128,6 +144,78 @@ class EvidenceBundleTests(unittest.TestCase):
                     "test producer",
                     base=base,
                 )
+
+    def test_verifies_unchanged_bundle_and_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle, manifest_path = self._communication_bundle(root)
+            result = verify_evidence_bundle(
+                bundle, manifest_path, root / "verification", base=ROOT
+            )
+
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["verified_artifact_count"], 5)
+        self.assertEqual((result["verified_dependency_count"], result["dependency_count"]), (3, 3))
+        self.assertEqual(result["findings"], [])
+
+    def test_reports_missing_unexpected_and_same_size_tamper(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle, manifest_path = self._communication_bundle(root)
+            target = bundle / "communication-evidence-report.md"
+            content = target.read_bytes()
+            target.write_bytes(bytes([content[0] ^ 1]) + content[1:])
+            (bundle / "static-validation.json").unlink()
+            (bundle / "unexpected.txt").write_text("unexpected\n", encoding="utf-8")
+
+            result = verify_evidence_bundle(
+                bundle, manifest_path, root / "verification", base=ROOT
+            )
+
+        codes = {finding["code"] for finding in result["findings"]}
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("EVIDENCE-FILE-MISSING", codes)
+        self.assertIn("EVIDENCE-FILE-UNEXPECTED", codes)
+        self.assertIn("EVIDENCE-SHA256-MISMATCH", codes)
+
+    def test_reports_external_dependency_tamper(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = root / "base"
+            source = base / "input.json"
+            source.parent.mkdir()
+            source.write_text('{"version":1}\n', encoding="utf-8")
+            bundle = root / "bundle"
+            bundle.mkdir()
+            report = {
+                "source_artifacts": [
+                    {"source": "input.json", "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
+                ]
+            }
+            (bundle / "report.json").write_text(json.dumps(report), encoding="utf-8")
+            manifest = root / "manifest.json"
+            create_evidence_bundle_manifest(bundle, manifest, "test", base=base)
+            source.write_text('{"version":2}\n', encoding="utf-8")
+
+            result = verify_evidence_bundle(
+                bundle, manifest, root / "verification", base=base
+            )
+
+        self.assertEqual(result["status"], "failed")
+        self.assertIn(
+            "EVIDENCE-DEPENDENCY-SHA256-MISMATCH",
+            {finding["code"] for finding in result["findings"]},
+        )
+
+    def test_rejects_unsafe_or_inconsistent_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle, manifest_path = self._communication_bundle(root)
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            payload["artifacts"][0]["relative_path"] = "../escape.json"
+            manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "portable relative path"):
+                load_evidence_bundle_manifest(manifest_path)
 
 
 if __name__ == "__main__":
