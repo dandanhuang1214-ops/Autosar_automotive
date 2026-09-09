@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/communication-evidence-delivery.schema.json",
+  "title": "Communication Evidence Delivery Receipt",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "created_at", "status", "reason", "chain_status", "integrity_status", "bundle_path", "manifest_path", "verification_path", "manifest_sha256", "verification_sha256", "artifact_count", "verified_artifact_count", "dependency_count", "verified_dependency_count"],
+  "properties": {
+    "artifact_type": {"const": "communication-evidence-delivery"},
+    "schema_version": {"const": "communication-evidence-delivery-0.1"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["passed", "failed", "blocked"]},
+    "reason": {"type": "string"},
+    "chain_status": {"enum": ["passed", "failed", "blocked"]},
+    "integrity_status": {"enum": ["passed", "failed"]},
+    "bundle_path": {"const": "bundle"},
+    "manifest_path": {"const": "manifest.json"},
+    "verification_path": {"const": "verification/evidence-bundle-verification.json"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verification_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_count": {"type": "integer", "minimum": 1},
+    "verified_artifact_count": {"type": "integer", "minimum": 0},
+    "dependency_count": {"type": "integer", "minimum": 0},
+    "verified_dependency_count": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": false
+}

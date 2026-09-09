@@ -57,10 +57,9 @@ class LinuxScriptContractTests(unittest.TestCase):
         for mutation in ("sudo ", "modprobe ", "ip link add", "ip link set", "apt "):
             self.assertNotIn(mutation, script)
         self.assertIn("probe_socketcan.sh", script)
-        self.assertIn("run-communication-chain", script)
+        self.assertIn("run-communication-delivery", script)
         self.assertIn("--interface socketcan", script)
-        self.assertIn("index-evidence", script)
-        self.assertIn("verify-evidence", script)
+        self.assertIn("--base .", script)
         self.assertIn("flock -w 30", script)
         self.assertIn("AUTOMOTIVE_WORKBENCH_CHANNEL_LOCK", script)
 

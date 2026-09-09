@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P6 — 后端无关完整通信证据链及 Windows/Ubuntu 验收完成`。
+当前阶段：`P7 — 一键通信证据交付已完成本地实现，待 Windows/Ubuntu 验收`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -42,6 +42,7 @@
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
 | 完整通信证据链 | 完成当前闭环 | P4 完成静态/virtual 绑定；P6 以同一契约支持 virtual/SocketCAN、精确过滤、锁证据、结构化 blocked 和双平台 artifact 验收 |
 | 本地 Artifact Registry | 完成当前闭环 | P5a manifest、P5b 事后验证与 P5c Windows/Ubuntu 正常/篡改拒绝证据均通过 |
+| 通信证据交付 | 本地完成 | P7 一条 CLI 交付 bundle/manifest/verification/receipt，双平台 CI 待验收 |
 
 ## 已完成升级历史
 
@@ -144,6 +145,18 @@
 - 远端共上传 16 份未过期 artifact；P6 新增 `communication-chain-blocked-Windows`（7518 bytes）与 `communication-chain-blocked-Linux`（7497 bytes），升级后的正常链分别为 5203/5225 bytes。
 - 边界：P6 证明所选 python-can backend 上的过滤式应用层帧交换或可审计的环境阻断，不证明真实 ECU、RTE/COM API、CAN 控制器、电气总线、硬实时或量产 ECUC。
 - 状态：完成，Windows/Ubuntu 双平台验收通过；P6 契约冻结。
+
+### P7：一键通信证据交付（2026-09-09）
+
+- 新增 `run-communication-delivery <dbc> <intent>`，在一次本地调用中顺序执行 P6 communication chain、P5 manifest index 和 P5 verification。
+- 交付目录固定为 `bundle/`、`manifest.json`、`verification/` 和 `communication-evidence-delivery.{json,md}`；receipt 不写绝对工作区路径。
+- 新增闭合 `communication-evidence-delivery-0.1` schema，receipt 同时记录 chain/integrity 状态、artifact/dependency 验证计数以及 manifest/verification SHA-256。
+- 状态传播保留 `passed/failed/blocked`；SocketCAN 不可用时业务仍为 `blocked`，但可完整交付的阻断证据仍为 `integrity_status=passed`。
+- 拒绝符号链接、非目录或非空输出，不自动删除用户文件，避免重跑时将 stale artifact 混入新 manifest。
+- Linux SocketCAN 入口改为调用新交付命令，保留 host probe、channel `flock` 和无 host mutation 边界；CI 新增独立 `communication-delivery-{OS}` artifact。
+- 定向验证：19 项通过，覆盖 virtual 7/7 artifact、3/3 dependency 正向交付、failed/blocked 状态传播、非空目录拒绝及 P5/P6 回归；全量 131 项通过、2 项环境跳过。
+- 边界：receipt 是单次本地编排和字节绑定证据，不是签名、attestation、远程 provenance、producer 身份认证或目标 ECU 证明。
+- 状态：本地实现完成，待 Windows/Ubuntu CI 远程验收。
 
 ### R0：python-can virtual 运行时
 
@@ -788,9 +801,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：P6 后端无关通信证据链
+### 最近一步：P7 一键通信证据交付
 
-P4/P5/P6 均已完成 Windows/Ubuntu 验收并冻结。平台现具备后端无关完整通信链、环境阻断证据、本地 portable manifest、事后完整性验证和受控篡改拒绝。下一步选择新的窄里程碑；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+P7 将 P6 通信链与 P5 索引/验证组合为单个本地命令，交付目录同时保存 bundle、manifest、verification 和 receipt。receipt 区分业务结果与字节完整性，并固定后两者的 SHA-256。本地验收完成，待双平台 CI 验收；R5 评测契约继续冻结。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

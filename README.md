@@ -34,6 +34,7 @@
 28. 在同一次编排中运行静态映射与双向 virtual CAN 场景，以 message/signal identity、方向和 frame ID 将两层证据绑定为闭合通信链报告。
 29. 为本地证据目录生成可移植 manifest，登记相对路径、类型、schema、producer、SHA-256，以及报告显式声明的 bundle 内部和外部依赖。
 30. 使用已有 manifest 事后验证 bundle 与外部依赖，确定性报告 missing、unexpected、tampered 和 dependency failure，并在 CI 演练可控篡改拒绝。
+31. 用一条命令串联通信链运行、bundle 索引、完整性验证与 receipt，保留 `passed/failed/blocked` 业务状态并单独记录 integrity 状态。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -53,6 +54,7 @@ python -m automotive_workbench.cli run-suite examples/window_control/window_cont
 python -m automotive_workbench.cli run-can-lab examples/window_control/window_control.dbc --output output/latest
 python -m automotive_workbench.cli run-can-supervision examples/window_control/window_control.dbc --output output/latest
 python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --output output/communication-chain
+python -m automotive_workbench.cli run-communication-delivery examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --base . --output output/communication-delivery
 python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --interface socketcan --channel vcan0 --output output/socketcan-communication-chain
 python -m automotive_workbench.cli index-evidence output/communication-chain --producer "workbench run-communication-chain" --base . --manifest output/evidence-manifests/communication-chain.json
 python -m automotive_workbench.cli verify-evidence output/communication-chain output/evidence-manifests/communication-chain.json --base . --output output/evidence-verification
@@ -99,6 +101,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 - `run-communication-chain` 以同一个 `BusConfig` 在 virtual 或 SocketCAN 上执行双向通信，并固定 DBC、intent、runtime report 的 SHA-256。SocketCAN 不可用时输出 `blocked` 证据和退出码 3，不把宿主缺失误报为通信失败；它仍不证明目标 ECU、RTE、控制器、电气总线或量产 ECUC 行为。
 - `index-evidence` 只读取指定目录与报告显式声明的本地依赖；manifest 必须写在 bundle 外，不跟随符号链接，不下载或复制来源，也不承担 P5b 的事后篡改验证职责。
 - `verify-evidence` 对合法 manifest 产生闭合 verification result；bundle 状态变化返回 `status=failed` 和退出码 2，manifest 结构错误返回 CLI error。它验证本地字节完整性，不认证 producer 身份或供应链来源。
+- `run-communication-delivery` 在一个空目录中串联已冻结的通信链、manifest 和 verifier，receipt 固定 manifest/verification SHA-256；为避免旧 artifact 混入新证据，非空输出目录会被拒绝。
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。
 - `examples/window_control/dtc_intent.json` 中的 debounce、operation-cycle、aging、snapshot、extended data、进程内持久镜像、generation、commit marker 和 status byte 仅用于可重复研究实验，不是量产 DEM displacement、NvM、OBD 或 OEM 策略。
 - `run-review` 只读取 request 显式列出的本地 JSON/Markdown；跨 artifact 冲突只比较显式 assertion locator，词法匹配和 coverage 不是语义理解、LLM 结论或安全证明。

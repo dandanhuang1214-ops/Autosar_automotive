@@ -62,6 +62,18 @@ jobs:
           name: communication-chain-${{ runner.os }}
           path: output/communication-chain/
           if-no-files-found: error
+      - name: Run one-command communication evidence delivery
+        id: communication_delivery
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli run-communication-delivery examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --base . --output output/communication-delivery
+      - name: Upload communication evidence delivery
+        if: ${{ always() && steps.communication_delivery.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: communication-delivery-${{ runner.os }}
+          path: output/communication-delivery/
+          if-no-files-found: error
       - name: Exercise unavailable SocketCAN communication backend
         id: blocked_communication_chain
         continue-on-error: true

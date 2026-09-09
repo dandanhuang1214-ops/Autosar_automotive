@@ -26,6 +26,7 @@ from automotive_workbench.review import run_review
 from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 from automotive_workbench.communication_evidence import run_communication_chain
+from automotive_workbench.communication_delivery import run_communication_delivery
 from automotive_workbench.communication_runtime import default_communication_config
 from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
@@ -196,6 +197,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--output", type=Path, default=Path("output") / "communication-chain"
     )
 
+    communication_delivery_parser = commands.add_parser(
+        "run-communication-delivery",
+        help="Run, index, verify, and summarize a communication evidence delivery",
+    )
+    communication_delivery_parser.add_argument("dbc", type=Path)
+    communication_delivery_parser.add_argument("intent", type=Path)
+    communication_delivery_parser.add_argument("--interface", default="virtual")
+    communication_delivery_parser.add_argument("--channel")
+    communication_delivery_parser.add_argument("--base", type=Path, default=Path.cwd())
+    communication_delivery_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "communication-delivery"
+    )
+
     evidence_index_parser = commands.add_parser(
         "index-evidence",
         help="Create a portable manifest for a local evidence bundle",
@@ -302,6 +316,14 @@ def main() -> int:
                 args.intent,
                 args.output,
                 default_communication_config(args.interface, args.channel),
+            )
+        elif args.command == "run-communication-delivery":
+            result = run_communication_delivery(
+                args.dbc,
+                args.intent,
+                args.output,
+                default_communication_config(args.interface, args.channel),
+                base=args.base,
             )
         elif args.command == "index-evidence":
             manifest_path = args.manifest or (

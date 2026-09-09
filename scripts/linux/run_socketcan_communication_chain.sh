@@ -64,30 +64,15 @@ if [[ ! -x "${python_bin}" ]]; then
 fi
 
 set +e
-PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli run-communication-chain \
+PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli run-communication-delivery \
   "${dbc}" "${intent}" \
   --interface socketcan \
   --channel "${channel}" \
-  --output "${output}/workbench-communication-chain" \
-  > "${output}/workbench-communication-chain.stdout.json"
+  --base . \
+  --output "${output}/workbench-communication-delivery" \
+  > "${output}/workbench-communication-delivery.stdout.json"
 chain_rc=$?
 set -e
-
-if [[ "${chain_rc}" -eq 0 || "${chain_rc}" -eq 3 ]]; then
-  manifest="${output}.evidence-manifest.json"
-  verification="${output}-verification"
-  PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli index-evidence \
-    "${output}/workbench-communication-chain" \
-    --producer "workbench run-communication-chain socketcan" \
-    --base . \
-    --manifest "${manifest}" \
-    > "${output}/evidence-index.stdout.json"
-  PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli verify-evidence \
-    "${output}/workbench-communication-chain" "${manifest}" \
-    --base . \
-    --output "${verification}" \
-    > "${output}/evidence-verification.stdout.json"
-fi
 
 if [[ "${chain_rc}" -eq 0 ]]; then
   echo "SOCKETCAN_COMMUNICATION_CHAIN_PASSED"
