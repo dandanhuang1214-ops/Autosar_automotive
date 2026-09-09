@@ -32,6 +32,7 @@
 26. 在 Windows/Ubuntu CI 中分别上传正常固定报告 cohort 与可控 SHA-256 拒绝证据，并校验拒绝命令确实失败、最小证据闭合且无 request/result 旁路物化。
 27. 从本地 ECU 视角显式校验 DBC sender/receiver 与 BSW intent 的 Tx/Rx 方向，并输出 `DBC Signal → SWC → COM → I-PDU → PduR → CanIf` 逐链路证据。
 28. 在同一次编排中运行静态映射与双向 virtual CAN 场景，以 message/signal identity、方向和 frame ID 将两层证据绑定为闭合通信链报告。
+29. 为本地证据目录生成可移植 manifest，登记相对路径、类型、schema、producer、SHA-256，以及报告显式声明的 bundle 内部和外部依赖。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -51,6 +52,7 @@ python -m automotive_workbench.cli run-suite examples/window_control/window_cont
 python -m automotive_workbench.cli run-can-lab examples/window_control/window_control.dbc --output output/latest
 python -m automotive_workbench.cli run-can-supervision examples/window_control/window_control.dbc --output output/latest
 python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --output output/communication-chain
+python -m automotive_workbench.cli index-evidence output/communication-chain --producer "workbench run-communication-chain" --base . --manifest output/evidence-manifests/communication-chain.json
 python -m automotive_workbench.cli capture-log --interface socketcan --channel vcan0 --count 10 --output output/capture
 python -m automotive_workbench.cli decode-log output/capture/capture.log examples/window_control/window_control.dbc --output output/decode
 python -m automotive_workbench.cli replay-log output/capture/capture.log --interface socketcan --channel vcan0 --output output/replay
@@ -92,6 +94,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 - `examples/window_control/bsw_intent.json` 是公开学习样例和vendor-neutral意图，不是量产ECUC。
 - `bsw-intent-0.2` 的 `local_ecu` 和 `direction` 是显式研究契约；校验方向来自 DBC sender/receiver，不通过 PduR/CanIf 对象名中的 `Tx`/`Rx` 后缀推断配置语义。
 - `run-communication-chain` 绑定的是同次运行生成的 `python-can virtual` 报告，并固定 DBC、intent、runtime report 的 SHA-256；它不证明目标 ECU、RTE、控制器、电气总线或量产 ECUC 行为。
+- `index-evidence` 只读取指定目录与报告显式声明的本地依赖；manifest 必须写在 bundle 外，不跟随符号链接，不下载或复制来源，也不承担 P5b 的事后篡改验证职责。
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。
 - `examples/window_control/dtc_intent.json` 中的 debounce、operation-cycle、aging、snapshot、extended data、进程内持久镜像、generation、commit marker 和 status byte 仅用于可重复研究实验，不是量产 DEM displacement、NvM、OBD 或 OEM 策略。
 - `run-review` 只读取 request 显式列出的本地 JSON/Markdown；跨 artifact 冲突只比较显式 assertion locator，词法匹配和 coverage 不是语义理解、LLM 结论或安全证明。

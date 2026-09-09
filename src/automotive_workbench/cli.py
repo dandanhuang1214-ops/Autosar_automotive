@@ -26,6 +26,7 @@ from automotive_workbench.review import run_review
 from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
 from automotive_workbench.communication_evidence import run_communication_chain
+from automotive_workbench.evidence_bundle import create_evidence_bundle_manifest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -188,6 +189,16 @@ def build_parser() -> argparse.ArgumentParser:
     communication_parser.add_argument(
         "--output", type=Path, default=Path("output") / "communication-chain"
     )
+
+    evidence_index_parser = commands.add_parser(
+        "index-evidence",
+        help="Create a portable manifest for a local evidence bundle",
+    )
+    evidence_index_parser.add_argument("bundle", type=Path)
+    evidence_index_parser.add_argument("--producer", required=True)
+    evidence_index_parser.add_argument("--bundle-id")
+    evidence_index_parser.add_argument("--base", type=Path, default=Path.cwd())
+    evidence_index_parser.add_argument("--manifest", type=Path)
     return parser
 
 
@@ -270,6 +281,17 @@ def main() -> int:
             result = run_review_evaluation(args.manifest, args.output)
         elif args.command == "run-communication-chain":
             result = run_communication_chain(args.dbc, args.intent, args.output)
+        elif args.command == "index-evidence":
+            manifest_path = args.manifest or (
+                args.bundle.parent / f"{args.bundle.name}.evidence-manifest.json"
+            )
+            result = create_evidence_bundle_manifest(
+                args.bundle,
+                manifest_path,
+                args.producer,
+                bundle_id=args.bundle_id,
+                base=args.base,
+            )
         else:
             result = run_backend_lab(
                 args.dbc,

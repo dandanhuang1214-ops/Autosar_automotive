@@ -62,6 +62,16 @@ jobs:
           name: communication-chain-${{ runner.os }}
           path: output/communication-chain/
           if-no-files-found: error
+      - name: Index communication evidence bundle
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli index-evidence output/communication-chain --producer "workbench run-communication-chain" --base . --manifest output/evidence-manifests/communication-chain.json
+      - name: Upload evidence bundle manifest
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidence-bundle-manifest-${{ runner.os }}
+          path: output/evidence-manifests/communication-chain.json
+          if-no-files-found: error
       - name: Run periodic communication supervision
         env:
           PYTHONPATH: src

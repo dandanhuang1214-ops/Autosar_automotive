@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P4b — 静态到运行时完整通信证据链完成`。
+当前阶段：`P5a — 本地 Evidence Bundle Manifest 实现`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -41,6 +41,7 @@
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
 | 完整通信证据链 | 完成当前闭环 | P4a 绑定本地 ECU、DBC sender/receiver 与跨层 Tx/Rx；P4b 将两条静态路径绑定到同次 virtual CAN frame/decode evidence |
+| 本地 Artifact Registry | 部分完成 | P5a 已实现 portable bundle manifest 与依赖关系；P5b 事后完整性验证尚未开始 |
 
 ## 已完成升级历史
 
@@ -93,6 +94,19 @@
 - 远端已上传 `communication-chain-Windows`（3914 bytes）与 `communication-chain-Linux`（3879 bytes），同时保留两平台 core test、正常 review cohort 和受控 rejection artifacts，共 8 份且均未过期。
 - 边界：本阶段完成公开样例在 `python-can virtual` 上的确定性静态—运行闭环，不证明 SocketCAN/OpenBSW/目标 ECU、RTE/COM API、控制器、电气总线或量产 ECUC。
 - 状态：完成，Windows/Ubuntu 双平台验收通过。
+
+### P5a：本地 Evidence Bundle Manifest（2026-09-09）
+
+- 新增 `index-evidence <bundle> --producer <producer> --base <base> --manifest <path>`，只读扫描用户指定 bundle，并将 manifest 写在 bundle 外部。
+- `evidence-bundle-manifest-0.1` 逐 artifact 记录 POSIX 相对 ID/path、media type、artifact type、schema version、size 和 SHA-256；顶层记录 bundle ID、producer、总文件数和总字节数。
+- 对 JSON 报告的 `source_artifacts` 建立显式 `artifact/external` 依赖：bundle 内引用 artifact ID，外部来源必须位于 portable base；两者均在生成时核对声明 SHA-256。
+- 拒绝空目录、符号链接、特殊文件、非对象 JSON、manifest 自引用、非法依赖、哈希不符和 portable base 路径逃逸。
+- 新增闭合 schema 与五类测试，CI 在完整通信链之后生成并独立上传 `evidence-bundle-manifest-{OS}`。
+- 定向验证：P5a 5 项通过，覆盖 5-file 通信 bundle 正向索引、manifest 自引用、符号链接、依赖 SHA mismatch 和 portable base 逃逸。
+- 实际 CLI：通信链先返回 `bound_count=2/2`；随后 `index-evidence` 生成 5 artifact、8385 bytes 的 manifest，组合报告依赖 1 个 bundle 内 runtime JSON 与 2 个 external DBC/intent，清单不含临时目录或工作区绝对路径。
+- 回归：全量 116 项通过、2 项环境跳过；全部 checked-in JSON 可解析，Python compileall、manifest/schema 闭合字段、portable relative path 和 whitespace check 通过。
+- 边界：P5a 不复制/移动 artifact，不重新验证已有 manifest，不检测生成后的篡改，不下载远端文件，也不提供签名或 attestation；这些验证能力留给 P5b。
+- 状态：本地实现与验证完成；远端 Windows/Ubuntu CI 验收等待提交推送。
 
 ### R0：python-can virtual 运行时
 
@@ -739,7 +753,7 @@ official_native_baseline=false
 
 ### 最近一步：P4 完整通信证据链已实现
 
-公开车窗 BSW intent 已显式固定 BODY_ECU 视角和 Tx/Rx，CAN lab 覆盖两个方向，组合入口以稳定 identity、direction 和 frame ID 绑定静态路径与同次 runtime report。Windows/Ubuntu 远端验收通过，P4 进入冻结。下一步进入 P5a 本地 evidence bundle manifest；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+P4 已经 Windows/Ubuntu 验收并冻结。当前实现 P5a 本地 evidence bundle manifest，将通信证据目录转为具有相对 artifact identity、逐文件哈希和显式依赖的可移植清单；完成验收后进入 P5b 事后完整性验证。R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

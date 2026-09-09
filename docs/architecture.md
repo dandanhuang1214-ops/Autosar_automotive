@@ -19,6 +19,8 @@ Adapters
 
 `run-communication-chain` 编排 P4 静态与运行时闭环：先运行 DBC/BSW intent 校验，再执行 CAN lab，最后以 `DBC message + signal` 为稳定 identity，对比静态/运行方向和 frame ID。报告固定 DBC、intent 与实际 runtime JSON 的 SHA-256；任一静态失败、runtime lab 失败、identity 缺失、frame ID 或方向漂移均使整份证据失败。
 
+P5a 的 `index-evidence` 在报告生成之后建立只读 bundle inventory。artifact identity 使用 bundle 内 POSIX 相对路径；JSON 文件保留自身声明的 artifact type/schema，其他文件按媒体类型分类。若 JSON 报告携带 `source_artifacts`，索引器会把来源解析为 bundle 内 artifact 或 portable base 下的 external dependency，并逐字节核对声明哈希。manifest 写在 bundle 外，避免自引用。
+
 `run-can-supervision` 在同一底座上增加周期观测与通信监督状态。平台只把 `RECEIVING → TIMEOUT → RECOVERED` 视为可移植业务证据；Windows 主机测得的周期和抖动只用于回归观察，不宣称硬实时性能。
 
 日志内核采用双层证据：can-utils `.log` 保存不可被 DBC 覆盖的原始 frame/timestamp；manifest、decode Finding 和 Markdown report 保存派生工程证据。每次分析记录日志与 DBC 的 SHA-256。`BusConfig` 只选择 python-can backend，业务实验不直接依赖 virtual 或 SocketCAN。

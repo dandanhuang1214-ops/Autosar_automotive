@@ -52,8 +52,9 @@
 - P4a 已完成（2026-09-08）：`bsw-intent-0.2` 显式声明本地 ECU 与 message/signal Tx/Rx；DBC sender/receiver、跨层方向和 sender/receiver 负例均可确定性检出，`validate-map` 输出两条完整通信路径证据。
 - P4b 已完成（2026-09-08）：CAN lab 0.2 覆盖 BODY_ECU Tx/Rx；`run-communication-chain` 以 message/signal identity、direction 和 frame ID 将两条静态路径绑定到同次 virtual CAN 报告，并固定三份来源 SHA-256。
 - P4 远端验收完成（2026-09-09）：GitHub Actions run `34299638224` 的 Windows/Ubuntu job 均成功，并分别上传 `communication-chain-Windows/Linux` artifact。
+- P5a 已实现（2026-09-09）：新增纯本地 `index-evidence` 和 `evidence-bundle-manifest-0.1`，登记相对 artifact identity、类型/schema、producer、SHA-256 及 bundle 内/portable base 外部依赖；验证完成后进入 P5b。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：P5a 建立纯本地 evidence bundle manifest，登记相对路径、artifact type、schema、producer、SHA-256 和依赖关系；不移动原报告，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
+- 当前下一阶段：完成 P5a 本地与双平台 CI 验收后进入 P5b，验证已有 manifest 并确定性报告 missing/unexpected/tampered；不移动原报告，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 
