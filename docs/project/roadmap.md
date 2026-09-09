@@ -56,9 +56,9 @@
 - P5b/P5c 已完成（2026-09-09）：`verify-evidence` 区分非法 manifest 与合法 manifest 下的 missing/unexpected/tampered/dependency failure；run `34322744055` 的 Windows/Ubuntu 正常验证、可控篡改非零退出、拒绝检查与独立 artifact 上传全部通过，P5 契约冻结。
 - P6 已完成（2026-09-09）：`run-communication-chain` 改为 `BusConfig` 驱动的 virtual/SocketCAN 共用双向 runtime，固定 `0x100/0x200` filters、backend probe、通道锁证据及 `passed/failed/blocked` 三态；不可用 SocketCAN 的结构化证据仍可被 P5 manifest/verifier 接受；run `34339864977` 的 Windows/Ubuntu 正常链、blocked 链、索引、验证和 artifact 上传全部通过。
 - P7 已完成（2026-09-09）：新增 `run-communication-delivery`，一次生成 chain bundle、manifest、verification 和哈希绑定 receipt；正确传播 `passed/failed/blocked` 且拒绝非空输出目录。run `34365685454` 的 Windows/Ubuntu 交付与 artifact 上传均通过。
-- P8 本地实现中（2026-09-09）：新增 `export-evidence-capsule`，按 P5 manifest 白名单复制 P7 bundle 及外部依赖，并以 capsule 根目录为 base 执行离线复验。待全量回归与 Windows/Ubuntu CI 验收。
+- P8 已完成（2026-09-09）：新增 `export-evidence-capsule`，按 P5 manifest 白名单复制 P7 bundle 及外部依赖，并以 capsule 根目录为 base 执行离线复验；run `34368118499` 的 Windows/Ubuntu 迁移复验与 artifact 上传均通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：完成 P8 自包含证据胶囊的全量回归与双平台验收；继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
+- 当前下一阶段：P8 已完成双平台验收并冻结，选择新的窄里程碑；继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 
