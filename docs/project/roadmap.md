@@ -54,9 +54,9 @@
 - P4 远端验收完成（2026-09-09）：GitHub Actions run `34299638224` 的 Windows/Ubuntu job 均成功，并分别上传 `communication-chain-Windows/Linux` artifact。
 - P5a 已完成（2026-09-09）：新增纯本地 `index-evidence` 和 `evidence-bundle-manifest-0.1`，登记相对 artifact identity、类型/schema、producer、SHA-256 及 bundle 内/portable base 外部依赖；run `34310607466` Windows/Ubuntu 双平台索引与 artifact 上传通过。
 - P5b/P5c 已完成（2026-09-09）：`verify-evidence` 区分非法 manifest 与合法 manifest 下的 missing/unexpected/tampered/dependency failure；run `34322744055` 的 Windows/Ubuntu 正常验证、可控篡改非零退出、拒绝检查与独立 artifact 上传全部通过，P5 契约冻结。
-- P6 实现完成、等待远端验收（2026-09-09）：`run-communication-chain` 改为 `BusConfig` 驱动的 virtual/SocketCAN 共用双向 runtime，固定 `0x100/0x200` filters、backend probe、通道锁证据及 `passed/failed/blocked` 三态；不可用 SocketCAN 的结构化证据仍可被 P5 manifest/verifier 接受。
+- P6 已完成（2026-09-09）：`run-communication-chain` 改为 `BusConfig` 驱动的 virtual/SocketCAN 共用双向 runtime，固定 `0x100/0x200` filters、backend probe、通道锁证据及 `passed/failed/blocked` 三态；不可用 SocketCAN 的结构化证据仍可被 P5 manifest/verifier 接受；run `34339864977` 的 Windows/Ubuntu 正常链、blocked 链、索引、验证和 artifact 上传全部通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前阶段：完成 P6 Windows/Ubuntu CI 与 artifact 验收后冻结 P4/P5/P6，再选择新的窄里程碑；继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
+- 当前下一阶段：P4/P5/P6 已冻结，选择新的窄里程碑；继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 

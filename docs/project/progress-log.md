@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P6 — 后端无关完整通信证据链已实现，等待 Windows/Ubuntu CI 验收`。
+当前阶段：`P6 — 后端无关完整通信证据链及 Windows/Ubuntu 验收完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -40,7 +40,7 @@
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
-| 完整通信证据链 | 等待远端验收 | P4 完成静态/virtual 绑定；P6 以同一契约支持 virtual/SocketCAN、精确过滤、锁证据和结构化 blocked |
+| 完整通信证据链 | 完成当前闭环 | P4 完成静态/virtual 绑定；P6 以同一契约支持 virtual/SocketCAN、精确过滤、锁证据、结构化 blocked 和双平台 artifact 验收 |
 | 本地 Artifact Registry | 完成当前闭环 | P5a manifest、P5b 事后验证与 P5c Windows/Ubuntu 正常/篡改拒绝证据均通过 |
 
 ## 已完成升级历史
@@ -140,8 +140,10 @@
 - 实际 virtual CLI：`status=passed`、2/2 路径绑定、0 Finding；7/7 artifacts 与 3/3 dependencies 验证通过。
 - 实际 missing-SocketCAN CLI：退出码 3、`reason=interface_missing`、2 条 blocked binding、0 Finding；加入演练摘要后 8/8 artifacts 与 3/3 dependencies 验证通过。
 - Linux 一键入口在当前 sandbox 以 `XDG_RUNTIME_DIR=/tmp` 复验：返回 `SOCKETCAN_COMMUNICATION_CHAIN_BLOCKED`/3，报告记录 `held_by_entrypoint`，其 7/7 artifact bundle 验证通过；未执行 `setup_vcan --apply` 或其他 host mutation。
+- 提交 `95c92e2` 推送后，GitHub Actions run `34339864977` 的 Windows `102427860760` 与 Ubuntu `102427861199` job 均成功；正常通信链、blocked 演练、blocked bundle 索引/验证/上传及既有 P5 正常/篡改回归步骤全部为 success。
+- 远端共上传 16 份未过期 artifact；P6 新增 `communication-chain-blocked-Windows`（7518 bytes）与 `communication-chain-blocked-Linux`（7497 bytes），升级后的正常链分别为 5203/5225 bytes。
 - 边界：P6 证明所选 python-can backend 上的过滤式应用层帧交换或可审计的环境阻断，不证明真实 ECU、RTE/COM API、CAN 控制器、电气总线、硬实时或量产 ECUC。
-- 状态：本地实现与验证完成，等待 Windows/Ubuntu CI 和 artifact 验收。
+- 状态：完成，Windows/Ubuntu 双平台验收通过；P6 契约冻结。
 
 ### R0：python-can virtual 运行时
 
@@ -788,7 +790,7 @@ official_native_baseline=false
 
 ### 最近一步：P6 后端无关通信证据链
 
-P4 与 P5 已冻结；P6 将完整通信链提升为 virtual/SocketCAN 共用契约，并把 backend unavailable 与通信 mismatch 分离。完成双平台远端验收后冻结 P6，再选择新的窄里程碑；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+P4/P5/P6 均已完成 Windows/Ubuntu 验收并冻结。平台现具备后端无关完整通信链、环境阻断证据、本地 portable manifest、事后完整性验证和受控篡改拒绝。下一步选择新的窄里程碑；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
