@@ -25,6 +25,7 @@ from automotive_workbench.dtc_redundancy_repair import run_dtc_redundancy_repair
 from automotive_workbench.review import run_review
 from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
+from automotive_workbench.communication_evidence import run_communication_chain
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -177,6 +178,16 @@ def build_parser() -> argparse.ArgumentParser:
     review_eval_parser.add_argument(
         "--output", type=Path, default=Path("output") / "review-evaluation"
     )
+
+    communication_parser = commands.add_parser(
+        "run-communication-chain",
+        help="Bind static DBC/BSW intent paths to deterministic CAN runtime evidence",
+    )
+    communication_parser.add_argument("dbc", type=Path)
+    communication_parser.add_argument("intent", type=Path)
+    communication_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "communication-chain"
+    )
     return parser
 
 
@@ -257,6 +268,8 @@ def main() -> int:
             result = run_review(args.request, args.output)
         elif args.command == "run-review-eval":
             result = run_review_evaluation(args.manifest, args.output)
+        elif args.command == "run-communication-chain":
+            result = run_communication_chain(args.dbc, args.intent, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

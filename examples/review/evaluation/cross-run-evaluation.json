@@ -136,7 +136,7 @@
         "kind": "can-lab",
         "input": "../../window_control/window_control.dbc",
         "runs": 2,
-        "mutations": [{"run": 2, "pointer": "/applicability_profile/software_version", "value": "can-lab-0.2"}]
+        "mutations": [{"run": 2, "pointer": "/applicability_profile/software_version", "value": "can-lab-incompatible-fixture"}]
       },
       "expected_status": "refused",
       "expected_checks": {"cross-run-applicability-mismatch": "blocked"},

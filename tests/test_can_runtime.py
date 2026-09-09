@@ -23,15 +23,22 @@ class VirtualCanRuntimeTests(unittest.TestCase):
             markdown = (output / "can-runtime-report.md").read_text(encoding="utf-8")
 
         self.assertEqual(result["status"], "passed")
-        self.assertEqual(result["passed_count"], 4)
+        self.assertEqual(result["passed_count"], 5)
         scenarios = {item["scenario"]: item for item in result["scenarios"]}
         self.assertEqual(scenarios["round_trip"]["evidence"]["payload_hex"], "2A01020000000000")
         self.assertEqual(scenarios["round_trip"]["evidence"]["decoded"]["WindowPosition"], 42)
+        self.assertEqual(scenarios["round_trip"]["evidence"]["message_name"], "WindowStatus")
+        self.assertEqual(scenarios["round_trip"]["evidence"]["direction"], "tx")
+        self.assertEqual(
+            scenarios["command_receive"]["evidence"]["decoded"]["RequestedDirection"],
+            2,
+        )
+        self.assertEqual(scenarios["command_receive"]["evidence"]["direction"], "rx")
         self.assertEqual(scenarios["wrong_can_id"]["evidence"]["actual_frame_id"], 0x101)
         self.assertEqual(persisted["backend"], "python-can virtual")
         self.assertEqual(persisted["applicability_profile"]["variant"], "window_control")
         self.assertEqual(
-            persisted["applicability_profile"]["software_version"], "can-lab-0.1"
+            persisted["applicability_profile"]["software_version"], "can-lab-0.2"
         )
         self.assertEqual(
             persisted["applicability_profile"]["backend"], "python-can virtual"

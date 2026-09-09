@@ -15,7 +15,9 @@ Adapters
 
 `run-suite` 当前执行一条基线和五条故障注入实验，将所有 adapter 的 Finding 汇总为可归档 JSON/Markdown。故障样例只在临时目录中生成，不修改基线资产。
 
-`run-can-lab` 使用 python-can virtual backend 建立两个进程内节点，通过 cantools 完成 DBC 编解码。它是 Windows/CI 可运行的最低成本运行时底座，后续 SocketCAN/OpenBSW adapter 应复用报告契约，而不是重写实验语义。
+`run-can-lab` 使用 python-can virtual backend 建立两个进程内节点，通过 cantools 完成 DBC 编解码。0.2 契约分别执行 BODY_ECU 发送 `WindowStatus` 和接收 `WindowCommand`，在运行证据中保留 message identity、direction、frame ID、payload 和 decoded signals。它是 Windows/CI 可运行的最低成本运行时底座，后续 SocketCAN/OpenBSW adapter 应复用报告契约，而不是重写实验语义。
+
+`run-communication-chain` 编排 P4 静态与运行时闭环：先运行 DBC/BSW intent 校验，再执行 CAN lab，最后以 `DBC message + signal` 为稳定 identity，对比静态/运行方向和 frame ID。报告固定 DBC、intent 与实际 runtime JSON 的 SHA-256；任一静态失败、runtime lab 失败、identity 缺失、frame ID 或方向漂移均使整份证据失败。
 
 `run-can-supervision` 在同一底座上增加周期观测与通信监督状态。平台只把 `RECEIVING → TIMEOUT → RECOVERED` 视为可移植业务证据；Windows 主机测得的周期和抖动只用于回归观察，不宣称硬实时性能。
 

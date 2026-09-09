@@ -38,7 +38,7 @@
         "kind": "can-lab",
         "input": "../../window_control/window_control.dbc",
         "runs": 3,
-        "mutations": [{"run": 3, "pointer": "/applicability_profile/software_version", "value": "can-lab-0.2"}]
+        "mutations": [{"run": 3, "pointer": "/applicability_profile/software_version", "value": "can-lab-incompatible-fixture"}]
       },
       "expected_status": "refused",
       "expected_checks": {"cohort-can-applicability": "blocked"},

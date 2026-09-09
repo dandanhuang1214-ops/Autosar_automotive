@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-07）
+## 当前总览（2026-09-08）
 
-当前阶段：`R5q — CI rejection contract 双平台验收完成`。
+当前阶段：`P4b — 静态到运行时完整通信证据链完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -40,6 +40,7 @@
 | OpenBSW POSIX spike | 部分完成 | Docker 路线因 development 镜像下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` build、referenceApp CAN smoke、源码入口索引、`tests-posix-debug` 全量 CTest 通过；最小 CANFrame 测试候选已整理为 patch artifact |
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
+| 完整通信证据链 | 完成当前闭环 | P4a 绑定本地 ECU、DBC sender/receiver 与跨层 Tx/Rx；P4b 将两条静态路径绑定到同次 virtual CAN frame/decode evidence |
 
 ## 已完成升级历史
 
@@ -64,6 +65,33 @@
 - 生成 JSON 与 Markdown 双层证据报告。
 - 确立“确定性规则最终判定，AI 不覆盖规则结果”。
 - 状态：完成。
+
+### P4a：跨层通信方向契约（2026-09-08）
+
+- `bsw-intent` schema 与 loader 升级到 0.2，根级显式声明 `local_ecu=BODY_ECU`，message 和 signal 逐项声明 `direction=tx|rx`；loader 保留 0.1 兼容读取。
+- `validate-map` 从 DBC message sender 和 signal receiver 推导本地 ECU 方向，并新增 `DBC-MESSAGE-DIRECTION-MISMATCH`、`INTENT-SIGNAL-DIRECTION-MISMATCH`、`DBC-SENDER-MISMATCH` 和 `DBC-SIGNAL-RECEIVER-MISMATCH`。
+- 校验结果新增 `communication_paths`，公开样例输出 BODY_ECU 的 `WindowPosition tx` 与 `RequestedDirection rx` 两条 `DBC Signal → SWC → COM → I-PDU → PduR → CanIf` 路径。
+- PduR/CanIf 名称中的 Tx/Rx 后缀不参与判定；它们仍是显式引用标识，不被当作量产 ECUC 语义来源。
+- 更新两份引用 BSW intent 的 review evaluation SHA-256，保持 R5 artifact binding fail-closed。
+- 定向验证：BSW intent、DBC adapter、canonical contract 和 experiment 共 13 项通过；CLI `validate-map` 实际运行通过并输出 2 条路径、0 Finding。
+- 回归：全量 107 项运行、2 项环境跳过；development 14 case/30 check 与 held-out 3 case/3 check 评测均通过且各项 accuracy/gate 为 `1.0`；76 份 JSON 可解析、Python compileall 和 whitespace check 通过。
+- 边界：当前只绑定静态 DBC/intent 事实，尚未把路径 identity 与 virtual/SocketCAN runtime frame report 关联，不验证 vendor BSWMD、RTE API、handle ID 或硬件对象。
+- 状态：完成；下一步 P4b 绑定静态路径与既有 CAN runtime evidence。
+
+### P4b：静态—运行时完整通信证据链（2026-09-08）
+
+- CAN lab 升级到 `can-lab-0.2`：保留 `WindowStatus.WindowPosition` BODY_ECU Tx round trip，新增 `WindowCommand.RequestedDirection` BODY_ECU Rx 场景；运行证据显式保存 message、direction、frame ID、payload 和 decoded signals。
+- 新增 `run-communication-chain <dbc> <intent>`，同次编排静态 `validate-map`、virtual CAN lab 和 identity binding，输出静态报告、原始 runtime JSON/Markdown、组合 JSON/Markdown。
+- 组合报告使用 `DBC message + signal` identity，并同时核对 direction 与 frame ID；静态失败、runtime lab 失败、identity 缺失、frame ID 或方向漂移均 fail closed 并生成独立 Finding。
+- `communication-evidence-0.1` 固定 DBC、BSW intent 和实际 runtime JSON 的 SHA-256，保留 runtime applicability profile，不用路径、场景数组位置或对象名后缀替代 identity。
+- 新增闭合 JSON schema 和四类绑定测试：双向正向绑定、runtime identity 缺失、frame/direction drift、静态引用失败。
+- Windows/Ubuntu CI 新增完整通信链 smoke 和独立 `communication-chain-{OS}` artifact upload，不与既有 CAN lab 或 review evidence 混用输出目录。
+- 定向验证：P4 intent/DBC/CAN/binding 共 14 项通过；实际 `run-communication-chain` 返回 `status=passed`、`bound_count=2/2`、`finding_count=0`，Tx/Rx frame ID 分别为 `0x100/0x200`。
+- 首轮全量回归 111 项中有 2 项 R5 applicability mismatch gold 失败：CAN runner 已升级为 0.2，而 fixture 仍将 candidate 变异成同一个 0.2，因此不再构成 mismatch；改为显式 `can-lab-incompatible-fixture` 后两项定向 gate 恢复。
+- 最终回归：全量 111 项通过、2 项环境跳过；全部 checked-in JSON 可解析，Python compileall、CLI help、communication schema/report 闭合字段和 whitespace check 通过。
+- CI 定义已覆盖 Windows/Ubuntu smoke 与 artifact upload；本地不能代替远端 runner 验收，待提交推送后观察首次双平台运行。
+- 边界：本阶段完成公开样例在 `python-can virtual` 上的确定性静态—运行闭环，不证明 SocketCAN/OpenBSW/目标 ECU、RTE/COM API、控制器、电气总线或量产 ECUC。
+- 状态：本地实现与验证完成；远端双平台 CI 验收等待提交推送。
 
 ### R0：python-can virtual 运行时
 
@@ -708,9 +736,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：R5q CI rejection contract 已完成
+### 最近一步：P4 完整通信证据链已实现
 
-Windows/Ubuntu 已实际确认正常 cohort artifact 和可控 SHA-256 rejection artifact 均上传；检查器观察到 CLI failure 且 request/result 未物化。下一步先冻结 R5 评测契约并选择新的窄里程碑，不直接扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+公开车窗 BSW intent 已显式固定 BODY_ECU 视角和 Tx/Rx，CAN lab 覆盖两个方向，组合入口以稳定 identity、direction 和 frame ID 绑定静态路径与同次 runtime report。本地统一验证已完成，P4 进入冻结；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

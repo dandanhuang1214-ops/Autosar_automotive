@@ -27,6 +27,7 @@
 - [DTC persistence integrity faults R4n 调研](research/dtc-persistence-integrity-fault-research-2026-08-20.md)
 - [DTC redundant mirror/generation R4o 调研](research/dtc-redundant-mirror-generation-research-2026-08-20.md)
 - [DTC redundancy repair/interrupted write R4p 调研](research/dtc-redundancy-repair-interrupted-write-research-2026-08-31.md)
+- [完整通信证据链 P4a-P4b 调研](research/communication-direction-contract-research-2026-09-08.md)
 - [AI engineering review contract R5a 调研](research/ai-engineering-review-contract-research-2026-08-31.md)
 - [AI review conflict、Markdown citation 与 evaluation R5c 调研](research/ai-engineering-review-conflict-markdown-evaluation-research-2026-08-31.md)
   - 同一文档追加 R5d-R5q 实施结果、runtime producer、held-out/cross-run/cohort split、artifact-bound applicability、跨域 drift catalog、固定外部报告导入、CI provenance、调用方 expectation、cohort policy、preflight rejection evidence 与 CI 演练边界。

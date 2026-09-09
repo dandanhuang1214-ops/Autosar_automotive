@@ -45,6 +45,29 @@ def _round_trip(database: Any, sender: Any, receiver: Any, can: Any) -> dict[str
         "receive frame 0x100 and decode all three physical values",
         "decoded" if passed else "missing or mismatched frame",
         passed,
+        message_name=definition.name,
+        direction="tx",
+        frame_id=None if received is None else received.arbitration_id,
+        payload_hex=payload.hex().upper(),
+        decoded=decoded,
+    )
+
+
+def _command_receive(database: Any, peer: Any, local: Any, can: Any) -> dict[str, Any]:
+    definition = database.get_message_by_name("WindowCommand")
+    values = {"RequestedDirection": 2}
+    payload = definition.encode(values)
+    peer.send(can.Message(arbitration_id=definition.frame_id, data=payload, is_extended_id=False))
+    received = local.recv(timeout=0.2)
+    decoded = definition.decode(received.data, decode_choices=False) if received else None
+    passed = received is not None and received.arbitration_id == definition.frame_id and decoded == values
+    return _scenario(
+        "command_receive",
+        "BODY_ECU receives frame 0x200 and decodes RequestedDirection",
+        "decoded" if passed else "missing or mismatched frame",
+        passed,
+        message_name=definition.name,
+        direction="rx",
         frame_id=None if received is None else received.arbitration_id,
         payload_hex=payload.hex().upper(),
         decoded=decoded,
@@ -135,6 +158,7 @@ def run_can_lab(dbc: Path, output: Path) -> dict[str, Any]:
     try:
         scenarios = [
             _round_trip(database, sender, receiver, can),
+            _command_receive(database, sender, receiver, can),
             _wrong_can_id(sender, receiver, can),
             _receive_timeout(receiver),
             _invalid_physical_value(database),
@@ -151,7 +175,7 @@ def run_can_lab(dbc: Path, output: Path) -> dict[str, Any]:
         "backend": "python-can virtual",
         "applicability_profile": build_runtime_applicability_profile(
             variant=dbc.stem,
-            software_version="can-lab-0.1",
+            software_version="can-lab-0.2",
             inputs=[dbc],
             backend="python-can virtual",
         ),

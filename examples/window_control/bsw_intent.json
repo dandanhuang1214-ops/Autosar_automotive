@@ -1,7 +1,8 @@
 {
-  "schema_version": "bsw-intent-0.1",
+  "schema_version": "bsw-intent-0.2",
   "model_status": "research-intent",
   "source": "public window_control.dbc learning sample",
+  "local_ecu": "BODY_ECU",
   "messages": [
     {
       "dbc_message": "WindowStatus",
@@ -9,6 +10,7 @@
       "dlc": 8,
       "sender": "BODY_ECU",
       "receiver": "TESTER",
+      "direction": "tx",
       "i_pdu": "WindowStatus_IPdu",
       "canif_pdu": "WindowStatus_CanIfTxPdu"
     },
@@ -18,6 +20,7 @@
       "dlc": 8,
       "sender": "TESTER",
       "receiver": "BODY_ECU",
+      "direction": "rx",
       "i_pdu": "WindowCommand_IPdu",
       "canif_pdu": "WindowCommand_CanIfRxPdu"
     }
@@ -35,6 +38,7 @@
       "minimum": 0,
       "maximum": 100,
       "unit": "%",
+      "direction": "tx",
       "canonical_signal": "WindowPosition",
       "swc_data_element": "WindowPosition",
       "swc_port": "PpWindowStatus",
@@ -60,6 +64,7 @@
       "minimum": 0,
       "maximum": 3,
       "unit": "",
+      "direction": "rx",
       "canonical_signal": "RequestedDirection",
       "swc_data_element": "RequestedDirection",
       "swc_port": "RpWindowCommand",

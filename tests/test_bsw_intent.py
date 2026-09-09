@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
-from automotive_workbench.bsw_intent import trace_signal
+from automotive_workbench.bsw_intent import load_intent, trace_signal
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +25,15 @@ class BswIntentTests(unittest.TestCase):
     def test_unknown_signal_is_rejected(self) -> None:
         with self.assertRaisesRegex(KeyError, "Signal not found"):
             trace_signal(INTENT, "PrivateCompanySignal")
+
+    def test_version_02_requires_explicit_direction(self) -> None:
+        payload = json.loads(INTENT.read_text(encoding="utf-8"))
+        payload["signals"][0].pop("direction")
+        with tempfile.TemporaryDirectory() as directory:
+            changed = Path(directory) / "intent.json"
+            changed.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "direction to be tx or rx"):
+                load_intent(changed)
 
 
 if __name__ == "__main__":

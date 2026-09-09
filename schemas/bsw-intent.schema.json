@@ -5,11 +5,35 @@
   "type": "object",
   "required": ["schema_version", "model_status", "messages", "signals"],
   "properties": {
-    "schema_version": {"const": "bsw-intent-0.1"},
+    "schema_version": {"enum": ["bsw-intent-0.1", "bsw-intent-0.2"]},
     "model_status": {"enum": ["research-intent", "vendor-validated", "unknown"]},
-    "messages": {"type": "array", "items": {"type": "object"}},
-    "signals": {"type": "array", "items": {"type": "object"}}
+    "local_ecu": {"type": "string", "minLength": 1},
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {"direction": {"enum": ["tx", "rx"]}}
+      }
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {"direction": {"enum": ["tx", "rx"]}}
+      }
+    }
   },
+  "allOf": [
+    {
+      "if": {"properties": {"schema_version": {"const": "bsw-intent-0.2"}}},
+      "then": {
+        "required": ["local_ecu"],
+        "properties": {
+          "messages": {"items": {"required": ["direction"]}},
+          "signals": {"items": {"required": ["direction"]}}
+        }
+      }
+    }
+  ],
   "additionalProperties": true
 }
-

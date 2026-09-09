@@ -9,7 +9,7 @@
     "artifact_type": "bsw-intent",
     "source": "../../../window_control/bsw_intent.json",
     "confidentiality": "public",
-    "expected_sha256": "4e3ff8bcbb16e4942479066a5c30208d89303f52646ab67e44f684411713534c"
+    "expected_sha256": "d6d7dd4214911552f4ce0a5292ed2560fc43f83b7f1d0f55a4f7a25f3138ff9b"
   }],
   "artifact_ids": ["bsw-intent"],
   "checks": [{

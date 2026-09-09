@@ -50,6 +50,18 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m automotive_workbench.cli run-can-lab examples/window_control/window_control.dbc --output output/ci
+      - name: Run complete communication evidence chain
+        id: communication_chain
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --output output/communication-chain
+      - name: Upload communication chain evidence
+        if: ${{ always() && steps.communication_chain.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: communication-chain-${{ runner.os }}
+          path: output/communication-chain/
+          if-no-files-found: error
       - name: Run periodic communication supervision
         env:
           PYTHONPATH: src
