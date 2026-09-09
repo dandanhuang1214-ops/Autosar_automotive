@@ -53,9 +53,9 @@
 - P4b 已完成（2026-09-08）：CAN lab 0.2 覆盖 BODY_ECU Tx/Rx；`run-communication-chain` 以 message/signal identity、direction 和 frame ID 将两条静态路径绑定到同次 virtual CAN 报告，并固定三份来源 SHA-256。
 - P4 远端验收完成（2026-09-09）：GitHub Actions run `34299638224` 的 Windows/Ubuntu job 均成功，并分别上传 `communication-chain-Windows/Linux` artifact。
 - P5a 已完成（2026-09-09）：新增纯本地 `index-evidence` 和 `evidence-bundle-manifest-0.1`，登记相对 artifact identity、类型/schema、producer、SHA-256 及 bundle 内/portable base 外部依赖；run `34310607466` Windows/Ubuntu 双平台索引与 artifact 上传通过。
-- P5b/P5c 已实现（2026-09-09）：`verify-evidence` 区分非法 manifest 与合法 manifest 下的 missing/unexpected/tampered/dependency failure；CI 同时运行正常验证和可控 runtime JSON 篡改拒绝，等待双平台验收后冻结 P5。
+- P5b/P5c 已完成（2026-09-09）：`verify-evidence` 区分非法 manifest 与合法 manifest 下的 missing/unexpected/tampered/dependency failure；run `34322744055` 的 Windows/Ubuntu 正常验证、可控篡改非零退出、拒绝检查与独立 artifact 上传全部通过，P5 契约冻结。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：完成 P5b/P5c 本地与 Windows/Ubuntu 验收并冻结 P5；不移动原报告，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
+- 当前下一阶段：冻结 P4/P5 并选择新的窄里程碑；继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 

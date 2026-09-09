@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-09）
 
-当前阶段：`P5b/P5c — Evidence Bundle 事后验证与受控篡改演练`。
+当前阶段：`P5 — 本地 Evidence Bundle 索引、验证与双平台拒绝演练完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -41,7 +41,7 @@
 | ISO-TP/UDS 诊断链 | 完成当前闭环 | R4a-R4i 已完成架构、virtual/SocketCAN 和 isolation 证据；R4j-R4p 已完成 DTC 生命周期到冗余 repair/中断写入证据 |
 | AI 工程审查 | 完成当前闭环 | R5a-R5q 已完成基础契约、引用/冲突、五类评测、artifact-bound applicability、跨域 drift catalog、固定报告 provenance/policy、preflight rejection evidence 与 Windows/Ubuntu CI artifact 验收 |
 | 完整通信证据链 | 完成当前闭环 | P4a 绑定本地 ECU、DBC sender/receiver 与跨层 Tx/Rx；P4b 将两条静态路径绑定到同次 virtual CAN frame/decode evidence |
-| 本地 Artifact Registry | 部分完成 | P5a manifest 已双平台验收；P5b/P5c 验证与 CI 篡改演练已实现，等待验收 |
+| 本地 Artifact Registry | 完成当前闭环 | P5a manifest、P5b 事后验证与 P5c Windows/Ubuntu 正常/篡改拒绝证据均通过 |
 
 ## 已完成升级历史
 
@@ -122,8 +122,11 @@
 - 实际正常 CLI：5/5 artifacts、3/3 dependencies verified，`status=passed`、0 Finding。
 - 实际受控演练：追加换行后 `verify-evidence` 返回退出码 2，4/5 artifacts、2/3 dependencies verified；产生 `EVIDENCE-SIZE-MISMATCH` 与 `EVIDENCE-DEPENDENCY-FAILED`，检查摘要为 passed。
 - 回归：全量 122 项通过、2 项环境跳过；全部 checked-in JSON 可解析，Python compileall、verification/tamper schema 闭合字段、whitespace check 通过。
+- 提交 `52dcb47` 推送后，GitHub Actions run `34322744055` 的 Windows `102372887629` 与 Ubuntu `102372887826` job 均成功；正常验证、受控 CLI failure、拒绝检查和上传步骤全部为 success。
+- 两平台各上传 `evidence-verification-normal`（719 bytes）和 `evidence-verification-rejection`（1358 bytes）；加上 manifest、communication、core test 与 review evidence，共 14 份 artifact 且均未过期。
+- Actions 中 exit 2 annotation 来自预期的 evidence tamper step，exit 1 来自既有 review rejection step；两个 step 都由后续检查器验证，未被静默吞掉，workflow 保持绿色。
 - 边界：只验证本地字节和 manifest 声明，不认证 producer、CI identity 或 repository ownership，不下载远端 artifact，不提供签名/attestation。
-- 状态：本地实现与验证完成，等待 Windows/Ubuntu 双平台验收。
+- 状态：完成，Windows/Ubuntu 双平台验收通过；P5 契约冻结。
 
 ### R0：python-can virtual 运行时
 
@@ -770,7 +773,7 @@ official_native_baseline=false
 
 ### 最近一步：P4 完整通信证据链已实现
 
-P4 已冻结，P5a 已双平台验收。当前完成 P5b/P5c 事后验证和受控篡改演练的实现，统一验证通过后推送进行 Windows/Ubuntu 验收并冻结 P5。R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
+P4 与 P5 均已完成 Windows/Ubuntu 验收并冻结。平台现具备完整通信证据链、本地 portable manifest、事后完整性验证和可审计的受控篡改拒绝。下一步先选择新的窄里程碑；R5 评测契约继续冻结，不扩展 provider API、远端 artifact 下载、签名/attestation 或通用 policy language。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
