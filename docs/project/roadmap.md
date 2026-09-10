@@ -1,6 +1,8 @@
 # Automotive Software Engineering Workbench 路线v2
 
-## 实施状态（2026-09-09）
+## 实施状态（2026-09-10）
+
+本节按时间保留状态迁移；较早条目中的“下一阶段”是历史决策，当前唯一下一阶段以本节末尾条目和进度账本为准。
 
 - 已完成：统一 Artifact/Finding/Trace 骨架；Generate-Arxml report adapter；DBC→BSW intent→canonical contract 静态校验。
 - 已完成：基线与五类配置故障注入，JSON/Markdown 证据报告，Windows/Linux CI 定义。
@@ -59,7 +61,7 @@
 - P8 已完成（2026-09-09）：新增 `export-evidence-capsule`，按 P5 manifest 白名单复制 P7 bundle 及外部依赖，并以 capsule 根目录为 base 执行离线复验；run `34368118499` 的 Windows/Ubuntu 迁移复验与 artifact 上传均通过。
 - P9 已完成（2026-09-10）：新增 `verify-evidence-capsule`，对 16 份胶囊文件执行完整库存、哈希、契约及 P5 依赖图复验，并增加顶层 receipt 受控篡改拒绝；run `34436609789` 的 Windows/Ubuntu 正常验证、受控拒绝检查与 artifact 上传均通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- 当前下一阶段：P9 已完成双平台验收并冻结，选择新的窄里程碑；继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
+- 当前下一阶段：P10 Contract Conformance 与 Runtime Currency；不增加汽车协议功能，优先统一 schema/loader accept-reject 行为、验证 Python 3.14、建立最小 lint/type 门禁和 resolved dependency inventory。继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
 
 ## 平台目标
 

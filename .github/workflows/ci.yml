@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     strategy:
@@ -12,8 +15,8 @@ jobs:
         os: [windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
       - name: Install CAN and diagnostic adapter dependencies
@@ -25,7 +28,7 @@ jobs:
         run: python scripts/run_ci_tests.py --output output/test-results
       - name: Upload core test evidence
         if: ${{ always() && steps.core_tests.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: core-test-results-${{ runner.os }}
           path: output/test-results/
@@ -57,7 +60,7 @@ jobs:
         run: python -m automotive_workbench.cli run-communication-chain examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --output output/communication-chain
       - name: Upload communication chain evidence
         if: ${{ always() && steps.communication_chain.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: communication-chain-${{ runner.os }}
           path: output/communication-chain/
@@ -69,7 +72,7 @@ jobs:
         run: python -m automotive_workbench.cli run-communication-delivery examples/window_control/window_control.dbc examples/window_control/bsw_intent.json --base . --output output/communication-delivery
       - name: Upload communication evidence delivery
         if: ${{ always() && steps.communication_delivery.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: communication-delivery-${{ runner.os }}
           path: output/communication-delivery/
@@ -91,7 +94,7 @@ jobs:
         run: python -m automotive_workbench.cli verify-evidence-capsule output/evidence-capsule-relocated --output output/evidence-capsule-verification-normal
       - name: Upload self-contained evidence capsule
         if: ${{ always() && steps.evidence_capsule.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: evidence-capsule-${{ runner.os }}
           path: |
@@ -112,7 +115,7 @@ jobs:
         run: python scripts/evidence_capsule_tamper_exercise.py check output/evidence-capsule-verification-rejection --cli-outcome ${{ steps.controlled_capsule_tamper.outcome }}
       - name: Upload capsule tamper rejection
         if: ${{ always() && steps.controlled_capsule_tamper.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: evidence-capsule-rejection-${{ runner.os }}
           path: output/evidence-capsule-verification-rejection/
@@ -138,7 +141,7 @@ jobs:
         run: python -m automotive_workbench.cli verify-evidence output/communication-chain-blocked output/evidence-manifests/communication-chain-blocked.json --base . --output output/evidence-verification-blocked
       - name: Upload blocked communication evidence
         if: ${{ always() && steps.blocked_communication_chain.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: communication-chain-blocked-${{ runner.os }}
           path: |
@@ -151,7 +154,7 @@ jobs:
           PYTHONPATH: src
         run: python -m automotive_workbench.cli index-evidence output/communication-chain --producer "workbench run-communication-chain" --base . --manifest output/evidence-manifests/communication-chain.json
       - name: Upload evidence bundle manifest
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: evidence-bundle-manifest-${{ runner.os }}
           path: output/evidence-manifests/communication-chain.json
@@ -161,7 +164,7 @@ jobs:
           PYTHONPATH: src
         run: python -m automotive_workbench.cli verify-evidence output/communication-chain output/evidence-manifests/communication-chain.json --base . --output output/evidence-verification-normal
       - name: Upload normal evidence verification
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: evidence-verification-normal-${{ runner.os }}
           path: output/evidence-verification-normal/
@@ -179,7 +182,7 @@ jobs:
         run: python scripts/evidence_bundle_tamper_exercise.py check output/evidence-verification-rejection --cli-outcome ${{ steps.controlled_evidence_tamper.outcome }}
       - name: Upload evidence tamper rejection
         if: ${{ always() && steps.controlled_evidence_tamper.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: evidence-verification-rejection-${{ runner.os }}
           path: output/evidence-verification-rejection/
@@ -207,7 +210,7 @@ jobs:
         run: python -m automotive_workbench.cli run-review-eval examples/review/evaluation/external-cohort-evaluation.json --output output/review-external-cohort
       - name: Upload fixed-report review evidence
         if: ${{ always() && steps.fixed_report_review.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: review-external-cohort-${{ runner.os }}
           path: output/review-external-cohort/
@@ -225,7 +228,7 @@ jobs:
         run: python scripts/review_rejection_exercise.py check output/review-external-rejection --cli-outcome ${{ steps.controlled_review_rejection.outcome }}
       - name: Upload controlled review rejection evidence
         if: ${{ always() && steps.controlled_review_rejection.outcome != 'skipped' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: review-external-rejection-${{ runner.os }}
           path: output/review-external-rejection/

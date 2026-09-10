@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -104,6 +105,19 @@ class EvidenceCapsuleVerificationTests(unittest.TestCase):
             "CAPSULE-SYMLINK-DETECTED",
             {item["code"] for item in result["findings"]},
         )
+
+    def test_rejects_boolean_capsule_report_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            capsule = self._capsule(root)
+            report_path = capsule / "evidence-capsule-report.json"
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            report["dependency_count"] = False
+            report["verified_dependency_count"] = False
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "count is invalid"):
+                verify_evidence_capsule(capsule, root / "verification")
 
 
 if __name__ == "__main__":

@@ -221,9 +221,17 @@ def load_evidence_bundle_manifest(path: Path) -> dict[str, Any]:
     for field in ("bundle_id", "created_at", "producer"):
         if not isinstance(payload[field], str) or not payload[field].strip():
             raise ValueError(f"Evidence bundle manifest requires {field}")
-    if not isinstance(payload["artifact_count"], int) or payload["artifact_count"] < 1:
+    if (
+        not isinstance(payload["artifact_count"], int)
+        or isinstance(payload["artifact_count"], bool)
+        or payload["artifact_count"] < 1
+    ):
         raise ValueError("Evidence bundle artifact_count must be positive")
-    if not isinstance(payload["total_bytes"], int) or payload["total_bytes"] < 0:
+    if (
+        not isinstance(payload["total_bytes"], int)
+        or isinstance(payload["total_bytes"], bool)
+        or payload["total_bytes"] < 0
+    ):
         raise ValueError("Evidence bundle total_bytes must be non-negative")
     if not isinstance(payload["artifacts"], list) or not payload["artifacts"]:
         raise ValueError("Evidence bundle artifacts must be a non-empty list")
@@ -249,7 +257,11 @@ def load_evidence_bundle_manifest(path: Path) -> dict[str, Any]:
             artifact["schema_version"], str
         ):
             raise ValueError(f"Evidence bundle artifact schema_version is invalid: {artifact_id}")
-        if not isinstance(artifact["size_bytes"], int) or artifact["size_bytes"] < 0:
+        if (
+            not isinstance(artifact["size_bytes"], int)
+            or isinstance(artifact["size_bytes"], bool)
+            or artifact["size_bytes"] < 0
+        ):
             raise ValueError(f"Evidence bundle artifact size is invalid: {artifact_id}")
         if not isinstance(artifact["sha256"], str) or re.fullmatch(
             r"[0-9a-f]{64}", artifact["sha256"]

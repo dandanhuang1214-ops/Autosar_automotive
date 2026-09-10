@@ -15,6 +15,7 @@
 
 ## 技术调研
 
+- [全局目标、前沿性与代码质量审计（2026-09-10）](research/global-alignment-frontier-code-audit-2026-09-10.md)
 - [CAN 运行时、日志和回放](research/can-runtime-log-replay-research-2026-08-14.md)
 - [SocketCAN R2 调研](research/socketcan-r2-research-2026-08-14.md)
 - [OpenBSW POSIX spike 调研](research/openbsw-posix-spike-research-2026-08-16.md)

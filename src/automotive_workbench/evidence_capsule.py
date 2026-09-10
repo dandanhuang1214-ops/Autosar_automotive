@@ -69,6 +69,20 @@ def _load_delivery(path: Path) -> dict[str, Any]:
         raise ValueError("Communication delivery status does not match chain status")
     if payload["integrity_status"] != "passed":
         raise ValueError("Communication delivery integrity must have passed before export")
+    for field in (
+        "artifact_count",
+        "verified_artifact_count",
+        "dependency_count",
+        "verified_dependency_count",
+    ):
+        if (
+            not isinstance(payload[field], int)
+            or isinstance(payload[field], bool)
+            or payload[field] < 0
+        ):
+            raise ValueError(f"Communication delivery count is invalid: {field}")
+    if payload["artifact_count"] < 1:
+        raise ValueError("Communication delivery artifact_count must be positive")
     expected_paths = {
         "bundle_path": "bundle",
         "manifest_path": "manifest.json",

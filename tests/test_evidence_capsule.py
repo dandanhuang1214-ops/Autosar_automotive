@@ -110,6 +110,20 @@ class EvidenceCapsuleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "manifest SHA-256"):
                 export_evidence_capsule(delivery, root / "capsule", base=ROOT)
 
+    def test_rejects_boolean_delivery_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            delivery = root / "delivery"
+            run_communication_delivery(DBC, INTENT, delivery, base=ROOT)
+            receipt_path = delivery / "communication-evidence-delivery.json"
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            receipt["dependency_count"] = False
+            receipt["verified_dependency_count"] = False
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "count is invalid"):
+                export_evidence_capsule(delivery, root / "capsule", base=ROOT)
+
     def test_rejects_nonempty_or_overlapping_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

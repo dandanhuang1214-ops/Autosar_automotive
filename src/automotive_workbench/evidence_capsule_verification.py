@@ -94,7 +94,11 @@ def _load_capsule_report(path: Path) -> dict[str, Any]:
         "verified_dependency_count", "external_dependency_count",
         "copied_external_dependency_count",
     ):
-        if not isinstance(payload[field], int) or payload[field] < 0:
+        if (
+            not isinstance(payload[field], int)
+            or isinstance(payload[field], bool)
+            or payload[field] < 0
+        ):
             raise ValueError(f"Evidence capsule report count is invalid: {field}")
     if payload["artifact_count"] < 1:
         raise ValueError("Evidence capsule artifact_count must be positive")

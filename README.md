@@ -2,7 +2,7 @@
 
 平台路线、升级状态、环境记录和技术调研统一从 [`docs/README.md`](docs/README.md) 进入。每次功能或环境升级都必须同步更新 [`docs/project/progress-log.md`](docs/project/progress-log.md)。
 
-这是统一汽车软件工程平台的轻量骨架。当前版本只做四件事：
+这是统一汽车软件工程平台的轻量骨架。当前版本围绕统一契约、静态映射、确定性运行实验和可审计证据四条主线展开，以下为已落地能力：
 
 1. 定义跨工具稳定的 `Artifact`、`Finding`、`Trace`、`TestResult` 数据契约；
 2. 将 Generate-Arxml 的 `issues.json` 转换为统一 Finding；

@@ -217,6 +217,32 @@ class EvidenceBundleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "portable relative path"):
                 load_evidence_bundle_manifest(manifest_path)
 
+    def test_rejects_boolean_manifest_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = root / "bundle"
+            bundle.mkdir()
+            (bundle / "empty.md").write_bytes(b"")
+            manifest_path = root / "manifest.json"
+            manifest = create_evidence_bundle_manifest(
+                bundle, manifest_path, "test producer"
+            )
+
+            for field, value in (
+                ("artifact_count", True),
+                ("total_bytes", False),
+                ("size_bytes", False),
+            ):
+                with self.subTest(field=field):
+                    payload = json.loads(json.dumps(manifest))
+                    if field == "size_bytes":
+                        payload["artifacts"][0][field] = value
+                    else:
+                        payload[field] = value
+                    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "count|bytes|size"):
+                        load_evidence_bundle_manifest(manifest_path)
+
 
 if __name__ == "__main__":
     unittest.main()
