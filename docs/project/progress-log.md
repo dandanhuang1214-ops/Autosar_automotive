@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-10）
+## 当前总览（2026-09-11）
 
-当前阶段：`P12 — CI 职责拆分与拓扑门禁完成`。
+当前阶段：`P13 — 安装后发行物消费者 smoke 本地完成，待远程验收`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -48,8 +48,22 @@
 | 契约一致性与运行时前沿 | 完成 | P10 schema/loader parity、Python 3.14、Ruff/mypy 与依赖 inventory 三 job 验收通过 |
 | OpenBSW 版本漂移复验 | 完成 | P11 固定 `dbd6e118..00052043`，patch 重放及 7/7、44/44、2572/2572 CTest 通过 |
 | CI 职责拆分 | 完成 | P12 四类职责、七个实际 job，topology guard、本地回归与远端 run `34486148658` 全部通过 |
+| 安装后 CLI 发行物 | 本地完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；双平台 CI 待验收 |
 
 ## 已完成升级历史
+
+### P13：Installed Distribution Smoke（2026-09-11）
+
+- 新增 `scripts/check_installed_distribution.py`：从 `pyproject.toml` 构建唯一临时 wheel，在全新 venv 中以 `--no-deps --no-index` 安装，并从仓库外工作目录调用真实 `workbench` console script。
+- smoke 清除 `PYTHONPATH/PYTHONHOME`，用 Python isolated mode 检查已安装 distribution name/version 和 module path；若从 checkout 导入则 fail closed。
+- 核心消费者场景在无 CAN/UDS 可选依赖的环境中完成 `WindowPosition` 8 节点 trace，同时确认安装后命令目录含 capsule verifier。
+- 新增闭合 `installed-distribution-smoke-0.1` schema，报告固定 wheel 文件名、字节数、SHA-256、版本、运行时和六项 checks；非空输出目录被拒绝。
+- 临时 wheel 在验收后删除；CI 只上传 JSON smoke evidence，不把此里程碑伪装成发布或供应链身份证明。
+- `core-contracts` 的 Windows/Ubuntu matrix 新增显式 smoke 与 artifact upload；P12 topology guard 固定该步骤归属，scoped mypy 纳入新脚本。
+- 本地验收：已安装 wheel consumer smoke 6/6 checks 通过；全量 158 项中 156 项通过、2 项环境跳过；26 份 schema、45 份 schema-bound example、topology guard、Ruff、6-source mypy、compileall、`pip check` 与 whitespace gate 全部通过。
+- 详细设计：`docs/research/p13-installed-distribution-smoke-2026-09-11.md`。
+- 边界：不上传 wheel，不发布到 package index，不新增 CD、签名、attestation、远程下载、新汽车协议或硬件依赖。
+- 状态：本地完成，等待 Windows/Ubuntu CI 验收。
 
 ### P12：CI 职责拆分与拓扑门禁（2026-09-10）
 
@@ -869,9 +883,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：P11 OpenBSW Drift Revalidation
+### 最近一步：P13 Installed Distribution Smoke
 
-P11 已将 R3 的 OpenBSW 历史基线与当前上游固定比较，旧 patch 在 classic/non-FD preset 下无冲突重放，定向与全量 CTest 均通过；源码锚点和 CAN-FD 适用性边界已归档。P5-P10、R5 和该 patch 的历史内容继续冻结；下一步不自动扩展协议或硬件范围，优先服务明确的学习验收、adapter consumer 或上游化需求。
+P13 将已有 console entry point 当作真实 adapter consumer 验收：不使用 editable install 或 `PYTHONPATH=src`，而是在隔离环境安装 wheel 后运行核心 trace。本地实现已完成，待 Windows/Ubuntu CI 验收后冻结。下一里程碑仍必须由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

@@ -14,6 +14,7 @@ EXPECTED_JOBS = {
 
 STEP_OWNERS = {
     "Run core tests": "core-contracts",
+    "Smoke-test installed wheel distribution": "core-contracts",
     "Validate checked-in JSON": "core-contracts",
     "Run minimum-error Ruff gate": {"core-contracts", "runtime-currency"},
     "Run virtual CAN runtime lab": "runtime-evidence",

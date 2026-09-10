@@ -12,7 +12,7 @@ dependencies = []
 [project.optional-dependencies]
 can = ["cantools>=41.4,<42", "python-can>=4.6,<5"]
 diag = ["cantools>=41.4,<42", "python-can>=4.6,<5", "can-isotp>=2.0,<3", "udsoncan>=1.26,<2"]
-dev = ["jsonschema[format]>=4.26,<5", "mypy>=2.3.1,<3", "ruff>=0.16.6,<1"]
+dev = ["jsonschema[format]>=4.26,<5", "mypy>=2.3.1,<3", "ruff>=0.16.6,<1", "setuptools>=68"]
 
 [project.scripts]
 workbench = "automotive_workbench.cli:main"

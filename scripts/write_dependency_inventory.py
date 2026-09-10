@@ -16,6 +16,7 @@ TRACKED_DISTRIBUTIONS = (
     "jsonschema",
     "mypy",
     "ruff",
+    "setuptools",
 )
 
 
