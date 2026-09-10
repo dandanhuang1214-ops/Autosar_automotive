@@ -847,6 +847,7 @@ P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 �
 - 完成全局目标、前沿性与代码质量审计。结论为技术目标保持对齐、路线叙事轻度漂移、工程门禁中度滞后；调研覆盖 AUTOSAR R25-11、OpenBSW 2026 活动、Python 3.14、CAN/UDS 依赖、SLSA/in-toto、GitHub artifact attestations、SARIF 与 SOVD。
 - 修复 evidence manifest、delivery receipt 与 capsule report 中 Python `bool` 被当作 JSON integer 接受的闭合契约缺陷，新增三组负例回归；本地全量 148 项测试中 146 项通过、2 项按环境跳过，evidence 定向测试 22/22 通过。
 - CI 官方 actions 更新到当前 major/minor 并固定完整 commit SHA，默认 `GITHUB_TOKEN` 权限收敛为 `contents: read`。
+- 远端验收完成：GitHub Actions run `34441821082` 的 Windows/Ubuntu job 均通过；固定 SHA、只读 token、148 项核心回归、正常证据链与 controlled rejection 全部按契约运行。
 - 下一窄里程碑确定为 P10 Contract Conformance 与 Runtime Currency，不增加新的汽车协议功能。
 
 ## 下次必须补录

@@ -56,7 +56,7 @@
 | 全部 Linux Bash `bash -n` | 通过 |
 | `pip check` | 无依赖冲突 |
 | `git diff --check` | 通过 |
-| 最近双平台主线 CI | Windows/Ubuntu 均通过 |
+| 本轮双平台主线 CI | run `34441821082`：Windows/Ubuntu 均通过 |
 
 两个跳过项分别对应当前环境没有 `vcan0` 和仅在非 Linux 上有意义的结构行为；这与既定 blocked/conditional contract 一致，不是隐藏失败。
 
