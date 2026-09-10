@@ -63,6 +63,7 @@
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
 - P10 已完成并冻结（2026-09-10，最终 run `34446441635`）：25 份 schema meta-validation、45 份 schema-bound example、三类 evidence boolean/integer 与 RFC 3339 schema-loader 同拒绝、portable path、Python 3.14 runtime-currency、最小 Ruff/mypy 门禁和 resolved dependency inventory 均通过三 job 验收。下一里程碑需重新选择，不自动进入 OpenBSW/新协议；继续保持纯本地确定性边界。
 - P11 已完成（2026-09-10）：将 OpenBSW `dbd6e118` 基线与当前 `00052043` 固定比较，历史 CANFrame patch 无冲突重放；`CANFrameTest` 7/7、`cpp2canTest` 44/44、全量 POSIX CTest 2572/2572 通过。确认 `0x123 -> 0x124` 与每秒 `0x558` 学习锚点仍成立，并将八字节结论严格限定为 classic/non-FD 配置；未新增 adapter、协议或硬件依赖。
+- P12 本地实现完成（2026-09-10）：CI 拆为 core-contracts、runtime-evidence、controlled-rejections 和 runtime-currency 四类职责、七个实际 job；运行证据与拒绝证据各自重建前置输入，不共享可变目录。新增依赖无关的 topology guard 和三项负例，156 项本地回归中 154 项通过、2 项环境跳过；等待首次远端拓扑验收。
 
 ## 平台目标
 

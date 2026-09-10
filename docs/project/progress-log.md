@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-10）
 
-当前阶段：`P11 — OpenBSW 版本漂移复验完成`。
+当前阶段：`P12 — CI 职责拆分本地完成，等待远端拓扑验收`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -47,8 +47,20 @@
 | 胶囊级完整性验证 | 完成 | P9 完整库存/哈希/契约/P5 依赖图复验与 receipt 篡改拒绝，Windows/Ubuntu CI 均通过 |
 | 契约一致性与运行时前沿 | 完成 | P10 schema/loader parity、Python 3.14、Ruff/mypy 与依赖 inventory 三 job 验收通过 |
 | OpenBSW 版本漂移复验 | 完成 | P11 固定 `dbd6e118..00052043`，patch 重放及 7/7、44/44、2572/2572 CTest 通过 |
+| CI 职责拆分 | 本地完成 | P12 四类职责、七个实际 job，topology guard 及 156 项本地回归通过；等待远端验收 |
 
 ## 已完成升级历史
+
+### P12：CI 职责拆分与拓扑门禁（2026-09-10）
+
+- 将原 Windows/Ubuntu 单体 `test` matrix 拆为 `core-contracts`、`runtime-evidence`、`controlled-rejections`；保留独立 `runtime-currency`，共形成七个实际 job。
+- runtime/rejection 两组均依赖 core 契约通过；拒绝组独立重建 chain、manifest、delivery 和 capsule，不从 runtime job 下载或共享可变工作目录。
+- 原有 artifact 名称、CLI、schema 和四类受控失败保持不变；`continue-on-error` 只允许出现在 rejection job，且每个失败后仍有强制 checker。
+- 新增 `scripts/check_ci_topology.py`，冻结 job 身份、依赖边、关键步骤归属、四个预期失败和禁止跨 job mutable artifact 下载；新增三项正/负例测试并接入 core job。
+- 本地验证：topology guard 通过（4 job definitions、3 matrices、4 controlled failures）；拓扑测试 3/3；全量 156 项运行，154 项通过、2 项环境跳过；25 份 schema、45 份 schema-bound examples、Ruff、scoped mypy 和 whitespace gate 通过。
+- 详细设计：`docs/research/p12-ci-job-topology-2026-09-10.md`。
+- 边界：只改变 CI 编排，不改变业务结果、证据契约或平台能力；不增加 CD、attestation、新协议、OpenBSW adapter 或硬件依赖。
+- 状态：本地完成，等待 GitHub Actions 首次七 job 验收。
 
 ### P11：OpenBSW Drift Revalidation（2026-09-10）
 

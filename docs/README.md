@@ -18,6 +18,7 @@
 - [全局目标、前沿性与代码质量审计（2026-09-10）](research/global-alignment-frontier-code-audit-2026-09-10.md)
 - [P10 契约一致性与运行时前沿实施记录（2026-09-10）](research/p10-contract-runtime-currency-2026-09-10.md)
 - [OpenBSW P11 版本漂移复验（2026-09-10）](research/openbsw-p11-drift-revalidation-2026-09-10.md)
+- [P12 CI 职责拆分与拓扑门禁（2026-09-10）](research/p12-ci-job-topology-2026-09-10.md)
 - [CAN 运行时、日志和回放](research/can-runtime-log-replay-research-2026-08-14.md)
 - [SocketCAN R2 调研](research/socketcan-r2-research-2026-08-14.md)
 - [OpenBSW POSIX spike 调研](research/openbsw-posix-spike-research-2026-08-16.md)

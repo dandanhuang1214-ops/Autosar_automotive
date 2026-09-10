@@ -134,4 +134,4 @@ adapters/
 
 ## CI/CD边界
 
-当前GitHub Actions在Windows和Ubuntu 22.04/Python 3.11上运行完整工程链，并用Ubuntu 22.04/Python 3.14执行 runtime-currency 全量回归、Draft 2020-12 schema 实例校验、最小 Ruff 门禁和 evidence 模块范围内的 mypy 门禁；每个环境归档 resolved dependency inventory。现在只有CI，没有CD；等出现可发布CLI包、容器或文档站后再设计发布流程。
+当前 GitHub Actions 将 Windows/Ubuntu 22.04 Python 3.11 拆为 `core-contracts`、`runtime-evidence` 和 `controlled-rejections` 三类职责，并用 Ubuntu 22.04/Python 3.14 执行独立 runtime-currency 全量回归。运行证据和拒绝证据分别重建输入，不跨 job 共享可变目录；拓扑门禁固定关键步骤归属和四个预期失败。现在只有 CI，没有 CD；等出现可发布 CLI 包、容器或文档站后再设计发布流程。
