@@ -58,6 +58,7 @@
 - 历史 patch `0001-cpp2can-add-classic-canframe-invariant-test.patch` 通过 `git apply --check` 并无冲突重放；configure、定向构建和全量 748-action 构建通过。
 - CTest：`CANFrameTest` 7/7、`cpp2canTest` 44/44、全量 `tests-posix-debug` 2572/2572 通过；旧基线分别为 7/7、34/34、1879/1879。
 - Workbench 回归：153 项运行，151 项通过、2 项按环境跳过；25 份 schema、45 份 schema-bound example、Ruff 和 whitespace gate 通过。
+- P11 文档提交 `07371c8` 推送后，GitHub Actions run `34483850808` 的 Ubuntu/Python 3.11、Windows/Python 3.11 和 Ubuntu/Python 3.14 runtime-currency 三个 job 全部通过；受控篡改、backend blocked 与 review rejection 的预期非零步骤均被后续检查器验证。
 - 适用性修正：八字节 payload 只属于 classic/non-FD 构建；定义 `CPP2CAN_USE_64_BYTE_FRAMES` 时 `CANFrame::MAX_FRAME_LENGTH=64`。历史 patch 不改写，上游化前必须更新 rationale 并先按贡献流程沟通。
 - 详细证据：`docs/research/openbsw-p11-drift-revalidation-2026-09-10.md`。
 - 边界：没有引入 OpenBSW runtime adapter、DoIP/SOME-IP/Bazel/Rust、S32K148 硬件依赖或商业 AUTOSAR 工具；没有自动创建 issue/PR。

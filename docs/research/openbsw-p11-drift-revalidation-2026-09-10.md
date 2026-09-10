@@ -90,6 +90,18 @@ Workbench JSON Schema / instance gate             25 schemas, 45 instances passe
 Workbench Ruff and git diff checks                passed
 ```
 
+The Workbench documentation update was committed as `07371c8` and accepted by
+GitHub Actions run
+[`34483850808`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34483850808):
+
+- Ubuntu 22.04 / Python 3.11: passed;
+- Windows / Python 3.11: passed;
+- Ubuntu 22.04 / Python 3.14 runtime currency: passed.
+
+The non-zero annotations in the two main jobs are the expected controlled
+tamper, unavailable-backend and review-rejection exercises. Their mandatory
+verification steps passed and all three jobs completed successfully.
+
 The old R3 baseline was 34 cpp2can tests and 1,879 total tests. The increase to
 44 and 2,572 is upstream test growth; the replayed Workbench test contributes
 one test in both totals.
