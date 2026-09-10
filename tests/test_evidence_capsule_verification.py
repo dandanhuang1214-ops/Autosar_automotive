@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jsonschema import FormatChecker
 from jsonschema.validators import validator_for
 
 from automotive_workbench.communication_delivery import run_communication_delivery
@@ -126,6 +127,24 @@ class EvidenceCapsuleVerificationTests(unittest.TestCase):
             self.assertTrue(list(validator_for(schema)(schema).iter_errors(report)))
 
             with self.assertRaisesRegex(ValueError, "count is invalid"):
+                verify_evidence_capsule(capsule, root / "verification")
+
+    def test_schema_and_loader_reject_invalid_capsule_timestamp(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            capsule = self._capsule(root)
+            report_path = capsule / "evidence-capsule-report.json"
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            report["created_at"] = "not-a-date-time"
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            schema = json.loads(
+                (ROOT / "schemas" / "evidence-capsule.schema.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            validator = validator_for(schema)(schema, format_checker=FormatChecker())
+            self.assertTrue(list(validator.iter_errors(report)))
+            with self.assertRaisesRegex(ValueError, "RFC 3339"):
                 verify_evidence_capsule(capsule, root / "verification")
 
 

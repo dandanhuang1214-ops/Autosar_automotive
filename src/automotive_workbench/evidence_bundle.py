@@ -16,6 +16,9 @@ ARTIFACT_KEYS = {
     "artifact_id", "relative_path", "media_type", "artifact_type", "schema_version",
     "size_bytes", "sha256", "depends_on",
 }
+RFC3339_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
 DEPENDENCY_KEYS = {"kind", "ref", "sha256"}
 
 def _sha256_file(path: Path) -> str:
@@ -24,6 +27,19 @@ def _sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _require_rfc3339(value: Any, label: str) -> str:
+    if not isinstance(value, str) or RFC3339_PATTERN.fullmatch(value) is None:
+        raise ValueError(f"{label} must be an RFC 3339 date-time")
+    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as error:
+        raise ValueError(f"{label} must be an RFC 3339 date-time") from error
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{label} must include a timezone offset")
+    return value
 
 
 def _relative_to(path: Path, parent: Path) -> str | None:
@@ -224,6 +240,7 @@ def load_evidence_bundle_manifest(path: Path) -> dict[str, Any]:
     for field in ("bundle_id", "created_at", "producer"):
         if not isinstance(payload[field], str) or not payload[field].strip():
             raise ValueError(f"Evidence bundle manifest requires {field}")
+    _require_rfc3339(payload["created_at"], "Evidence bundle created_at")
     if (
         not isinstance(payload["artifact_count"], int)
         or isinstance(payload["artifact_count"], bool)

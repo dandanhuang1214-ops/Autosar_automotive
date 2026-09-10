@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import tempfile
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.evidence_bundle import (
+    _require_rfc3339,
     load_evidence_bundle_manifest,
     verify_evidence_bundle,
 )
@@ -69,6 +71,14 @@ def _load_delivery(path: Path) -> dict[str, Any]:
         raise ValueError("Communication delivery status does not match chain status")
     if payload["integrity_status"] != "passed":
         raise ValueError("Communication delivery integrity must have passed before export")
+    _require_rfc3339(payload["created_at"], "Communication delivery created_at")
+    if not isinstance(payload["reason"], str):
+        raise ValueError("Communication delivery reason must be a string")
+    for field in ("manifest_sha256", "verification_sha256"):
+        if not isinstance(payload[field], str) or re.fullmatch(
+            r"[0-9a-f]{64}", payload[field]
+        ) is None:
+            raise ValueError(f"Communication delivery requires {field}")
     for field in (
         "artifact_count",
         "verified_artifact_count",

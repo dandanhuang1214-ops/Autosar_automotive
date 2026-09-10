@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jsonschema import FormatChecker
 from jsonschema.validators import validator_for
 
 from automotive_workbench.can_io import BusConfig
@@ -131,6 +132,25 @@ class EvidenceCapsuleTests(unittest.TestCase):
             self.assertTrue(list(validator_for(schema)(schema).iter_errors(receipt)))
 
             with self.assertRaisesRegex(ValueError, "count is invalid"):
+                export_evidence_capsule(delivery, root / "capsule", base=ROOT)
+
+    def test_schema_and_loader_reject_invalid_delivery_timestamp(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            delivery = root / "delivery"
+            run_communication_delivery(DBC, INTENT, delivery, base=ROOT)
+            receipt_path = delivery / "communication-evidence-delivery.json"
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            receipt["created_at"] = "not-a-date-time"
+            receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+            schema = json.loads(
+                (
+                    ROOT / "schemas" / "communication-evidence-delivery.schema.json"
+                ).read_text(encoding="utf-8")
+            )
+            validator = validator_for(schema)(schema, format_checker=FormatChecker())
+            self.assertTrue(list(validator.iter_errors(receipt)))
+            with self.assertRaisesRegex(ValueError, "RFC 3339"):
                 export_evidence_capsule(delivery, root / "capsule", base=ROOT)
 
     def test_rejects_nonempty_or_overlapping_output(self) -> None:

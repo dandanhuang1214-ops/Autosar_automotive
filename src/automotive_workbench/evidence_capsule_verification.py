@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from automotive_workbench.evidence_bundle import (
+    _require_rfc3339,
     _render_verification as _render_bundle_verification,
     load_evidence_bundle_manifest,
     verify_evidence_bundle,
@@ -72,6 +73,7 @@ def _load_capsule_report(path: Path) -> dict[str, Any]:
     for field in ("created_at", "bundle_id"):
         if not isinstance(payload[field], str) or not payload[field].strip():
             raise ValueError(f"Evidence capsule report requires {field}")
+    _require_rfc3339(payload["created_at"], "Evidence capsule created_at")
     fixed_paths = {
         "bundle_path": "bundle",
         "manifest_path": "manifest.json",

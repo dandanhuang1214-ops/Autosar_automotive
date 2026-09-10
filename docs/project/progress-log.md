@@ -865,8 +865,9 @@ P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 �
 - evidence manifest、delivery receipt、capsule report 的 boolean/integer 负例现同时验证 JSON Schema 与 loader 均拒绝，避免只测一侧产生虚假一致性。
 - 新增 `resolved-dependency-inventory-0.1` 及生成脚本，记录 Python implementation/version、平台和 Workbench/CAN/UDS/质量工具的解析版本。
 - 新增最小 Ruff `E4/E7/E9/F` 全仓门禁，以及 evidence bundle/capsule 和新脚本的范围化 mypy 门禁；本地均通过。
-- CI 保留 Windows/Ubuntu Python 3.11 主矩阵，并增加 Ubuntu/Python 3.14 runtime-currency 全量测试 job；远端兼容性等待本轮提交验收。
-- 本地全量 150 项测试中 148 项通过、2 项按环境跳过；compileall、schema/example、Ruff、mypy、Bash 语法和 `pip check` 均通过。
+- CI 保留 Windows/Ubuntu Python 3.11 主矩阵，并增加 Ubuntu/Python 3.14 runtime-currency 全量测试 job；run `34445964343` 的三个 job 全部通过。
+- 冻结复核新增 manifest、delivery receipt、capsule report 的 RFC 3339 时间戳 schema-loader 同拒绝，并让 manifest/capsule portable path schema 显式拒绝反斜杠。
+- 本地全量 153 项测试中 151 项通过、2 项按环境跳过；契约/evidence 定向 29/29，compileall、schema/example、Ruff、mypy、Bash 语法和 `pip check` 均通过；最终远端验收待后续提交运行。
 
 ## 下次必须补录
 

@@ -47,14 +47,16 @@ jsonschema 4.26.0 是当前 PyPI release，并支持 Python 3.10 及以上。[^4
 
 | 检查 | 结果 |
 |---|---|
-| 全量 unittest | 150 项运行，148 通过，2 项环境条件跳过 |
-| 契约/evidence 定向测试 | 26/26 通过 |
+| 全量 unittest | 153 项运行，151 通过，2 项环境条件跳过 |
+| 契约/evidence 定向测试 | 29/29 通过 |
 | Schema | 25 份 meta-schema 通过 |
 | Schema-bound example | 45/45 通过 |
 | Syntax-only fixture | 16 份，明确未声明 schema |
 | Ruff | 全仓通过 |
 | mypy | 5 个安全敏感源文件通过 |
 | compileall/Bash/pip check | 通过 |
+
+首轮远端 run `34445964343` 已验证 Windows/Python 3.11、Ubuntu/Python 3.11 和 Ubuntu/Python 3.14 三个 job 全部通过。复核冻结条件后又补齐三个 evidence loader 的 RFC 3339 时间戳拒绝，以及 manifest/capsule portable path 对反斜杠的 schema 拒绝；最终远端验收等待后续提交运行。
 
 ## 边界与后续
 

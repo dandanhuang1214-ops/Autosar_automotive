@@ -6,6 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jsonschema import FormatChecker
+from jsonschema.validators import validator_for
+
 from automotive_workbench.communication_evidence import run_communication_chain
 from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
@@ -242,6 +245,28 @@ class EvidenceBundleTests(unittest.TestCase):
                     manifest_path.write_text(json.dumps(payload), encoding="utf-8")
                     with self.assertRaisesRegex(ValueError, "count|bytes|size"):
                         load_evidence_bundle_manifest(manifest_path)
+
+    def test_schema_and_loader_reject_invalid_manifest_timestamp(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = root / "bundle"
+            bundle.mkdir()
+            (bundle / "empty.md").write_bytes(b"")
+            manifest_path = root / "manifest.json"
+            manifest = create_evidence_bundle_manifest(
+                bundle, manifest_path, "test producer"
+            )
+            manifest["created_at"] = "not-a-date-time"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            schema = json.loads(
+                (ROOT / "schemas" / "evidence-bundle-manifest.schema.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            validator = validator_for(schema)(schema, format_checker=FormatChecker())
+            self.assertTrue(list(validator.iter_errors(manifest)))
+            with self.assertRaisesRegex(ValueError, "RFC 3339"):
+                load_evidence_bundle_manifest(manifest_path)
 
 
 if __name__ == "__main__":
