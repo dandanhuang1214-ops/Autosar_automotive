@@ -38,6 +38,23 @@ cpp2canTest label: 34/34 passed
 full tests-posix-debug CTest: 1879/1879 passed
 ```
 
+P11 drift revalidation at upstream commit
+`000520435cf5f3b287de7aea1a4b52bd005e48ce`:
+
+```text
+git apply --check: passed
+CANFrameTest: 7/7 passed
+cpp2canTest label: 44/44 passed
+full tests-posix-debug CTest: 2572/2572 passed
+```
+
+The replay is valid for the classic/non-FD `tests-posix-debug` configuration.
+`CANFrame::MAX_FRAME_LENGTH` may be 64 when
+`CPP2CAN_USE_64_BYTE_FRAMES` is enabled, so the test must not be presented as a
+universal CAN FD invariant. The historical patch is intentionally unchanged;
+see `docs/research/openbsw-p11-drift-revalidation-2026-09-10.md` for the drift
+report and current upstreaming decision.
+
 Upstream readiness note:
 
 OpenBSW's `CONTRIBUTING.md` asks contributors to discuss work with the team

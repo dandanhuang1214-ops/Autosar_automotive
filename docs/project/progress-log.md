@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-10）
 
-当前阶段：`P9 — 胶囊级事后完整性验证及 Windows/Ubuntu 验收完成`。
+当前阶段：`P11 — OpenBSW 版本漂移复验完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -45,8 +45,23 @@
 | 通信证据交付 | 完成 | P7 一条 CLI 交付 bundle/manifest/verification/receipt，Windows/Ubuntu CI 均通过 |
 | 自包含证据胶囊 | 完成 | P8 按 manifest 白名单复制外部依赖，移出原 base 后离线复验及双平台 CI 通过 |
 | 胶囊级完整性验证 | 完成 | P9 完整库存/哈希/契约/P5 依赖图复验与 receipt 篡改拒绝，Windows/Ubuntu CI 均通过 |
+| 契约一致性与运行时前沿 | 完成 | P10 schema/loader parity、Python 3.14、Ruff/mypy 与依赖 inventory 三 job 验收通过 |
+| OpenBSW 版本漂移复验 | 完成 | P11 固定 `dbd6e118..00052043`，patch 重放及 7/7、44/44、2572/2572 CTest 通过 |
 
 ## 已完成升级历史
+
+### P11：OpenBSW Drift Revalidation（2026-09-10）
+
+- 将 R3 固定基线 `dbd6e118a9aaa2db36e4461ce76655e8f285598d` 与 2026-09-09 上游 `000520435cf5f3b287de7aea1a4b52bd005e48ce` 比较；在 `/tmp/openbsw-p11` 使用干净 clone，未修改 `/home/dev/work/openbsw` 的历史工作树。
+- 目标范围内 `cpp2can` 增加 MaskFilter/CAN-FD 构建接线，DoCAN 增加多种 addressing 与集成测试，referenceApp 增加 UDS/SOME-IP 能力；这些更新不触发 Workbench 新协议或 adapter 扩张。
+- `CanDemoListener` 的 `0x123 -> 0x124` 回送、`DemoSystem` 每秒发送 `0x558`、POSIX `vcan0` 入口均保留；POSIX CanSystem 新增 classic/CAN-FD 配置分支。
+- 历史 patch `0001-cpp2can-add-classic-canframe-invariant-test.patch` 通过 `git apply --check` 并无冲突重放；configure、定向构建和全量 748-action 构建通过。
+- CTest：`CANFrameTest` 7/7、`cpp2canTest` 44/44、全量 `tests-posix-debug` 2572/2572 通过；旧基线分别为 7/7、34/34、1879/1879。
+- Workbench 回归：153 项运行，151 项通过、2 项按环境跳过；25 份 schema、45 份 schema-bound example、Ruff 和 whitespace gate 通过。
+- 适用性修正：八字节 payload 只属于 classic/non-FD 构建；定义 `CPP2CAN_USE_64_BYTE_FRAMES` 时 `CANFrame::MAX_FRAME_LENGTH=64`。历史 patch 不改写，上游化前必须更新 rationale 并先按贡献流程沟通。
+- 详细证据：`docs/research/openbsw-p11-drift-revalidation-2026-09-10.md`。
+- 边界：没有引入 OpenBSW runtime adapter、DoIP/SOME-IP/Bazel/Rust、S32K148 硬件依赖或商业 AUTOSAR 工具；没有自动创建 issue/PR。
+- 状态：完成；是否上游化继续保持人工触发。
 
 ### P0：平台边界与统一证据模型
 
@@ -840,14 +855,14 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：P9 Evidence Capsule 事后验证
+### 最近一步：P11 OpenBSW Drift Revalidation
 
-P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 依赖图双层验证，并以受控 receipt 篡改证明非 bundle 文件也会 fail closed。本地与双平台 CI 验收均完成；下一步选择新的窄里程碑，P5-P9 和 R5 契约继续冻结。
+P11 已将 R3 的 OpenBSW 历史基线与当前上游固定比较，旧 patch 在 classic/non-FD preset 下无冲突重放，定向与全量 CTest 均通过；源码锚点和 CAN-FD 适用性边界已归档。P5-P10、R5 和该 patch 的历史内容继续冻结；下一步不自动扩展协议或硬件范围，优先服务明确的学习验收、adapter consumer 或上游化需求。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
 - R3a-R3e 已完成 native POSIX baseline、源码索引、全量测试和 patch artifact，不再作为当前阻塞项。
-- 是否开启 OpenBSW issue/PR 或继续完整 development 容器，等诊断闭环需要或有明确上游目标时再决定。
+- P11 已完成当前上游漂移复验；是否开启 OpenBSW issue/PR 或继续完整 development 容器，等有明确上游目标时再决定。
 
 诊断链当前闭环已稳定，AI 工程审查已完成 development/runtime/held-out/cross-run/cohort 五类确定性评测；CAN/UDS/DTC 的现场 producer 与固定报告 cohort 均能逐 candidate 区分 stable、drifted 与 not-comparable，固定报告同时归档哈希绑定 provenance、已匹配的调用方 expectation 和已执行的 cohort repository/job policy；preflight 失败现可在不物化请求的前提下留存最小拒绝证据。
 
@@ -873,4 +888,4 @@ P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 �
 ## 下次必须补录
 
 - 新 schema/loader 版本的正例、负例与 parity 回归结果；
-- OpenBSW 仅在出现明确 adapter 或上游化需求时补录 drift revalidation 结果。
+- OpenBSW 上游 HEAD 再次变化后，仅在出现明确 adapter 或上游化需求时补录下一次 drift revalidation。
