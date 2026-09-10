@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/evidence-capsule-verification.schema.json",
+  "title": "Evidence Capsule Verification",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "bundle_id", "verified_at", "capsule_report_sha256", "manifest_sha256", "source_delivery_status", "status", "expected_file_count", "actual_file_count", "verified_file_count", "artifact_count", "verified_artifact_count", "dependency_count", "verified_dependency_count", "finding_count", "findings"],
+  "properties": {
+    "artifact_type": {"const": "evidence-capsule-verification"},
+    "schema_version": {"const": "evidence-capsule-verification-0.1"},
+    "bundle_id": {"type": "string", "minLength": 1},
+    "verified_at": {"type": "string", "format": "date-time"},
+    "capsule_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_delivery_status": {"enum": ["passed", "failed", "blocked"]},
+    "status": {"enum": ["passed", "failed"]},
+    "expected_file_count": {"type": "integer", "minimum": 1},
+    "actual_file_count": {"type": "integer", "minimum": 0},
+    "verified_file_count": {"type": "integer", "minimum": 0},
+    "artifact_count": {"type": "integer", "minimum": 1},
+    "verified_artifact_count": {"type": "integer", "minimum": 0},
+    "dependency_count": {"type": "integer", "minimum": 0},
+    "verified_dependency_count": {"type": "integer", "minimum": 0},
+    "finding_count": {"type": "integer", "minimum": 0},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "category", "path", "message"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "category": {"enum": ["missing", "unexpected", "tampered", "unsafe-file", "contract", "dependency"]},
+          "path": {"type": "string", "minLength": 1},
+          "message": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

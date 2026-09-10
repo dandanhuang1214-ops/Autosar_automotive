@@ -80,6 +80,10 @@ if [[ "${chain_rc}" -eq 0 || "${chain_rc}" -eq 3 ]]; then
     --base . \
     --output "${output}/workbench-evidence-capsule" \
     > "${output}/workbench-evidence-capsule.stdout.json"
+  PYTHONPATH=src "${python_bin}" -m automotive_workbench.cli verify-evidence-capsule \
+    "${output}/workbench-evidence-capsule" \
+    --output "${output}/workbench-evidence-capsule-verification" \
+    > "${output}/workbench-evidence-capsule-verification.stdout.json"
 fi
 
 if [[ "${chain_rc}" -eq 0 ]]; then

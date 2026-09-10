@@ -33,6 +33,7 @@ from automotive_workbench.evidence_bundle import (
     verify_evidence_bundle,
 )
 from automotive_workbench.evidence_capsule import export_evidence_capsule
+from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -241,6 +242,15 @@ def build_parser() -> argparse.ArgumentParser:
     capsule_parser.add_argument(
         "--output", type=Path, default=Path("output") / "evidence-capsule"
     )
+
+    capsule_verify_parser = commands.add_parser(
+        "verify-evidence-capsule",
+        help="Verify the complete inventory and dependency graph of an evidence capsule",
+    )
+    capsule_verify_parser.add_argument("capsule", type=Path)
+    capsule_verify_parser.add_argument(
+        "--output", type=Path, default=Path("output") / "evidence-capsule-verification"
+    )
     return parser
 
 
@@ -360,6 +370,8 @@ def main() -> int:
                 args.output,
                 base=args.base,
             )
+        elif args.command == "verify-evidence-capsule":
+            result = verify_evidence_capsule(args.capsule, args.output)
         else:
             result = run_backend_lab(
                 args.dbc,

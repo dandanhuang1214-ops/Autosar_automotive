@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/evidence-capsule-tamper-exercise.schema.json",
+  "title": "Controlled Evidence Capsule Tamper Exercise",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "status", "cli_outcome", "verification_status", "tampered_path", "finding_code"],
+  "properties": {
+    "artifact_type": {"const": "evidence-capsule-tamper-exercise"},
+    "schema_version": {"const": "evidence-capsule-tamper-exercise-0.1"},
+    "status": {"const": "passed"},
+    "cli_outcome": {"const": "failure"},
+    "verification_status": {"const": "failed"},
+    "tampered_path": {"const": "communication-evidence-delivery.json"},
+    "finding_code": {"const": "CAPSULE-SHA256-MISMATCH"}
+  },
+  "additionalProperties": false
+}

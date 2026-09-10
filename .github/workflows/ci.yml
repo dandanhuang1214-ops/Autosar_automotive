@@ -85,6 +85,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m automotive_workbench.cli verify-evidence output/evidence-capsule-relocated/bundle output/evidence-capsule-relocated/manifest.json --base output/evidence-capsule-relocated --output output/evidence-capsule-relocated-recheck
+      - name: Verify complete relocated capsule inventory
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-evidence-capsule output/evidence-capsule-relocated --output output/evidence-capsule-verification-normal
       - name: Upload self-contained evidence capsule
         if: ${{ always() && steps.evidence_capsule.outcome != 'skipped' }}
         uses: actions/upload-artifact@v7
@@ -93,6 +97,25 @@ jobs:
           path: |
             output/evidence-capsule/
             output/evidence-capsule-relocated-recheck/
+            output/evidence-capsule-verification-normal/
+          if-no-files-found: error
+      - name: Prepare controlled capsule receipt tamper
+        run: python scripts/evidence_capsule_tamper_exercise.py prepare output/evidence-capsule-relocated output/evidence-capsule-tampered
+      - name: Run controlled capsule tamper rejection
+        id: controlled_capsule_tamper
+        continue-on-error: true
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-evidence-capsule output/evidence-capsule-tampered --output output/evidence-capsule-verification-rejection
+      - name: Verify controlled capsule tamper rejection
+        if: ${{ always() && steps.controlled_capsule_tamper.outcome != 'skipped' }}
+        run: python scripts/evidence_capsule_tamper_exercise.py check output/evidence-capsule-verification-rejection --cli-outcome ${{ steps.controlled_capsule_tamper.outcome }}
+      - name: Upload capsule tamper rejection
+        if: ${{ always() && steps.controlled_capsule_tamper.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidence-capsule-rejection-${{ runner.os }}
+          path: output/evidence-capsule-verification-rejection/
           if-no-files-found: error
       - name: Exercise unavailable SocketCAN communication backend
         id: blocked_communication_chain
