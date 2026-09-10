@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-09）
+## 当前总览（2026-09-10）
 
-当前阶段：`P9 — 胶囊级事后完整性验证`。
+当前阶段：`P9 — 胶囊级事后完整性验证及 Windows/Ubuntu 验收完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -44,7 +44,7 @@
 | 本地 Artifact Registry | 完成当前闭环 | P5a manifest、P5b 事后验证与 P5c Windows/Ubuntu 正常/篡改拒绝证据均通过 |
 | 通信证据交付 | 完成 | P7 一条 CLI 交付 bundle/manifest/verification/receipt，Windows/Ubuntu CI 均通过 |
 | 自包含证据胶囊 | 完成 | P8 按 manifest 白名单复制外部依赖，移出原 base 后离线复验及双平台 CI 通过 |
-| 胶囊级完整性验证 | 本地完成 | P9 完整库存/哈希/契约/P5 依赖图复验与 receipt 篡改拒绝，双平台 CI 待验收 |
+| 胶囊级完整性验证 | 完成 | P9 完整库存/哈希/契约/P5 依赖图复验与 receipt 篡改拒绝，Windows/Ubuntu CI 均通过 |
 
 ## 已完成升级历史
 
@@ -175,7 +175,7 @@
 - 边界：capsule 是目录结构和本地字节搬运契约，不是压缩归档、签名、attestation、producer 身份或供应链认证。
 - 状态：完成，Windows/Ubuntu 双平台验收通过；P8 契约冻结。
 
-### P9：Evidence Capsule 事后完整性验证（2026-09-09）
+### P9：Evidence Capsule 事后完整性验证（2026-09-10）
 
 - 新增 `verify-evidence-capsule <capsule> --output <output>` 和闭合 `evidence-capsule-verification-0.1`，从 P8 report 重建完整预期文件库存。
 - 胶囊级 verifier 验证 manifest、receipt、source/offline verification、可重建 Markdown、全部 bundle artifacts 和去重 external dependencies，并拒绝 missing、unexpected、SHA-256 drift、special file 和 symlink。
@@ -184,8 +184,9 @@
 - CI 在 P8 目录迁移后运行完整 capsule verifier，正常与受控拒绝证据分开上传；Linux SocketCAN 入口在导出后也自动执行 P9 verifier。
 - 定向验证 7 项通过，覆盖 16/16 files 正向验证、external tamper、receipt missing + unexpected file、Markdown tamper、symlink 和受控 CLI failure；全量 143 项通过、2 项环境跳过。
 - 实际受控演练：未改动 bundle 或 external dependency，P9 返回 15/16 files verified、7/7 artifacts、3/3 dependencies 和唯一 receipt hash Finding，证明胶囊级检查与 P5 内容检查职责分离。
+- 提交 `974b1b5` 推送后，GitHub Actions run `34436609789` 的 Ubuntu job `102742875545` 与 Windows job `102742875415` 均成功；两平台完整库存验证、receipt 篡改拒绝检查及正常/拒绝 artifact 上传步骤全部通过。
 - 边界：P9 验证胶囊内部字节一致性，不提供胶囊之外的信任根、签名、attestation、身份或供应链来源认证。
-- 状态：本地实现与验收完成，待 Windows/Ubuntu CI 远程验收。
+- 状态：完成，Windows/Ubuntu 双平台验收通过；P9 契约冻结。
 
 ### R0：python-can virtual 运行时
 
@@ -832,7 +833,7 @@ official_native_baseline=false
 
 ### 最近一步：P9 Evidence Capsule 事后验证
 
-P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 依赖图双层验证，并以受控 receipt 篡改证明非 bundle 文件也会 fail closed。本地验收完成，待双平台 CI 验收；P5-P8 和 R5 契约继续冻结。
+P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 依赖图双层验证，并以受控 receipt 篡改证明非 bundle 文件也会 fail closed。本地与双平台 CI 验收均完成；下一步选择新的窄里程碑，P5-P9 和 R5 契约继续冻结。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
