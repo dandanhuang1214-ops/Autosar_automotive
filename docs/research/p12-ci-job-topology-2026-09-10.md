@@ -79,6 +79,21 @@ scoped mypy                            passed
 git diff --check                       passed
 ```
 
+## Remote acceptance
+
+GitHub Actions run
+[`34486148658`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34486148658)
+validated commit `a5e49a2` with all seven concrete jobs successful:
+
+- `core-contracts`: Windows `102900831129`, Ubuntu `102900831313`;
+- `runtime-evidence`: Windows `102901678103`, Ubuntu `102901678049`;
+- `controlled-rejections`: Windows `102901678190`, Ubuntu `102901678164`;
+- `runtime-currency`: Ubuntu/Python 3.14 `102900831363`.
+
+The runtime and rejection matrices started only after both core matrix jobs
+completed. The four non-zero CLI exits in each rejection job were expected,
+and every mandatory checker and artifact upload completed successfully.
+
 ## Boundary
 
 P12 changes orchestration only. Artifact names, schemas, CLI behavior, expected
