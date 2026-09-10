@@ -3,6 +3,11 @@
 cantools<42,>=41.4
 python-can<5,>=4.6
 
+[dev]
+jsonschema[format]<5,>=4.26
+mypy<3,>=2.3.1
+ruff<1,>=0.16.6
+
 [diag]
 cantools<42,>=41.4
 python-can<5,>=4.6

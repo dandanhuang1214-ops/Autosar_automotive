@@ -13,7 +13,6 @@ from automotive_workbench.can_io import (
     exact_can_filters,
     open_bus,
     replay_log,
-    sha256_file,
 )
 from automotive_workbench.can_runtime import _python_can
 

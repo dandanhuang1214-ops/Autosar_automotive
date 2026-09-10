@@ -49,7 +49,7 @@
 
 | 校验 | 结果 |
 |---|---|
-| `unittest` 全量测试 | 148 项运行：146 项通过，2 项按环境跳过 |
+| `unittest` 全量测试 | 146 项运行：144 项通过，2 项按环境跳过 |
 | evidence 定向回归 | 22 项通过 |
 | Python `compileall` | 通过 |
 | 全部 schema/example JSON 解析 | 通过 |
@@ -233,7 +233,7 @@ SARIF 2.1.0 加 Errata 01 仍是 OASIS 当前公开标准，GitHub code scanning
 4. 引入最小 Ruff 门禁；type checking 先覆盖 evidence 与 domain public API；
 5. 输出 resolved dependency inventory；
 6. GitHub Actions 均固定完整 SHA，权限默认只读；
-7. Windows/Ubuntu 的现有 148 项回归和所有 controlled rejection 继续通过。
+7. Windows/Ubuntu 的现有 146 项回归和所有 controlled rejection 继续通过。
 
 ### P11 候选：OpenBSW Drift Revalidation
 

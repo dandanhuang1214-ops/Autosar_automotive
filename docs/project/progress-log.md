@@ -797,6 +797,15 @@ official_native_baseline=false
 - 增加 WSL 命令、报告路径和“故障场景 passed 表示故障被检出”的解释；
 - 状态：任务说明修正完成，无运行时代码变化。
 
+### L5：第四周 Day 5 OpenBSW 学习任务降维（2026-09-10）
+
+- 原任务“查找 main/CanSystem/DemoSystem/测试入口”缺少可观察主线，对初次阅读大型 C++ 仓库不够友好；
+- 已确认 `/home/dev/work/openbsw` 的四个目标源码文件及 POSIX Release 可执行文件存在；
+- 学习任务改为追踪 `0x123 → CanDemoListener → 0x124` 回送链，并观察 `DemoSystem` 每秒发送 `0x558`；
+- 增加四段限定行号的源码命令、三终端运行实验、预期现象和四行职责表；
+- 明确不要求本日理解 lifecycle/async/C++ 模板，也不把 OpenBSW 实现等同于 AUTOSAR 标准调用链；
+- 状态：任务说明完成，等待学习者运行观察和口述验收。
+
 ### L4：第四周 Day 2 分层图参考答案（2026-09-04）
 
 - 使用学习者提供的 ASW/System/ECU Extract/ECUC/Runtime 分层图回答 Day 2 三题；
@@ -845,10 +854,19 @@ P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 �
 ## 2026-09-10 全局审计与契约加固
 
 - 完成全局目标、前沿性与代码质量审计。结论为技术目标保持对齐、路线叙事轻度漂移、工程门禁中度滞后；调研覆盖 AUTOSAR R25-11、OpenBSW 2026 活动、Python 3.14、CAN/UDS 依赖、SLSA/in-toto、GitHub artifact attestations、SARIF 与 SOVD。
-- 修复 evidence manifest、delivery receipt 与 capsule report 中 Python `bool` 被当作 JSON integer 接受的闭合契约缺陷，新增三组负例回归；本地全量 148 项测试中 146 项通过、2 项按环境跳过，evidence 定向测试 22/22 通过。
+- 修复 evidence manifest、delivery receipt 与 capsule report 中 Python `bool` 被当作 JSON integer 接受的闭合契约缺陷，新增三组负例回归；本地全量 146 项测试中 144 项通过、2 项按环境跳过，evidence 定向测试 22/22 通过。原记录将跳过项重复计入总数，已在 P10 复核时更正。
 - CI 官方 actions 更新到当前 major/minor 并固定完整 commit SHA，默认 `GITHUB_TOKEN` 权限收敛为 `contents: read`。
-- 远端验收完成：GitHub Actions run `34441821082` 的 Windows/Ubuntu job 均通过；固定 SHA、只读 token、148 项核心回归、正常证据链与 controlled rejection 全部按契约运行。
+- 远端验收完成：GitHub Actions run `34441821082` 的 Windows/Ubuntu job 均通过；固定 SHA、只读 token、146 项核心回归、正常证据链与 controlled rejection 全部按契约运行。
 - 下一窄里程碑确定为 P10 Contract Conformance 与 Runtime Currency，不增加新的汽车协议功能。
+
+## P10：Contract Conformance 与 Runtime Currency（2026-09-10）
+
+- 新增基于 `jsonschema` Draft 2020-12 的 schema meta-validation、`format` 检查和按 `schema_version` 自动绑定的实例校验；25 份 schema、45 份自描述样例本地通过，16 份外部或非自描述 fixture 明确保持 syntax-only。
+- evidence manifest、delivery receipt、capsule report 的 boolean/integer 负例现同时验证 JSON Schema 与 loader 均拒绝，避免只测一侧产生虚假一致性。
+- 新增 `resolved-dependency-inventory-0.1` 及生成脚本，记录 Python implementation/version、平台和 Workbench/CAN/UDS/质量工具的解析版本。
+- 新增最小 Ruff `E4/E7/E9/F` 全仓门禁，以及 evidence bundle/capsule 和新脚本的范围化 mypy 门禁；本地均通过。
+- CI 保留 Windows/Ubuntu Python 3.11 主矩阵，并增加 Ubuntu/Python 3.14 runtime-currency 全量测试 job；远端兼容性等待本轮提交验收。
+- 本地全量 150 项测试中 148 项通过、2 项按环境跳过；compileall、schema/example、Ruff、mypy、Bash 语法和 `pip check` 均通过。
 
 ## 下次必须补录
 

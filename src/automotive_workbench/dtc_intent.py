@@ -210,7 +210,7 @@ def load_dtc_intent(path: Path) -> dict[str, Any]:
                 raise ValueError(f"Unsupported DTC lifecycle state: {state}")
             expected_status = _integer(step.get("expected_status"), "expected_status", 0, 0xFF)
             if expected_status & ~availability_mask:
-                raise ValueError(f"DTC lifecycle step expected status uses unavailable bits")
+                raise ValueError("DTC lifecycle step expected status uses unavailable bits")
             if event == "read_dtc":
                 _integer(step.get("status_mask"), "status_mask", 1, 0xFF)
 

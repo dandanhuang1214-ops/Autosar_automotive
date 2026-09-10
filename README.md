@@ -37,12 +37,15 @@
 31. 用一条命令串联通信链运行、bundle 索引、完整性验证与 receipt，保留 `passed/failed/blocked` 业务状态并单独记录 integrity 状态。
 32. 将 P7 交付导出为自包含 evidence capsule，仅复制 manifest 声明的外部依赖，移出原工作区后仍可离线验证。
 33. 对整个 capsule 执行事后库存与依赖图验证，检出顶层 receipt/verification/Markdown、bundle、external dependency 的 missing、unexpected、tampered 和 unsafe file。
+34. 用 Draft 2020-12 schema 校验自描述样例，在 Python 3.14 上复跑全量测试，并归档解释器、平台和关键依赖的 resolved inventory。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
 ## 运行
 
 核心追踪无需第三方依赖；DBC 功能安装可选 CAN 依赖：
+
+运行完整测试、schema、Ruff 和 mypy 门禁时安装 `python -m pip install -e ".[diag,dev]"`。
 
 ```powershell
 python -m pip install -e ".[can]"
@@ -131,4 +134,4 @@ adapters/
 
 ## CI/CD边界
 
-当前GitHub Actions在Windows和Ubuntu 22.04上运行单元测试、CLI smoke test、固定报告 cohort、可控 preflight rejection 演练和JSON语法检查；正常与拒绝证据分别上传。现在只有CI，没有CD；等出现可发布CLI包、容器或文档站后再设计发布流程。
+当前GitHub Actions在Windows和Ubuntu 22.04/Python 3.11上运行完整工程链，并用Ubuntu 22.04/Python 3.14执行 runtime-currency 全量回归、Draft 2020-12 schema 实例校验、最小 Ruff 门禁和 evidence 模块范围内的 mypy 门禁；每个环境归档 resolved dependency inventory。现在只有CI，没有CD；等出现可发布CLI包、容器或文档站后再设计发布流程。

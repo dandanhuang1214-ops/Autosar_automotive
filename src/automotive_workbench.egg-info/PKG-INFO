@@ -11,3 +11,7 @@ Requires-Dist: cantools<42,>=41.4; extra == "diag"
 Requires-Dist: python-can<5,>=4.6; extra == "diag"
 Requires-Dist: can-isotp<3,>=2.0; extra == "diag"
 Requires-Dist: udsoncan<2,>=1.26; extra == "diag"
+Provides-Extra: dev
+Requires-Dist: jsonschema[format]<5,>=4.26; extra == "dev"
+Requires-Dist: mypy<3,>=2.3.1; extra == "dev"
+Requires-Dist: ruff<1,>=0.16.6; extra == "dev"

@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jsonschema.validators import validator_for
+
 from automotive_workbench.communication_delivery import run_communication_delivery
 from automotive_workbench.evidence_capsule import export_evidence_capsule
 from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
@@ -115,6 +117,13 @@ class EvidenceCapsuleVerificationTests(unittest.TestCase):
             report["dependency_count"] = False
             report["verified_dependency_count"] = False
             report_path.write_text(json.dumps(report), encoding="utf-8")
+
+            schema = json.loads(
+                (ROOT / "schemas" / "evidence-capsule.schema.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertTrue(list(validator_for(schema)(schema).iter_errors(report)))
 
             with self.assertRaisesRegex(ValueError, "count is invalid"):
                 verify_evidence_capsule(capsule, root / "verification")

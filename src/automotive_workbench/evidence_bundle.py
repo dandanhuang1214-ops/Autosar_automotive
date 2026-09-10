@@ -133,7 +133,7 @@ def create_evidence_bundle_manifest(
     for path in paths:
         relative = path.relative_to(bundle).as_posix()
         media_type, artifact_type, schema_version, payload = _metadata(path)
-        artifact = {
+        artifact: dict[str, Any] = {
             "artifact_id": relative,
             "relative_path": relative,
             "media_type": media_type,
@@ -148,7 +148,10 @@ def create_evidence_bundle_manifest(
 
     artifacts_by_path = {artifact["relative_path"]: artifact for artifact in artifacts}
     for artifact in artifacts:
-        payload = payloads[artifact["relative_path"]]
+        relative_path = artifact["relative_path"]
+        if not isinstance(relative_path, str):
+            raise ValueError("Evidence bundle artifact relative_path must be a string")
+        payload = payloads[relative_path]
         if payload is None or "source_artifacts" not in payload:
             continue
         sources = payload["source_artifacts"]
