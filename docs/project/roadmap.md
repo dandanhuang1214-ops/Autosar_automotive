@@ -61,7 +61,7 @@
 - P8 已完成（2026-09-09）：新增 `export-evidence-capsule`，按 P5 manifest 白名单复制 P7 bundle 及外部依赖，并以 capsule 根目录为 base 执行离线复验；run `34368118499` 的 Windows/Ubuntu 迁移复验与 artifact 上传均通过。
 - P9 已完成（2026-09-10）：新增 `verify-evidence-capsule`，对 16 份胶囊文件执行完整库存、哈希、契约及 P5 依赖图复验，并增加顶层 receipt 受控篡改拒绝；run `34436609789` 的 Windows/Ubuntu 正常验证、受控拒绝检查与 artifact 上传均通过。
 - OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- P10 基础门禁远端通过（2026-09-10，run `34445964343`）：25 份 schema meta-validation、45 份 schema-bound example、三类 evidence boolean/integer schema-loader 同拒绝、Python 3.14 runtime-currency job、最小 Ruff/mypy 门禁和 resolved dependency inventory 已落地。冻结复核补充的 RFC 3339 与 portable path 一致性正在等待最终三 job 验收。继续保持纯本地确定性边界，不扩张为远端下载、签名/attestation、外部 LLM 或向量库。
+- P10 已完成并冻结（2026-09-10，最终 run `34446441635`）：25 份 schema meta-validation、45 份 schema-bound example、三类 evidence boolean/integer 与 RFC 3339 schema-loader 同拒绝、portable path、Python 3.14 runtime-currency、最小 Ruff/mypy 门禁和 resolved dependency inventory 均通过三 job 验收。下一里程碑需重新选择，不自动进入 OpenBSW/新协议；继续保持纯本地确定性边界。
 
 ## 平台目标
 

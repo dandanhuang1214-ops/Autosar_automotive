@@ -867,9 +867,10 @@ P9 在 P8 可搬运目录之上增加完整库存、顶层哈希/契约与 P5 �
 - 新增最小 Ruff `E4/E7/E9/F` 全仓门禁，以及 evidence bundle/capsule 和新脚本的范围化 mypy 门禁；本地均通过。
 - CI 保留 Windows/Ubuntu Python 3.11 主矩阵，并增加 Ubuntu/Python 3.14 runtime-currency 全量测试 job；run `34445964343` 的三个 job 全部通过。
 - 冻结复核新增 manifest、delivery receipt、capsule report 的 RFC 3339 时间戳 schema-loader 同拒绝，并让 manifest/capsule portable path schema 显式拒绝反斜杠。
-- 本地全量 153 项测试中 151 项通过、2 项按环境跳过；契约/evidence 定向 29/29，compileall、schema/example、Ruff、mypy、Bash 语法和 `pip check` 均通过；最终远端验收待后续提交运行。
+- 本地全量 153 项测试中 151 项通过、2 项按环境跳过；契约/evidence 定向 29/29，compileall、schema/example、Ruff、mypy、Bash 语法和 `pip check` 均通过。
+- P10 最终远端验收完成：run `34446441635` 的 Windows/Python 3.11、Ubuntu/Python 3.11 和 Ubuntu/Python 3.14 三个 job 全部通过；P10 契约冻结。
 
 ## 下次必须补录
 
-- P10 schema/loader conformance 差异目录、Python 3.14 lane、最小 lint/type 门禁和 resolved dependency inventory 的验收结果；
+- 新 schema/loader 版本的正例、负例与 parity 回归结果；
 - OpenBSW 仅在出现明确 adapter 或上游化需求时补录 drift revalidation 结果。

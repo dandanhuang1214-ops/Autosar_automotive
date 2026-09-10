@@ -56,7 +56,7 @@ jsonschema 4.26.0 是当前 PyPI release，并支持 Python 3.10 及以上。[^4
 | mypy | 5 个安全敏感源文件通过 |
 | compileall/Bash/pip check | 通过 |
 
-首轮远端 run `34445964343` 已验证 Windows/Python 3.11、Ubuntu/Python 3.11 和 Ubuntu/Python 3.14 三个 job 全部通过。复核冻结条件后又补齐三个 evidence loader 的 RFC 3339 时间戳拒绝，以及 manifest/capsule portable path 对反斜杠的 schema 拒绝；最终远端验收等待后续提交运行。
+首轮远端 run `34445964343` 已验证 Windows/Python 3.11、Ubuntu/Python 3.11 和 Ubuntu/Python 3.14 三个 job 全部通过。复核冻结条件后又补齐三个 evidence loader 的 RFC 3339 时间戳拒绝，以及 manifest/capsule portable path 对反斜杠的 schema 拒绝；最终 run `34446441635` 再次验证三个 job 全部通过，P10 契约冻结。
 
 ## 边界与后续
 
@@ -64,7 +64,7 @@ jsonschema 4.26.0 是当前 PyPI release，并支持 Python 3.10 及以上。[^4
 - syntax-only fixture 仍需在未来出现稳定 producer contract 时逐步补 schema，不应为追求数字给外部格式套错误 schema。
 - mypy 是渐进式范围门禁，不代表全仓 strict typing。
 - dependency inventory 不提供哈希锁定、签名或 provenance authentication。
-- P10 远端验收通过后，下一步优先整理剩余 schema/loader 差异目录；OpenBSW drift revalidation 仍需明确 adapter 或上游化需求触发。
+- P10 已冻结；后续 schema/loader 新版本必须同步增加正例、负例和 parity 回归。OpenBSW drift revalidation 仍需明确 adapter 或上游化需求触发。
 
 ## Sources
 
