@@ -39,6 +39,7 @@
 33. 对整个 capsule 执行事后库存与依赖图验证，检出顶层 receipt/verification/Markdown、bundle、external dependency 的 missing、unexpected、tampered 和 unsafe file。
 34. 用 Draft 2020-12 schema 校验自描述样例，在 Python 3.14 上复跑全量测试，并归档解释器、平台和关键依赖的 resolved inventory。
 35. 构建临时 wheel，在全新虚拟环境和仓库外工作目录中通过安装后的 `workbench` 入口运行核心 trace，并拒绝源码树导入污染。
+36. 将 P7/P8 通信证据胶囊迁移到仓库外，再由无项目依赖的已安装 wheel 执行完整库存、哈希与依赖图复验。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 
@@ -89,6 +90,7 @@ python -m automotive_workbench.cli run-review-eval examples/review/evaluation/cr
 python -m automotive_workbench.cli run-review-eval examples/review/evaluation/cohort-evaluation.json --output output/review-cohort
 python -m automotive_workbench.cli run-review-eval examples/review/evaluation/external-cohort-evaluation.json --output output/review-external-cohort
 python scripts/check_installed_distribution.py --output output/distribution-smoke
+python scripts/check_installed_capsule_consumer.py --output output/installed-capsule-consumer
 python -m automotive_workbench.cli probe-uds-backend --interface socketcan --channel vcan0 --output output/socketcan-uds-probe
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --output output/uds-lab
 python -m automotive_workbench.cli run-uds-lab examples/window_control/uds_intent.json --interface socketcan --channel vcan0 --output output/socketcan-uds-lab
@@ -115,6 +117,7 @@ python -m automotive_workbench.cli inspect D:\path\to\issues.json
 - `export-evidence-capsule` 先重验 P7 交付及所有依赖，再按 manifest 白名单复制 bundle 和 external files，最后以 capsule 根目录为 portable base 离线复验。它不打包整个仓库，也不提供签名或身份证明。
 - `verify-evidence-capsule` 从闭合 capsule report 重建全量文件库存，验证固定哈希、可重建 Markdown 和 P5 依赖图；合法胶囊变化会生成 `status=failed` 证据并返回退出码 2。
 - `check_installed_distribution.py` 是发布前消费者 smoke：临时构建 wheel、无依赖安装到全新环境，并从仓库外调用 console script；验收后删除 wheel，只留哈希绑定的 smoke 报告，不构成发布、CD、签名或 attestation。
+- `check_installed_capsule_consumer.py` 将既有胶囊能力与安装包消费路径连接起来：源码侧生成并迁移胶囊，隔离安装的 wheel 在仓库外复验 16 份文件、7 份 artifact 和 3 条 dependency；临时 wheel 与胶囊均不上传，只保留闭合摘要。
 - `examples/window_control/uds_intent.json` 是公开学习样例和vendor-neutral诊断意图，不是量产DCM/DEM或OEM诊断规范。
 - `examples/window_control/dtc_intent.json` 中的 debounce、operation-cycle、aging、snapshot、extended data、进程内持久镜像、generation、commit marker 和 status byte 仅用于可重复研究实验，不是量产 DEM displacement、NvM、OBD 或 OEM 策略。
 - `run-review` 只读取 request 显式列出的本地 JSON/Markdown；跨 artifact 冲突只比较显式 assertion locator，词法匹配和 coverage 不是语义理解、LLM 结论或安全证明。
@@ -137,4 +140,4 @@ adapters/
 
 ## CI/CD边界
 
-当前 GitHub Actions 将 Windows/Ubuntu 22.04 Python 3.11 拆为 `core-contracts`、`runtime-evidence` 和 `controlled-rejections` 三类职责，并用 Ubuntu 22.04/Python 3.14 执行独立 runtime-currency 全量回归。`core-contracts` 会在 Windows/Linux 中额外构建、隔离安装并调用 wheel；运行证据和拒绝证据分别重建输入，不跨 job 共享可变目录；拓扑门禁固定关键步骤归属和四个预期失败。现在只有 CI，没有 CD；wheel 只用于临时 smoke 且不上传，等出现正式发布需求后再设计发布、签名和验证流程。
+当前 GitHub Actions 将 Windows/Ubuntu 22.04 Python 3.11 拆为 `core-contracts`、`runtime-evidence` 和 `controlled-rejections` 三类职责，并用 Ubuntu 22.04/Python 3.14 执行独立 runtime-currency 全量回归。`core-contracts` 会在 Windows/Linux 中额外构建、隔离安装并调用 wheel，并用安装后的命令复验迁移胶囊；运行证据和拒绝证据分别重建输入，不跨 job 共享可变目录；拓扑门禁固定关键步骤归属和四个预期失败。现在只有 CI，没有 CD；wheel 只用于临时 smoke 且不上传，等出现正式发布需求后再设计发布、签名和验证流程。

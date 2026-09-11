@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-11）
 
-当前阶段：`P13 — 安装后发行物消费者 smoke 完成`。
+当前阶段：`P14 — 安装后证据胶囊消费者本地完成，等待远端验收`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -49,8 +49,21 @@
 | OpenBSW 版本漂移复验 | 完成 | P11 固定 `dbd6e118..00052043`，patch 重放及 7/7、44/44、2572/2572 CTest 通过 |
 | CI 职责拆分 | 完成 | P12 四类职责、七个实际 job，topology guard、本地回归与远端 run `34486148658` 全部通过 |
 | 安装后 CLI 发行物 | 完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；run `34529188770` 双平台验收成功 |
+| 安装后胶囊消费者 | 等待环境验证 | P14 用无依赖隔离 wheel 在仓库外复验迁移胶囊；本地 16/16 文件、7/7 artifact、3/3 dependency 通过，等待 Windows/Ubuntu CI |
 
 ## 已完成升级历史
+
+### P14：Installed Evidence Capsule Consumer（2026-09-11）
+
+- 新增 `scripts/check_installed_capsule_consumer.py`，在开发环境生成 P7 delivery/P8 capsule，迁移后由无项目依赖的隔离 wheel 从仓库外调用 `verify-evidence-capsule`。
+- 消费者环境清除 `PYTHONPATH/PYTHONHOME`、拒绝 checkout import，并要求 CLI stdout 与落盘 verification 一致且状态为 `passed`。
+- 新增闭合 `installed-capsule-consumer-0.1` schema；摘要固定 wheel、capsule report、consumer verification 三份 SHA-256，以及 16/16 文件、7/7 artifact、3/3 dependency 完整计数和七项有序 checks。
+- 临时 wheel、producer、迁移胶囊、venv 和明细 verification 均在验收后删除；只保留摘要，不改变 P13 的发行边界。
+- `core-contracts` Windows/Ubuntu matrix 新增消费者检查和独立 artifact upload；P12 topology guard 固定步骤归属，scoped mypy 扩展为七个 source。
+- 本地验收：P14 7/7 checks 通过；全量 161 项中 159 项通过、2 项环境跳过；27 份 schema、45 份 schema-bound example、topology guard、Ruff、7-source mypy、compileall、`pip check` 与 whitespace gate 全部通过。
+- 详细设计：`docs/research/p14-installed-capsule-consumer-2026-09-11.md`。
+- 边界：不上传或发布 wheel/capsule，不增加 CD、签名、attestation、远程身份、新协议、硬件或运行时依赖。
+- 状态：本地完成，等待提交推送后的 Windows/Ubuntu CI 远端验收。
 
 ### P13：Installed Distribution Smoke（2026-09-11）
 
@@ -891,9 +904,9 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：P13 Installed Distribution Smoke
+### 最近一步：P14 Installed Evidence Capsule Consumer
 
-P13 将已有 console entry point 当作真实 adapter consumer 验收：不使用 editable install 或 `PYTHONPATH=src`，而是在隔离环境安装 wheel 后运行核心 trace。Windows/Ubuntu 双平台验收已通过并冻结。下一里程碑仍必须由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
+P14 将 P8/P9 的迁移胶囊与 P13 的安装后 CLI 连接：源码侧生成胶囊，随后由无项目依赖的隔离 wheel 在仓库外完成 16 文件、7 artifact、3 dependency 复验。本地验收已通过，等待提交推送后的 Windows/Ubuntu CI；完成前不扩展下一里程碑，也不自动进入发布、attestation、OpenBSW adapter 或新协议。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
@@ -920,6 +933,17 @@ P13 将已有 console entry point 当作真实 adapter consumer 验收：不使�
 - 冻结复核新增 manifest、delivery receipt、capsule report 的 RFC 3339 时间戳 schema-loader 同拒绝，并让 manifest/capsule portable path schema 显式拒绝反斜杠。
 - 本地全量 153 项测试中 151 项通过、2 项按环境跳过；契约/evidence 定向 29/29，compileall、schema/example、Ruff、mypy、Bash 语法和 `pip check` 均通过。
 - P10 最终远端验收完成：run `34446441635` 的 Windows/Python 3.11、Ubuntu/Python 3.11 和 Ubuntu/Python 3.14 三个 job 全部通过；P10 契约冻结。
+
+## L7：第五周 UDS / ISO-TP 最小诊断竖切计划（2026-09-11）
+
+- 学习主题从第四周 CAN 通信闭环推进到 UDS `0x22 ReadDataByIdentifier` 最小诊断链；
+- 固定使用 OpenBSW 示例 DID `0xCF01`，覆盖 UDS、ISO-TP SF/FF/FC/CF、SocketCAN/`vcan0` 和 OpenBSW 响应路径；
+- 计划包含 Workbench virtual backend 实验以及 OpenBSW + `vcan0` 实验，明确二者的验证边界；
+- 故障验收至少覆盖缺少 Flow Control、不支持 DID、错误 CAN ID、畸形长度中的两项；
+- 本周冻结完整 DCM、DEM/DTC、刷写、安全访问和 DoIP，避免诊断范围过早扩张；
+- 第六周决策门：链路不稳定则补 `can-isotp + udsoncan` 自动化客户端；稳定后再进入 DCM/DID 配置语义；
+- 学习计划：`D:/work/improve/learning/week-05/week-plan.md`；
+- 状态：计划已发布，等待 Day 1 学习与答题。
 
 ## 下次必须补录
 

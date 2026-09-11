@@ -37,6 +37,14 @@ jobs:
           name: installed-distribution-smoke-${{ runner.os }}-python-3.11
           path: output/distribution-smoke/installed-distribution-smoke.json
           if-no-files-found: error
+      - name: Verify evidence capsule with installed wheel
+        run: python scripts/check_installed_capsule_consumer.py --output output/installed-capsule-consumer
+      - name: Upload installed capsule consumer evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: installed-capsule-consumer-${{ runner.os }}-python-3.11
+          path: output/installed-capsule-consumer/installed-capsule-consumer.json
+          if-no-files-found: error
       - name: Run core tests
         id: core_tests
         env:
@@ -72,7 +80,7 @@ jobs:
       - name: Run minimum-error Ruff gate
         run: ruff check src tests scripts
       - name: Run scoped evidence type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/write_dependency_inventory.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/check_installed_capsule_consumer.py scripts/write_dependency_inventory.py
 
   runtime-evidence:
     needs: core-contracts
@@ -324,7 +332,7 @@ jobs:
       - name: Run minimum-error Ruff gate
         run: ruff check src tests scripts
       - name: Run scoped evidence type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/write_dependency_inventory.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/check_installed_capsule_consumer.py scripts/write_dependency_inventory.py
       - name: Upload Python 3.14 runtime currency evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

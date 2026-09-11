@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/installed-capsule-consumer.schema.json",
+  "title": "Installed Workbench Evidence Capsule Consumer",
+  "type": "object",
+  "required": ["artifact_type", "schema_version", "created_at", "status", "runtime", "wheel_sha256", "capsule_report_sha256", "verification_sha256", "verified_file_count", "verified_artifact_count", "verified_dependency_count", "checks"],
+  "properties": {
+    "artifact_type": {"const": "installed-capsule-consumer"},
+    "schema_version": {"const": "installed-capsule-consumer-0.1"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "passed"},
+    "runtime": {
+      "type": "object",
+      "required": ["implementation", "python", "platform"],
+      "properties": {
+        "implementation": {"type": "string", "minLength": 1},
+        "python": {"type": "string", "minLength": 1},
+        "platform": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "wheel_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "capsule_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verification_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verified_file_count": {"type": "integer", "minimum": 1},
+    "verified_artifact_count": {"type": "integer", "minimum": 1},
+    "verified_dependency_count": {"type": "integer", "minimum": 1},
+    "checks": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "prefixItems": [
+        {"const": "capsule-produced"},
+        {"const": "capsule-relocated"},
+        {"const": "wheel-built"},
+        {"const": "isolated-install"},
+        {"const": "checkout-import-excluded"},
+        {"const": "installed-capsule-verification"},
+        {"const": "verification-counts-complete"}
+      ],
+      "items": false
+    }
+  },
+  "additionalProperties": false
+}
