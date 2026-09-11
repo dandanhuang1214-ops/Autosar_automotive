@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-11）
 
-当前阶段：`P13 — 安装后发行物消费者 smoke 本地完成，待远程验收`。
+当前阶段：`P13 — 安装后发行物消费者 smoke 完成`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -48,7 +48,7 @@
 | 契约一致性与运行时前沿 | 完成 | P10 schema/loader parity、Python 3.14、Ruff/mypy 与依赖 inventory 三 job 验收通过 |
 | OpenBSW 版本漂移复验 | 完成 | P11 固定 `dbd6e118..00052043`，patch 重放及 7/7、44/44、2572/2572 CTest 通过 |
 | CI 职责拆分 | 完成 | P12 四类职责、七个实际 job，topology guard、本地回归与远端 run `34486148658` 全部通过 |
-| 安装后 CLI 发行物 | 本地完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；双平台 CI 待验收 |
+| 安装后 CLI 发行物 | 完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；run `34529188770` 双平台验收成功 |
 
 ## 已完成升级历史
 
@@ -61,9 +61,10 @@
 - 临时 wheel 在验收后删除；CI 只上传 JSON smoke evidence，不把此里程碑伪装成发布或供应链身份证明。
 - `core-contracts` 的 Windows/Ubuntu matrix 新增显式 smoke 与 artifact upload；P12 topology guard 固定该步骤归属，scoped mypy 纳入新脚本。
 - 本地验收：已安装 wheel consumer smoke 6/6 checks 通过；全量 158 项中 156 项通过、2 项环境跳过；26 份 schema、45 份 schema-bound example、topology guard、Ruff、6-source mypy、compileall、`pip check` 与 whitespace gate 全部通过。
+- 远程验收：GitHub Actions run `34529188770` 的七个实际 job 全部成功；Windows/Ubuntu 均完成 wheel build、isolated install、console trace 及 smoke evidence upload，runtime/rejection 回归与 Python 3.14 currency 同时保持绿色。
 - 详细设计：`docs/research/p13-installed-distribution-smoke-2026-09-11.md`。
 - 边界：不上传 wheel，不发布到 package index，不新增 CD、签名、attestation、远程下载、新汽车协议或硬件依赖。
-- 状态：本地完成，等待 Windows/Ubuntu CI 验收。
+- 状态：完成并冻结。
 
 ### P12：CI 职责拆分与拓扑门禁（2026-09-10）
 
@@ -849,6 +850,13 @@ official_native_baseline=false
 - 明确不要求本日理解 lifecycle/async/C++ 模板，也不把 OpenBSW 实现等同于 AUTOSAR 标准调用链；
 - 状态：任务说明完成，等待学习者运行观察和口述验收。
 
+### L5：第四周 Day 4 验收参考答案（2026-09-10）
+
+- 已回答错误 CAN ID 与 factor 的分层区别：前者属于 Frame/PDU identity，后者属于 Signal 数值转换；
+- 已明确 timeout 是结果证据，不能脱离 CanIf/PduR/COM 等观察点直接判定 PduR 根因；
+- 已解释 `RECEIVING → TIMEOUT → RECOVERED` 同时验证正常、故障检测、新数据恢复及旧缓存退出；
+- 状态：参考答案已发布，等待学习者结合实际报告复述并填写两个故障案例。
+
 ### L4：第四周 Day 2 分层图参考答案（2026-09-04）
 
 - 使用学习者提供的 ASW/System/ECU Extract/ECUC/Runtime 分层图回答 Day 2 三题；
@@ -885,7 +893,7 @@ official_native_baseline=false
 
 ### 最近一步：P13 Installed Distribution Smoke
 
-P13 将已有 console entry point 当作真实 adapter consumer 验收：不使用 editable install 或 `PYTHONPATH=src`，而是在隔离环境安装 wheel 后运行核心 trace。本地实现已完成，待 Windows/Ubuntu CI 验收后冻结。下一里程碑仍必须由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
+P13 将已有 console entry point 当作真实 adapter consumer 验收：不使用 editable install 或 `PYTHONPATH=src`，而是在隔离环境安装 wheel 后运行核心 trace。Windows/Ubuntu 双平台验收已通过并冻结。下一里程碑仍必须由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

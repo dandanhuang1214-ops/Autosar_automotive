@@ -64,7 +64,7 @@
 - P10 已完成并冻结（2026-09-10，最终 run `34446441635`）：25 份 schema meta-validation、45 份 schema-bound example、三类 evidence boolean/integer 与 RFC 3339 schema-loader 同拒绝、portable path、Python 3.14 runtime-currency、最小 Ruff/mypy 门禁和 resolved dependency inventory 均通过三 job 验收。下一里程碑需重新选择，不自动进入 OpenBSW/新协议；继续保持纯本地确定性边界。
 - P11 已完成（2026-09-10）：将 OpenBSW `dbd6e118` 基线与当前 `00052043` 固定比较，历史 CANFrame patch 无冲突重放；`CANFrameTest` 7/7、`cpp2canTest` 44/44、全量 POSIX CTest 2572/2572 通过。确认 `0x123 -> 0x124` 与每秒 `0x558` 学习锚点仍成立，并将八字节结论严格限定为 classic/non-FD 配置；未新增 adapter、协议或硬件依赖。
 - P12 已完成（2026-09-10，验收 run `34486148658`）：CI 拆为 core-contracts、runtime-evidence、controlled-rejections 和 runtime-currency 四类职责、七个实际 job；运行证据与拒绝证据各自重建前置输入，不共享可变目录。新增依赖无关的 topology guard 和三项负例，156 项本地回归中 154 项通过、2 项环境跳过；Windows/Ubuntu 两组 core、runtime、rejection 与 Ubuntu/Python 3.14 currency 全部通过远端验收。
-- P13 已完成本地实现（2026-09-11）：临时 wheel 无依赖安装到全新虚拟环境，在仓库外通过 console script 运行 8 节点 trace，并显式拒绝 checkout import 污染。输出 `installed-distribution-smoke-0.1` 哈希绑定报告，临时 wheel 不上传；不增加 CD、签名、attestation、新协议或硬件依赖。远程双平台验收待本次提交后补录。
+- P13 已完成并冻结（2026-09-11，run `34529188770`）：临时 wheel 无依赖安装到全新虚拟环境，在仓库外通过 console script 运行 8 节点 trace，并显式拒绝 checkout import 污染。`installed-distribution-smoke-0.1` 报告在 Windows/Ubuntu 均生成并上传，临时 wheel 本身不上传；七个实际 job 全部成功。不增加 CD、签名、attestation、新协议或硬件依赖。
 
 ## 平台目标
 

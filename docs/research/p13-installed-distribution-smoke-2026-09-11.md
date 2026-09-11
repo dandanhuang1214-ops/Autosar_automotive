@@ -58,3 +58,12 @@ compileall / pip check / diff check       passed
 P13 is distribution readiness, not a release. It does not upload the wheel,
 publish to an index, create CD, sign artifacts, issue attestations, authenticate
 producer identity, add runtime dependencies, or change automotive behavior.
+
+## Remote acceptance
+
+GitHub Actions run
+[`34529188770`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34529188770)
+validated commit `8c97bea`. All seven concrete jobs succeeded. Both Windows and
+Ubuntu completed the installed wheel smoke and uploaded the JSON evidence;
+both runtime and controlled-rejection matrices also passed, together with the
+Ubuntu/Python 3.14 runtime-currency job.
