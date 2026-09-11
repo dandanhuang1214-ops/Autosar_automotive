@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-11）
 
-当前阶段：`P14 — 安装后证据胶囊消费者本地完成，等待远端验收`。
+当前阶段：`P14 — 安装后证据胶囊消费者完成并冻结`。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -49,7 +49,7 @@
 | OpenBSW 版本漂移复验 | 完成 | P11 固定 `dbd6e118..00052043`，patch 重放及 7/7、44/44、2572/2572 CTest 通过 |
 | CI 职责拆分 | 完成 | P12 四类职责、七个实际 job，topology guard、本地回归与远端 run `34486148658` 全部通过 |
 | 安装后 CLI 发行物 | 完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；run `34529188770` 双平台验收成功 |
-| 安装后胶囊消费者 | 等待环境验证 | P14 用无依赖隔离 wheel 在仓库外复验迁移胶囊；本地 16/16 文件、7/7 artifact、3/3 dependency 通过，等待 Windows/Ubuntu CI |
+| 安装后胶囊消费者 | 完成 | P14 用无依赖隔离 wheel 在仓库外复验迁移胶囊；16/16 文件、7/7 artifact、3/3 dependency 通过，run `34581882908` 七 job 全绿 |
 
 ## 已完成升级历史
 
@@ -61,9 +61,10 @@
 - 临时 wheel、producer、迁移胶囊、venv 和明细 verification 均在验收后删除；只保留摘要，不改变 P13 的发行边界。
 - `core-contracts` Windows/Ubuntu matrix 新增消费者检查和独立 artifact upload；P12 topology guard 固定步骤归属，scoped mypy 扩展为七个 source。
 - 本地验收：P14 7/7 checks 通过；全量 161 项中 159 项通过、2 项环境跳过；27 份 schema、45 份 schema-bound example、topology guard、Ruff、7-source mypy、compileall、`pip check` 与 whitespace gate 全部通过。
+- 远程验收：GitHub Actions run `34581882908` 的七个实际 job 全部成功；Windows/Ubuntu 均完成 wheel 隔离安装、迁移胶囊复验和 P14 摘要上传，runtime/rejection 与 Python 3.14 currency 同时保持绿色。
 - 详细设计：`docs/research/p14-installed-capsule-consumer-2026-09-11.md`。
 - 边界：不上传或发布 wheel/capsule，不增加 CD、签名、attestation、远程身份、新协议、硬件或运行时依赖。
-- 状态：本地完成，等待提交推送后的 Windows/Ubuntu CI 远端验收。
+- 状态：完成并冻结。
 
 ### P13：Installed Distribution Smoke（2026-09-11）
 
@@ -906,7 +907,7 @@ official_native_baseline=false
 
 ### 最近一步：P14 Installed Evidence Capsule Consumer
 
-P14 将 P8/P9 的迁移胶囊与 P13 的安装后 CLI 连接：源码侧生成胶囊，随后由无项目依赖的隔离 wheel 在仓库外完成 16 文件、7 artifact、3 dependency 复验。本地验收已通过，等待提交推送后的 Windows/Ubuntu CI；完成前不扩展下一里程碑，也不自动进入发布、attestation、OpenBSW adapter 或新协议。
+P14 将 P8/P9 的迁移胶囊与 P13 的安装后 CLI 连接：源码侧生成胶囊，随后由无项目依赖的隔离 wheel 在仓库外完成 16 文件、7 artifact、3 dependency 复验。GitHub Actions run `34581882908` 的七个实际 job 全部成功，P14 已冻结；下一里程碑仍需由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 

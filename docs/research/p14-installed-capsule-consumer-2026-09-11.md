@@ -64,5 +64,13 @@ compileall / pip check / diff check        passed
 
 P14 does not upload or publish the wheel or capsule, authenticate producer
 identity, add a signature or attestation, create CD, add runtime dependencies,
-or change CAN/UDS/DTC behavior. Remote Windows/Ubuntu acceptance remains pending
-until the implementation is committed and pushed.
+or change CAN/UDS/DTC behavior.
+
+## Remote acceptance
+
+GitHub Actions run
+[`34581882908`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34581882908)
+validated commit `d0aff8b`. All seven concrete jobs succeeded. Windows and
+Ubuntu both completed the installed capsule consumer and uploaded its closed
+summary; runtime evidence, controlled rejections, and Python 3.14 runtime
+currency also remained green.
