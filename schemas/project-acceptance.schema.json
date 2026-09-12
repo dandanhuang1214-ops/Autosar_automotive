@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/project-acceptance.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "name",
+    "status",
+    "stages",
+    "requirements",
+    "source_artifacts"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "project-acceptance"
+    },
+    "schema_version": {
+      "enum": [
+        "project-acceptance-0.1",
+        "project-acceptance-0.2"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical",
+        "mapping",
+        "communication"
+      ],
+      "properties": {
+        "canonical": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "path"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "skipped"
+              ]
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "mapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "path"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "skipped"
+              ]
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "communication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "path"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "skipped"
+              ]
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "path"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "skipped"
+              ]
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text",
+          "stage",
+          "pointer",
+          "expected",
+          "status",
+          "reason",
+          "actual",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "text": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "stage": {
+            "enum": [
+              "canonical",
+              "mapping",
+              "communication",
+              "generation"
+            ]
+          },
+          "pointer": {
+            "type": "string",
+            "pattern": "^/(?:[^~]|~[01])*$"
+          },
+          "expected": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "blocked"
+            ]
+          },
+          "reason": {
+            "enum": [
+              "matched",
+              "value_mismatch",
+              "evidence_missing",
+              "stage_not_run",
+              "backend_unavailable"
+            ]
+          },
+          "actual": {},
+          "evidence": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "sha256",
+                  "pointer"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "pointer": {
+                    "type": "string",
+                    "pattern": "^/(?:[^~]|~[01])*$"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "sha256"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "project-acceptance-0.2"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stages": {
+            "required": [
+              "generation"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "stages": {
+            "not": {
+              "required": [
+                "generation"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

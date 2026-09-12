@@ -4,6 +4,18 @@
 
 这是统一汽车软件工程平台的轻量骨架。当前版本围绕统一契约、静态映射、确定性运行实验和可审计证据四条主线展开，以下为已落地能力：
 
+日常项目验收从 `run-project` 开始：
+
+```bash
+python -m automotive_workbench.cli run-project examples/window_control/project.json --output output/project-run
+```
+
+安装可选 CAN 依赖后，一条命令完成 canonical/DBC/BSW intent 校验、双向通信实验和声明验收项检查。打开 `output/project-run/bundle/index.html` 查看结果与证据。详见 [项目工作流](docs/project-workflow.md)；平台方向选择见 [P15 目标复核与调研](docs/research/p15-platform-workflow-reassessment-2026-09-12.md)。
+
+现有细粒度能力：
+
+P16 已接入真实 Generate-Arxml 导出：运行 `examples/generate_arxml/bridge/baseline/project.json` 可同时检查上游生成结果和下游 DBC 一致性。另提供分辨率变化、缺初值两组实际导出负例；[操作及重放说明](examples/generate_arxml/bridge/README.md)。
+
 1. 定义跨工具稳定的 `Artifact`、`Finding`、`Trace`、`TestResult` 数据契约；
 2. 将 Generate-Arxml 的 `issues.json` 转换为统一 Finding；
 3. 查询公开样例中 `DBC Signal → SWC → COM → I-PDU → PduR → CanIf` 的研究映射。
@@ -40,6 +52,7 @@
 34. 用 Draft 2020-12 schema 校验自描述样例，在 Python 3.14 上复跑全量测试，并归档解释器、平台和关键依赖的 resolved inventory。
 35. 构建临时 wheel，在全新虚拟环境和仓库外工作目录中通过安装后的 `workbench` 入口运行核心 trace，并拒绝源码树导入污染。
 36. 将 P7/P8 通信证据胶囊迁移到仓库外，再由无项目依赖的已安装 wheel 执行完整库存、哈希与依赖图复验。
+37. 使用 `read-uds-did` 向独立运行的 ECU 发送一次 `0x22` 请求，校验 DID 数据并记录 ISO-TP 帧、原始日志和来源 SHA-256；OpenBSW 操作说明见 [`examples/openbsw/README.md`](examples/openbsw/README.md)。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 

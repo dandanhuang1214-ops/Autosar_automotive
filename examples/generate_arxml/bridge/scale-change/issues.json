@@ -1,0 +1,70 @@
+{
+  "source_docx": "source.docx",
+  "mode": "signal",
+  "counts": {
+    "swcs": 3,
+    "signals": 2,
+    "services": 0,
+    "operation_args": 0,
+    "record_elements": 0,
+    "runnables": 1,
+    "components": 1,
+    "ports": 2,
+    "connectors": 0,
+    "runnable_events": 1,
+    "runnable_accesses": 2,
+    "open_issues": 0,
+    "validation_errors": 0,
+    "core_findings": 3
+  },
+  "validation_errors": [],
+  "core_summary": {
+    "by_severity": {
+      "ERROR": 0,
+      "WARNING": 3,
+      "INFO": 0
+    },
+    "by_group": {
+      "CORE-010": 1,
+      "CORE-030": 2
+    }
+  },
+  "items": [
+    {
+      "kind": "core_rule",
+      "severity": "WARNING",
+      "code": "CORE-010-PHYS-RANGE-CONSISTENCY",
+      "field": "",
+      "message": "ADT 'App_WindowPosition' internal range 0..100 maps to 0..200, but its LINEAR CompuScale declares physical range 0..100.",
+      "location": "PrimitiveDataTypes!R3",
+      "suggestion": "Correct InternalRange, PhysicalRange, Resolution, or Offset in the delivery document.",
+      "source": "",
+      "owner": "",
+      "status": "open"
+    },
+    {
+      "kind": "core_rule",
+      "severity": "WARNING",
+      "code": "CORE-030-CONNECTOR-UNCONNECTED",
+      "field": "",
+      "message": "Unconnected port: WindowControlSwc/RequestedDirection",
+      "location": "Ports!R2",
+      "suggestion": "Connect via CompositionConnectors or mark as external-facing.",
+      "source": "",
+      "owner": "",
+      "status": "open"
+    },
+    {
+      "kind": "core_rule",
+      "severity": "WARNING",
+      "code": "CORE-030-CONNECTOR-UNCONNECTED",
+      "field": "",
+      "message": "Unconnected port: WindowControlSwc/WindowPosition",
+      "location": "Ports!R3",
+      "suggestion": "Connect via CompositionConnectors or mark as external-facing.",
+      "source": "",
+      "owner": "",
+      "status": "open"
+    }
+  ]
+}

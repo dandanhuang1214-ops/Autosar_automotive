@@ -75,7 +75,7 @@ def _scan_files(bundle: Path) -> list[Path]:
 def _metadata(path: Path) -> tuple[str, str, str | None, dict[str, Any] | None]:
     suffix = path.suffix.casefold()
     if suffix == ".json":
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
         if not isinstance(payload, dict):
             raise ValueError(f"Evidence JSON must contain an object: {path}")
         artifact_type = payload.get("artifact_type")

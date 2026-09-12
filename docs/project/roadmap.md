@@ -1,6 +1,22 @@
 # Automotive Software Engineering Workbench 路线v2
 
-## 实施状态（2026-09-11）
+## 当前目标与升级顺序（2026-09-12 复核）
+
+平台目标保持为：个人可维护的汽车软件工程工作台，通过 artifact 串联需求/配置、静态校验、运行实验和可追溯报告，兼顾 Windows 工程工具与 Linux 执行环境。
+
+当前优先补齐统一工程工作流。P10–P14 的质量、CI 和证据消费基线已完成；学习周次、协议数量和新增 schema 数量不作为平台升级目标。此节是当前决策，下文实施状态与月度计划保留为历史。
+
+| 阶段 | 面向使用者的交付 | 验收门 |
+|---|---|---|
+| P15 项目工作流（本地已验收） | 项目配置 → 静态校验 → 通信实验 → 声明验收矩阵/HTML | 正常、配置错误阻止执行、后端阻断、缺失证据、迁移复验；远端待验收 |
+| P16 真实输入桥接（本地已验收） | 实际 Generate-Arxml 导出三例，增加上游生成门控 | 固定提交、公开 DOCX、来源哈希、正常/分辨率变化/缺初值三例重放；远端待验收 |
+| P17 项目级审查 | 用实际失败报告回答工程问题并引用证据 | 真实失败集、引用正确、证据不足拒答；再决定 LLM 接入 |
+
+openDuT 以多 DUT/远程执行需求触发，ReqIF/StrictDoc 以真实需求交换触发，商业工具桥接以可用导出产物触发。CF01 客户端是保留的独立接入工作，不代替本次平台目标。选择依据见 [P15 调研](../research/p15-platform-workflow-reassessment-2026-09-12.md)。
+
+当前先完成 P15/P16 工作区的远端跨平台验收，再进入 P17。P16 的“真实”指调用实际生成器，输入是公开合成 DOCX；不外推为客户数据或量产交付。详见 [P16 记录](../research/p16-generate-arxml-artifact-bridge-2026-09-12.md)。
+
+## 实施状态（2026-09-12）
 
 本节按时间保留状态迁移；较早条目中的“下一阶段”是历史决策，当前唯一下一阶段以本节末尾条目和进度账本为准。
 
@@ -66,6 +82,8 @@
 - P12 已完成（2026-09-10，验收 run `34486148658`）：CI 拆为 core-contracts、runtime-evidence、controlled-rejections 和 runtime-currency 四类职责、七个实际 job；运行证据与拒绝证据各自重建前置输入，不共享可变目录。新增依赖无关的 topology guard 和三项负例，156 项本地回归中 154 项通过、2 项环境跳过；Windows/Ubuntu 两组 core、runtime、rejection 与 Ubuntu/Python 3.14 currency 全部通过远端验收。
 - P13 已完成并冻结（2026-09-11，run `34529188770`）：临时 wheel 无依赖安装到全新虚拟环境，在仓库外通过 console script 运行 8 节点 trace，并显式拒绝 checkout import 污染。`installed-distribution-smoke-0.1` 报告在 Windows/Ubuntu 均生成并上传，临时 wheel 本身不上传；七个实际 job 全部成功。不增加 CD、签名、attestation、新协议或硬件依赖。
 - P14 已完成并冻结（2026-09-11，run `34581882908`）：将 P8/P9 迁移胶囊交给 P13 同类的无依赖隔离 wheel，在仓库外以安装后的 `workbench` 完成 16/16 文件、7/7 artifact、3/3 dependency 复验；Windows/Ubuntu 与其余五个既有 job 全部通过，不上传 wheel/capsule，不扩大到发布或新协议。
+
+- 第五周 CF01 客户端本地验收（2026-09-12）：新增 `read-uds-did`，以独立 ECU 为 consumer 读取 OpenBSW `0xCF01` 并留存多帧、预期数据与来源哈希证据；cantools 升至 44 系列。本地 165 项测试中 163 通过、2 项环境跳过，29 schema 和质量门禁通过；既有现场报告哈希复核通过。下一步为当前改动的远端跨平台 CI 验收，不扩展其他诊断服务。
 
 ## 平台目标
 

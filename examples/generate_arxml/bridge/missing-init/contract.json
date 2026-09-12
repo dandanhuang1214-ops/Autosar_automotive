@@ -1,0 +1,221 @@
+{
+  "project": {
+    "system_name": "WindowControlPublicSample",
+    "root_package": "/WINDOWCONTROLPUBLICSAMPLE_DELIVERY",
+    "generation_profile": "signal_atomic_davinci",
+    "composition_name": "",
+    "interface_package": "/PortInterfaces",
+    "data_type_package": "/DataTypes",
+    "compu_method_package": "/DataTypes/CompuMethods",
+    "data_constr_package": "/DataTypes/DataConstrs",
+    "unit_package": "/DataTypes/Units",
+    "mapping_set_path": "/ComponentTypes/MappingSets/APP_data_mapping",
+    "domain": "",
+    "target_autosar_version": "4-3-0",
+    "component_prefix": "",
+    "interface_prefix": "If",
+    "data_type_prefix": "App",
+    "source_status": {
+      "system_name": "explicit",
+      "root_package": "inferred",
+      "target_autosar_version": "explicit",
+      "interface_package": "defaulted",
+      "data_type_package": "defaulted",
+      "compu_method_package": "defaulted",
+      "data_constr_package": "defaulted",
+      "unit_package": "defaulted",
+      "mapping_set_path": "defaulted",
+      "generation_profile": "explicit"
+    }
+  },
+  "swcs": [
+    {
+      "name": "WindowControlSwc",
+      "prototype_name": "",
+      "kind": "Application",
+      "layer": "",
+      "domain": "",
+      "is_composition": "",
+      "description": "Derived from signal WindowPosition",
+      "requirement_id": "",
+      "source_status": {
+        "name": "explicit",
+        "kind": "defaulted"
+      }
+    },
+    {
+      "name": "BODY_ECU",
+      "prototype_name": "",
+      "kind": "Application",
+      "layer": "",
+      "domain": "",
+      "is_composition": "",
+      "description": "Derived from signal WindowPosition",
+      "requirement_id": "",
+      "source_status": {
+        "name": "explicit",
+        "kind": "defaulted"
+      }
+    },
+    {
+      "name": "TESTER",
+      "prototype_name": "",
+      "kind": "Application",
+      "layer": "",
+      "domain": "",
+      "is_composition": "",
+      "description": "Derived from signal RequestedDirection",
+      "requirement_id": "",
+      "source_status": {
+        "name": "explicit",
+        "kind": "defaulted"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "signal_name": "WindowPosition",
+      "direction": "output",
+      "provider_swc": "WindowControlSwc",
+      "consumer_swc": "BODY_ECU",
+      "value_type": "Value",
+      "data_type": "App_WindowPosition",
+      "internal_data_type": "uint8",
+      "internal_range": "0-100",
+      "physical_range": "0-100",
+      "resolution": "1",
+      "offset": "0",
+      "unit": "%",
+      "range": "0-100",
+      "enum_values": "",
+      "init_value": "",
+      "period_ms": "10",
+      "description": "Public fixture; position output",
+      "requirement_id": "",
+      "source": "",
+      "source_trace": "table:2,row:2",
+      "source_status": {
+        "signal_name": "explicit",
+        "direction": "explicit",
+        "provider_swc": "explicit",
+        "consumer_swc": "explicit",
+        "data_type": "explicit",
+        "internal_data_type": "explicit"
+      }
+    },
+    {
+      "signal_name": "RequestedDirection",
+      "direction": "input",
+      "provider_swc": "TESTER",
+      "consumer_swc": "WindowControlSwc",
+      "value_type": "Value",
+      "data_type": "App_RequestedDirection",
+      "internal_data_type": "uint8",
+      "internal_range": "0-3",
+      "physical_range": "0-3",
+      "resolution": "1",
+      "offset": "0",
+      "unit": "",
+      "range": "0-3",
+      "enum_values": "",
+      "init_value": "0",
+      "period_ms": "10",
+      "description": "Public fixture; requested direction 0..3",
+      "requirement_id": "",
+      "source": "",
+      "source_trace": "table:2,row:3",
+      "source_status": {
+        "signal_name": "explicit",
+        "direction": "explicit",
+        "provider_swc": "explicit",
+        "consumer_swc": "explicit",
+        "data_type": "explicit",
+        "internal_data_type": "explicit"
+      }
+    }
+  ],
+  "data_types": [
+    {
+      "type_name": "App_WindowPosition",
+      "type_kind": "Value",
+      "base_type": "uint8",
+      "compu_method_category": "IDENTICAL",
+      "enum_values": "",
+      "internal_range": "0-100",
+      "physical_range": "0-100",
+      "resolution": "1",
+      "offset": "0",
+      "implementation_type_name": "",
+      "field_order": "",
+      "field_name": "",
+      "field_type": "",
+      "range_or_enum": "",
+      "unit": "%",
+      "description": "Derived from signal WindowPosition",
+      "source_status": {
+        "type_name": "explicit",
+        "base_type": "inferred",
+        "compu_method_category": "inferred"
+      }
+    },
+    {
+      "type_name": "App_RequestedDirection",
+      "type_kind": "Value",
+      "base_type": "uint8",
+      "compu_method_category": "IDENTICAL",
+      "enum_values": "",
+      "internal_range": "0-3",
+      "physical_range": "0-3",
+      "resolution": "1",
+      "offset": "0",
+      "implementation_type_name": "",
+      "field_order": "",
+      "field_name": "",
+      "field_type": "",
+      "range_or_enum": "",
+      "unit": "",
+      "description": "Derived from signal RequestedDirection",
+      "source_status": {
+        "type_name": "explicit",
+        "base_type": "inferred",
+        "compu_method_category": "inferred"
+      }
+    }
+  ],
+  "record_elements": [],
+  "services": [],
+  "operation_args": [],
+  "runnables": [
+    {
+      "swc": "WindowControlSwc",
+      "runnable_name": "WindowControl_Step",
+      "trigger_type": "Periodic",
+      "period_ms": "10",
+      "trigger_object": "",
+      "related_port_or_signal": "",
+      "related_operation": "",
+      "read_signals": "RequestedDirection",
+      "write_signals": "WindowPosition",
+      "description": "",
+      "requirement_id": "",
+      "source_trace": "table:3,row:2",
+      "source_status": {}
+    }
+  ],
+  "connectors": [],
+  "open_issues": [
+    {
+      "field": "signals.WindowPosition.init_value",
+      "question": "确认 InitValue；若无特殊要求建议填 0。",
+      "suggested_default": "0",
+      "owner": "",
+      "status": "open",
+      "source": ""
+    }
+  ],
+  "metadata": {
+    "source_docx": "source.docx",
+    "mode": "signal",
+    "generation_profile": "signal_atomic_davinci"
+  }
+}

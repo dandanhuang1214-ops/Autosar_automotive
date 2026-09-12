@@ -1,0 +1,24 @@
+VERSION "WindowControl public learning sample 0.1"
+
+NS_ :
+    NS_DESC_
+    CM_
+    BA_DEF_
+    BA_
+    VAL_
+
+BS_:
+
+BU_: BODY_ECU TESTER
+
+BO_ 256 WindowStatus: 8 BODY_ECU
+ SG_ WindowPosition : 0|8@1+ (1,0) [0|100] "%" TESTER
+ SG_ AntiPinchActive : 8|1@1+ (1,0) [0|1] "" TESTER
+ SG_ MotorRequest : 16|2@1+ (1,0) [0|3] "" TESTER
+
+BO_ 512 WindowCommand: 8 TESTER
+ SG_ RequestedDirection : 0|2@1+ (1,0) [0|3] "" BODY_ECU
+
+VAL_ 256 AntiPinchActive 0 "Inactive" 1 "Active" ;
+VAL_ 256 MotorRequest 0 "Stop" 1 "Up" 2 "Down" 3 "Reserved" ;
+VAL_ 512 RequestedDirection 0 "Stop" 1 "Up" 2 "Down" 3 "Reserved" ;

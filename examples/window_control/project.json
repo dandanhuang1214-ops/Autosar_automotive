@@ -1,0 +1,46 @@
+{
+  "schema_version": "workbench-project-0.1",
+  "name": "公开车窗通信项目",
+  "inputs": {
+    "dbc": "window_control.dbc",
+    "contract": "canonical_contract.json",
+    "intent": "bsw_intent.json"
+  },
+  "requirements": [
+    {
+      "id": "WIN-CFG-001",
+      "text": "两个信号的 canonical 数值、单位与范围映射均通过",
+      "stage": "canonical",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-CFG-002",
+      "text": "声明的两条信号映射均接受检查",
+      "stage": "canonical",
+      "pointer": "/checked_count",
+      "expected": 2
+    },
+    {
+      "id": "WIN-MAP-001",
+      "text": "DBC 与 BSW intent 的方向、帧和信号映射一致",
+      "stage": "mapping",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-RUN-001",
+      "text": "所选 CAN 后端的通信实验通过",
+      "stage": "communication",
+      "pointer": "/runtime_status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-TRACE-001",
+      "text": "两条声明的静态路径均绑定到同次运行观测",
+      "stage": "communication",
+      "pointer": "/bound_count",
+      "expected": 2
+    }
+  ]
+}

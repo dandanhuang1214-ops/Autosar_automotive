@@ -25,6 +25,7 @@ from automotive_workbench.dtc_redundancy_repair import run_dtc_redundancy_repair
 from automotive_workbench.review import run_review
 from automotive_workbench.review_eval import run_review_evaluation
 from automotive_workbench.uds_runtime import probe_uds_backend, run_uds_lab
+from automotive_workbench.uds_client import read_uds_did
 from automotive_workbench.communication_evidence import run_communication_chain
 from automotive_workbench.communication_delivery import run_communication_delivery
 from automotive_workbench.communication_runtime import default_communication_config
@@ -34,11 +35,18 @@ from automotive_workbench.evidence_bundle import (
 )
 from automotive_workbench.evidence_capsule import export_evidence_capsule
 from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
+from automotive_workbench.project_workflow import run_project
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    project_parser = commands.add_parser("run-project", help="Validate and run a project with requirement acceptance evidence")
+    project_parser.add_argument("project", type=Path)
+    project_parser.add_argument("--output", type=Path, required=True)
+    project_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
+    project_parser.add_argument("--channel", default="workbench-project")
 
     inspect_parser = commands.add_parser("inspect", help="Inspect a supported engineering artifact")
     inspect_parser.add_argument("artifact", type=Path)
@@ -113,6 +121,12 @@ def build_parser() -> argparse.ArgumentParser:
     uds_lab_parser.add_argument("--interface", default="virtual")
     uds_lab_parser.add_argument("--channel", default="workbench")
     uds_lab_parser.add_argument("--output", type=Path, default=Path("output") / "uds-lab")
+
+    did_parser = commands.add_parser("read-uds-did", help="Read and verify one DID from an independently running ECU")
+    did_parser.add_argument("profile", type=Path)
+    did_parser.add_argument("--interface", choices=["virtual", "socketcan"], required=True)
+    did_parser.add_argument("--channel", required=True)
+    did_parser.add_argument("--output", type=Path, required=True)
 
     uds_probe_parser = commands.add_parser("probe-uds-backend", help="Probe UDS/ISO-TP diagnostic runtime dependencies and backend")
     uds_probe_parser.add_argument("--interface", default="virtual")
@@ -313,6 +327,10 @@ def main() -> int:
                 BusConfig(args.interface, args.channel),
                 args.output,
             )
+        elif args.command == "run-project":
+            result = run_project(args.project, args.output, BusConfig(args.interface, args.channel))
+        elif args.command == "read-uds-did":
+            result = read_uds_did(args.profile, BusConfig(args.interface, args.channel), args.output)
         elif args.command == "probe-uds-backend":
             result = probe_uds_backend(BusConfig(args.interface, args.channel), args.output)
         elif args.command == "run-dtc-lifecycle":

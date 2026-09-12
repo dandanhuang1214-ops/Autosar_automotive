@@ -20,6 +20,8 @@ STEP_OWNERS = {
     "Run minimum-error Ruff gate": {"core-contracts", "runtime-currency"},
     "Run virtual CAN runtime lab": "runtime-evidence",
     "Run complete communication evidence chain": "runtime-evidence",
+    "Run project acceptance workflow": "runtime-evidence",
+    "Run imported Generate-Arxml project": "runtime-evidence",
     "Run fixed-report engineering review cohort": "runtime-evidence",
     "Run controlled evidence tamper rejection": "controlled-rejections",
     "Run controlled capsule tamper rejection": "controlled-rejections",

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/uds-did-profile.schema.json",
+  "title": "Read-only external ECU DID profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "target", "request_id", "response_id", "did", "expected_data_hex", "timeout_s"],
+  "properties": {
+    "schema_version": {"const": "uds-did-profile-0.1"},
+    "target": {"type": "string", "pattern": "\\S"},
+    "request_id": {"type": "integer", "minimum": 0, "maximum": 2047},
+    "response_id": {"type": "integer", "minimum": 0, "maximum": 2047},
+    "did": {"type": "integer", "minimum": 0, "maximum": 65535},
+    "expected_data_hex": {"type": "string", "pattern": "^(?:[0-9A-F]{2}){1,4092}$"},
+    "timeout_s": {"type": "number", "minimum": 0.05, "maximum": 30}
+  },
+  "$comment": "Loader additionally checks request_id != response_id and finite timeout."
+}

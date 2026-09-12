@@ -2,6 +2,8 @@
 
 ## 项目管理
 
+- [项目验收工作流](project-workflow.md)：一条命令从配置校验运行到 HTML 验收报告。
+
 - [平台升级进度账本](project/progress-log.md)：每次升级必须更新的唯一状态源。
 - [中长期路线](project/roadmap.md)：平台阶段、边界和里程碑。
 - [Windows/WSL 双平面决策](project/windows-wsl-platform-decision.md)：开发环境职责划分。
@@ -14,6 +16,10 @@
 - [OpenBSW spike 说明](openbsw-spike.md)
 
 ## 技术调研
+
+- [P16 实际 Generate-Arxml 导出桥接（2026-09-12）](research/p16-generate-arxml-artifact-bridge-2026-09-12.md)
+
+- [P15 平台目标复核与项目工作流升级（2026-09-12）](research/p15-platform-workflow-reassessment-2026-09-12.md)
 
 - [全局目标、前沿性与代码质量审计（2026-09-10）](research/global-alignment-frontier-code-audit-2026-09-10.md)
 - [P10 契约一致性与运行时前沿实施记录（2026-09-10）](research/p10-contract-runtime-currency-2026-09-10.md)

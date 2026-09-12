@@ -1,0 +1,65 @@
+{
+  "schema_version": "workbench-project-0.2",
+  "name": "Generate-Arxml bridge: missing-init",
+  "inputs": {
+    "dbc": "dbc.dbc",
+    "contract": "contract.json",
+    "intent": "intent.json"
+  },
+  "requirements": [
+    {
+      "id": "GEN-001",
+      "text": "上游无阻塞问题且导出命令成功",
+      "stage": "generation",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-CFG-001",
+      "text": "两个信号的 canonical 数值、单位与范围映射均通过",
+      "stage": "canonical",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-CFG-002",
+      "text": "声明的两条信号映射均接受检查",
+      "stage": "canonical",
+      "pointer": "/checked_count",
+      "expected": 2
+    },
+    {
+      "id": "WIN-MAP-001",
+      "text": "DBC 与 BSW intent 的方向、帧和信号映射一致",
+      "stage": "mapping",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-RUN-001",
+      "text": "所选 CAN 后端的通信实验通过",
+      "stage": "communication",
+      "pointer": "/runtime_status",
+      "expected": "passed"
+    },
+    {
+      "id": "WIN-TRACE-001",
+      "text": "两条声明的静态路径均绑定到同次运行观测",
+      "stage": "communication",
+      "pointer": "/bound_count",
+      "expected": 2
+    }
+  ],
+  "generation": {
+    "tool": "Generate-Arxml",
+    "revision": "e912e404d52e671c7561d518d9989af3382fce51",
+    "exit_code": 1,
+    "source_docx": "source.docx",
+    "issue_report": "issues.json",
+    "sha256": {
+      "source_docx": "df0c9f2b843d94e26143805ef73e4e617cf4a76bd61a22442b07f3606eb3e63c",
+      "issue_report": "5601a6458f4387ed107866a40c4a453c13ea1d3ad56f412f32ac5252581d982c",
+      "contract": "25c36bb0e128bccc9f57220d09abbd920243d6dfa1a11054b7baa127a9111150"
+    }
+  }
+}

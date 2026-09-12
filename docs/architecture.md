@@ -1,4 +1,8 @@
-# Architecture v0
+# Workbench Architecture
+
+P16 的 `generation_gate` 将 Generate-Arxml 导出视为应用层输入：在创建输出前验证 DOCX/contract/issues 哈希，记录完整 findings 与生产者 revision 声明。project 0.2 的 generation 阶段与 canonical/mapping 并列参与运行门控，上游失败不能被局部映射通过覆盖。显式重放脚本在 git archive 隔离副本执行生产者；核心 CLI 仅消费导出文件，不依赖外部 DOCX/Excel 库。
+
+P15 增加项目应用层：`run-project` 读取显式输入与验收条件，将输入按字节归档，再调用既有 canonical/DBC、DBC/intent 校验和 communication chain。静态失败时停止运行阶段；项目级结论保留底层失败与后端阻断，逐验收项记录报告 hash / JSON Pointer，输出静态 HTML 和 JSON，并复用 P5 索引和复验。此层不执行项目声明的任意命令，不替换各运行内核；首个工作流限定为公开车窗通信模型。详见 [项目工作流](project-workflow.md)。
 
 ```text
 CLI / future API

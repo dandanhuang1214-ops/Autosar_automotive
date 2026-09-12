@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/workbench-project.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "name",
+    "inputs",
+    "requirements"
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "workbench-project-0.1",
+        "workbench-project-0.2"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dbc",
+        "contract",
+        "intent"
+      ],
+      "properties": {
+        "dbc": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "intent": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text",
+          "stage",
+          "pointer",
+          "expected"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "text": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "stage": {
+            "enum": [
+              "canonical",
+              "mapping",
+              "communication",
+              "generation"
+            ]
+          },
+          "pointer": {
+            "type": "string",
+            "pattern": "^/(?:[^~]|~[01])*$"
+          },
+          "expected": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "revision",
+        "exit_code",
+        "source_docx",
+        "issue_report",
+        "sha256"
+      ],
+      "properties": {
+        "tool": {
+          "const": "Generate-Arxml"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "exit_code": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "source_docx": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "issue_report": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "sha256": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_docx",
+            "issue_report",
+            "contract"
+          ],
+          "properties": {
+            "source_docx": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "issue_report": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$comment": "Loader additionally requires unique requirement IDs, finite numbers and readable input files. Paths resolve relative to project file.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "workbench-project-0.2"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "generation"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "generation"
+          ]
+        },
+        "properties": {
+          "requirements": {
+            "items": {
+              "properties": {
+                "stage": {
+                  "enum": [
+                    "canonical",
+                    "mapping",
+                    "communication"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

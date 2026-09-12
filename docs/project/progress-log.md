@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-11）
+## 当前总览（2026-09-12）
 
-当前阶段：`P14 — 安装后证据胶囊消费者完成并冻结`。
+当前阶段：`P16 — 实际 Generate-Arxml 导出桥接，本地验收完成`；P15 工作流已本地验收，P14 是远端已冻结基线。用户已明确要求以平台升级目标推进，学习周次不驱动本次里程碑。P15/P16 实测结果见文末，远端 CI 尚待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -50,6 +50,8 @@
 | CI 职责拆分 | 完成 | P12 四类职责、七个实际 job，topology guard、本地回归与远端 run `34486148658` 全部通过 |
 | 安装后 CLI 发行物 | 完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；run `34529188770` 双平台验收成功 |
 | 安装后胶囊消费者 | 完成 | P14 用无依赖隔离 wheel 在仓库外复验迁移胶囊；16/16 文件、7/7 artifact、3/3 dependency 通过，run `34581882908` 七 job 全绿 |
+| 项目配置到验收报告 | 本地验收完成，远端待验收 | P15 `run-project`、5 项声明验收、HTML/JSON、静态失败阻止运行、后端阻断、输入快照及迁移复验 |
+| Generate-Arxml 实际导出桥接 | 本地验收完成，远端待验收 | P16 固定生产者提交、实际 DOCX 导出三例、generation 门控、源码/输入/输出哈希与重放 |
 
 ## 已完成升级历史
 
@@ -880,7 +882,7 @@ official_native_baseline=false
 - 修正教学图边界：不把 RTE 直接画到 I-PDU 当作严格引用，也不把 Extract 到 ECUC 理解成无条件自动生成；
 - 状态：教练参考答案已发布，等待学习者不看答案复述后完成个人验收。
 
-## 当前升级：R3 OpenBSW POSIX 限时 spike
+## 历史升级：R3 OpenBSW POSIX 限时 spike
 
 目标：在不破坏 R2 已完成 SocketCAN 闭环的前提下，执行一次受限 OpenBSW POSIX spike，并形成可复现 build/run evidence 与源码入口索引。
 
@@ -905,9 +907,15 @@ official_native_baseline=false
 
 ## 下一步方向
 
-### 最近一步：P14 Installed Evidence Capsule Consumer
+### 已冻结基线：P14 Installed Evidence Capsule Consumer
 
 P14 将 P8/P9 的迁移胶囊与 P13 的安装后 CLI 连接：源码侧生成胶囊，随后由无项目依赖的隔离 wheel 在仓库外完成 16 文件、7 artifact、3 dependency 复验。GitHub Actions run `34581882908` 的七个实际 job 全部成功，P14 已冻结；下一里程碑仍需由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
+
+### 当前升级：P16 实际导出桥接
+
+依据用户本次纠正，重新审核平台目标并调研 ASAM XIL、openDuT、StrictDoc 与 OpenBSW。当前优先补齐项目入口、声明验收矩阵和可阅读结果，复用既有校验/运行/证据能力；CF01 保留为之前未提交的独立工作，先前将其认定为平台下一目标的判断已撤回。详见 P15 调研与路线顶部的当前升级顺序。
+
+P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实际导出，验证上游生成门与跨工具映射门相互独立。接下来先完成当前工作区的远端验收，再按实际报告需求进入 P17。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
@@ -945,6 +953,48 @@ P14 将 P8/P9 的迁移胶囊与 P13 的安装后 CLI 连接：源码侧生成�
 - 第六周决策门：链路不稳定则补 `can-isotp + udsoncan` 自动化客户端；稳定后再进入 DCM/DID 配置语义；
 - 学习计划：`D:/work/improve/learning/week-05/week-plan.md`；
 - 状态：计划已发布，等待 Day 1 学习与答题。
+
+## 第五周 CF01 独立客户端与依赖升级（2026-09-12）
+
+- 接续未提交实现：新增 `read-uds-did` CLI、`uds-did-profile-0.1` 和 `uds-did-read-0.1`，只向独立 ECU 发送一次 `0x22`；支持 classic CAN virtual/SocketCAN，不启动 responder。
+- 固定 OpenBSW DID `0xCF01`、请求 `0x02A`、响应 `0x0F0` 和 24 字节预期值；生成 JSON/Markdown、SF/FF/FC/CF 帧证据及原始日志，并绑定 profile/log SHA-256。
+- 已有现场证据 `output/upgrade-20260912/openbsw-live/` 显示读取通过；本次复核 report schema 及 profile/capture 哈希均通过。当前环境 `vcan0` 不可用，未将历史证据写成本次重新实测。
+- 独立 virtual ISO-TP peer 覆盖多帧成功、数据不符、NRC、短响应、错误 DID、无响应、错误响应 CAN ID；另覆盖 blocked CLI 退出码、非法 profile 在 probe 前拒绝以及非空输出目录保护。
+- 依赖约束更新为 cantools `>=44.0,<45`、python-can `>=4.6.1,<5`、can-isotp `>=2.0.7,<3`、udsoncan `>=1.26.1,<2`；本次回归实际使用 cantools 44.0.0、Python 3.12.3。
+- 本地全量 165 项测试：163 通过、2 项环境跳过；29 schema、46 schema-bound examples、16 syntax-only examples、Ruff 与既有 7 文件 mypy 门禁均通过。测试摘要为 `output/upgrade-20260912/resume-tests/ci-test-summary.json`。
+- 安装后 wheel smoke 和隔离 capsule consumer 均通过，后者复验 16 文件、7 artifact、3 dependency；证据位于 `output/upgrade-20260912/resume-distribution/` 和 `resume-capsule/`。`pip check` 通过，实际依赖清单为 `output/upgrade-20260912/resume-dependencies.json`。
+- 使用说明已补至 `examples/openbsw/README.md` 并从主 README 链接；明确数据匹配不认证 ECU 身份，入口不自动取得通道锁。
+- 状态：本地功能与回归通过；远端 Windows/Ubuntu/Python 3.14 CI 尚未执行，此里程碑尚未远端冻结。
+
+## P15：平台目标复核与项目工作流（2026-09-12）
+
+- 目标：补齐统一工程入口，将既有 canonical/DBC/BSW intent 校验、通信实验和证据消费连接到项目声明的验收条件。此前将 CF01 学习任务作为平台下一目标的判断已撤回。
+- 调研 ASAM XIL、openDuT、StrictDoc 和 OpenBSW 官方资料，判断现阶段优先整合工作流，随后接真实导出产物，再推进项目级审查；详细依据见 `docs/research/p15-platform-workflow-reassessment-2026-09-12.md`。
+- 新增 `workbench-project-0.1`、`project-acceptance-0.1`、`run-project`、公开车窗项目文件与静态 HTML/JSON 报告；每次运行先固化输入，再执行静态阶段与受门控的通信阶段。
+- 验收项显式声明 ID、文本、阶段、JSON Pointer 和期望值；报告绑定证据哈希，不把声明条件通过率视为完整需求覆盖。阶段失败不能被少量通过的验收项掩盖。
+- 复用 P5 manifest/verifier；证据依赖全部指向 bundle 内输入快照及本次报告，移动完整输出并移除原输入后仍可复验，篡改输入快照被拒绝。JSON evidence metadata 增加 UTF-8 BOM 读取兼容，哈希仍基于原始字节。
+- 已运行公开样例：5/5 声明验收通过；报告 `output/p15-project-baseline/bundle/index.html`。真实改动复制件 scale 的演练返回 failed 并跳过通信；缺失 SocketCAN 演练返回 blocked，两者 evidence integrity 均 passed，分别归档于 `output/p15-validation/configuration-failure/` 和 `backend-blocked/`。
+- 新增 6 项工作流测试通过；全量 171 项中 169 通过、2 项环境跳过。31 schema、47 schema-bound examples、16 syntax-only examples、Ruff、原 7 文件加新工作流模块 mypy、CI topology、pip check 与 diff whitespace 均通过。全量摘要：`output/p15-validation/tests/ci-test-summary.json`。
+- 安装后核心 CLI smoke、隔离 capsule consumer 均通过，16 文件/7 artifact/3 dependency 基线保持；证据在 `output/p15-validation/distribution/` 和 `capsule/`。
+- CI 已在 runtime-evidence 增加项目工作流及报告上传，并将新模块纳入既有 mypy 门禁；仍为四类职责、七个实际 job。远端尚未执行，不能标记跨平台冻结。
+- 边界：首个项目执行契约为公开车窗通信；不自动调用 Generate-Arxml 生成器、不新增 ECU 协议、不启用任意命令执行、不自动创建 vcan/取得通道锁。
+- 回退：停用新增入口即可继续原有命令；旧输入、运行内核和既有报告契约保持兼容。本次状态为本地验收完成、远端待验收，改动尚未提交或推送。
+- 后续平台方向：P16 明确导出产物桥接，P17 实际项目报告驱动的工程审查；详见路线顶部，不按学习周次推进。
+
+## P16：实际 Generate-Arxml 导出桥接（2026-09-12）
+
+- 目标：将 P15 手写 canonical fixture 推进为真实工具导出消费，并保留上游问题作为运行门控；输入仍为公开合成车窗 DOCX，不是客户或量产数据。
+- 从 `/mnt/d/work/SOA/code` 固定提交 `e912e404d52e671c7561d518d9989af3382fce51` 导出隔离源码，运行真实 `scripts/docx_to_contract.py`，未使用或修改原仓库未提交工作；生成器依赖安装于独立 `/tmp/p16-generator-env`。
+- 新增 project/report 0.2，兼容 0.1；generation 声明绑定 DOCX、contract、issue report 的 SHA-256 和本地 producer revision/退出码。哈希错误在创建输出前拒绝；完整上游 findings 原样进入 generation 报告。
+- 上游退出 1、未闭合问题、模型错误或 CORE ERROR 使 generation failed；所有阶段共同门控通信，不能用 canonical passed 掩盖 upstream failed。
+- 三组真实导出重放通过：baseline 生产者退出 0、项目 6/6 通过；Resolution 1→2 生产者退出 0、canonical failed、通信 skipped；删除 InitValue 生产者退出 1、generation failed、canonical passed、通信 skipped。
+- 上游警告保留：baseline/missing-init 各 2 条未连接端口 WARNING；scale-change 额外保留 `CORE-010-PHYS-RANGE-CONSISTENCY`。Workbench 独立产生 `MAP-NUMERIC-MISMATCH`，不修改上游严重度。
+- 新增确定性公开 DOCX 生成脚本、隔离 producer 重放脚本和三组完整样例；重放记录 archive/script hash、实际依赖版本与运行结果，路径 `output/p16-replay/bridge-replay.json`，各案例报告位于同目录下 `<case>/acceptance/bundle/index.html`。
+- 新增 6 项集成测试；全量 177 项中 175 通过、2 项环境跳过。31 schema、53 schema-bound examples、22 syntax-only examples、Ruff、11 文件 mypy、CI topology 通过；测试摘要 `output/p16-validation/tests/ci-test-summary.json`。后续非法 schema_version 类型补充用例随 P15 定向 6 项复验通过。
+- 安装后 CLI smoke、隔离 capsule consumer 及 pip check 通过，16 文件/7 artifact/3 dependency 的 P14 基线保持；证据位于 `output/p16-validation/distribution/` 和 `capsule/`。
+- CI 增加固定导出正常项目执行和 artifact 上传，负例由核心测试覆盖，保持七个实际 job；CI 不安装外部生成器，生产者实跑和导出 consumer 回归分别记录。
+- 状态：本地验收完成；P15/P16 及更早 CF01 改动仍未提交/推送，远端 Windows/Ubuntu/Python 3.14 验收未运行，不标记远端冻结。
+- 边界与回退：不申请最终 ARXML、不声称 DaVinci/真实 ECU 已验证；首个 runtime 仍固定公开车窗通信。可继续使用 project 0.1，核心依赖无需安装 DOCX/Excel 库。详见 `examples/generate_arxml/bridge/README.md` 和 P16 实施记录。
 
 ## 下次必须补录
 
