@@ -127,9 +127,11 @@ def create_document(
     path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(path, "w") as archive:
         for name, content in sorted(parts.items()):
-            archive.writestr(
-                zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0)), content.encode("utf-8")
-            )
+            info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+            # Match the checked-in ZIP metadata on every host, including Windows.
+            info.create_system = 3
+            info.external_attr = 0o600 << 16
+            archive.writestr(info, content.encode("utf-8"))
 
 
 def main() -> None:

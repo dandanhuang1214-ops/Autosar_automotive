@@ -32,7 +32,9 @@ class ProjectWorkflowTests(unittest.TestCase):
         result = run_project(self.project, self.output, config or self.config)
         report = json.loads(Path(result["report_json"]).read_text(encoding="utf-8"))
         schema = json.loads(
-            (ROOT / "schemas/project-acceptance.schema.json").read_text()
+            (ROOT / "schemas/project-acceptance.schema.json").read_text(
+                encoding="utf-8"
+            )
         )
         Draft202012Validator(schema, format_checker=FormatChecker()).validate(report)
         self.assertEqual(result["integrity_status"], "passed")
@@ -50,7 +52,7 @@ class ProjectWorkflowTests(unittest.TestCase):
             moved / "bundle", moved / "manifest.json", self.root / "recheck", base=moved
         )
         self.assertEqual(verified["status"], "passed")
-        manifest = json.loads((moved / "manifest.json").read_text())
+        manifest = json.loads((moved / "manifest.json").read_text(encoding="utf-8"))
         self.assertTrue(
             all(
                 dependency["kind"] == "artifact"
@@ -58,7 +60,7 @@ class ProjectWorkflowTests(unittest.TestCase):
                 for dependency in artifact["depends_on"]
             )
         )
-        (moved / "bundle/inputs/dbc.dbc").write_text("tampered")
+        (moved / "bundle/inputs/dbc.dbc").write_text("tampered", encoding="utf-8")
         verified = verify_evidence_bundle(
             moved / "bundle",
             moved / "manifest.json",
@@ -69,9 +71,9 @@ class ProjectWorkflowTests(unittest.TestCase):
 
     def test_bad_configuration_stops_runtime_and_preserves_findings(self):
         path = self.inputs / "canonical_contract.json"
-        payload = json.loads(path.read_text())
+        payload = json.loads(path.read_text(encoding="utf-8"))
         payload["signals"][0]["resolution"] = "2"
-        path.write_text(json.dumps(payload))
+        path.write_text(json.dumps(payload), encoding="utf-8")
         with patch(
             "automotive_workbench.project_workflow.run_communication_chain"
         ) as runtime:
@@ -79,9 +81,9 @@ class ProjectWorkflowTests(unittest.TestCase):
         runtime.assert_not_called()
         self.assertEqual(result["status"], "failed")
         self.assertEqual(report["stages"]["communication"]["status"], "skipped")
-        findings = json.loads((self.output / "bundle/canonical.json").read_text())[
-            "findings"
-        ]
+        findings = json.loads(
+            (self.output / "bundle/canonical.json").read_text(encoding="utf-8")
+        )["findings"]
         self.assertTrue(any(f["code"] == "MAP-NUMERIC-MISMATCH" for f in findings))
         self.assertEqual(report["requirements"][-1]["status"], "blocked")
 
@@ -104,12 +106,12 @@ class ProjectWorkflowTests(unittest.TestCase):
         self.assertEqual(report["requirements"][-1]["reason"], "backend_unavailable")
 
     def test_missing_evidence_and_boolean_number_do_not_pass(self):
-        project = json.loads(self.project.read_text())
+        project = json.loads(self.project.read_text(encoding="utf-8"))
         project["name"] = '<script>alert("x")</script>'
         project["requirements"][0]["pointer"] = "/absent"
         project["requirements"][1]["pointer"] = "/finding_count"
         project["requirements"][1]["expected"] = False
-        self.project.write_text(json.dumps(project))
+        self.project.write_text(json.dumps(project), encoding="utf-8")
         result, report = self.run_and_check()
         self.assertEqual(result["status"], "failed")
         self.assertEqual(report["requirements"][0]["reason"], "evidence_missing")
@@ -119,7 +121,7 @@ class ProjectWorkflowTests(unittest.TestCase):
         self.assertIn("&lt;script&gt;", page)
 
     def test_invalid_project_rejected_before_output_or_runtime(self):
-        original = json.loads(self.project.read_text())
+        original = json.loads(self.project.read_text(encoding="utf-8"))
         mutations = [
             {**original, "schema_version": []},
             {**original, "command": "anything"},
@@ -136,7 +138,7 @@ class ProjectWorkflowTests(unittest.TestCase):
         ]
         for project in mutations:
             with self.subTest(project=project):
-                self.project.write_text(json.dumps(project))
+                self.project.write_text(json.dumps(project), encoding="utf-8")
                 with self.assertRaises(ValueError):
                     run_project(self.project, self.output, self.config)
                 self.assertFalse(self.output.exists())
@@ -146,4 +148,4 @@ class ProjectWorkflowTests(unittest.TestCase):
         (self.output / "keep.txt").write_text("keep")
         with self.assertRaises(ValueError):
             run_project(self.project, self.output, self.config)
-        self.assertEqual((self.output / "keep.txt").read_text(), "keep")
+        self.assertEqual((self.output / "keep.txt").read_text(encoding="utf-8"), "keep")

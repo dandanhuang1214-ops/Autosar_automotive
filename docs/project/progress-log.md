@@ -996,6 +996,15 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 状态：本地验收完成；P15/P16 及更早 CF01 改动仍未提交/推送，远端 Windows/Ubuntu/Python 3.14 验收未运行，不标记远端冻结。
 - 边界与回退：不申请最终 ARXML、不声称 DaVinci/真实 ECU 已验证；首个 runtime 仍固定公开车窗通信。可继续使用 project 0.1，核心依赖无需安装 DOCX/Excel 库。详见 `examples/generate_arxml/bridge/README.md` 和 P16 实施记录。
 
+## P15/P16：Windows 跨平台验收修复（2026-09-13）
+
+- 复核发现上一轮已提交并推送为 `53f1a56`；上文“未提交/推送、远端未运行”是当时状态，由本条更新。远端 run `34682217101` 的 Ubuntu/Python 3.11 与 3.14 通过，Windows 核心测试失败，运行与拒绝验收因依赖失败而跳过。
+- Windows 注释确认两类原因：四项测试以默认 cp1252 解码含中文的 UTF-8 项目声明；DOCX 重放因 ZIP `create_system` 的 Windows/Unix 默认值不同而产生字节差异。
+- P15/P16 测试显式使用 UTF-8；DOCX 生成器固定 ZIP creator 和权限元数据，保持既有三组 DOCX 内容与 SHA-256 不变。新增模拟 Windows ZIP 默认值的三案例字节一致性回归。
+- 本地全量 178 项测试：176 通过、2 项环境跳过；31 schema、53 schema-bound examples、22 syntax-only examples、Ruff、生成脚本 mypy、CI topology 和 diff whitespace 均通过。摘要：`output/p16-cross-platform-fix/tests/ci-test-summary.json`。
+- 固定导出 baseline 项目及证据完整性复验通过，可读报告：`output/p16-cross-platform-fix/baseline/bundle/index.html`。
+- 状态：本地修复已验收，等待本次修复提交的远端七 job 验收；通过后冻结 P15/P16，再按路线进入 P17 项目级审查。
+
 ## 下次必须补录
 
 - 新 schema/loader 版本的正例、负例与 parity 回归结果；

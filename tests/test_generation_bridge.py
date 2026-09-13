@@ -4,6 +4,7 @@ import json
 import shutil
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -34,7 +35,9 @@ class GenerationBridgeTests(unittest.TestCase):
     def read_report(self, result):
         report = json.loads(Path(result["report_json"]).read_text(encoding="utf-8"))
         schema = json.loads(
-            (ROOT / "schemas/project-acceptance.schema.json").read_text()
+            (ROOT / "schemas/project-acceptance.schema.json").read_text(
+                encoding="utf-8"
+            )
         )
         Draft202012Validator(schema).validate(report)
         self.assertEqual(result["integrity_status"], "passed")
@@ -58,11 +61,17 @@ class GenerationBridgeTests(unittest.TestCase):
                 self.assertEqual(report["stages"]["generation"]["status"], generation)
                 self.assertEqual(report["stages"]["canonical"]["status"], canonical)
                 gate = json.loads(
-                    (Path(result["report_json"]).parent / "generation.json").read_text()
+                    (Path(result["report_json"]).parent / "generation.json").read_text(
+                        encoding="utf-8"
+                    )
                 )
-                original = json.loads((case / "issues.json").read_text())
+                original = json.loads(
+                    (case / "issues.json").read_text(encoding="utf-8")
+                )
                 self.assertEqual(gate["findings"], original["items"])
-                self.assertEqual(gate["warning_count"], 3 if name == "scale-change" else 2)
+                self.assertEqual(
+                    gate["warning_count"], 3 if name == "scale-change" else 2
+                )
                 self.assertFalse(gate["producer_identity_verified"])
                 if expected == "failed":
                     self.assertEqual(
@@ -80,10 +89,10 @@ class GenerationBridgeTests(unittest.TestCase):
         self,
     ):
         case = self.copy_case("missing-init")
-        project = json.loads((case / "project.json").read_text())
+        project = json.loads((case / "project.json").read_text(encoding="utf-8"))
         project["generation"]["exit_code"] = 0
         project["requirements"] = [project["requirements"][1]]
-        (case / "project.json").write_text(json.dumps(project))
+        (case / "project.json").write_text(json.dumps(project), encoding="utf-8")
         with patch(
             "automotive_workbench.project_workflow.run_communication_chain"
         ) as runtime:
@@ -106,7 +115,7 @@ class GenerationBridgeTests(unittest.TestCase):
     def test_invalid_generation_declarations_and_reports_fail_closed(self):
         case = self.copy_case("baseline")
         path = case / "project.json"
-        original = json.loads(path.read_text())
+        original = json.loads(path.read_text(encoding="utf-8"))
         for change in (
             {"exit_code": True},
             {"revision": "main"},
@@ -114,27 +123,31 @@ class GenerationBridgeTests(unittest.TestCase):
             {"command": "echo"},
         ):
             project = {**original, "generation": {**original["generation"], **change}}
-            path.write_text(json.dumps(project))
+            path.write_text(json.dumps(project), encoding="utf-8")
             schema = json.loads(
-                (ROOT / "schemas/workbench-project.schema.json").read_text()
+                (ROOT / "schemas/workbench-project.schema.json").read_text(
+                    encoding="utf-8"
+                )
             )
             self.assertFalse(Draft202012Validator(schema).is_valid(project))
             with self.assertRaises(ValueError):
                 load_project(path)
         for mutation in ("summary", "items", "count"):
-            report = json.loads((FIXTURES / "baseline/issues.json").read_text())
+            report = json.loads(
+                (FIXTURES / "baseline/issues.json").read_text(encoding="utf-8")
+            )
             if mutation == "summary":
                 report["core_summary"]["by_severity"]["ERROR"] = False
             elif mutation == "items":
                 report["items"].append("invalid finding")
             else:
                 report["counts"]["signals"] = 1
-            (case / "issues.json").write_text(json.dumps(report))
+            (case / "issues.json").write_text(json.dumps(report), encoding="utf-8")
             project = json.loads(json.dumps(original))
             project["generation"]["sha256"]["issue_report"] = sha256_file(
                 case / "issues.json"
             )
-            path.write_text(json.dumps(project))
+            path.write_text(json.dumps(project), encoding="utf-8")
             with self.assertRaises(ValueError):
                 load_project(path)
 
@@ -164,6 +177,28 @@ class GenerationBridgeTests(unittest.TestCase):
             moved / "bundle", moved / "manifest.json", self.root / "tamper", base=moved
         )
         self.assertEqual(result["status"], "failed")
+
+    def test_docx_bytes_are_independent_of_zip_creator_platform(self):
+        class WindowsZipInfo(zipfile.ZipInfo):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.create_system = 0
+
+        for name, resolution, omit_init in [
+            ("baseline", "1", False),
+            ("scale-change", "2", False),
+            ("missing-init", "1", True),
+        ]:
+            with self.subTest(name=name):
+                path = self.root / (name + ".docx")
+                with patch(
+                    "scripts.create_public_delivery_docx.zipfile.ZipInfo",
+                    WindowsZipInfo,
+                ):
+                    create_document(path, resolution=resolution, omit_init=omit_init)
+                self.assertEqual(
+                    path.read_bytes(), (FIXTURES / name / "source.docx").read_bytes()
+                )
 
     def test_cli_exit_codes_for_imported_exports(self):
         for name, code in [("baseline", 0), ("scale-change", 2), ("missing-init", 2)]:
