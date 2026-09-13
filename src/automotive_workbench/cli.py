@@ -36,6 +36,7 @@ from automotive_workbench.evidence_bundle import (
 from automotive_workbench.evidence_capsule import export_evidence_capsule
 from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
 from automotive_workbench.project_workflow import run_project
+from automotive_workbench.project_review import run_project_review
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -47,6 +48,17 @@ def build_parser() -> argparse.ArgumentParser:
     project_parser.add_argument("--output", type=Path, required=True)
     project_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
     project_parser.add_argument("--channel", default="workbench-project")
+
+    project_review_parser = commands.add_parser(
+        "run-project-review",
+        help="Answer an engineering question from one project acceptance report",
+    )
+    project_review_parser.add_argument("report", type=Path)
+    project_review_parser.add_argument("--output", type=Path, required=True)
+    project_review_parser.add_argument(
+        "--claim",
+        help="Check one explicit claim; unsupported claims are refused",
+    )
 
     inspect_parser = commands.add_parser("inspect", help="Inspect a supported engineering artifact")
     inspect_parser.add_argument("artifact", type=Path)
@@ -329,6 +341,8 @@ def main() -> int:
             )
         elif args.command == "run-project":
             result = run_project(args.project, args.output, BusConfig(args.interface, args.channel))
+        elif args.command == "run-project-review":
+            result = run_project_review(args.report, args.output, args.claim)
         elif args.command == "read-uds-did":
             result = read_uds_did(args.profile, BusConfig(args.interface, args.channel), args.output)
         elif args.command == "probe-uds-backend":

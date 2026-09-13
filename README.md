@@ -16,6 +16,16 @@ python -m automotive_workbench.cli run-project examples/window_control/project.j
 
 P16 已接入真实 Generate-Arxml 导出：运行 `examples/generate_arxml/bridge/baseline/project.json` 可同时检查上游生成结果和下游 DBC 一致性。另提供分辨率变化、缺初值两组实际导出负例；[操作及重放说明](examples/generate_arxml/bridge/README.md)。
 
+P17 可直接审查项目报告并复验每条引用：
+
+```bash
+python -m automotive_workbench.cli run-project-review \
+  output/project-run/bundle/project-report.json \
+  --output output/project-review
+```
+
+结果同时写入 `review-result.json` 和更便于阅读的 `project-review.md`。使用 `--claim` 检查一条额外声明时，报告及阶段证据不支持该声明会明确返回 `refused`。公开正常、两类失败和物理 ECU 越界声明的完整重放入口为 `python scripts/run_project_review_scenarios.py --output output/p17-review`。
+
 1. 定义跨工具稳定的 `Artifact`、`Finding`、`Trace`、`TestResult` 数据契约；
 2. 将 Generate-Arxml 的 `issues.json` 转换为统一 Finding；
 3. 查询公开样例中 `DBC Signal → SWC → COM → I-PDU → PduR → CanIf` 的研究映射。

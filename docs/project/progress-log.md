@@ -1006,6 +1006,16 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 远端验收：修复提交 `af699c1` 的 [GitHub Actions run `34734838719`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34734838719) 七个实际 job 全部成功，覆盖 Windows/Ubuntu 核心、运行证据、受控拒绝以及 Python 3.14；项目报告和导出消费证据均成功上传。
 - 状态：P15/P16 已冻结，CF01 客户端既有回归也随本次跨平台门通过；未重新进行 OpenBSW/vcan 实测。下一里程碑为 P17 实际失败报告驱动的项目级审查。
 
+## P17：实际项目报告驱动的工程审查（2026-09-13）
+
+- 新增 `run-project-review`，直接读取 P15/P16 `project-report.json` 及其中声明的阶段报告；为项目/阶段状态、非通过验收项和 finding severity/code/message 生成精确 JSON Pointer 断言。
+- 复用 R5 的 retrieval-only 审查、SHA-256 artifact registry、citation identity 与复验机制；同时输出 `review-result.json`、`evidence-units.json` 和面向工程人员的 `project-review.md`，不接入 LLM、embedding 或外部服务。
+- 阶段路径只允许报告目录内相对路径；缺失阶段文件使整次审查 `refused`，不根据项目总状态猜测根因。审查 registry 使用相对路径，完整场景归档移动后 citation validation 仍通过；非空输出目录在写入前拒绝。
+- `--claim` 支持检查一条调用方声明；证据完全不覆盖时返回 `REVIEW-NO-EVIDENCE`。公开验收固定验证“物理 ECU flash timing 已测量并认证”不能由合成 DOCX 与 virtual CAN 报告证明。
+- 新增 `scripts/run_project_review_scenarios.py`，重跑 P16 baseline、scale-change、missing-init 三例并分别审查；两份失败报告准确保留 `MAP-NUMERIC-MISMATCH`、`CONTRACT-OPEN-ISSUE`、上游 WARNING 及 communication skipped 证据。
+- 本地全量 185 项测试中 183 项通过、2 项按环境跳过；P17/既有 review 定向 22 项通过，覆盖正常/两类实际失败、引用复验、越界声明拒答、阶段文件缺失、路径逃逸与输出保护。31 schema、53 schema-bound examples、22 syntax-only examples、Ruff、13 文件 mypy、CI topology、pip check 和 diff whitespace 均通过。
+- 本地可迁移场景证据位于 `output/p17-portable/`，全量测试摘要位于 `output/p17-validation/tests-final/`；三份项目审查均 answered、coverage 1.0、citation validation passed，越界声明 refused。状态：本地验收完成，等待远端 Windows/Ubuntu/Python 3.14 七 job 验收；通过前不冻结 P17。
+
 ## 下次必须补录
 
 - 新 schema/loader 版本的正例、负例与 parity 回归结果；

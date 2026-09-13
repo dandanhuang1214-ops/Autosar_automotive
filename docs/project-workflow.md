@@ -55,3 +55,21 @@ python -m automotive_workbench.cli verify-evidence output/my-project-run/bundle 
 这 5 项是公开样例的声明验收项，不代表完整车窗需求覆盖率。P15 不自动调用 Generate-Arxml 生成器或商业工具，也未接入目标 ECU。
 
 P16 增加 project 0.2：导入实际 Generate-Arxml 的 DOCX、contract 和 issue report，新增 `generation` 阶段；先校验声明哈希，再读取完整上游 findings。上游阻塞或任一静态失败均跳过通信。公开三例含正常、分辨率变化和初值缺失，另有显式调用固定生产者的重放脚本，详见 [Generate-Arxml 桥接](../examples/generate_arxml/bridge/README.md)。0.1 项目继续可用。
+
+P17 在项目输出之上增加确定性工程审查。它读取 `project-report.json` 及报告中声明的阶段文件，为项目状态、各阶段状态、非通过验收项和每条 finding 的 severity/code/message 建立精确 JSON Pointer 断言，并锁定源文件 SHA-256：
+
+```bash
+python -m automotive_workbench.cli run-project-review \
+  output/my-project-run/bundle/project-report.json \
+  --output output/my-project-review
+```
+
+`project-review.md` 回答哪些阶段执行、哪里失败、通信是否被门控，并在每条结论下显示来源和定位；`review-result.json` 保留完整 citation 与复验结果。缺少阶段报告时不猜测，结果为 `refused`。可用 `--claim "..."` 检查一条自由声明；如果全部项目证据都不能覆盖该声明，同样返回 `refused`。
+
+完整公开验收会重跑 Generate-Arxml 桥接的 baseline、scale-change、missing-init 三份固定导出，并确认“已测量并认证物理 ECU flash timing”不受这些 virtual/合成证据支持：
+
+```bash
+python scripts/run_project_review_scenarios.py --output output/p17-review
+```
+
+该入口仍为 retrieval-only，不调用 LLM、embedding 或外部服务。引用正确和拒答边界先于自然语言生成；是否接入 LLM 由后续真实使用反馈决定。
