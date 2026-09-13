@@ -911,11 +911,11 @@ official_native_baseline=false
 
 P14 将 P8/P9 的迁移胶囊与 P13 的安装后 CLI 连接：源码侧生成胶囊，随后由无项目依赖的隔离 wheel 在仓库外完成 16 文件、7 artifact、3 dependency 复验。GitHub Actions run `34581882908` 的七个实际 job 全部成功，P14 已冻结；下一里程碑仍需由明确 consumer 或学习目标触发，不自动进入发布、attestation、OpenBSW adapter 或新协议。
 
-### 当前升级：P16 实际导出桥接
+### 已冻结：P16 实际导出桥接；下一里程碑 P17
 
 依据用户本次纠正，重新审核平台目标并调研 ASAM XIL、openDuT、StrictDoc 与 OpenBSW。当前优先补齐项目入口、声明验收矩阵和可阅读结果，复用既有校验/运行/证据能力；CF01 保留为之前未提交的独立工作，先前将其认定为平台下一目标的判断已撤回。详见 P15 调研与路线顶部的当前升级顺序。
 
-P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实际导出，验证上游生成门与跨工具映射门相互独立。接下来先完成当前工作区的远端验收，再按实际报告需求进入 P17。
+P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实际导出，验证上游生成门与跨工具映射门相互独立。2026-09-13 已完成远端七 job 验收并冻结 P15/P16，下一里程碑按实际报告需求进入 P17。
 
 ### 已冻结的可选工作：OpenBSW 上游化与完整容器
 
@@ -1003,7 +1003,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - P15/P16 测试显式使用 UTF-8；DOCX 生成器固定 ZIP creator 和权限元数据，保持既有三组 DOCX 内容与 SHA-256 不变。新增模拟 Windows ZIP 默认值的三案例字节一致性回归。
 - 本地全量 178 项测试：176 通过、2 项环境跳过；31 schema、53 schema-bound examples、22 syntax-only examples、Ruff、生成脚本 mypy、CI topology 和 diff whitespace 均通过。摘要：`output/p16-cross-platform-fix/tests/ci-test-summary.json`。
 - 固定导出 baseline 项目及证据完整性复验通过，可读报告：`output/p16-cross-platform-fix/baseline/bundle/index.html`。
-- 状态：本地修复已验收，等待本次修复提交的远端七 job 验收；通过后冻结 P15/P16，再按路线进入 P17 项目级审查。
+- 远端验收：修复提交 `af699c1` 的 [GitHub Actions run `34734838719`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34734838719) 七个实际 job 全部成功，覆盖 Windows/Ubuntu 核心、运行证据、受控拒绝以及 Python 3.14；项目报告和导出消费证据均成功上传。
+- 状态：P15/P16 已冻结，CF01 客户端既有回归也随本次跨平台门通过；未重新进行 OpenBSW/vcan 实测。下一里程碑为 P17 实际失败报告驱动的项目级审查。
 
 ## 下次必须补录
 
