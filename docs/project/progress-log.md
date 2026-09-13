@@ -1014,7 +1014,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - `--claim` 支持检查一条调用方声明；证据完全不覆盖时返回 `REVIEW-NO-EVIDENCE`。公开验收固定验证“物理 ECU flash timing 已测量并认证”不能由合成 DOCX 与 virtual CAN 报告证明。
 - 新增 `scripts/run_project_review_scenarios.py`，重跑 P16 baseline、scale-change、missing-init 三例并分别审查；两份失败报告准确保留 `MAP-NUMERIC-MISMATCH`、`CONTRACT-OPEN-ISSUE`、上游 WARNING 及 communication skipped 证据。
 - 本地全量 185 项测试中 183 项通过、2 项按环境跳过；P17/既有 review 定向 22 项通过，覆盖正常/两类实际失败、引用复验、越界声明拒答、阶段文件缺失、路径逃逸与输出保护。31 schema、53 schema-bound examples、22 syntax-only examples、Ruff、13 文件 mypy、CI topology、pip check 和 diff whitespace 均通过。
-- 本地可迁移场景证据位于 `output/p17-portable/`，全量测试摘要位于 `output/p17-validation/tests-final/`；三份项目审查均 answered、coverage 1.0、citation validation passed，越界声明 refused。状态：本地验收完成，等待远端 Windows/Ubuntu/Python 3.14 七 job 验收；通过前不冻结 P17。
+- 本地可迁移场景证据位于 `output/p17-portable/`，全量测试摘要位于 `output/p17-validation/tests-final/`；三份项目审查均 answered、coverage 1.0、citation validation passed，越界声明 refused。
+- 远端验收：提交 `5b3103e` 的 [GitHub Actions run `34764974287`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34764974287) 七个实际 job 全部成功；Windows/Ubuntu 均重跑 P17 三场景并上传 `project-review` artifact，Python 3.14 全量回归、既有安装/capsule、runtime 和 controlled rejection 门保持通过。
+- 状态：P17 已冻结。当前失败定位不需要 LLM 即可给出完整、可复验答案；不因里程碑完成自动引入模型依赖。下一升级由真实项目报告、用户对解释质量的明确反馈或新 consumer 触发。
 
 ## 下次必须补录
 
