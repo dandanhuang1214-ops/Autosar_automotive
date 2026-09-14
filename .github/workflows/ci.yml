@@ -80,7 +80,7 @@ jobs:
       - name: Run minimum-error Ruff gate
         run: ruff check src tests scripts
       - name: Run scoped evidence type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/adapters/generation_gate.py scripts/create_public_delivery_docx.py scripts/run_generate_arxml_bridge.py scripts/run_project_review_scenarios.py src/automotive_workbench/project_workflow.py src/automotive_workbench/project_review.py src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/check_installed_capsule_consumer.py scripts/write_dependency_inventory.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/adapters/generation_gate.py scripts/create_public_delivery_docx.py scripts/run_generate_arxml_bridge.py scripts/run_project_review_scenarios.py scripts/run_project_comparison_scenarios.py src/automotive_workbench/project_workflow.py src/automotive_workbench/project_review.py src/automotive_workbench/project_comparison.py src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/check_installed_capsule_consumer.py scripts/write_dependency_inventory.py
 
   runtime-evidence:
     needs: core-contracts
@@ -140,6 +140,18 @@ jobs:
         with:
           name: project-review-${{ runner.os }}
           path: output/project-review/
+          if-no-files-found: error
+      - name: Run project comparison scenarios
+        id: project_comparison
+        env:
+          PYTHONPATH: src
+        run: python scripts/run_project_comparison_scenarios.py --output output/project-comparison
+      - name: Upload project comparison evidence
+        if: ${{ always() && steps.project_comparison.outcome != 'skipped' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: project-comparison-${{ runner.os }}
+          path: output/project-comparison/
           if-no-files-found: error
       - name: Upload communication chain evidence
         if: ${{ always() && steps.communication_chain.outcome != 'skipped' }}
@@ -368,7 +380,7 @@ jobs:
       - name: Run minimum-error Ruff gate
         run: ruff check src tests scripts
       - name: Run scoped evidence type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/adapters/generation_gate.py scripts/create_public_delivery_docx.py scripts/run_generate_arxml_bridge.py scripts/run_project_review_scenarios.py src/automotive_workbench/project_workflow.py src/automotive_workbench/project_review.py src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/check_installed_capsule_consumer.py scripts/write_dependency_inventory.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/adapters/generation_gate.py scripts/create_public_delivery_docx.py scripts/run_generate_arxml_bridge.py scripts/run_project_review_scenarios.py scripts/run_project_comparison_scenarios.py src/automotive_workbench/project_workflow.py src/automotive_workbench/project_review.py src/automotive_workbench/project_comparison.py src/automotive_workbench/evidence_bundle.py src/automotive_workbench/evidence_capsule.py src/automotive_workbench/evidence_capsule_verification.py scripts/check_json.py scripts/check_installed_distribution.py scripts/check_installed_capsule_consumer.py scripts/write_dependency_inventory.py
       - name: Upload Python 3.14 runtime currency evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

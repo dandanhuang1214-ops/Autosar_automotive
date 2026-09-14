@@ -37,6 +37,7 @@ from automotive_workbench.evidence_capsule import export_evidence_capsule
 from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
 from automotive_workbench.project_workflow import run_project
 from automotive_workbench.project_review import run_project_review
+from automotive_workbench.project_comparison import compare_project_reports
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -59,6 +60,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--claim",
         help="Check one explicit claim; unsupported claims are refused",
     )
+
+    project_comparison_parser = commands.add_parser(
+        "compare-projects",
+        help="Compare baseline and candidate project acceptance reports",
+    )
+    project_comparison_parser.add_argument("baseline", type=Path)
+    project_comparison_parser.add_argument("candidate", type=Path)
+    project_comparison_parser.add_argument("--output", type=Path, required=True)
 
     inspect_parser = commands.add_parser("inspect", help="Inspect a supported engineering artifact")
     inspect_parser.add_argument("artifact", type=Path)
@@ -343,6 +352,10 @@ def main() -> int:
             result = run_project(args.project, args.output, BusConfig(args.interface, args.channel))
         elif args.command == "run-project-review":
             result = run_project_review(args.report, args.output, args.claim)
+        elif args.command == "compare-projects":
+            result = compare_project_reports(
+                args.baseline, args.candidate, args.output
+            )
         elif args.command == "read-uds-did":
             result = read_uds_did(args.profile, BusConfig(args.interface, args.channel), args.output)
         elif args.command == "probe-uds-backend":
@@ -414,7 +427,14 @@ def main() -> int:
         print(json.dumps({"status": "error", "message": str(exc)}, ensure_ascii=False, indent=2))
         return 1
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if result.get("status") in {"failed", "partial", "refused"}:
+    if result.get("status") in {
+        "failed",
+        "partial",
+        "refused",
+        "regressed",
+        "changed",
+        "not-comparable",
+    }:
         return 2
     if result.get("status") == "blocked":
         return 3

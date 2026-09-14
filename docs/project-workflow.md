@@ -73,3 +73,24 @@ python scripts/run_project_review_scenarios.py --output output/p17-review
 ```
 
 该入口仍为 retrieval-only，不调用 LLM、embedding 或外部服务。引用正确和拒答边界先于自然语言生成；是否接入 LLM 由后续真实使用反馈决定。
+
+P18 对两份独立项目验收报告做确定性比较：
+
+```bash
+python -m automotive_workbench.cli compare-projects \
+  output/baseline/bundle/project-report.json \
+  output/candidate/bundle/project-report.json \
+  --output output/project-comparison
+```
+
+可比较的前提是 project report schema version、阶段集合和验收项 ID 集合一致。比较逐项报告阶段状态、验收状态与理由，并把 stage finding 作为集合计算新增和移除；finding 中随归档位置变化的来源路径不参与指纹。每项变化引用 baseline/candidate 的精确 JSON Pointer 和 SHA-256。
+
+`stable` 表示未发现稳定字段变化，`regressed`/`improved` 表示项目结果相对通过状态变差/变好，`changed` 表示存在其他可审计变化，`not-comparable` 表示比较前提或证据完整性不成立。阶段文件缺失、未被项目报告唯一哈希绑定或字节被修改时不会继续推断 finding 差异。完整目录迁移后仍可调用 `validate_project_comparison` 复验相对引用。
+
+公开验收入口重跑 baseline、scale-change 和 missing-init 项目，生成稳定、两类回归及反向改善四份比较：
+
+```bash
+python scripts/run_project_comparison_scenarios.py --output output/p18-comparison
+```
+
+比较只说明声明的项目结果和 artifact 差异，不证明根因或物理 ECU 行为。

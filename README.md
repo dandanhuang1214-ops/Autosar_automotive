@@ -26,6 +26,17 @@ python -m automotive_workbench.cli run-project-review \
 
 结果同时写入 `review-result.json` 和更便于阅读的 `project-review.md`。使用 `--claim` 检查一条额外声明时，报告及阶段证据不支持该声明会明确返回 `refused`。公开正常、两类失败和物理 ECU 越界声明的完整重放入口为 `python scripts/run_project_review_scenarios.py --output output/p17-review`。
 
+P18 可比较两次项目验收结果并保留两侧证据：
+
+```bash
+python -m automotive_workbench.cli compare-projects \
+  output/baseline/bundle/project-report.json \
+  output/candidate/bundle/project-report.json \
+  --output output/project-comparison
+```
+
+结果把阶段、验收项和 finding 差异分类为 `stable`、`regressed`、`improved`、`changed` 或 `not-comparable`，并输出 `project-comparison.json` 与 `project-comparison.md`。非稳定结果使用非零退出码，便于 CI 阻止回归。公开四场景入口为 `python scripts/run_project_comparison_scenarios.py --output output/p18-comparison`。
+
 1. 定义跨工具稳定的 `Artifact`、`Finding`、`Trace`、`TestResult` 数据契约；
 2. 将 Generate-Arxml 的 `issues.json` 转换为统一 Finding；
 3. 查询公开样例中 `DBC Signal → SWC → COM → I-PDU → PduR → CanIf` 的研究映射。
@@ -63,6 +74,7 @@ python -m automotive_workbench.cli run-project-review \
 35. 构建临时 wheel，在全新虚拟环境和仓库外工作目录中通过安装后的 `workbench` 入口运行核心 trace，并拒绝源码树导入污染。
 36. 将 P7/P8 通信证据胶囊迁移到仓库外，再由无项目依赖的已安装 wheel 执行完整库存、哈希与依赖图复验。
 37. 使用 `read-uds-did` 向独立运行的 ECU 发送一次 `0x22` 请求，校验 DID 数据并记录 ISO-TP 帧、原始日志和来源 SHA-256；OpenBSW 操作说明见 [`examples/openbsw/README.md`](examples/openbsw/README.md)。
+38. 比较两次项目验收报告的阶段、验收项与 finding 差异，以双侧哈希和 JSON Pointer 证据区分稳定、回归、改善、其他变化及不可比较。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
 

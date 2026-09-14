@@ -1018,6 +1018,16 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 远端验收：提交 `5b3103e` 的 [GitHub Actions run `34764974287`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34764974287) 七个实际 job 全部成功；Windows/Ubuntu 均重跑 P17 三场景并上传 `project-review` artifact，Python 3.14 全量回归、既有安装/capsule、runtime 和 controlled rejection 门保持通过。
 - 状态：P17 已冻结。当前失败定位不需要 LLM 即可给出完整、可复验答案；不因里程碑完成自动引入模型依赖。下一升级由真实项目报告、用户对解释质量的明确反馈或新 consumer 触发。
 
+## P18：项目验收基线与候选比较（2026-09-14）
+
+- 新增 `compare-projects`，以两份 P15/P16 `project-report.json` 为 baseline/candidate，逐稳定 ID 比较阶段状态和验收项状态/理由，并将阶段 finding 归一后计算新增与移除。
+- 输出 `project-comparison.json` 与 `project-comparison.md`；每项阶段及验收变化绑定两侧报告的 SHA-256 和精确 JSON Pointer，finding 变化绑定实际阶段报告。来源使用相对路径，完整 P18 目录迁移后仍可复验。
+- 分类固定为 `stable`、`regressed`、`improved`、`changed`、`not-comparable`。schema version、阶段集合或验收项 ID 集合不一致时不比较；阶段文件缺失、哈希声明不唯一或字节被修改时同样 fail closed。回归、其他变化及不可比较的 CLI 均返回非零。
+- finding 指纹忽略随归档根目录变化的 `source`/`source_artifact`，其余内容和所属阶段参与比较；报告只陈述 artifact 差异，不声称确定根因或物理 ECU 行为。
+- 新增 `scripts/run_project_comparison_scenarios.py`，重跑 baseline、scale-change、missing-init，并生成稳定、两类回归和反向改善四份比较。分辨率回归检出 2 个阶段、3 个验收项和 2 个新增 finding；缺初值回归检出 2 个阶段、3 个验收项和 1 个新增 finding；所有 evidence validation 通过。
+- 新增 10 项 P18 测试；本地全量 195 项中 193 项通过、2 项按环境跳过。32 schema、53 schema-bound examples、22 syntax-only examples、CI topology、Ruff、15 文件 mypy、compileall、`pip check` 和 diff whitespace 均通过。场景证据及测试摘要位于 `output/p18-final/`。
+- CI 在 Windows/Ubuntu `runtime-evidence` 中重跑并上传 `project-comparison` artifact，Python 3.11/3.14 的范围化 mypy 纳入新模块和脚本；仍维持四类职责、七个实际 job。当前等待远端验收，P18 尚未冻结。
+
 ## 下次必须补录
 
 - 新 schema/loader 版本的正例、负例与 parity 回归结果；

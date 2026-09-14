@@ -51,7 +51,7 @@ def _assertion_check(
     }
 
 
-def _load_project_report(path: Path) -> dict[str, Any]:
+def load_project_report(path: Path) -> dict[str, Any]:
     report = json.loads(path.read_text(encoding="utf-8-sig"))
     if report.get("artifact_type") != "project-acceptance":
         raise ValueError("Project review requires a project-acceptance report")
@@ -158,7 +158,7 @@ def run_project_review(
 
     report_path = report_path.resolve()
     output = output.resolve()
-    report = _load_project_report(report_path)
+    report = load_project_report(report_path)
     artifacts = [
         _artifact("project-report", "project-acceptance", report_path, output)
     ]
