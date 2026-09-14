@@ -1026,7 +1026,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - finding 指纹忽略随归档根目录变化的 `source`/`source_artifact`，其余内容和所属阶段参与比较；报告只陈述 artifact 差异，不声称确定根因或物理 ECU 行为。
 - 新增 `scripts/run_project_comparison_scenarios.py`，重跑 baseline、scale-change、missing-init，并生成稳定、两类回归和反向改善四份比较。分辨率回归检出 2 个阶段、3 个验收项和 2 个新增 finding；缺初值回归检出 2 个阶段、3 个验收项和 1 个新增 finding；所有 evidence validation 通过。
 - 新增 10 项 P18 测试；本地全量 195 项中 193 项通过、2 项按环境跳过。32 schema、53 schema-bound examples、22 syntax-only examples、CI topology、Ruff、15 文件 mypy、compileall、`pip check` 和 diff whitespace 均通过。场景证据及测试摘要位于 `output/p18-final/`。
-- CI 在 Windows/Ubuntu `runtime-evidence` 中重跑并上传 `project-comparison` artifact，Python 3.11/3.14 的范围化 mypy 纳入新模块和脚本；仍维持四类职责、七个实际 job。当前等待远端验收，P18 尚未冻结。
+- CI 在 Windows/Ubuntu `runtime-evidence` 中重跑并上传 `project-comparison` artifact，Python 3.11/3.14 的范围化 mypy 纳入新模块和脚本；仍维持四类职责、七个实际 job。
+- 远端验收：提交 `a000a50` 的 [GitHub Actions run `34817437909`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34817437909) 七个实际 job 全部成功，覆盖 Windows/Ubuntu 核心、项目比较运行证据、受控拒绝及 Python 3.14；P18 已冻结。
 
 ## 下次必须补录
 
