@@ -7,6 +7,7 @@ import unittest
 import uuid
 from contextlib import redirect_stdout
 from io import StringIO
+from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,6 +15,7 @@ from jsonschema import Draft202012Validator
 
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.project_comparison import (
+    _render_html,
     compare_project_reports,
     validate_project_comparison,
 )
@@ -37,6 +39,22 @@ class ProjectComparisonTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "passed")
         self.assertEqual(validation["status"], "passed")
+        class Links(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                if tag == "a":
+                    for key, value in attrs:
+                        if key == "href":
+                            self.links.append(value)
+
+        from urllib.parse import unquote
+
+        for page in [moved / "index.html", *moved.glob("comparisons/*/index.html")]:
+            parser = Links()
+            parser.links = []
+            parser.feed(page.read_text(encoding="utf-8"))
+            self.assertTrue(parser.links)
+            for link in parser.links:
+                self.assertTrue((page.parent / unquote(link)).is_file(), link)
         self.assertEqual(
             [item["status"] for item in result["comparisons"]],
             ["stable", "regressed", "regressed", "improved"],
@@ -117,6 +135,28 @@ class ProjectComparisonTests(unittest.TestCase):
                 for item in result["requirements"]
             )
         )
+
+    def test_html_escapes_report_content_and_keeps_evidence_visible(self) -> None:
+        result = self._compare("baseline", "scale-change", "html")
+        page = (self.root / "html/index.html").read_text(encoding="utf-8")
+        self.assertIn("MAP-NUMERIC-MISMATCH", page)
+        self.assertIn("skipped", page)
+        self.assertIn("JSON Pointer:", page)
+        self.assertIn("静态快照", page)
+        result["findings"][0]["finding"]["message"] = '<script>alert("unsafe")</script>'
+        result["baseline"]["source"] = 'javascript:alert(1)'
+        page = _render_html(result)
+        self.assertNotIn("<script>", page)
+        self.assertNotIn('href="javascript:', page)
+        self.assertIn("&lt;script&gt;", page)
+
+    def test_not_comparable_html_shows_reason_without_change_tables(self) -> None:
+        self.reports["scale-change"].parent.joinpath("canonical.json").unlink()
+        result = self._compare("baseline", "scale-change", "html-missing")
+        page = (self.root / "html-missing/index.html").read_text(encoding="utf-8")
+        self.assertEqual(result["status"], "not-comparable")
+        self.assertIn("candidate stage artifact is missing", page)
+        self.assertNotIn("<table>", page)
 
     def test_requirement_set_mismatch_is_not_comparable(self) -> None:
         report_path = self.reports["scale-change"]
@@ -205,6 +245,63 @@ class ProjectComparisonTests(unittest.TestCase):
                 self.reports["scale-change"],
                 self.root / "escaping",
             )
+
+    def test_rejects_modified_conclusions_counts_and_removed_evidence(self) -> None:
+        import copy
+
+        result = self._compare("baseline", "scale-change", "conclusion-tamper")
+        path = self.root / "conclusion-tamper/project-comparison.json"
+        mutations = (
+            lambda value: value.update(status="stable"),
+            lambda value: value["summary"].update(stage_change_count=999),
+            lambda value: value["summary"].update(stage_change_count=True),
+            lambda value: value["stages"][0].update(classification="improved"),
+            lambda value: value["requirements"].clear(),
+            lambda value: value["findings"].clear(),
+            lambda value: value["stages"][0]["evidence"].clear(),
+            lambda value: value.update(schema_version="unknown"),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                changed = copy.deepcopy(result)
+                mutate(changed)
+                path.write_text(json.dumps(changed), encoding="utf-8")
+                validation = validate_project_comparison(path)
+                self.assertEqual(validation["status"], "failed")
+                self.assertTrue(validation["reasons"])
+
+    def test_rechecks_unchanged_stage_files_without_finding_references(self) -> None:
+        self._compare("baseline", "baseline", "stable-stage-tamper")
+        report = json.loads(self.reports["baseline"].read_text(encoding="utf-8"))
+        stage = self.reports["baseline"].parent / report["stages"]["canonical"]["path"]
+        stage.write_text("{}", encoding="utf-8")
+        validation = validate_project_comparison(
+            self.root / "stable-stage-tamper/project-comparison.json"
+        )
+        self.assertEqual(validation["status"], "failed")
+
+    def test_verification_cli_is_read_only_and_accepts_authentic_regression(self) -> None:
+        self._compare("baseline", "scale-change", "verify-cli")
+        path = self.root / "verify-cli/project-comparison.json"
+        original = path.read_bytes()
+        with patch("sys.argv", ["workbench", "verify-project-comparison", str(path)]), redirect_stdout(StringIO()):
+            self.assertEqual(main(), 0)
+        self.assertEqual(path.read_bytes(), original)
+        payload = json.loads(original)
+        payload["status"] = "stable"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        with patch("sys.argv", ["workbench", "verify-project-comparison", str(path)]), redirect_stdout(StringIO()):
+            self.assertEqual(main(), 2)
+
+    def test_malformed_comparisons_return_structured_failure(self) -> None:
+        path = self.root / "malformed.json"
+        for content in ("{", "[]", "null", "{}", '{"baseline": null}'):
+            with self.subTest(content=content):
+                path.write_text(content, encoding="utf-8")
+                self.assertEqual(validate_project_comparison(path)["status"], "failed")
+        self.assertEqual(
+            validate_project_comparison(self.root / "missing.json")["status"], "failed"
+        )
 
     def test_cli_returns_nonzero_for_regression_and_zero_for_stable(self) -> None:
         for candidate, name, expected_exit in (

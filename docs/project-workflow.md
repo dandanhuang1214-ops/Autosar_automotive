@@ -94,3 +94,26 @@ python scripts/run_project_comparison_scenarios.py --output output/p18-compariso
 ```
 
 比较只说明声明的项目结果和 artifact 差异，不证明根因或物理 ECU 行为。
+
+
+## 离线回归报告与演示
+
+`compare-projects` 现在同时生成 `index.html`。浏览器直接打开即可查看阶段、声明验收项和 finding 变化；展开“查看证据”可看到两侧来源链接、SHA-256、JSON Pointer 和原值。不可比较时显示拒绝原因，不展示推断的变化表。
+
+一条命令生成四场景演示（输出目录需为空或不存在）：
+
+```bash
+python scripts/run_project_comparison_scenarios.py --output output/project-demo
+```
+
+打开 `output/project-demo/index.html`。建议按“稳定 → 分辨率回归 → 缺初值回归 → 恢复初值”阅读。先解释哪一阶段失败、为何通信 skipped，再展开 finding 的证据。该脚本消费固定导出产物，不重新执行 Generate-Arxml。
+
+页面是生成时快照，不会自动检测事后的文件修改。移交时复制整个演示目录，随后重新复验：
+
+```bash
+python -m automotive_workbench.cli verify-project-comparison output/project-demo/comparisons/scale-regression/project-comparison.json
+```
+
+这里退出 0 表示比较结果及引用与来源一致，即使项目结论为 `regressed`。页面本身不是完整性验证凭据；独立复验校验的是 JSON 比较与其来源。
+
+用于作品演示时，可以展示“配置变化 → 确定性校验 → 运行门控 → 回归证据”的工具链能力；BSW 方向可解释跨层映射和通信为何未执行。公开合成输入与 virtual CAN 不作为量产或硬件经验。

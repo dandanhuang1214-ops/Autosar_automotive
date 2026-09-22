@@ -146,6 +146,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python scripts/run_project_comparison_scenarios.py --output output/project-comparison
+      - name: Verify saved project comparison
+        env:
+          PYTHONPATH: src
+        run: python -m automotive_workbench.cli verify-project-comparison output/project-comparison/comparisons/scale-regression/project-comparison.json
       - name: Upload project comparison evidence
         if: ${{ always() && steps.project_comparison.outcome != 'skipped' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

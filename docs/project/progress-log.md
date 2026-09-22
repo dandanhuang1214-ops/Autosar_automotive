@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-12）
+## 当前总览（2026-09-22）
 
-当前阶段：`P16 — 实际 Generate-Arxml 导出桥接，本地验收完成`；P15 工作流已本地验收，P14 是远端已冻结基线。用户已明确要求以平台升级目标推进，学习周次不驱动本次里程碑。P15/P16 实测结果见文末，远端 CI 尚待验收。
+当前阶段：`P19 — 项目回归可读报告与公开演示，本地验收完成`。P15–P18 已完成历史远端七 job 验收；9 月 22 日的 P18 独立复验补强与 P19 属于新的本地改动，尚未远端冻结。平台升级按工程工作流推进，个人学习掌握情况单独验收。实测结果见文末。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -50,8 +50,8 @@
 | CI 职责拆分 | 完成 | P12 四类职责、七个实际 job，topology guard、本地回归与远端 run `34486148658` 全部通过 |
 | 安装后 CLI 发行物 | 完成 | P13 wheel 隔离安装、checkout import 排除、console entrypoint 与核心 trace 通过；run `34529188770` 双平台验收成功 |
 | 安装后胶囊消费者 | 完成 | P14 用无依赖隔离 wheel 在仓库外复验迁移胶囊；16/16 文件、7/7 artifact、3/3 dependency 通过，run `34581882908` 七 job 全绿 |
-| 项目配置到验收报告 | 本地验收完成，远端待验收 | P15 `run-project`、5 项声明验收、HTML/JSON、静态失败阻止运行、后端阻断、输入快照及迁移复验 |
-| Generate-Arxml 实际导出桥接 | 本地验收完成，远端待验收 | P16 固定生产者提交、实际 DOCX 导出三例、generation 门控、源码/输入/输出哈希与重放 |
+| 项目配置到验收报告 | 已冻结（run `34734838719`） | P15 `run-project`、5 项声明验收、HTML/JSON、静态失败阻止运行、后端阻断、输入快照及迁移复验 |
+| Generate-Arxml 实际导出桥接 | 已冻结（run `34734838719`） | P16 固定生产者提交、实际 DOCX 导出三例、generation 门控、源码/输入/输出哈希与重放 |
 
 ## 已完成升级历史
 
@@ -1028,6 +1028,29 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 新增 10 项 P18 测试；本地全量 195 项中 193 项通过、2 项按环境跳过。32 schema、53 schema-bound examples、22 syntax-only examples、CI topology、Ruff、15 文件 mypy、compileall、`pip check` 和 diff whitespace 均通过。场景证据及测试摘要位于 `output/p18-final/`。
 - CI 在 Windows/Ubuntu `runtime-evidence` 中重跑并上传 `project-comparison` artifact，Python 3.11/3.14 的范围化 mypy 纳入新模块和脚本；仍维持四类职责、七个实际 job。
 - 远端验收：提交 `a000a50` 的 [GitHub Actions run `34817437909`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/34817437909) 七个实际 job 全部成功，覆盖 Windows/Ubuntu 核心、项目比较运行证据、受控拒绝及 Python 3.14；P18 已冻结。
+
+## P18 补强：比较结论独立复验（2026-09-22）
+
+- 复核发现原 `validate_project_comparison` 只检查来源和已有引用，改写顶层结论、统计或删除差异仍可能通过；没有 finding 差异的阶段文件也未在消费时重新检查。
+- 抽取无写入的比较构建函数，生成与复验共享确定性计算；复验重新读取两侧项目及阶段来源，逐项比对结论、basis、阶段、验收项、finding、统计和引用，嵌套值严格区分 boolean/integer。
+- 新增 `verify-project-comparison <report>` CLI，只读执行并输出 JSON。真实回归报告可返回完整性 passed/退出 0；篡改、缺失来源或非法输入返回 failed/退出 2。内嵌 evidence_validation 保留为历史记录，消费时以重新计算结果为准；不提供来源身份认证。
+- 保持 project-comparison-0.1 与原比较分类语义；README 增加迁移复验说明，Windows/Ubuntu runtime-evidence 增加保存后 CLI 复验步骤。
+- 新增 4 项测试，覆盖八类结论/统计/引用修改、无差异阶段篡改、只读 CLI 与非法输入；P18 定向 14/14 通过。全量 199 项中 197 通过、2 项环境跳过，含既有安装后 wheel/capsule consumer 回归。
+- 32 schema、53 schema-bound examples、22 syntax-only examples、Ruff、修改模块 mypy、CI topology、diff whitespace 检查通过。四个公开场景重放通过，scale-regression 独立 CLI 复验 34/34 引用通过。
+- 本地证据：`output/p18-verification-upgrade/tests/ci-test-summary.json`、`output/p18-verification-upgrade/scenarios/`。状态：本地验收完成，尚未提交/推送，远端跨平台 CI 待执行，不标记本次补强已远端冻结。
+
+
+## P19：项目回归可读报告与公开演示（2026-09-22）
+
+- 依据：读取个人成长仓库的 README 与能力矩阵，沿用“工具链/配置自动化主线、BSW 集成与定位并行”的定位及每两周 20～30 小时预算。能力矩阵是历史学习基线，不把平台代码完成等同于个人能力掌握。本次 consumer 是个人日常配置回归排查与公开作品演示。
+- `compare-projects` 新增离线 `index.html`，展示结论、阶段/验收变化、finding 及可展开的两侧来源、SHA-256、JSON Pointer；保留 JSON/Markdown 与现有比较契约、退出码。
+- 四场景脚本增加统一 HTML 入口，串联稳定、分辨率回归、缺初值回归、反向改善。无需网页服务或前端依赖，现有 CI 场景目录上传自动包含页面。
+- 页面明确标注生成时静态快照，提供 P18 独立复验命令；完整性通过不代表项目通过。正文转义，来源链接限定相对本地路径，避免将报告文本解释为网页代码或 URL scheme。
+- 同步校正账本首页停留 P16 的旧状态；保留本轮开始前已有的 P18 独立复验改动。
+- 验收：P18/P19 定向 16/16 通过；全量 201 项中 199 通过、2 项环境跳过，含既有安装后 wheel/capsule 回归。32 schema、53 schema-bound examples、22 syntax-only examples、Ruff、15 文件 mypy、CI topology 与 diff whitespace 通过。新增测试覆盖 HTML 文本/链接安全、缺失来源拒绝展示；迁移测试同时检查首页及四份报告的全部链接。
+- 实际重放：四场景结果为 stable/regressed/regressed/improved，证据均 passed；scale-regression 的独立 CLI 复验 34/34 引用通过。演示入口 `output/p19-demo/index.html`，测试摘要 `output/p19-validation/tests/ci-test-summary.json`。
+- 状态：本地验收完成，工作区未提交/推送；本轮 P18 补强/P19 尚未运行远端跨平台 CI，不标记远端冻结。未执行浏览器视觉验收，HTML 内容与本地链接由自动化检查。
+- 边界：公开合成 DOCX、保存的真实生成器导出与 virtual CAN；未新增物理 ECU、商业工具验证或 LLM。回退可继续消费原 JSON/Markdown。下一步为本轮改动的远端跨平台验收及实际报告使用反馈。
 
 ## 下次必须补录
 

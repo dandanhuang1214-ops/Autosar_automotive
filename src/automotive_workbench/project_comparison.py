@@ -3,8 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from html import escape
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from automotive_workbench.project_review import STAGE_ORDER, load_project_report
 
@@ -17,7 +19,17 @@ def _sha256(path: Path) -> str:
 
 
 def _same(left: Any, right: Any) -> bool:
-    return type(left) is type(right) and left == right
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(
+            _same(value, right[key]) for key, value in left.items()
+        )
+    if isinstance(left, list):
+        return len(left) == len(right) and all(
+            _same(a, b) for a, b in zip(left, right)
+        )
+    return left == right
 
 
 def _pointer(value: Any, pointer: str) -> Any:
@@ -214,8 +226,7 @@ def _all_references(result: dict[str, Any]) -> list[dict[str, Any]]:
     return references
 
 
-def validate_project_comparison(path: Path) -> dict[str, Any]:
-    result = json.loads(path.read_text(encoding="utf-8-sig"))
+def _validate_references(path: Path, result: dict[str, Any]) -> dict[str, Any]:
     reasons: list[str] = []
     valid = 0
     seen: set[str] = set()
@@ -335,18 +346,112 @@ def _render_markdown(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def compare_project_reports(
+def _render_html(result: dict[str, Any]) -> str:
+    """Render a local, script-free view of the same comparison and its evidence."""
+    def text(value: Any) -> str:
+        return escape(str(value))
+
+    def source_link(source: str) -> str:
+        # Only relative local paths become links; encode URL punctuation, including
+        # colons, so report content cannot introduce a URL scheme or fragment.
+        if Path(source).is_absolute() or "\\" in source or ":" in source:
+            return f"<code>{text(source)}</code>"
+        return f'<a href="./{quote(source, safe="/")}">{text(source)}</a>'
+
+    def evidence(references: list[dict[str, Any]]) -> str:
+        entries = []
+        for ref in references:
+            entries.append(
+                f"<li><strong>{text(ref['role'])}</strong> "
+                f"{source_link(ref['source'])}<br>"
+                f"JSON Pointer: <code>{text(ref['pointer'])}</code><br>"
+                f"SHA-256: <code>{text(ref['source_sha256'])}</code>"
+                f"<pre>{text(json.dumps(ref['value'], ensure_ascii=False, indent=2))}</pre></li>"
+            )
+        return (
+            f"<details><summary>查看证据（{len(entries)}）</summary>"
+            f"<ul>{''.join(entries)}</ul></details>"
+        )
+
+    labels = {
+        "stable": "稳定", "regressed": "回归", "improved": "改善",
+        "changed": "存在变化", "not-comparable": "不可比较",
+    }
+    status = result["status"]
+    parts = [
+        '<!doctype html><html lang="zh-CN"><meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        '<title>项目回归比较</title><style>',
+        'body{font:16px/1.6 system-ui,sans-serif;max-width:1100px;margin:auto;padding:24px;color:#172b40;background:#f6f8fb}',
+        'h1,h2{line-height:1.3}section{background:white;padding:20px;margin:20px 0;border:1px solid #ccd5df;border-radius:8px}',
+        'table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:10px;border-bottom:1px solid #ccd5df;vertical-align:top}',
+        'code,pre{overflow-wrap:anywhere;white-space:pre-wrap}a{color:#0757a0}summary{cursor:pointer}li{margin:12px 0}.scroll{overflow-x:auto}',
+        '</style><main><h1>项目回归比较</h1>',
+        f"<p>结论：<strong>{text(labels[status])} / {text(status)}</strong></p>",
+        '<p><a href="project-comparison.json">比较 JSON</a> · '
+        '<a href="project-comparison.md">Markdown</a></p>',
+        '<section><h2>比较来源与复验</h2>',
+    ]
+    for role in ("baseline", "candidate"):
+        source = result[role]
+        parts.append(
+            f"<p><strong>{role}</strong>: {source_link(source['source'])}<br>"
+            f"SHA-256: <code>{text(source['sha256'])}</code></p>"
+        )
+    validation = result["evidence_validation"]
+    parts.extend([
+        f"<p>生成时证据复验：<strong>{text(validation['status'])}</strong>；"
+        f"引用 {validation['valid_count']} / {validation['reference_count']}。</p>",
+        '<p>本页是生成时的静态快照。迁移或修改文件后，请重新执行独立复验；静态页面不会自动更新。</p>',
+        '<pre>workbench verify-project-comparison &lt;比较目录&gt;/project-comparison.json</pre></section>',
+    ])
+    if result["basis"]["reasons"]:
+        parts.append('<section><h2>不可比较的原因</h2><ul>')
+        parts.extend(f"<li>{text(reason)}</li>" for reason in result["basis"]["reasons"])
+        parts.append('</ul></section>')
+    else:
+        summary = result["summary"]
+        parts.append(
+            '<section><h2>变化概览</h2><p>'
+            f"阶段变化 {summary['stage_change_count']}；验收项变化 {summary['requirement_change_count']}；"
+            f"新增 finding {summary['finding_added_count']}；移除 finding {summary['finding_removed_count']}。"
+            '</p></section>'
+        )
+        for key, title, identity in (
+            ("stages", "阶段状态", "stage"),
+            ("requirements", "声明验收项", "id"),
+        ):
+            parts.append(f'<section><h2>{title}</h2><div class="scroll"><table><thead><tr><th>条目</th><th>baseline</th><th>candidate</th><th>分类 / 证据</th></tr></thead><tbody>')
+            for item in result[key]:
+                values = [item[role] for role in ("baseline", "candidate")]
+                if key == "requirements":
+                    values = [f"{value['status']} — {value['reason']}" for value in values]
+                parts.append(
+                    f"<tr><th scope=\"row\">{text(item[identity])}</th>"
+                    f"<td>{text(values[0])}</td><td>{text(values[1])}</td>"
+                    f"<td>{text(item['classification'])}{evidence(item['evidence'])}</td></tr>"
+                )
+            parts.append('</tbody></table></div></section>')
+        parts.append('<section><h2>Finding 变化</h2>')
+        if not result["findings"]:
+            parts.append('<p>没有 finding 变化。</p>')
+        for item in result["findings"]:
+            finding = item["finding"]
+            parts.append(
+                f"<h3>{text(item['change'])} · {text(item['stage'])} · {text(finding.get('code', ''))}</h3>"
+                f"<p>{text(finding.get('severity', ''))}: {text(finding.get('message', ''))}</p>"
+                f"{evidence(item['evidence'])}"
+            )
+        parts.append('</section>')
+    parts.append('<section><h2>解释边界</h2><p>比较描述声明的项目结果与报告差异，不能单独证明工程根因或物理 ECU 行为。证据复验通过不等于候选项目验收通过。</p></section></main></html>')
+    return "\n".join(parts) + "\n"
+
+
+def _build_comparison(
     baseline_path: Path,
     candidate_path: Path,
     output: Path,
 ) -> dict[str, Any]:
-    if output.is_symlink() or (
-        output.exists() and (not output.is_dir() or any(output.iterdir()))
-    ):
-        raise ValueError("Project comparison output must be empty or absent")
-    baseline_path = baseline_path.resolve()
-    candidate_path = candidate_path.resolve()
-    output = output.resolve()
     baseline = load_project_report(baseline_path)
     candidate = load_project_report(candidate_path)
     baseline_requirements, baseline_indexes = _requirements(baseline)
@@ -494,6 +599,48 @@ def compare_project_reports(
             "reasons": [],
         },
     }
+    return result
+
+
+def validate_project_comparison(path: Path) -> dict[str, Any]:
+    """Recompute conclusions from local sources without writing or running labs."""
+    validation: dict[str, Any] = {
+        "status": "failed", "reference_count": 0, "valid_count": 0, "reasons": [],
+    }
+    try:
+        path = path.resolve()
+        result = json.loads(path.read_text(encoding="utf-8-sig"))
+        if not isinstance(result, dict):
+            raise ValueError("comparison must be an object")
+        validation = _validate_references(path, result)
+        sources = []
+        for role in ("baseline", "candidate"):
+            source = Path(result[role]["source"])
+            sources.append((path.parent / source).resolve())
+        expected = _build_comparison(sources[0], sources[1], path.parent)
+        # The embedded validation is historical; always compute a fresh verdict.
+        for key in sorted(expected.keys() - {"evidence_validation"}):
+            if not _same(result.get(key), expected[key]):
+                validation["reasons"].append(f"Comparison field differs from sources: {key}")
+        if result.keys() != expected.keys():
+            validation["reasons"].append("Comparison field set is invalid")
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError, AttributeError, IndexError) as exc:
+        validation["reasons"].append(f"Invalid project comparison: {exc}")
+    validation["status"] = "failed" if validation["reasons"] else "passed"
+    return validation
+
+
+def compare_project_reports(
+    baseline_path: Path,
+    candidate_path: Path,
+    output: Path,
+) -> dict[str, Any]:
+    if output.is_symlink() or (
+        output.exists() and (not output.is_dir() or any(output.iterdir()))
+    ):
+        raise ValueError("Project comparison output must be empty or absent")
+    output = output.resolve()
+    result = _build_comparison(baseline_path.resolve(), candidate_path.resolve(), output)
     if not output.exists():
         output.mkdir(parents=True)
     result_path = output / "project-comparison.json"
@@ -511,4 +658,5 @@ def compare_project_reports(
     (output / "project-comparison.md").write_text(
         _render_markdown(result), encoding="utf-8"
     )
+    (output / "index.html").write_text(_render_html(result), encoding="utf-8")
     return result

@@ -37,6 +37,15 @@ python -m automotive_workbench.cli compare-projects \
 
 结果把阶段、验收项和 finding 差异分类为 `stable`、`regressed`、`improved`、`changed` 或 `not-comparable`，并输出 `project-comparison.json` 与 `project-comparison.md`。非稳定结果使用非零退出码，便于 CI 阻止回归。公开四场景入口为 `python scripts/run_project_comparison_scenarios.py --output output/p18-comparison`。
 
+保存或迁移后的比较报告可独立复验：
+
+```bash
+python -m automotive_workbench.cli verify-project-comparison \
+  output/project-comparison/project-comparison.json
+```
+
+该命令只读取本地证据，重新计算比较结论、阶段/验收项/finding 差异和统计，并复验来源哈希与引用。有效报告返回 0（包括真实的回归或不可比较报告），篡改、缺失来源或非法 JSON 返回 2；JSON 输出提供失败原因。内嵌 `evidence_validation` 是生成时记录，消费方应使用本次命令返回的复验结果。迁移时应一并保留两侧项目目录及相对路径；此检查验证内部一致性，不认证来源身份。
+
 1. 定义跨工具稳定的 `Artifact`、`Finding`、`Trace`、`TestResult` 数据契约；
 2. 将 Generate-Arxml 的 `issues.json` 转换为统一 Finding；
 3. 查询公开样例中 `DBC Signal → SWC → COM → I-PDU → PduR → CanIf` 的研究映射。
@@ -77,6 +86,8 @@ python -m automotive_workbench.cli compare-projects \
 38. 比较两次项目验收报告的阶段、验收项与 finding 差异，以双侧哈希和 JSON Pointer 证据区分稳定、回归、改善、其他变化及不可比较。
 
 当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
+
+直接查看回归演示：运行 `python scripts/run_project_comparison_scenarios.py --output output/project-demo`，然后打开 `output/project-demo/index.html`。包含稳定、配置回归、上游生成失败和恢复四例，可展开来源证据；详见 [离线回归报告](docs/project-workflow.md#离线回归报告与演示)。
 
 ## 运行
 

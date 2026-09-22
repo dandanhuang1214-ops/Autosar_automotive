@@ -37,7 +37,10 @@ from automotive_workbench.evidence_capsule import export_evidence_capsule
 from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
 from automotive_workbench.project_workflow import run_project
 from automotive_workbench.project_review import run_project_review
-from automotive_workbench.project_comparison import compare_project_reports
+from automotive_workbench.project_comparison import (
+    compare_project_reports,
+    validate_project_comparison,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -68,6 +71,11 @@ def build_parser() -> argparse.ArgumentParser:
     project_comparison_parser.add_argument("baseline", type=Path)
     project_comparison_parser.add_argument("candidate", type=Path)
     project_comparison_parser.add_argument("--output", type=Path, required=True)
+    comparison_verification_parser = commands.add_parser(
+        "verify-project-comparison",
+        help="Recompute a saved project comparison and verify its evidence",
+    )
+    comparison_verification_parser.add_argument("report", type=Path)
 
     inspect_parser = commands.add_parser("inspect", help="Inspect a supported engineering artifact")
     inspect_parser.add_argument("artifact", type=Path)
@@ -352,6 +360,8 @@ def main() -> int:
             result = run_project(args.project, args.output, BusConfig(args.interface, args.channel))
         elif args.command == "run-project-review":
             result = run_project_review(args.report, args.output, args.claim)
+        elif args.command == "verify-project-comparison":
+            result = validate_project_comparison(args.report)
         elif args.command == "compare-projects":
             result = compare_project_reports(
                 args.baseline, args.candidate, args.output

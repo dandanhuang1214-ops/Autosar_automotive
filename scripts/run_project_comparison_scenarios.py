@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from html import escape
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +76,34 @@ def run_comparison_scenarios(output: Path) -> dict:
     }
     (output / "p18-project-comparison.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    descriptions = {
+        "stable": "同一基线：稳定不代表覆盖全部需求",
+        "scale-regression": "分辨率变化：canonical 失败，通信跳过",
+        "generation-regression": "缺少初值：generation 失败，通信跳过",
+        "generation-improvement": "恢复初值：从失败报告回到通过基线",
+    }
+    cards = "\n".join(
+        f'<li><a href="comparisons/{escape(item["comparison"])}/index.html">'
+        f'{escape(descriptions[item["comparison"]])}</a> — {escape(item["status"])}</li>'
+        for item in comparisons
+    )
+    (output / "index.html").write_text(
+        '<!doctype html><html lang="zh-CN"><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        '<title>公开车窗项目回归演示</title>'
+        '<style>body{font:18px/1.7 system-ui,sans-serif;max-width:900px;margin:auto;padding:24px}'
+        'li{margin:18px 0}a{color:#0757a0}</style><main>'
+        '<h1>公开车窗项目回归演示</h1>'
+        '<p>公开合成 DOCX → 固定 Generate-Arxml 导出 → 静态校验 → virtual CAN → 项目比较。</p>'
+        f'<ol>{cards}</ol>'
+        '<p>阅读顺序：比较结论 → 失败阶段 → finding → 展开两侧证据。'
+        '每份比较保留来源文件、SHA-256 和 JSON Pointer。</p>'
+        '<p>本次重放消费已保存的导出，不重新运行 Generate-Arxml；'
+        '结果不代表客户数据、物理 ECU 或量产验证。</p>'
+        '<p>迁移时保留整个场景目录；各比较页提供独立复验命令。</p>'
+        '</main></html>\n',
         encoding="utf-8",
     )
     return summary
