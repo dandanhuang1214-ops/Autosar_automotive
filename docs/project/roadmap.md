@@ -1,225 +1,75 @@
-# Automotive Software Engineering Workbench 路线v2
+# Automotive Workbench 长期升级路线 v3
 
-## 当前目标与升级顺序（2026-09-22 复核）
+更新：2026-09-23。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
-平台目标保持为：个人可维护的汽车软件工程工作台，通过 artifact 串联需求/配置、静态校验、运行实验和可追溯报告，兼顾 Windows 工程工具与 Linux 执行环境。
+## 长期产品目标
 
-当前优先补齐统一工程工作流。P10–P14 的质量、CI 和证据消费基线已完成；学习周次、协议数量和新增 schema 数量不作为平台升级目标。此节是当前决策，下文实施状态与月度计划保留为历史。
+形成个人可维护的汽车软件配置与验证工作台：把需求/接口、DBC、ARXML、BSW 配置意图、执行测试和工程审查连成可复现工作流。工程人员改变配置后，应能回答：**改了什么，影响哪些通信/诊断对象，哪些检查和实验受影响，哪些结论已有证据，哪些还未验证。**
 
-| 阶段 | 面向使用者的交付 | 验收门 |
+目标使用者首先是你本人：做配置自动化、跨层问题定位和公开工程交付；以此积累汽车工具链开发能力，并支持 Classic AUTOSAR BSW 配置/集成方向。长期架构仍是 Windows 工程面 + Linux 执行面，复用 Generate-Arxml、现有审查内核和成熟 CAN/UDS 库，以 artifact 连接，避免重复建设工具内核。
+
+半年交付目标不是命令数、schema 数或测试总数，而是以下四项用户能力同时成立：
+
+1. 至少两个结构不同的公开项目由同一声明式流程运行；加入第二个项目不修改运行内核。
+2. 配置变更能沿信号、PDU、路由与验收项追踪，输出有来源的影响范围；无法判断的部分显式标记未知。
+3. 至少一条真实导出桥接和一条独立进程 ECU 通信/诊断路径，分别记录输入版本、工具版本、执行条件与失败证据。
+4. 从干净环境完成配置导入、检查、运行、变更比较、审查和交付；公开演示可复现，求职表述能逐项指向证据。
+
+## 个人情况与资源假设
+
+依据 `D:/work/improve/README.md`、`docs/job-research/TARGET_PROFILE.md`、`docs/SKILL_MATRIX.md` 与第六周学习计划：已有 ASW/SWC/ARXML 与 Python 自动化积累；主出口为汽车工具链/配置自动化，BSW 配置集成为并行出口；当前个人学习在独立 UDS/ISO-TP 与 OpenBSW 调用链。记录未证明的能力不视为已经掌握。
+
+沿用每两周 20～30 小时的个人总预算，建议分配：平台评审与集成 8～12 小时，通信/诊断和 C/C++ 学习实操 8～12 小时，复盘与表达 4～6 小时。下面 24 周是滚动容量规划，不是每阶段必然按日历完成的承诺；代理编码耗时也不等于你的学习投入。每两周用实际验收结果调整余量，阶段目标保持连续。
+
+## 当前事实与主要缺口
+
+| 领域 | 已有能力 | 本轮查证的缺口 |
 |---|---|---|
-| P15 项目工作流（已冻结） | 项目配置 → 静态校验 → 通信实验 → 声明验收矩阵/HTML | 正常、配置错误阻止执行、后端阻断、缺失证据、迁移复验；远端七 job 通过 |
-| P16 真实输入桥接（已冻结） | 实际 Generate-Arxml 导出三例，增加上游生成门控 | 固定提交、公开 DOCX、来源哈希、正常/分辨率变化/缺初值三例重放；远端七 job 通过 |
-| P17 项目级审查（已冻结） | 用实际失败报告回答工程问题并引用证据 | 正常/两类失败重放、精确引用、缺文件及证据不足拒答；远端七 job 通过 |
-| P18 项目回归比较（已冻结） | baseline/candidate 项目报告 → 阶段、验收项和 finding 差异 | 稳定/两类回归/反向改善、双侧精确证据、不可比较与篡改拒绝；远端七 job 通过 |
+| 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | 项目运行仍以公开车窗为唯一业务模型 |
+| 通信运行 | virtual/SocketCAN、双向证据、过滤与 blocked | `communication_runtime.py` 固定 0x100/0x200，调用 `can_runtime.py` 中固定报文/信号值 |
+| BSW 映射 | Tx/Rx、DBC 属性、跨层引用一致性与 8 节点 trace | 主要为字符串意图；缺少有独立身份的配置对象图、规则覆盖清单与变更影响分析 |
+| 外部工具 | 固定 Generate-Arxml DOCX/contract/issues 三例 | 尚未以 ARXML/ECU Extract/ECUC 的明确受限语义子集连接平台 |
+| ECU 执行 | OpenBSW 构建、CF01 客户端与历史现场证据 | 项目编排、独立 ECU 生命周期、构建配置和诊断结果尚未统一验收 |
+| 审查交付 | 确定性引用、拒答、项目比较、P19 HTML | 现有结果比较不等同于输入变更影响；检索审查不等同于通用语义诊断 |
+| 质量基线 | 七 job CI、安装后验证、证据迁移复验 | 必须继续完成当前提交的远端验收，不能停在本地全绿 |
 
-openDuT 以多 DUT/远程执行需求触发，ReqIF/StrictDoc 以真实需求交换触发，商业工具桥接以可用导出产物触发。CF01 客户端是保留的独立接入工作，不代替本次平台目标。选择依据见 [P15 调研](../research/p15-platform-workflow-reassessment-2026-09-12.md)。
+P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已由实现提交 `88c24e2`、远端 run `35748563878` 的七 job 全绿完成冻结。P19 属于既有工作流的易用性补强，不是新的长期产品方向。
 
-P15/P16 已由修复提交 `af699c1` 的远端 run `34734838719` 完成七 job 跨平台验收。P17 由提交 `5b3103e` 的远端 run `34764974287` 完成七 job 验收并冻结。P18 由提交 `a000a50` 的远端 run `34817437909` 完成七 job 验收并冻结。P16–P18 的输入仍是公开合成 DOCX 与 virtual CAN；不外推为客户数据、物理 ECU 或量产交付。当前确定性审查和回归比较不需要 LLM；后续升级等待真实项目报告或明确 consumer 需求触发。详见 [P16 记录](../research/p16-generate-arxml-artifact-bridge-2026-09-12.md)。
+## 未来 24 周的六个交付阶段
 
-## P18 补强：比较报告独立复验（2026-09-22）
+| 顺序 / 参考窗口 | 主阶段与交付 | 必须满足的阶段门 | 对你的能力价值 |
+|---|---|---|---|
+| P20 / 第 1～4 周 | **声明驱动的多项目通信验证**：从项目文件选择本地 ECU、消息、方向与测试向量，同一引擎支持车窗和第二个结构不同项目 | 两项目无需改内核运行；旧项目兼容；非法向量/不支持特性在开总线前拒绝；双平台 virtual + Linux SocketCAN 条件验收；项目/review/compare 完整闭环 | Python 平台抽象、DBC/Tx/Rx 与工程接口设计 |
+| P21 / 第 5～8 周 | **BSW 通信对象图与变更影响**：明确 ComSignal、IPdu、PduR route、CanIf PDU 身份和关系；规则限定到可证实语义 | Tx/Rx 两链；至少覆盖断引用、重复身份、方向冲突、长度/布局冲突、路由端点错误、配置变化影响；每项规则有正负例与来源；两版本输入到受影响对象/验收项可追踪 | COM/PduR/CanIf 配置理解与分层定位 |
+| P22 / 第 9～12 周 | **ARXML 与商业工具桥接**：优先消费可公开的 Generate-Arxml 导出，逐步接一条合法可用的 DaVinci 导入/回导 | 固定受支持的元素与 AUTOSAR 版本；保留源路径、工具版本和未支持语义；正常/悬空引用/语义变化三组 golden diff；商业工具往返须有真实执行证据 | ARXML/ECU Extract/ECUC 工具链能力；不把 SWC ARXML 等同 ECUC |
+| P23 / 第 13～16 周 | **独立 ECU 执行纳入项目**：以固定 OpenBSW POSIX 构建和 CF01 为首条外部执行路径，统一运行前检查、诊断和报告 | 不在客户端内启动假 responder；绑定构建/寻址配置；成功、无响应、错误 DID/ID、环境 blocked；清理/超时/通道隔离可重放；virtual 和外部 ECU 证据分开 | C/C++ 调用链、ISO-TP/UDS 集成、执行系统设计 |
+| P24 / 第 17～20 周 | **面向真实工程问题的审查**：利用 P20–P23 的输入、对象图和失败报告回答变更影响/配置定位问题 | 固定至少 30 个不同工程问题，保留独立未参与开发的负例；检索/规则/可选模型分别计量；关键无证据断言必须拒答；引用与严重度保真 | 工程 AI 应用能力，连接现有知识工作台 |
+| P25 / 第 21～24 周 | **可复现平台交付与作品集**：统一安装/执行手册、英文入口、10 分钟演示、双岗位能力映射 | 干净环境重跑两项目与故障；安装后核心路径可用；CI 全绿和完整归档；演示每条能力可定位证据；真实外部使用/投递反馈形成下一轮问题清单 | 从研发到交付的完整叙事与可展示成果 |
 
-新增 `verify-project-comparison` 消费入口：从原始项目及阶段报告重新计算比较结果，检查结论、差异、统计与完整引用，修复仅复验引用而可能接受被改写结论的缺口。保持 `project-comparison-0.1` 格式及原分类语义。当前为本地实现与验收，远端跨平台 CI 待运行；P18 历史冻结记录不代表本次修改已远端验收。
+依赖：P20 → P21 → P22；P23 可在 P20 稳定后穿插本地环境工作；P24 使用前三阶段证据；P25 的演示/文档随阶段积累，最后做统一验收。一次只保留一个主要实现阶段，环境等待可切换到已有计划的独立任务。
 
-## P19：项目回归可读报告与公开演示（2026-09-22）
+P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-本次明确 consumer 为个人配置修改后的回归阅读和公开作品演示。结合工具链/配置自动化主线、BSW 问题定位出口与有限维护时间，复用 P15–P18 的实际三例项目和比较结果：`compare-projects` 同时生成离线 HTML，四场景脚本生成演示首页，支持展开证据与整包迁移。无需新增运行服务。平台产出不替代个人对通信与诊断的独立掌握验收。
+## 当前执行：P20 implementing
 
-本地验收结果见进度账本；本轮 P18 补强/P19 尚待远端 Windows/Ubuntu/Python 3.14 验收。下一步优先完成跨平台验收，再依据真实项目输入或报告阅读反馈选择后续功能。
+1. 已完成本轮 P18/P19 的远端 Windows/Ubuntu/Python 3.14 七 job 验收，记录见进度账本。以后每个实现阶段同样完成提交、CI 跟踪及失败修复。
+2. 当前主阶段为 P20；P20a 运行声明与纯预检已实现，远端验收待运行。下一实施包为 P20b 通用消息执行，按 [P20 实施计划](p20-multi-project-plan.md)推进：契约与预检 → 通用运行 → 项目集成 → 第二项目与跨平台验收。
+3. P20 未完成前，不用其他报告美化或证据封装任务替代主阶段。必要缺陷修复归入当前阶段，不因每个小改动重新编号。
 
-## 实施状态（2026-09-12）
+## 持续升级的完成规则
 
-本节按时间保留状态迁移；较早条目中的“下一阶段”是历史决策，当前唯一下一阶段以本节末尾条目和进度账本为准。
+用户说“继续升级平台”，默认继续当前阶段尚未完成的验收项；当前阶段全部通过则进入已排定的下一阶段。无需再次等待用户提出某一个小功能。职业方向或资源发生变化时更新假设与后续顺序，并说明取舍。
 
-- 已完成：统一 Artifact/Finding/Trace 骨架；Generate-Arxml report adapter；DBC→BSW intent→canonical contract 静态校验。
-- 已完成：基线与五类配置故障注入，JSON/Markdown 证据报告，Windows/Linux CI 定义。
-- 已完成：python-can virtual 双节点收发、DBC 编解码、错误 ID、越界值与接收超时。
-- 已完成：周期发送观测、丢帧超时和 `RECEIVING → TIMEOUT → RECOVERED` 监督状态实验。
-- 下一阶段：CAN 日志统一格式与 replay；随后实现 SocketCAN adapter，在环境可用时复用相同实验契约。
-- R1 已完成（2026-08-14）：can-utils `.log` 录制、DBC 离线解码、原始时间/固定 gap 回放、BusConfig、日志/DBC SHA-256、Finding 和双层证据报告。
-- 当前下一阶段调整为 R2：SocketCAN 环境探测与 backend adapter；不自动编译或替换 WSL 内核。
-- R2a 已完成（2026-08-16）：backend capability probe、结构化 blocked reason/退出码、virtual/SocketCAN 共用实验契约、条件式 vcan0 测试。
-- R2 环境工具已完成：只读 host probe、默认 dry-run 的幂等 vcan0 setup、显式 apply 与安全 rollback。
-- R2b 已完成 Linux 侧闭环（2026-08-17）：`vcan0` 已创建，can-utils 原始帧收发通过，Workbench SocketCAN backend probe/lab 通过，backend lab 覆盖正常 capture/decode/replay、错误 arbitration ID 与接收超时；Linux 测试 22 项通过、1 项非 Linux 行为测试跳过。Windows 原生回归需在 PowerShell 或 CI 中复验。
-- R2c 已完成 Linux 入口（2026-08-17）：新增 `scripts/linux/run_socketcan_lab.sh`，普通用户一条命令完成 host probe、can-utils smoke、Workbench SocketCAN probe/lab 和报告归档；sudo host 准备仍由 `setup_vcan.sh --dry-run/--apply` 显式完成；WSL shutdown 后 `vcan0` 恢复步骤已写入文档。
-- Windows 原生回归已由用户在 PowerShell 复验通过；R2 阶段门槛完成。
-- R3a readiness 已完成（2026-08-17）：Docker CLI/daemon 当前已可用；Ubuntu 24.04 原生工具链具备 Git/GCC/G++/Make/CMake/Ninja/Python，但不是官方 Ubuntu 22.04 native baseline。
-- R3b baseline 已部分完成（2026-08-17）：OpenBSW 已克隆到 WSL Linux 文件系统，官方 Docker development 镜像因完整工具链下载过重暂缓；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在恢复 `vcan0` 后完成 CAN 发送 smoke。
-- R3c 已完成（2026-08-17）：固化 OpenBSW POSIX/CAN/DoCAN/unit-test 源码入口索引；`tests-posix-debug` configure/build 通过，CTest 1878/1878 通过。
-- R3d 已完成（2026-08-17）：在 OpenBSW 本地 clone 新增 `CANFrameTest.ClassicCanFrameInvariants` 最小测试候选；`CANFrameTest` 7/7、`cpp2canTest` 34/34、全量 `tests-posix-debug` CTest 1879/1879 通过。
-- R3e 已完成（2026-08-18）：将 OpenBSW 最小测试候选整理为 Workbench patch artifact，路径为 `patches/openbsw/0001-cpp2can-add-classic-canframe-invariant-test.patch`；上游化前应先按 OpenBSW 贡献流程开 issue/沟通，并满足 Eclipse ECA 要求。
-- R4a 已完成（2026-08-18）：选定 UDS/ISO-TP 架构为 `udsoncan Client -> PythonIsoTpConnection -> can-isotp NotifierBasedCanStack -> python-can BusConfig`；virtual 作为 deterministic baseline，SocketCAN kernel ISO-TP 和 OpenBSW DoCAN 作为后续集成/比较路径。
-- R4b 已完成（2026-08-18）：新增 `uds-intent-0.1` schema、公开车窗诊断 intent 示例、`diag_intent` loader/summary 和 inspect CLI 支持；下一步进入 virtual UDS lab。
-- R4c 已完成（2026-08-18）：新增 `run_uds_lab()` 和 CLI，使用本地确定性 responder 在 `python-can virtual` 上跑通 ReadDataByIdentifier positive/NRC/timeout 三类诊断场景，并输出 JSON/Markdown 证据。
-- R4d-R4g 已完成（2026-08-19）：诊断 lab 已集成 backend probe/blocked 证据、SocketCAN 复验入口、独立 UDS backend probe 和 malformed payload Finding，virtual baseline 扩展为 4 类场景。
-- R4h 已完成（2026-08-19）：SocketCAN UDS 实机复验 4/4 通过；同时发现共享 `vcan0` 上并行 CAN/UDS lab 会产生帧污染。
-- R4i 已完成（2026-08-20）：CAN/UDS receiver 使用精确 ID filters，SocketCAN 入口使用按 channel 命名的 `flock`，报告记录 isolation evidence 和 contamination Finding；并发实机复验两个 lab 均通过。
-- R4j 已完成（2026-08-20）：新增 `dtc-intent-0.1`、absent/pending/confirmed/healing/healed/clear 确定性实验和 Finding；UDS `0x19` 读取、`0x14` 清除、清除后复读在 virtual 和 SocketCAN 上均通过。
-- R4k 已完成（2026-08-20）：调研并实现显式 operation-cycle、tested-pass aging/aged-out 和 confirmed-trigger snapshot；UDS `0x19/0x04` snapshot 在 virtual 和 SocketCAN 上均通过，clear 后 snapshot 正确消失。
-- R4l 已完成（2026-08-20）：增加 occurrence/aging extended data、UDS `0x19/0x06`，并覆盖未知 DTC、未知 record、非法 cycle 顺序和 malformed snapshot。
-- R4m 已完成（2026-08-20）：增加运行态/持久镜像对照实验和 UDS `0x11/0x01` hard reset，验证 flush 后恢复、未 flush 丢失和 clear 后不复活。
-- R4n 已完成（2026-08-20）：增加 SHA-256 镜像完整性封套和 flush/corruption 故障注入，验证 last-good 保留与恢复失败安全回退。
-- R4o 已完成（2026-08-20）：增加双副本 generation 仲裁、loss-of-redundancy 分类和损坏新副本后的旧副本回退证据。
-- R4p 已完成（2026-08-31）：实现 committed/staged 副本、幂等 repair、中断普通写入/修复的 last-good 保留和 25 步确定性证据。
-- R5a 调研已完成（2026-08-31）：定义 retrieval-only ReviewRequest/EvidenceUnit/Citation/ReviewResult、基于调用方 checks 的 coverage 和稳定拒答原因。
-- R5b 已完成（2026-08-31）：实现本地 JSON Pointer EvidenceUnit、词法检索、SHA-256 citation 验证、required-check coverage 和 answered/partial/refused 证据。
-- R5c 调研已完成（2026-08-31）：定义显式 comparable assertion、跨 artifact 冲突优先级、Markdown one-based inclusive line-range locator 和十案例 gold evaluation 契约。
-- R5d 已完成（2026-08-31）：实现 Markdown line-range、`equals/all-equal` 跨 artifact assertion、冲突双方 citation 和十案例三次运行 gold evaluator；全部 gate 通过。
-- R5e 已完成（2026-08-31）：复用公开 canonical contract、BSW、UDS 和 DTC intent，将评测扩展为 14 案例、30 checks，并新增五域 check count/accuracy 证据。
-- R5f 已完成（2026-08-31）：新增白名单 CAN/UDS/DTC producer、运行时报告请求物化与实际 SHA-256 绑定，并将 3 项 runtime checks 和独立 3 项 held-out negative checks 分开计量。
-- R5g 已完成（2026-09-01）：新增两次独立 runner 输出配对、稳定字段 allowlist drift injection、动态字段比较拒绝，以及 CAN/UDS/DTC 跨运行一致性和 CAN drift 冲突评测。
-- R5h 已完成（2026-09-01）：新增 `review-request-0.3` applicability profile，variant、software/calibration version、backend 任一不一致即阻断比较；cross-run catalog 扩展到 CAN/UDS/DTC 三域稳定与 drift，并增加 profile mismatch 拒答案例。
-- R5i 已完成（2026-09-01）：新增 `review-request-0.4` applicability locator；CAN/UDS/DTC runner 将输入哈希、runner contract 和实际 backend 固化为报告内 profile，evaluation 将 profile 与报告 SHA-256 一并归档并从 artifact 解析比较资格。
-- R5j 已完成（2026-09-01）：新增 `review-request-0.5` baseline/candidate cohort、逐 candidate drift catalog 和 evaluator 0.7 三运行 producer；CAN cohort 覆盖 stable+drift 与 stable+profile mismatch 两类组合。
-- R5k 已完成（2026-09-01）：三运行 cohort 扩展到 UDS decoded VIN 与 DTC confirmed state；evaluator 0.8 输出全局及 CAN/UDS/DTC 分域 drift 状态计数，全部精确 gate 通过。
-- R5l 已完成（2026-09-03）：新增 evaluator 0.9 `external_reports`，可对 1～3 份已存在的本地 CI/外部 runner JSON 报告逐字节验证 SHA-256 和 applicability profile 后执行 cohort evaluation；与现场 `producer` 互斥，首个 CAN stable+drift 固定报告案例全部 gate 通过。
-- R5m 已完成（2026-09-04）：evaluator 1.0 将固定报告 cohort 扩展到 CAN/UDS/DTC 三域；每份报告必须携带 provider、repository、run、job、commit provenance，验证后以 `hash-bound` 状态归档，三域 stable+drift gate 全部通过。
-- R5n 已完成（2026-09-04）：evaluator 1.1 要求每份固定报告由调用方独立声明 repository/job/commit expectation，逐字段匹配后记录 `matched`；缺失、非法或不符均在 materialization 前 fail closed，九份 CAN/UDS/DTC 报告全部覆盖。
-- R5o 已完成（2026-09-04）：evaluator 1.2 新增 case 级 repository + allowed job IDs policy，在逐报告 expectation 之后、materialization 之前拦截跨仓库和越权 job；结果以 `enforced` 状态归档，1.0/1.1 保持兼容。
-- R5p 已完成（2026-09-06）：evaluator 1.3 为外部报告 integrity、provenance、expectation 和 policy 预检失败生成闭合的最小 rejection artifact，保持非零退出且不物化 request；双平台 CI 已配置无论成败都上传评测输出。
-- R5q 已完成（2026-09-07）：新增跨平台可控 SHA-256 mismatch 演练，CI 直接观察 CLI failure 后校验 rejection artifact、无 request/result 物化，并独立上传拒绝证据；远端验收修复诊断 extra、matrix fail-fast、CRLF hash 漂移与 blocked reason 平台断言，run #10 Windows/Ubuntu 双 job 成功并上传六份测试/正常/拒绝 artifact。
-- P4a 已完成（2026-09-08）：`bsw-intent-0.2` 显式声明本地 ECU 与 message/signal Tx/Rx；DBC sender/receiver、跨层方向和 sender/receiver 负例均可确定性检出，`validate-map` 输出两条完整通信路径证据。
-- P4b 已完成（2026-09-08）：CAN lab 0.2 覆盖 BODY_ECU Tx/Rx；`run-communication-chain` 以 message/signal identity、direction 和 frame ID 将两条静态路径绑定到同次 virtual CAN 报告，并固定三份来源 SHA-256。
-- P4 远端验收完成（2026-09-09）：GitHub Actions run `34299638224` 的 Windows/Ubuntu job 均成功，并分别上传 `communication-chain-Windows/Linux` artifact。
-- P5a 已完成（2026-09-09）：新增纯本地 `index-evidence` 和 `evidence-bundle-manifest-0.1`，登记相对 artifact identity、类型/schema、producer、SHA-256 及 bundle 内/portable base 外部依赖；run `34310607466` Windows/Ubuntu 双平台索引与 artifact 上传通过。
-- P5b/P5c 已完成（2026-09-09）：`verify-evidence` 区分非法 manifest 与合法 manifest 下的 missing/unexpected/tampered/dependency failure；run `34322744055` 的 Windows/Ubuntu 正常验证、可控篡改非零退出、拒绝检查与独立 artifact 上传全部通过，P5 契约冻结。
-- P6 已完成（2026-09-09）：`run-communication-chain` 改为 `BusConfig` 驱动的 virtual/SocketCAN 共用双向 runtime，固定 `0x100/0x200` filters、backend probe、通道锁证据及 `passed/failed/blocked` 三态；不可用 SocketCAN 的结构化证据仍可被 P5 manifest/verifier 接受；run `34339864977` 的 Windows/Ubuntu 正常链、blocked 链、索引、验证和 artifact 上传全部通过。
-- P7 已完成（2026-09-09）：新增 `run-communication-delivery`，一次生成 chain bundle、manifest、verification 和哈希绑定 receipt；正确传播 `passed/failed/blocked` 且拒绝非空输出目录。run `34365685454` 的 Windows/Ubuntu 交付与 artifact 上传均通过。
-- P8 已完成（2026-09-09）：新增 `export-evidence-capsule`，按 P5 manifest 白名单复制 P7 bundle 及外部依赖，并以 capsule 根目录为 base 执行离线复验；run `34368118499` 的 Windows/Ubuntu 迁移复验与 artifact 上传均通过。
-- P9 已完成（2026-09-10）：新增 `verify-evidence-capsule`，对 16 份胶囊文件执行完整库存、哈希、契约及 P5 依赖图复验，并增加顶层 receipt 受控篡改拒绝；run `34436609789` 的 Windows/Ubuntu 正常验证、受控拒绝检查与 artifact 上传均通过。
-- OpenBSW 前置调研已完成：官方容器仍是隔离路线，但首次 spike 已证明 Ubuntu 24.04 原生 POSIX baseline 可用；后续不能把 OpenBSW 扩展为完整 AUTOSAR Classic 替代品。
-- P10 已完成并冻结（2026-09-10，最终 run `34446441635`）：25 份 schema meta-validation、45 份 schema-bound example、三类 evidence boolean/integer 与 RFC 3339 schema-loader 同拒绝、portable path、Python 3.14 runtime-currency、最小 Ruff/mypy 门禁和 resolved dependency inventory 均通过三 job 验收。下一里程碑需重新选择，不自动进入 OpenBSW/新协议；继续保持纯本地确定性边界。
-- P11 已完成（2026-09-10）：将 OpenBSW `dbd6e118` 基线与当前 `00052043` 固定比较，历史 CANFrame patch 无冲突重放；`CANFrameTest` 7/7、`cpp2canTest` 44/44、全量 POSIX CTest 2572/2572 通过。确认 `0x123 -> 0x124` 与每秒 `0x558` 学习锚点仍成立，并将八字节结论严格限定为 classic/non-FD 配置；未新增 adapter、协议或硬件依赖。
-- P12 已完成（2026-09-10，验收 run `34486148658`）：CI 拆为 core-contracts、runtime-evidence、controlled-rejections 和 runtime-currency 四类职责、七个实际 job；运行证据与拒绝证据各自重建前置输入，不共享可变目录。新增依赖无关的 topology guard 和三项负例，156 项本地回归中 154 项通过、2 项环境跳过；Windows/Ubuntu 两组 core、runtime、rejection 与 Ubuntu/Python 3.14 currency 全部通过远端验收。
-- P13 已完成并冻结（2026-09-11，run `34529188770`）：临时 wheel 无依赖安装到全新虚拟环境，在仓库外通过 console script 运行 8 节点 trace，并显式拒绝 checkout import 污染。`installed-distribution-smoke-0.1` 报告在 Windows/Ubuntu 均生成并上传，临时 wheel 本身不上传；七个实际 job 全部成功。不增加 CD、签名、attestation、新协议或硬件依赖。
-- P14 已完成并冻结（2026-09-11，run `34581882908`）：将 P8/P9 迁移胶囊交给 P13 同类的无依赖隔离 wheel，在仓库外以安装后的 `workbench` 完成 16/16 文件、7/7 artifact、3/3 dependency 复验；Windows/Ubuntu 与其余五个既有 job 全部通过，不上传 wheel/capsule，不扩大到发布或新协议。
+每阶段交付必须同时包含：可操作的用户路径、输入与输出、正例与真实失败用例、自动验证、本轮远端 CI、更新后的首页状态/进度/下一项任务。状态严格分为 planned / implementing / local-accepted / remote-accepted / blocked；CI 未运行与 CI 失败必须分别记录。涉及机器环境的门另行记录，远端 virtual 成功不能代替现场执行。
 
-- 第五周 CF01 客户端本地验收（2026-09-12）：新增 `read-uds-did`，以独立 ECU 为 consumer 读取 OpenBSW `0xCF01` 并留存多帧、预期数据与来源哈希证据；cantools 升至 44 系列。本地 165 项测试中 163 通过、2 项环境跳过，29 schema 和质量门禁通过；既有现场报告哈希复核通过。下一步为当前改动的远端跨平台 CI 验收，不扩展其他诊断服务。
+在会话授权范围内完成提交推送、跟踪 CI 和失败修复；权限/凭据/外部环境确实阻塞时记录具体动作、错误和恢复入口。新提交改变运行代码或 CI 配置后，需要该提交自己的验收结果；纯文档状态回填引用已经通过的实现提交，并区分随后文档提交的运行状态。
 
-## 平台目标
+保留底层核心、证据契约和回退路径。除非新 consumer 要求且当前阶段明确获益，不增加分布式服务、远程调度、完整 BSW 栈或协议覆盖面。每个阶段结束检查实际维护成本，优先消除重复内核。
 
-平台采用“统一体验、分离内核、开放适配器”：两个旧项目近期不搬迁代码，由新的orchestrator通过artifact协议连接；长期再根据边界稳定程度决定是否monorepo。
+## 本次官方资料核对与技术边界
 
-```text
-Windows Engineering Plane
-  DOCX/Excel | Generate-Arxml | DaVinci | Simulink
-                 ↓ artifacts
-Workbench Core
-  Artifact | Trace | Finding | TestResult | Evidence
-                 ↓ adapters
-Linux Execution Plane
-  SocketCAN | OpenBSW | CAN/UDS runners | future OpenSOVD/openDuT
-```
+- AUTOSAR 将 Classic Platform 架构与方法论同时纳入标准范围；平台路线因此保留 ASW/RTE/BSW 边界和跨工具交换，具体规则需固定文档版本后逐项落实。[AUTOSAR Classic Platform](https://www.autosar.org/standards/classic-platform)
+- Vector 当前 DaVinci Configurator Classic CLI 文档列出导出、ECUC 派生、验证、生成与项目比较入口。因此商业桥接优先消费产物并调用已有工具；具体命令必须匹配本机安装版本和许可，不据在线文档认定本机已可运行。[Vector CLI reference](https://help.vector.com/davinci-configurator-classic/en/latest/user-manual/references/cli/index.html)
+- OpenBSW 诊断与寻址受平台构建选项控制。P23 必须保存构建配置并显式配置请求/响应 ID，不把历史 CF01 地址假定为所有构建通用。[OpenBSW diagnostics](https://eclipse-openbsw.github.io/openbsw/sphinx_docs/doc/dev/features/diagnostics.html)
 
-## 本周：平台设计基线，不追求大而全运行
-
-截至周末平台应达到`v0-design`，交付：
-
-1. 平台上下文与模块边界图；
-2. `Artifact/Trace/Finding/TestResult`四个最小schema草案；
-3. 第一版BSW意图对象表：Message、Signal、ComSignal、IPdu、PduRRoute、CanIfPdu；
-4. Generate-Arxml和Evidence Workbench的adapter输入/输出清单；
-5. Windows + WSL2双平面ADR；
-6. 公开车窗案例的文件清单和数据流图；
-7. 本机WSL环境由用户PowerShell复核。
-
-本周不创建完整平台代码、不下载openDuT/OpenSOVD、不重构旧项目。
-
-### 本周知识储备（约5小时）
-
-- 90分钟：COM/PduR/CanIf职责和通信对象层级，只学到能定义意图对象；
-- 60分钟：追踪一条DBC Signal到SWC Port/DataElement；
-- 45分钟：学习artifact、adapter、port、finding四个平台概念；
-- 45分钟：学习SocketCAN/vcan和Windows/WSL边界；
-- 60分钟：口述平台边界并人工审核第一版schema。
-
-## 未来一个月：形成可运行CLI竖切
-
-### 第3周：CAN运行底座
-
-- python-can virtual作为保底；
-- WSL可用则建立SocketCAN/vcan；
-- 实现公开车窗报文发送、接收、日志和replay；
-- 正常场景 + 端序错误 + 超时/丢帧。
-
-平台产物：`experiment manifest + log + test result + finding`。
-
-### 第4周：跨层映射
-
-- 建立DBC Signal ↔ canonical signal ↔ SWC DataElement/Port映射；
-- 增加长度、范围、端序、scale、方向和缺失引用检查；
-- 暂以表格/JSON表达COM Signal、I-PDU、PduR route、CanIf PDU意图。
-
-平台产物：`bsw-intent v0.1 + trace report`。
-
-### 第5周：OpenBSW POSIX spike
-
-- 只构建官方POSIX reference/demo；
-- 找到CAN系统入口、收发调用链和测试入口；
-- 做一个小修改并补一个测试；
-- 构建成本超过预算或依赖长期不通则退出，继续Python virtual ECU。
-
-平台产物：`runtime adapter spike report`。
-
-### 第6周：月度闭环
-
-- 提供一个轻量CLI入口，不做Web：
-
-```text
-workbench inspect <dbc-or-report>
-workbench trace <signal>
-workbench run window-rx
-workbench report <run-id>
-```
-
-- CLI可以先是orchestrator脚本，不要求重构两个旧项目；
-- 形成1个正常运行和至少6个累计故障测试。
-
-### 一个月后的平台形态
-
-```text
-公开车窗DOCX/Excel + DBC
-→ SWC ARXML与校验报告
-→ BSW意图映射
-→ virtual CAN/OpenBSW实验
-→ 可重复日志、Findings和报告
-```
-
-此时AI前端仍不是关键验收项。
-
-## 2～3个月：通信与诊断工程平台
-
-- 完成COM/PduR/CanIf对象语义和Rx/Tx数据流；
-- 形成10～15个通信故障；
-- 进入ISO-TP、UDS、DCM、DEM和DTC生命周期；
-- 使用can-isotp、udsoncan建立虚拟诊断链；
-- 评估OpenSOVD架构但不强制纳入；
-- vendor-neutral intent可导出为表格/JSON，商业工具由adapter验证。
-
-阶段验收：通信链、诊断链、20+自动化测试、12+故障案例。
-
-## 4～5个月：平台核心与AI审查
-
-- 建立独立Workbench Core和artifact registry；
-- 抽取Evidence Workbench的FTS、citation、coverage和evaluation；
-- 默认retrieval-only，无LLM也能审查；
-- 接入Generate-Arxml、DBC/CAN、UDS四类artifact analyzer；
-- 建立30题汽车工程评测集；
-- 只在指标通过后开启AI解释与分层诊断。
-
-openDuT仅在出现多DUT、远程执行或多种runner需求时做adapter；否则不引入。
-
-## 第6个月：商业桥接与求职交付
-
-- DaVinci公开样例导入、回导和golden diff；
-- 如能合法使用，编写最小Automation Interface脚本；
-- 保留EB/ISOLAR bridge接口设计，不假装已验证；
-- 10分钟Demo、英文README、架构图和两套简历；
-- 提交OpenBSW、cantools、python-can、OpenSOVD或openDuT中的高质量Issue/PR之一。
-
-## 长期平台边界
-
-- 平台可以逐步成为个人可维护的Automotive DevTool平台；
-- 不成为商业BSW包、MCAL、RTE/OS generator或完整ECUC工具的复制品；
-- 供应商能力通过adapter调用，核心保存中立意图、追踪、测试和证据；
-- 所有AI输出必须依赖确定性Finding或可引用资料。
+以上资料核对支持接口与边界选择；六阶段的优先级与预算是结合本仓状态作出的工程计划，不是厂商路线或就业保证。

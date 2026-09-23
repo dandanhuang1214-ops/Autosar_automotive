@@ -1,0 +1,12 @@
+VERSION "Synthetic ThermalControl 0.1"
+NS_ :
+BS_:
+BU_: THERMAL_ECU TESTER
+BO_ 801 ThermalStatus: 4 THERMAL_ECU
+ SG_ CoolantTemperature : 0|16@1- (0.1,-40) [-40|150] "degC" TESTER
+ SG_ FanDuty : 16|8@1+ (0.5,0) [0|100] "%" TESTER
+BO_ 817 PumpStatus: 2 THERMAL_ECU
+ SG_ PumpSpeed : 0|16@1+ (10,0) [0|20000] "rpm" TESTER
+BO_ 833 CoolingRequest: 3 TESTER
+ SG_ TargetTemperature : 0|16@1- (0.1,-40) [-40|150] "degC" THERMAL_ECU
+ SG_ Enable : 16|1@1+ (1,0) [0|1] "" THERMAL_ECU

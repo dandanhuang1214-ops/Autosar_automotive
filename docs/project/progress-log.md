@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-22）
+## 当前总览（2026-09-23）
 
-当前阶段：`P19 — 项目回归可读报告与公开演示，本地验收完成`。P15–P18 已完成历史远端七 job 验收；9 月 22 日的 P18 独立复验补强与 P19 属于新的本地改动，尚未远端冻结。平台升级按工程工作流推进，个人学习掌握情况单独验收。实测结果见文末。
+当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a local-accepted，远端待验收）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；本轮实现提交 `88c24e2` 的 run `35748563878` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1052,7 +1052,34 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 状态：本地验收完成，工作区未提交/推送；本轮 P18 补强/P19 尚未运行远端跨平台 CI，不标记远端冻结。未执行浏览器视觉验收，HTML 内容与本地链接由自动化检查。
 - 边界：公开合成 DOCX、保存的真实生成器导出与 virtual CAN；未新增物理 ECU、商业工具验证或 LLM。回退可继续消费原 JSON/Markdown。下一步为本轮改动的远端跨平台验收及实际报告使用反馈。
 
+## 长期路线 v3 与升级连续性纠正（2026-09-22）
+
+- 用户明确要求按长期目标持续升级；上一轮将任务缩减为 P19 HTML 并停在本地验收，属于执行范围与验收闭环不足。
+- 重新读取个人成长 README、24 周路线、目标岗位画像、能力矩阵和第六周 UDS 计划，审查实际代码限制，并核对 AUTOSAR、Vector CLI、OpenBSW 官方资料。
+- 重写当前路线为六阶段：P20 多项目通信 → P21 BSW 对象图/变更影响 → P22 ARXML/商业工具桥接 → P23 独立 ECU 项目集成 → P24 工程审查 → P25 平台交付。包含每阶段用户结果、验收门、个人时间预算、依赖与阻塞替代任务；旧路线单独归档。
+- 新增 `p20-multi-project-plan.md`，明确纯预检、通用运行、项目集成、第二项目与跨平台交付四个实施包；P20 状态为 planned，尚未实现，不因计划完成而计入平台功能。
+- 新增根目录 `AGENTS.md`，约定以后“继续升级”直接推进当前未完成阶段，再进入已排定下一阶段；不能以独立小补丁替代长期能力，也不能将本地通过等同远端通过。
+- P18 补强/P19 实现提交 `88c24e2` 已推送，远端 run `35748563878` 七 job 全部 success；原“尚未提交/远端待验收”记录为当时状态，由本条更新。
+- 当前工作不修改个人学习仓库，不把平台自动化结果视为个人已经掌握 BSW/诊断；后续能力掌握仍按个人学习任务独立验收。
+
+## P18 补强/P19：远端冻结（2026-09-22）
+
+- 实现提交：`88c24e27b175a6348f48e84adc570f4bd98e3fc8`。
+- [GitHub Actions run `35748563878`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/35748563878) 已 completed/success，七个实际 job 全部 success：Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections，以及 Python 3.14 runtime-currency。
+- runtime-evidence 包含四场景比较重放、保存后比较独立 CLI 复验与报告 artifact 上传；本轮 P18 补强/P19 完成远端验收。此结论不包含未执行的物理 ECU/本机 SocketCAN 现场实验。
+- 路线 v3、P20 计划与执行规则另作后续文档提交；实现验收以以上固定提交为准。文档本地链接和 diff whitespace 检查通过。
+- 下一步明确为 P20a 运行声明与开总线前预检，随后 P20b 通用运行、P20c 项目集成、P20d 第二项目与跨平台交付。P20 未实现，不提前标记完成。
+
 ## 下次必须补录
 
 - 新 schema/loader 版本的正例、负例与 parity 回归结果；
 - OpenBSW 上游 HEAD 再次变化后，仅在出现明确 adapter 或上游化需求时补录下一次 drift revalidation。
+
+## P20a：运行声明与开总线前预检（2026-09-23）
+
+- 新增闭合 communication-vectors-0.1 / communication-plan-0.1、纯编译函数及只读 `plan-communication` CLI；先检查静态映射，再验证全部向量，输入无效时不打开总线或写运行输出。
+- 新增车窗完整信号向量与 ThermalControl 三报文样例（两 Tx/一 Rx、801/817/833、4/2/3 字节、缩放/偏移）；计划保存输入 SHA-256、声明值、payload、原始整数及量化结果。
+- 覆盖结构/schema parity、未知/缺值/重复身份/方向/不可编码值、bool/非有限数、超时、FD/multiplex/浮点线编码、CLI 无副作用、BOM/重复 JSON 成员。schema 与语义检查边界见 `p20-communication-declarations.md`。
+- Windows/Ubuntu runtime-evidence 新增真实 CLI 双样例预检、未知信号拒绝和 artifact 上传；仍维持七 job 拓扑。旧 runtime/project/report 契约不变。
+- 本地验收：209 项测试中 207 通过、2 项按环境跳过；34 schema、56 schema-bound examples、22 syntax-only examples、Ruff、16 文件 mypy、CI topology、pip check 与 whitespace 通过。真实 CLI 双计划及未知信号拒绝归档于 `output/p20a-validation/scenarios/`，全量摘要 `output/p20a-validation/tests-final/ci-test-summary.json`。首轮失败为 schema 总数断言仍固定 32，更新为 34 后全量通过。
+- 状态：P20 implementing，P20a local-accepted；实现尚未提交，远端 CI 待执行。P20a 不证明通用收发；P20b/P20c/P20d 和 SocketCAN 现场门尚未完成。下一步为 P20b：从通过预检的声明导出 filters 并执行 Tx/Rx，保留 probe、blocked、超时和清理证据。

@@ -1,0 +1,115 @@
+{
+  "schema_version": "bsw-intent-0.2",
+  "model_status": "research-intent",
+  "source": "Public synthetic ThermalControl fixture",
+  "local_ecu": "THERMAL_ECU",
+  "messages": [
+    {
+      "dbc_message": "ThermalStatus",
+      "can_id": 801,
+      "dlc": 4,
+      "direction": "tx",
+      "sender": "THERMAL_ECU",
+      "receiver": "TESTER",
+      "i_pdu": "ThermalStatus_IPdu",
+      "canif_pdu": "ThermalStatus_CanIfPdu"
+    },
+    {
+      "dbc_message": "PumpStatus",
+      "can_id": 817,
+      "dlc": 2,
+      "direction": "tx",
+      "sender": "THERMAL_ECU",
+      "receiver": "TESTER",
+      "i_pdu": "PumpStatus_IPdu",
+      "canif_pdu": "PumpStatus_CanIfPdu"
+    },
+    {
+      "dbc_message": "CoolingRequest",
+      "can_id": 833,
+      "dlc": 3,
+      "direction": "rx",
+      "sender": "TESTER",
+      "receiver": "THERMAL_ECU",
+      "i_pdu": "CoolingRequest_IPdu",
+      "canif_pdu": "CoolingRequest_CanIfPdu"
+    }
+  ],
+  "signals": [
+    {
+      "dbc_message": "ThermalStatus",
+      "dbc_signal": "CoolantTemperature",
+      "direction": "tx",
+      "canonical_signal": "CoolantTemperature",
+      "swc_data_element": "CoolantTemperature",
+      "swc_port": "PpThermalStatus",
+      "com_signal": "ComSig_CoolantTemperature",
+      "i_pdu": "ThermalStatus_IPdu",
+      "pdur_route": "PduR_ThermalStatus",
+      "canif_pdu": "ThermalStatus_CanIfPdu",
+      "unknowns": [
+        "Vendor ECUC configuration and physical ECU behavior"
+      ]
+    },
+    {
+      "dbc_message": "ThermalStatus",
+      "dbc_signal": "FanDuty",
+      "direction": "tx",
+      "canonical_signal": "FanDuty",
+      "swc_data_element": "FanDuty",
+      "swc_port": "PpThermalStatus",
+      "com_signal": "ComSig_FanDuty",
+      "i_pdu": "ThermalStatus_IPdu",
+      "pdur_route": "PduR_ThermalStatus",
+      "canif_pdu": "ThermalStatus_CanIfPdu",
+      "unknowns": [
+        "Vendor ECUC configuration and physical ECU behavior"
+      ]
+    },
+    {
+      "dbc_message": "PumpStatus",
+      "dbc_signal": "PumpSpeed",
+      "direction": "tx",
+      "canonical_signal": "PumpSpeed",
+      "swc_data_element": "PumpSpeed",
+      "swc_port": "PpPumpStatus",
+      "com_signal": "ComSig_PumpSpeed",
+      "i_pdu": "PumpStatus_IPdu",
+      "pdur_route": "PduR_PumpStatus",
+      "canif_pdu": "PumpStatus_CanIfPdu",
+      "unknowns": [
+        "Vendor ECUC configuration and physical ECU behavior"
+      ]
+    },
+    {
+      "dbc_message": "CoolingRequest",
+      "dbc_signal": "TargetTemperature",
+      "direction": "rx",
+      "canonical_signal": "TargetTemperature",
+      "swc_data_element": "TargetTemperature",
+      "swc_port": "RpCoolingRequest",
+      "com_signal": "ComSig_TargetTemperature",
+      "i_pdu": "CoolingRequest_IPdu",
+      "pdur_route": "PduR_CoolingRequest",
+      "canif_pdu": "CoolingRequest_CanIfPdu",
+      "unknowns": [
+        "Vendor ECUC configuration and physical ECU behavior"
+      ]
+    },
+    {
+      "dbc_message": "CoolingRequest",
+      "dbc_signal": "Enable",
+      "direction": "rx",
+      "canonical_signal": "Enable",
+      "swc_data_element": "Enable",
+      "swc_port": "RpCoolingRequest",
+      "com_signal": "ComSig_Enable",
+      "i_pdu": "CoolingRequest_IPdu",
+      "pdur_route": "PduR_CoolingRequest",
+      "canif_pdu": "CoolingRequest_CanIfPdu",
+      "unknowns": [
+        "Vendor ECUC configuration and physical ECU behavior"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": "communication-vectors-0.1",
+  "vectors": [
+    {
+      "id": "window-status",
+      "message": "WindowStatus",
+      "direction": "tx",
+      "signals": {
+        "WindowPosition": 42,
+        "AntiPinchActive": 0,
+        "MotorRequest": 1
+      },
+      "timeout_seconds": 0.5
+    },
+    {
+      "id": "window-request",
+      "message": "WindowCommand",
+      "direction": "rx",
+      "signals": {
+        "RequestedDirection": 2
+      },
+      "timeout_seconds": 0.5
+    }
+  ]
+}

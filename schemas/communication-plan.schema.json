@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/communication-plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "source_artifacts",
+    "local_ecu",
+    "vectors"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "communication-plan"
+    },
+    "schema_version": {
+      "const": "communication-plan-0.1"
+    },
+    "local_ecu": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "vectors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "message",
+          "direction",
+          "signals",
+          "timeout_seconds",
+          "frame_id",
+          "is_extended_id",
+          "dlc",
+          "payload_hex",
+          "expected_raw_signals",
+          "expected_signals"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$",
+            "not": {
+              "pattern": "[^A-Za-z0-9_.-]"
+            }
+          },
+          "message": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "direction": {
+            "enum": [
+              "tx",
+              "rx"
+            ]
+          },
+          "signals": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "additionalProperties": {
+              "type": "number",
+              "minimum": -1.7976931348623157e+308,
+              "maximum": 1.7976931348623157e+308
+            }
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 5
+          },
+          "frame_id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 536870911
+          },
+          "is_extended_id": {
+            "type": "boolean"
+          },
+          "dlc": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8
+          },
+          "payload_hex": {
+            "type": "string",
+            "pattern": "^(?:[0-9a-f]{2}){1,8}$"
+          },
+          "expected_raw_signals": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "expected_signals": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "additionalProperties": {
+              "type": "number",
+              "minimum": -1.7976931348623157e+308,
+              "maximum": 1.7976931348623157e+308
+            }
+          }
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

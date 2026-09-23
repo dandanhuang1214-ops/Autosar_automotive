@@ -29,6 +29,7 @@ from automotive_workbench.uds_client import read_uds_did
 from automotive_workbench.communication_evidence import run_communication_chain
 from automotive_workbench.communication_delivery import run_communication_delivery
 from automotive_workbench.communication_runtime import default_communication_config
+from automotive_workbench.communication_plan import preflight_communication
 from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
     verify_evidence_bundle,
@@ -46,6 +47,11 @@ from automotive_workbench.project_comparison import (
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    plan_parser = commands.add_parser("plan-communication", help="Preflight declared CAN vectors without opening a bus or writing files")
+    plan_parser.add_argument("dbc", type=Path)
+    plan_parser.add_argument("intent", type=Path)
+    plan_parser.add_argument("declaration", type=Path)
 
     project_parser = commands.add_parser("run-project", help="Validate and run a project with requirement acceptance evidence")
     project_parser.add_argument("project", type=Path)
@@ -309,6 +315,8 @@ def main() -> int:
                 result = summarize_dtc_intent(args.artifact)
             else:
                 result = summarize_issue_report(args.artifact)
+        elif args.command == "plan-communication":
+            result = preflight_communication(args.dbc, args.intent, args.declaration)
         elif args.command == "trace":
             result = trace_signal(args.intent, args.signal).to_dict()
         elif args.command == "validate-map":

@@ -5,7 +5,9 @@
 - [项目验收工作流](project-workflow.md)：一条命令从配置校验运行到 HTML 验收报告。
 
 - [平台升级进度账本](project/progress-log.md)：每次升级必须更新的唯一状态源。
-- [中长期路线](project/roadmap.md)：平台阶段、边界和里程碑。
+- [长期升级路线 v3](project/roadmap.md)：产品目标、24 周六阶段、个人投入与完整验收规则。
+- [P20 多项目通信实施计划](project/p20-multi-project-plan.md)：当前主阶段的四个实施包与验收门。
+- [P20 通信声明编写与预检](project/p20-communication-declarations.md)：两项目计划、量化规则与拒绝边界。
 - [Windows/WSL 双平面决策](project/windows-wsl-platform-decision.md)：开发环境职责划分。
 - [Git 项目管理常用指令与用法](project/git-workflow-cheatsheet.md)：提交、分支、远端同步、冲突和回滚速查。
 
