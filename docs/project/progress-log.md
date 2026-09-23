@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-23）
 
-当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a local-accepted，远端待验收）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；本轮实现提交 `88c24e2` 的 run `35748563878` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
+当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a remote-accepted；下一步 P20b 通用消息执行）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；本轮实现提交 `88c24e2` 的 run `35748563878` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1082,4 +1082,6 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 覆盖结构/schema parity、未知/缺值/重复身份/方向/不可编码值、bool/非有限数、超时、FD/multiplex/浮点线编码、CLI 无副作用、BOM/重复 JSON 成员。schema 与语义检查边界见 `p20-communication-declarations.md`。
 - Windows/Ubuntu runtime-evidence 新增真实 CLI 双样例预检、未知信号拒绝和 artifact 上传；仍维持七 job 拓扑。旧 runtime/project/report 契约不变。
 - 本地验收：209 项测试中 207 通过、2 项按环境跳过；34 schema、56 schema-bound examples、22 syntax-only examples、Ruff、16 文件 mypy、CI topology、pip check 与 whitespace 通过。真实 CLI 双计划及未知信号拒绝归档于 `output/p20a-validation/scenarios/`，全量摘要 `output/p20a-validation/tests-final/ci-test-summary.json`。首轮失败为 schema 总数断言仍固定 32，更新为 34 后全量通过。
-- 状态：P20 implementing，P20a local-accepted；实现尚未提交，远端 CI 待执行。P20a 不证明通用收发；P20b/P20c/P20d 和 SocketCAN 现场门尚未完成。下一步为 P20b：从通过预检的声明导出 filters 并执行 Tx/Rx，保留 probe、blocked、超时和清理证据。
+- 远端验收：实现提交 `102590780b4d9cfcc81a2aa19a5a16242b8b67fb`；[run `35809063044`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/35809063044) completed/success，Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections 及 Python 3.14 runtime-currency 七 job 全部 success。两平台的预检场景与 `communication-preflight` artifact 上传均 success。
+- 状态回填仅修改文档，随后使用 `[skip ci]` 文档提交推送；不把该文档提交当成新的实现验收，以上固定实现提交与 run 是本次验收依据。
+- 状态：P20 implementing，P20a remote-accepted。P20a 不证明通用收发；P20b/P20c/P20d 和 SocketCAN 现场门尚未完成。下一步为 P20b：从通过预检的声明导出 filters 并执行 Tx/Rx，保留 probe、blocked、超时和清理证据。
