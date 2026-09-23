@@ -1,6 +1,6 @@
 # P20：声明驱动的多项目通信验证
 
-状态：implementing，2026-09-23。这是 [长期路线 v3](roadmap.md) 的下一主阶段，整体尚未验收。P18/P19 已由提交 `88c24e2`、run `35748563878` 完成远端验收，P20a 已由实现提交 `1025907`、run `35809063044` 七 job 完成 remote-accepted；下一实施包为 P20b 通用运行。
+状态：implementing，2026-09-23。这是 [长期路线 v3](roadmap.md) 的下一主阶段，整体尚未验收。P18/P19 已由提交 `88c24e2`、run `35748563878` 完成远端验收，P20a 已由实现提交 `1025907`、run `35809063044` 七 job 完成 remote-accepted；P20b 已实现，跨平台验收进行中；下一实施包为 P20c 项目集成。
 
 ## 用户结果
 
@@ -52,4 +52,4 @@
 
 P20 完成后直接进入 P21 配置对象图与变更影响。若实现中发现影响基础接口的缺口，在此计划记录调整及证据；不要用额外报告页面或新协议旁支替代多项目验收。
 
-P20a 实际入口、支持边界及量化规则见 [通信声明说明](p20-communication-declarations.md)。P20b 应从计划的 frame ID 和 extended 标志生成匹配掩码；既有 `exact_can_filters` 仅适用于标准帧，不可直接沿用为扩展帧过滤。
+P20a 实际入口、支持边界及量化规则见 [通信声明说明](p20-communication-declarations.md)。P20b 已从计划的 frame ID 和 extended 标志生成匹配掩码；未改动既有只适用于标准帧的 `exact_can_filters`。

@@ -26,7 +26,7 @@
 | 领域 | 已有能力 | 本轮查证的缺口 |
 |---|---|---|
 | 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | 项目运行仍以公开车窗为唯一业务模型 |
-| 通信运行 | virtual/SocketCAN、双向证据、过滤与 blocked | `communication_runtime.py` 固定 0x100/0x200，调用 `can_runtime.py` 中固定报文/信号值 |
+| 通信运行 | virtual/SocketCAN、双向证据、过滤与 blocked | P20b 新入口已按声明运行多报文；旧 project/communication chain 尚未接入，留给 P20c |
 | BSW 映射 | Tx/Rx、DBC 属性、跨层引用一致性与 8 节点 trace | 主要为字符串意图；缺少有独立身份的配置对象图、规则覆盖清单与变更影响分析 |
 | 外部工具 | 固定 Generate-Arxml DOCX/contract/issues 三例 | 尚未以 ARXML/ECU Extract/ECUC 的明确受限语义子集连接平台 |
 | ECU 执行 | OpenBSW 构建、CF01 客户端与历史现场证据 | 项目编排、独立 ECU 生命周期、构建配置和诊断结果尚未统一验收 |
@@ -53,7 +53,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 ## 当前执行：P20 implementing
 
 1. 已完成本轮 P18/P19 的远端 Windows/Ubuntu/Python 3.14 七 job 验收，记录见进度账本。以后每个实现阶段同样完成提交、CI 跟踪及失败修复。
-2. 当前主阶段为 P20；P20a 运行声明与纯预检已由实现提交 `1025907`、run `35809063044` 七 job 验收通过；整体保持 implementing。下一实施包为 P20b 通用消息执行，按 [P20 实施计划](p20-multi-project-plan.md)推进：契约与预检 → 通用运行 → 项目集成 → 第二项目与跨平台验收。
+2. 当前主阶段为 P20；P20a 运行声明与纯预检已由实现提交 `1025907`、run `35809063044` 七 job 验收通过；整体保持 implementing。P20b 已实现并进入验收；下一实施包为 P20c 项目集成，按 [P20 实施计划](p20-multi-project-plan.md)推进：契约与预检 → 通用运行 → 项目集成 → 第二项目与跨平台验收。
 3. P20 未完成前，不用其他报告美化或证据封装任务替代主阶段。必要缺陷修复归入当前阶段，不因每个小改动重新编号。
 
 ## 持续升级的完成规则

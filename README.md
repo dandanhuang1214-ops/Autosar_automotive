@@ -4,7 +4,7 @@
 
 长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；当前正在实现 P20 声明驱动的多项目通信验证，完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
 
-P20a 已提供 [通信声明与只读预检](docs/project/p20-communication-declarations.md)，支持车窗与 ThermalControl 三报文计划；通用收发和项目接入仍待完成。
+P20 已提供 [通信声明、预检与通用收发](docs/project/p20-communication-declarations.md)，支持车窗和 ThermalControl 三报文的 virtual/SocketCAN Tx/Rx；下一步为项目/review/compare 集成。
 
 日常项目验收从 `run-project` 开始：
 

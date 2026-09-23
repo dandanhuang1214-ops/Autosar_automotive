@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-23）
 
-当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a remote-accepted；下一步 P20b 通用消息执行）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；本轮实现提交 `88c24e2` 的 run `35748563878` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
+当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a remote-accepted；P20b local-accepted、远端待验收；下一步 P20c 项目集成）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；本轮实现提交 `88c24e2` 的 run `35748563878` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1085,3 +1085,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 远端验收：实现提交 `102590780b4d9cfcc81a2aa19a5a16242b8b67fb`；[run `35809063044`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/35809063044) completed/success，Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections 及 Python 3.14 runtime-currency 七 job 全部 success。两平台的预检场景与 `communication-preflight` artifact 上传均 success。
 - 状态回填仅修改文档，随后使用 `[skip ci]` 文档提交推送；不把该文档提交当成新的实现验收，以上固定实现提交与 run 是本次验收依据。
 - 状态：P20 implementing，P20a remote-accepted。P20a 不证明通用收发；P20b/P20c/P20d 和 SocketCAN 现场门尚未完成。下一步为 P20b：从通过预检的声明导出 filters 并执行 Tx/Rx，保留 probe、blocked、超时和清理证据。
+
+## P20b：声明驱动的通用消息执行（2026-09-23）
+
+- 新增 `run-declared-communication` 与 `declared-communication-runtime-0.1`：开总线前完成全部向量/BusConfig/输出保护预检及输入哈希复核；按消息身份、方向和信号值执行车窗与 ThermalControl，不在新内核中硬编码业务名称或 ID。
+- 每向量创建 local/peer 两端，Tx 为 local→peer，Rx 为 peer→local；从计划生成标准 11 位/扩展 29 位精确 filters，每向量重建端点防止上一向量队列残留。send/recv 共用有界 timeout；资源获取失败、发送/接收/解码异常和单端 shutdown 失败均保留报告并独立清理已开端点。
+- 报告保留计划/源哈希、量化原始整数、实际帧/解码、方向、原因及清理结果；结果以稳定 vector ID 建索引。后端不可用为 blocked/退出 3、无实际帧；运行失败退出 2；非法输入/输出退出 1。旧 communication runtime、project 0.1/0.2 与 CAN lab 保持兼容。
+- 新增 12 组测试，覆盖双项目、重复 Rx、标准/扩展 ID、实际 virtual 错 ID 过滤/抑制发送超时、错误 flags/DLC/payload、partial open/异常清理、probe 异常、非有限解码、timeout 预算、无副作用拒绝、输入漂移、输出保护与 CLI 退出码。
+- 场景脚本通过两个真实 CLI 正例，真实 virtual transport 的 wrong-ID/no-send 注入均按预期 failed/receive_timeout，缺失接口为 blocked。注入方式与实际 send 记录另存 `injection.json`，不声称物理故障。归档于 `output/p20b-validation/scenarios/`；CI runtime-evidence 两平台新增执行/上传步骤，topology guard 固定职责，仍为七 job。
+- SocketCAN 现场：初查 `vcan0` 不存在，经已有 `setup_vcan.sh --apply` 恢复；新 Linux 入口复用既有通道锁命名并保存 host probe。ThermalControl 3/3、车窗 2/2 passed，均记录 `held_by_entrypoint`。报告位于 `output/p20b-validation/socketcan-thermal-final/`、`socketcan-window-final/`。首轮历史 `.venv-linux` 使用 cantools 41.4.3，最终显式 `--python .venv/bin/python` 使用 python-can 4.6.1/cantools 44.0.0 复跑；这是本机 Linux vcan 与同进程两个端点收发，不能当作物理 CAN 或独立 ECU。
+- 本地验收：最终 221 项测试中 219 通过、2 项按环境跳过；35 schema、56 schema-bound examples、22 syntax-only examples、Ruff、18 文件 mypy、CI topology、pip check、shell syntax 和 whitespace gate 通过。摘要 `output/p20b-validation/tests-final/ci-test-summary.json`。
+- 状态：P20 implementing；P20b local-accepted，尚未提交/推送，远端待验收。下一步 P20c：声明进入版本化项目与输入快照、静态门控、路径绑定、稳定验收 locator、review/compare 与迁移复验；尚未标记完整 P20 交付。

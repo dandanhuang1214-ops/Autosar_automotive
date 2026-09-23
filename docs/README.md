@@ -7,7 +7,7 @@
 - [平台升级进度账本](project/progress-log.md)：每次升级必须更新的唯一状态源。
 - [长期升级路线 v3](project/roadmap.md)：产品目标、24 周六阶段、个人投入与完整验收规则。
 - [P20 多项目通信实施计划](project/p20-multi-project-plan.md)：当前主阶段的四个实施包与验收门。
-- [P20 通信声明编写与预检](project/p20-communication-declarations.md)：两项目计划、量化规则与拒绝边界。
+- [P20 通信声明与通用收发](project/p20-communication-declarations.md)：两项目执行、量化规则、失败场景与 SocketCAN 入口。
 - [Windows/WSL 双平面决策](project/windows-wsl-platform-decision.md)：开发环境职责划分。
 - [Git 项目管理常用指令与用法](project/git-workflow-cheatsheet.md)：提交、分支、远端同步、冲突和回滚速查。
 

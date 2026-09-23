@@ -30,6 +30,7 @@ from automotive_workbench.communication_evidence import run_communication_chain
 from automotive_workbench.communication_delivery import run_communication_delivery
 from automotive_workbench.communication_runtime import default_communication_config
 from automotive_workbench.communication_plan import preflight_communication
+from automotive_workbench.declared_communication import run_declared_communication
 from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
     verify_evidence_bundle,
@@ -52,6 +53,14 @@ def build_parser() -> argparse.ArgumentParser:
     plan_parser.add_argument("dbc", type=Path)
     plan_parser.add_argument("intent", type=Path)
     plan_parser.add_argument("declaration", type=Path)
+
+    declared_parser = commands.add_parser("run-declared-communication", help="Execute preflighted classic CAN vectors with a local peer")
+    declared_parser.add_argument("dbc", type=Path)
+    declared_parser.add_argument("intent", type=Path)
+    declared_parser.add_argument("declaration", type=Path)
+    declared_parser.add_argument("--output", type=Path, required=True)
+    declared_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
+    declared_parser.add_argument("--channel")
 
     project_parser = commands.add_parser("run-project", help="Validate and run a project with requirement acceptance evidence")
     project_parser.add_argument("project", type=Path)
@@ -317,6 +326,11 @@ def main() -> int:
                 result = summarize_issue_report(args.artifact)
         elif args.command == "plan-communication":
             result = preflight_communication(args.dbc, args.intent, args.declaration)
+        elif args.command == "run-declared-communication":
+            result = run_declared_communication(
+                args.dbc, args.intent, args.declaration,
+                default_communication_config(args.interface, args.channel), args.output,
+            )
         elif args.command == "trace":
             result = trace_signal(args.intent, args.signal).to_dict()
         elif args.command == "validate-map":

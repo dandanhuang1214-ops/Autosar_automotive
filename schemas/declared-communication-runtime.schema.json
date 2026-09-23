@@ -1,0 +1,453 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "started_at",
+    "duration_ms",
+    "bus_config",
+    "backend_probe",
+    "isolation",
+    "source_artifacts",
+    "plan",
+    "status",
+    "reason",
+    "vector_count",
+    "passed_count",
+    "vectors"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "declared-communication-runtime"
+    },
+    "schema_version": {
+      "const": "declared-communication-runtime-0.1"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "bus_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interface",
+        "channel",
+        "receive_own_messages",
+        "fd"
+      ],
+      "properties": {
+        "interface": {
+          "enum": [
+            "virtual",
+            "socketcan"
+          ]
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receive_own_messages": {
+          "const": false
+        },
+        "fd": {
+          "const": false
+        }
+      }
+    },
+    "backend_probe": {
+      "type": "object"
+    },
+    "isolation": {
+      "type": "object"
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "source_artifacts",
+        "local_ecu",
+        "vectors"
+      ],
+      "properties": {
+        "artifact_type": {
+          "const": "communication-plan"
+        },
+        "schema_version": {
+          "const": "communication-plan-0.1"
+        },
+        "local_ecu": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "vectors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "message",
+              "direction",
+              "signals",
+              "timeout_seconds",
+              "frame_id",
+              "is_extended_id",
+              "dlc",
+              "payload_hex",
+              "expected_raw_signals",
+              "expected_signals"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.-]+$",
+                "not": {
+                  "pattern": "[^A-Za-z0-9_.-]"
+                }
+              },
+              "message": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "direction": {
+                "enum": [
+                  "tx",
+                  "rx"
+                ]
+              },
+              "signals": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": -1.7976931348623157e+308,
+                  "maximum": 1.7976931348623157e+308
+                }
+              },
+              "timeout_seconds": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 5
+              },
+              "frame_id": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 536870911
+              },
+              "is_extended_id": {
+                "type": "boolean"
+              },
+              "dlc": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8
+              },
+              "payload_hex": {
+                "type": "string",
+                "pattern": "^(?:[0-9a-f]{2}){1,8}$"
+              },
+              "expected_raw_signals": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "expected_signals": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": -1.7976931348623157e+308,
+                  "maximum": 1.7976931348623157e+308
+                }
+              }
+            }
+          }
+        },
+        "source_artifacts": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "vector_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "passed_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "vectors": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 256,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "message",
+          "direction",
+          "sender",
+          "receiver",
+          "status",
+          "reason",
+          "observed",
+          "error",
+          "cleanup"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "tx",
+              "rx"
+            ]
+          },
+          "sender": {
+            "enum": [
+              "local",
+              "peer"
+            ]
+          },
+          "receiver": {
+            "enum": [
+              "local",
+              "peer"
+            ]
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "blocked"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "observed": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "frame_id",
+                  "is_extended_id",
+                  "is_fd",
+                  "is_remote_frame",
+                  "is_error_frame",
+                  "dlc",
+                  "payload_hex",
+                  "raw_signals",
+                  "signals"
+                ],
+                "properties": {
+                  "frame_id": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "is_extended_id": {
+                    "type": "boolean"
+                  },
+                  "is_fd": {
+                    "type": "boolean"
+                  },
+                  "is_remote_frame": {
+                    "type": "boolean"
+                  },
+                  "is_error_frame": {
+                    "type": "boolean"
+                  },
+                  "dlc": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "payload_hex": {
+                    "type": "string",
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  },
+                  "raw_signals": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": "integer"
+                    }
+                  },
+                  "signals": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "message"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "cleanup": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "endpoint",
+                "status",
+                "error"
+              ],
+              "properties": {
+                "endpoint": {
+                  "enum": [
+                    "local",
+                    "peer"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "passed",
+                    "failed"
+                  ]
+                },
+                "error": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "message"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/automotive-workbench/declared-communication-runtime.schema.json",
+  "title": "Declared classic CAN runtime evidence"
+}
