@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-23）
 
-当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a remote-accepted；P20b local-accepted、远端待验收；下一步 P20c 项目集成）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；本轮实现提交 `88c24e2` 的 run `35748563878` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
+当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a remote-accepted；P20b remote-accepted，双项目 SocketCAN 已实测；下一步 P20c 项目集成）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；最新实现提交 `ef2e89e` 的 run `35875029401` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1095,4 +1095,6 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 场景脚本通过两个真实 CLI 正例，真实 virtual transport 的 wrong-ID/no-send 注入均按预期 failed/receive_timeout，缺失接口为 blocked。注入方式与实际 send 记录另存 `injection.json`，不声称物理故障。归档于 `output/p20b-validation/scenarios/`；CI runtime-evidence 两平台新增执行/上传步骤，topology guard 固定职责，仍为七 job。
 - SocketCAN 现场：初查 `vcan0` 不存在，经已有 `setup_vcan.sh --apply` 恢复；新 Linux 入口复用既有通道锁命名并保存 host probe。ThermalControl 3/3、车窗 2/2 passed，均记录 `held_by_entrypoint`。报告位于 `output/p20b-validation/socketcan-thermal-final/`、`socketcan-window-final/`。首轮历史 `.venv-linux` 使用 cantools 41.4.3，最终显式 `--python .venv/bin/python` 使用 python-can 4.6.1/cantools 44.0.0 复跑；这是本机 Linux vcan 与同进程两个端点收发，不能当作物理 CAN 或独立 ECU。
 - 本地验收：最终 221 项测试中 219 通过、2 项按环境跳过；35 schema、56 schema-bound examples、22 syntax-only examples、Ruff、18 文件 mypy、CI topology、pip check、shell syntax 和 whitespace gate 通过。摘要 `output/p20b-validation/tests-final/ci-test-summary.json`。
-- 状态：P20 implementing；P20b local-accepted，尚未提交/推送，远端待验收。下一步 P20c：声明进入版本化项目与输入快照、静态门控、路径绑定、稳定验收 locator、review/compare 与迁移复验；尚未标记完整 P20 交付。
+- 远端验收：实现提交 `ef2e89e0e5b84bd552ab36a00db293aff98b1d62`；[run `35875029401`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/35875029401) completed/success，Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections 及 Python 3.14 runtime-currency 七 job 全部 success。两平台 Run declared communication scenarios 均 success；上传日志确认 `declared-communication-Linux`（artifact `10756762315`，11262 bytes）和 `declared-communication-Windows`（artifact `10756372543`，11300 bytes）均 successfully finalized/uploaded。
+- 后续仅文档状态回填使用 `[skip ci]` 提交推送；该状态提交不算新的实现验证，验收依据为以上固定实现提交和 run。
+- 状态：P20 implementing；P20b remote-accepted，双项目 SocketCAN 现场路径已通过。下一步 P20c：声明进入版本化项目与输入快照、静态门控、路径绑定、稳定验收 locator、review/compare 与迁移复验；尚未标记完整 P20 交付。
