@@ -65,7 +65,7 @@ def validate_declaration(value: Any) -> dict[str, Any]:
     return value
 
 
-def load_declaration(path: Path) -> dict[str, Any]:
+def parse_declaration(raw: bytes) -> dict[str, Any]:
     def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
         for key, value in pairs:
@@ -75,10 +75,12 @@ def load_declaration(path: Path) -> dict[str, Any]:
         return result
 
     return validate_declaration(
-        json.loads(
-            path.read_text(encoding="utf-8-sig"), object_pairs_hook=unique_object
-        )
+        json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique_object)
     )
+
+
+def load_declaration(path: Path) -> dict[str, Any]:
+    return parse_declaration(path.read_bytes())
 
 
 def compile_plan(

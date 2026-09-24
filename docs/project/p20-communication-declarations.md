@@ -1,6 +1,6 @@
 # P20 通信声明：当前支持范围
 
-P20a 提供只读预检，P20b 提供声明驱动的通用发送/接收；P20c 项目接入尚待实现。以下命令不打开总线，不写运行输出；成功时 stdout 为 `communication-plan-0.1`，拒绝时退出 1。需要既有 `[can]` 可选依赖。
+P20a 提供只读预检，P20b 提供声明驱动的通用发送/接收；P20c 项目接入已实现，见 [多项目指南](p20-multi-project-guide.md)。以下命令不打开总线，不写运行输出；成功时 stdout 为 `communication-plan-0.1`，拒绝时退出 1。需要既有 `[can]` 可选依赖。
 
 ```bash
 workbench plan-communication examples/window_control/window_control.dbc examples/window_control/bsw_intent.json examples/window_control/communication_vectors.json
@@ -30,7 +30,7 @@ workbench run-declared-communication examples/window_control/window_control.dbc 
 
 输出 `declared-runtime-report.json`（`declared-communication-runtime-0.1`）和 Markdown。JSON 保存输入哈希、完整计划、backend probe、过滤/通道锁证据，以及按稳定 ID 索引的 `vectors`，例如 `/vectors/thermal-status/status`。每个结果记录 sender/receiver、实际帧或 null、错误与 cleanup。退出码：0 passed、1 输入/输出拒绝、2 failed、3 blocked；blocked 不制造帧观测。
 
-此路径由当前进程创建两个本地端点：virtual 或 Linux vcan 收发不证明独立 ECU、目标 BSW、物理 CAN 或电气/时序行为。旧 `run-project`、`run-can-lab` 和 `run-communication-chain` 保持原契约；项目/review/compare 集成留给 P20c。
+此路径由当前进程创建两个本地端点：virtual 或 Linux vcan 收发不证明独立 ECU、目标 BSW、物理 CAN 或电气/时序行为。旧 `run-project`、`run-can-lab` 和 `run-communication-chain` 保持原契约；project 0.3 已通过新的绑定报告接入项目/review/compare，旧版项目仍走兼容路径。
 
 ## 场景与 SocketCAN 复验
 

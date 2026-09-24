@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.review import run_review
+from automotive_workbench.project_declared import validate_declared_sources
 
 
 SUPPORTED_REPORT_VERSIONS = {
     "project-acceptance-0.1",
     "project-acceptance-0.2",
+    "project-acceptance-0.3",
 }
 STAGE_ORDER = ("generation", "canonical", "mapping", "communication")
 
@@ -159,6 +161,7 @@ def run_project_review(
     report_path = report_path.resolve()
     output = output.resolve()
     report = load_project_report(report_path)
+    validate_declared_sources(report_path, report)
     artifacts = [
         _artifact("project-report", "project-acceptance", report_path, output)
     ]

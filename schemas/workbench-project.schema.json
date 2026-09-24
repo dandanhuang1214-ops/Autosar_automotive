@@ -13,7 +13,8 @@
     "schema_version": {
       "enum": [
         "workbench-project-0.1",
-        "workbench-project-0.2"
+        "workbench-project-0.2",
+        "workbench-project-0.3"
       ]
     },
     "name": {
@@ -38,6 +39,10 @@
           "pattern": "\\S"
         },
         "intent": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "vectors": {
           "type": "string",
           "pattern": "\\S"
         }
@@ -146,6 +151,13 @@
           }
         }
       }
+    },
+    "comparison_key": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+$",
+      "not": {
+        "pattern": "[^A-Za-z0-9_.-]"
+      }
     }
   },
   "$comment": "Loader additionally requires unique requirement IDs, finite numbers and readable input files. Paths resolve relative to project file.",
@@ -154,21 +166,86 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "workbench-project-0.2"
+            "const": "workbench-project-0.3"
           }
         }
       },
       "then": {
         "required": [
-          "generation"
-        ]
+          "comparison_key"
+        ],
+        "properties": {
+          "inputs": {
+            "required": [
+              "vectors"
+            ]
+          }
+        }
       },
       "else": {
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "schema_version": {
+                  "const": "workbench-project-0.2"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "generation"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "generation"
+                ]
+              },
+              "properties": {
+                "requirements": {
+                  "items": {
+                    "properties": {
+                      "stage": {
+                        "enum": [
+                          "canonical",
+                          "mapping",
+                          "communication"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "not": {
+          "required": [
+            "comparison_key"
+          ]
+        },
+        "properties": {
+          "inputs": {
+            "not": {
+              "required": [
+                "vectors"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "not": {
           "required": [
             "generation"
           ]
-        },
+        }
+      },
+      "then": {
         "properties": {
           "requirements": {
             "items": {

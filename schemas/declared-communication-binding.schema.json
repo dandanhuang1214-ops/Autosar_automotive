@@ -1,0 +1,327 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "status",
+    "bindings",
+    "vectors",
+    "bound_count",
+    "path_count",
+    "finding_count",
+    "findings",
+    "source_artifacts"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "declared-communication-binding"
+    },
+    "schema_version": {
+      "const": "declared-communication-binding-0.1"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason",
+            "path",
+            "runtime_pointer",
+            "raw_value"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "path": {
+              "type": "object"
+            },
+            "runtime_pointer": {
+              "type": "string"
+            },
+            "raw_value": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "vectors": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 256,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "message",
+          "direction",
+          "sender",
+          "receiver",
+          "status",
+          "reason",
+          "observed",
+          "error",
+          "cleanup"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "tx",
+              "rx"
+            ]
+          },
+          "sender": {
+            "enum": [
+              "local",
+              "peer"
+            ]
+          },
+          "receiver": {
+            "enum": [
+              "local",
+              "peer"
+            ]
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "blocked"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "observed": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "frame_id",
+                  "is_extended_id",
+                  "is_fd",
+                  "is_remote_frame",
+                  "is_error_frame",
+                  "dlc",
+                  "payload_hex",
+                  "raw_signals",
+                  "signals"
+                ],
+                "properties": {
+                  "frame_id": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "is_extended_id": {
+                    "type": "boolean"
+                  },
+                  "is_fd": {
+                    "type": "boolean"
+                  },
+                  "is_remote_frame": {
+                    "type": "boolean"
+                  },
+                  "is_error_frame": {
+                    "type": "boolean"
+                  },
+                  "dlc": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "payload_hex": {
+                    "type": "string",
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  },
+                  "raw_signals": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": "integer"
+                    }
+                  },
+                  "signals": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "message"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
+          "cleanup": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "endpoint",
+                "status",
+                "error"
+              ],
+              "properties": {
+                "endpoint": {
+                  "enum": [
+                    "local",
+                    "peer"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "passed",
+                    "failed"
+                  ]
+                },
+                "error": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "message"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "bound_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "path_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "finding_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "severity": {
+            "const": "ERROR"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "sha256"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/declared-communication-binding.schema.json"
+}

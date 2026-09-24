@@ -13,6 +13,10 @@ from automotive_workbench.adapters.canonical_contract import validate_contract_m
 from automotive_workbench.adapters.dbc import validate_dbc_intent
 from automotive_workbench.adapters.generation_gate import load_generation
 from automotive_workbench.can_io import BusConfig, sha256_file
+from automotive_workbench.project_declared import (
+    prepare_declared_project,
+    run_bound_communication,
+)
 from automotive_workbench.communication_evidence import run_communication_chain
 from automotive_workbench.evidence_bundle import (
     create_evidence_bundle_manifest,
@@ -32,16 +36,28 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
     keys = {"schema_version", "name", "inputs", "requirements"}
     if version == "workbench-project-0.2":
         keys.add("generation")
+    if version == "workbench-project-0.3":
+        keys.add("comparison_key")
+        if "generation" in project:
+            keys.add("generation")
     if (
         not isinstance(version, str)
-        or version not in {"workbench-project-0.1", "workbench-project-0.2"}
+        or version
+        not in {
+            "workbench-project-0.1",
+            "workbench-project-0.2",
+            "workbench-project-0.3",
+        }
         or set(project) != keys
     ):
         raise ValueError("Project must use a closed workbench-project contract")
     if not isinstance(project["name"], str) or not project["name"].strip():
         raise ValueError("Project name must be non-empty")
     inputs = project["inputs"]
-    if not isinstance(inputs, dict) or set(inputs) != {"dbc", "contract", "intent"}:
+    input_keys = {"dbc", "contract", "intent"} | (
+        {"vectors"} if version == "workbench-project-0.3" else set()
+    )
+    if not isinstance(inputs, dict) or set(inputs) != input_keys:
         raise ValueError("Project requires dbc, contract and intent inputs")
     snapshots = {"project.json": raw}
     for key, value in inputs.items():
@@ -51,7 +67,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         if source.is_symlink() or not source.is_file():
             raise ValueError(f"Project input must be a regular file: {key}")
         content = source.read_bytes()
-        if key != "dbc":
+        if key not in {"dbc", "vectors"}:
             payload = json.loads(content.decode("utf-8-sig"))
             if not isinstance(payload, dict) or not isinstance(
                 payload.get("signals"), list
@@ -99,6 +115,8 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
             isinstance(expected, float) and not math.isfinite(expected)
         ):
             raise ValueError("Requirement expected value must be a finite JSON scalar")
+    if version == "workbench-project-0.3":
+        prepare_declared_project(project, snapshots)
     return project, snapshots
 
 
@@ -173,7 +191,18 @@ def _render_html(result: dict[str, Any]) -> str:
 
 def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str, Any]:
     project, snapshots = load_project(project_path)
-    if config.interface not in {"virtual", "socketcan"} or config.fd:
+    if (
+        config.interface not in {"virtual", "socketcan"}
+        or config.fd
+        or (
+            project["schema_version"] == "workbench-project-0.3"
+            and (
+                config.receive_own_messages
+                or not isinstance(config.channel, str)
+                or not config.channel.strip()
+            )
+        )
+    ):
         raise ValueError(
             "Project communication supports classic virtual/socketcan only"
         )
@@ -225,10 +254,21 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         for name, report in reports.items()
     }
     if all(report["status"] == "passed" for report in reports.values()):
-        reports["communication"] = run_communication_chain(
-            dbc, intent, bundle / "communication", config
-        )
-        paths["communication"] = "communication/communication-evidence-report.json"
+        if project["schema_version"] == "workbench-project-0.3":
+            reports["communication"] = run_bound_communication(
+                dbc,
+                intent,
+                inputs / "vectors.json",
+                reports["mapping"],
+                config,
+                bundle / "communication",
+            )
+            paths["communication"] = "communication/bound-communication.json"
+        else:
+            reports["communication"] = run_communication_chain(
+                dbc, intent, bundle / "communication", config
+            )
+            paths["communication"] = "communication/communication-evidence-report.json"
         stages["communication"] = {
             "status": reports["communication"]["status"],
             "path": paths["communication"],
@@ -303,6 +343,15 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         "requirements": requirements,
         "source_artifacts": sources,
     }
+    if project["schema_version"] == "workbench-project-0.3":
+        result["schema_version"] = "project-acceptance-0.3"
+        result["comparison_basis"] = prepare_declared_project(project, snapshots)
+        # Source paths are relative to portable output base, including runtime dependencies.
+        result["source_artifacts"] = [
+            {"source": path.relative_to(output).as_posix(), "sha256": sha256_file(path)}
+            for path in sorted(bundle.rglob("*"))
+            if path.is_file()
+        ]
     _write_json(bundle / "project-report.json", result)
     (bundle / "index.html").write_text(_render_html(result), encoding="utf-8")
     create_evidence_bundle_manifest(

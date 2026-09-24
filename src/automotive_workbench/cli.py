@@ -66,7 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
     project_parser.add_argument("project", type=Path)
     project_parser.add_argument("--output", type=Path, required=True)
     project_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
-    project_parser.add_argument("--channel", default="workbench-project")
+    project_parser.add_argument("--channel")
 
     project_review_parser = commands.add_parser(
         "run-project-review",
@@ -379,7 +379,7 @@ def main() -> int:
                 args.output,
             )
         elif args.command == "run-project":
-            result = run_project(args.project, args.output, BusConfig(args.interface, args.channel))
+            result = run_project(args.project, args.output, default_communication_config(args.interface, args.channel))
         elif args.command == "run-project-review":
             result = run_project_review(args.report, args.output, args.claim)
         elif args.command == "verify-project-comparison":

@@ -9,6 +9,7 @@ from typing import Any
 from urllib.parse import quote
 
 from automotive_workbench.project_review import STAGE_ORDER, load_project_report
+from automotive_workbench.project_declared import validate_declared_sources
 
 
 STATUSES = {"passed", "failed", "blocked", "skipped"}
@@ -166,6 +167,10 @@ def _finding_records(
 ) -> tuple[dict[str, tuple[str, dict[str, Any], dict[str, Any]]], list[str]]:
     records: dict[str, tuple[str, dict[str, Any], dict[str, Any]]] = {}
     reasons: list[str] = []
+    try:
+        validate_declared_sources(report_path, report)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        reasons.append(f"{role} project provenance invalid: {exc}")
     for stage_name in STAGE_ORDER:
         stage = report["stages"].get(stage_name)
         if stage is None:
@@ -468,6 +473,15 @@ def _build_comparison(
     if baseline_ids != candidate_ids:
         reasons.append("project requirement id set differs")
 
+    modern = any(r['schema_version'] == 'project-acceptance-0.3' for r in (baseline, candidate))
+    if modern:
+        if not _same(baseline.get('comparison_basis'), candidate.get('comparison_basis')):
+            reasons.append('project comparison basis differs')
+        for identity in sorted(baseline_ids & candidate_ids):
+            for field in ('text', 'stage', 'pointer', 'expected'):
+                if not _same(baseline_requirements[identity].get(field), candidate_requirements[identity].get(field)):
+                    reasons.append(f'requirement definition differs: {identity}.{field}')
+
     baseline_findings, baseline_finding_reasons = _finding_records(
         "baseline", baseline_path, baseline, output
     )
@@ -565,7 +579,7 @@ def _build_comparison(
         status = "changed"
     result: dict[str, Any] = {
         "artifact_type": "project-comparison",
-        "schema_version": "project-comparison-0.1",
+        "schema_version": "project-comparison-0.2" if modern else "project-comparison-0.1",
         "status": status,
         "baseline": _source("baseline", baseline_path, output),
         "candidate": _source("candidate", candidate_path, output),

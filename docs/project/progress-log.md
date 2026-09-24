@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-23）
+## 当前总览（2026-09-24）
 
-当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a remote-accepted；P20b remote-accepted，双项目 SocketCAN 已实测；下一步 P20c 项目集成）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；最新实现提交 `ef2e89e` 的 run `35875029401` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
+当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a/b remote-accepted；P20c/d local-accepted，整阶段远端待验收）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；最新实现提交 `ef2e89e` 的 run `35875029401` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1098,3 +1098,15 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 远端验收：实现提交 `ef2e89e0e5b84bd552ab36a00db293aff98b1d62`；[run `35875029401`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/35875029401) completed/success，Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections 及 Python 3.14 runtime-currency 七 job 全部 success。两平台 Run declared communication scenarios 均 success；上传日志确认 `declared-communication-Linux`（artifact `10756762315`，11262 bytes）和 `declared-communication-Windows`（artifact `10756372543`，11300 bytes）均 successfully finalized/uploaded。
 - 后续仅文档状态回填使用 `[skip ci]` 提交推送；该状态提交不算新的实现验证，验收依据为以上固定实现提交和 run。
 - 状态：P20 implementing；P20b remote-accepted，双项目 SocketCAN 现场路径已通过。下一步 P20c：声明进入版本化项目与输入快照、静态门控、路径绑定、稳定验收 locator、review/compare 与迁移复验；尚未标记完整 P20 交付。
+
+## P20c/P20d：完整多项目工作流与阶段交付（2026-09-24）
+
+- 本轮按用户要求完成一个完整大阶段，覆盖 P20 剩余项目接入与交付门，不再停在单个实施包。
+- 新增 project/report 0.3，输入快照包含 vectors，可选复用 generation；纯预检检查全部声明及映射路径覆盖。静态失败保存报告并跳过通信，合法输入执行通用 runner；新绑定报告逐向量/消息/信号/方向/frame ID/原始值核对。默认 virtual CLI 使用唯一通道。
+- ThermalControl 增加 canonical contract 和 project，车窗增加独立 project-declared.json；旧 project.json 保留 0.1。同一内核运行结构不同的两项目；升级新报告时需把旧 `/runtime_status` locator 改为 `/status` 或向量 ID 路径，文档已明确。
+- 新报告保存可迁移来源库存与比较依据；review 验证快照/运行来源哈希及定义后生成引用。comparison 0.2 对新报告强制同比较标识、本地 ECU、完整向量与完整验收条件，定义漂移及不同项目为 not-comparable；旧 comparison 0.1 语义保持。
+- 公开脚本归档六案例：window/thermal passed、canonical 静态回归 failed+communication skipped、合法输入下实际 virtual 发送抑制超时 failed、验收条件变化 failed、后端 blocked。五份比较分别 stable/regressed/regressed/not-comparable/not-comparable，完整目录移动后 manifest、citations、重新审查与 comparison 均可复验。
+- 新增 11 组测试涵盖闭环、兼容、非法输入无副作用、schema/loader parity、静态回归门控、不同验收定义/向量拒绝比较、来源篡改、绑定身份漂移、迁移和 0.3 generation。已有隔离 wheel/胶囊 consumer 保持通过；最终全量 232 项中 230 通过、2 项按环境跳过；36 schema、58 schema-bound examples、23 syntax-only examples、Ruff、20 文件 mypy、CI topology、pip check、shell syntax 与 whitespace 全部通过。摘要 `output/p20-final-validation/tests-final/ci-test-summary.json`。
+- SocketCAN：`scripts/linux/run_socketcan_projects.sh` 在已存在 vcan0 上复用通道锁，两项目均通过项目验收、审查、稳定比较和独立复验；向量分别 2/2、3/3，现场报告及 hash 见 [P20 验收表](p20-acceptance.md)。不声称物理 ECU 或独立进程 ECU 已验证。
+- 已接入 Windows/Ubuntu runtime-evidence 的完整场景及 `multi-project-release` artifact，保持七 job。公开教程 [多项目指南](p20-multi-project-guide.md) 包含写项目、运行、迁移、比较语义及边界。
+- 状态：P20 local-accepted，尚未提交/推送，整阶段远端验收待执行。验收后下一主阶段为 P21 通信对象图与变更影响；平台实现证据不代表个人 BSW 学习已经掌握。

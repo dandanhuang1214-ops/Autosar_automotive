@@ -182,6 +182,10 @@ def create_evidence_bundle_manifest(
                     f"source_artifacts[{index}] must be an object: {artifact['relative_path']}"
                 )
             source = source_artifact.get("source")
+            if source is None and payload.get("schema_version") in {
+                "communication-plan-0.1", "declared-communication-runtime-0.1"
+            }:
+                source = source_artifact.get("path")
             sha256 = source_artifact.get("sha256")
             if not isinstance(source, str) or not source:
                 raise ValueError(f"Declared dependency requires source: {artifact['relative_path']}")

@@ -1,0 +1,43 @@
+{
+  "project": {
+    "system_name": "ThermalControlPublicSample"
+  },
+  "signals": [
+    {
+      "signal_name": "CoolantTemperature",
+      "resolution": "0.1",
+      "offset": "-40",
+      "unit": "degC",
+      "physical_range": "-40..150"
+    },
+    {
+      "signal_name": "FanDuty",
+      "resolution": "0.5",
+      "offset": "0",
+      "unit": "%",
+      "physical_range": "0..100"
+    },
+    {
+      "signal_name": "PumpSpeed",
+      "resolution": "10",
+      "offset": "0",
+      "unit": "rpm",
+      "physical_range": "0..20000"
+    },
+    {
+      "signal_name": "TargetTemperature",
+      "resolution": "0.1",
+      "offset": "-40",
+      "unit": "degC",
+      "physical_range": "-40..150"
+    },
+    {
+      "signal_name": "Enable",
+      "resolution": "1",
+      "offset": "0",
+      "unit": "",
+      "physical_range": "0..1"
+    }
+  ],
+  "open_issues": []
+}

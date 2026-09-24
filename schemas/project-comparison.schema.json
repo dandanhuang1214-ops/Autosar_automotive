@@ -6,7 +6,7 @@
   "required": ["artifact_type", "schema_version", "status", "baseline", "candidate", "basis", "stages", "requirements", "findings", "summary", "evidence_validation"],
   "properties": {
     "artifact_type": {"const": "project-comparison"},
-    "schema_version": {"const": "project-comparison-0.1"},
+    "schema_version": {"enum": ["project-comparison-0.1", "project-comparison-0.2"]},
     "status": {"enum": ["stable", "regressed", "improved", "changed", "not-comparable"]},
     "baseline": {"$ref": "#/$defs/source"},
     "candidate": {"$ref": "#/$defs/source"},
