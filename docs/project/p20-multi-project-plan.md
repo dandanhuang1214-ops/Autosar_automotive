@@ -1,6 +1,6 @@
 # P20：声明驱动的多项目通信验证
 
-状态：implementing，2026-09-24。这是 [长期路线 v3](roadmap.md) 的下一主阶段，整体尚未验收。P18/P19 已由提交 `88c24e2`、run `35748563878` 完成远端验收，P20a 已由实现提交 `1025907`、run `35809063044` 七 job 完成 remote-accepted；P20b 已由实现提交 `ef2e89e`、run `35875029401` 七 job 完成 remote-accepted，且两项目 SocketCAN 现场通过；P20c/d 已实现，完整阶段验收中。新增用户入口见 [多项目指南](p20-multi-project-guide.md)。
+状态：**remote-accepted，2026-09-24，P20 整阶段完成**。最终实现提交 `31ca4ef`、run `35979820300` 七 job 全部通过；两项目本地 SocketCAN 项目/审查/比较全流程已通过。完整证据见 [阶段验收记录](p20-acceptance.md)，用户入口见 [多项目指南](p20-multi-project-guide.md)。下一主阶段为 [P21 对象图与变更影响](p21-object-graph-plan.md)。以下保留 P20 启动时审计与四个实施包的验收约定。
 
 ## 用户结果
 

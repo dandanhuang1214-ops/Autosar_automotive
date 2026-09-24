@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-24）
 
-当前阶段：`P20 — 声明驱动的多项目通信验证（implementing；P20a/b remote-accepted；P20c/d local-accepted，整阶段远端待验收）`。P15–P18 历史基线及 P18 独立复验补强/P19 均已远端验收；最新实现提交 `ef2e89e` 的 run `35875029401` 七 job 全部通过。长期执行顺序以路线 v3 为准，平台实现与个人学习掌握分别验收。
+当前阶段：`P21 — BSW 通信对象图与变更影响（planned，下一主阶段）`。P20 整阶段已 remote-accepted：实现提交 `31ca4ef`、run `35979820300` 七 job 全部通过，两项目本地 SocketCAN 项目/审查/比较全流程也已通过。P15–P19 历史基线继续有效。下一步从 [P21 实施计划](p21-object-graph-plan.md)的对象身份、类型关系与来源契约开始；平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1110,3 +1110,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - SocketCAN：`scripts/linux/run_socketcan_projects.sh` 在已存在 vcan0 上复用通道锁，两项目均通过项目验收、审查、稳定比较和独立复验；向量分别 2/2、3/3，现场报告及 hash 见 [P20 验收表](p20-acceptance.md)。不声称物理 ECU 或独立进程 ECU 已验证。
 - 已接入 Windows/Ubuntu runtime-evidence 的完整场景及 `multi-project-release` artifact，保持七 job。公开教程 [多项目指南](p20-multi-project-guide.md) 包含写项目、运行、迁移、比较语义及边界。
 - 状态：P20 local-accepted，尚未提交/推送，整阶段远端验收待执行。验收后下一主阶段为 P21 通信对象图与变更影响；平台实现证据不代表个人 BSW 学习已经掌握。
+
+## P20：整阶段远端冻结并进入 P21（2026-09-24）
+
+- 实现提交 `31ca4ef80ee9ff9c7147d964d805d73a5026798c`；[run `35979820300`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/35979820300) completed/success，Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections 以及 Python 3.14 runtime-currency 七 job 全部 success。
+- 两平台完整多项目场景与 `multi-project-release` 上传均 completed/success，覆盖六项目案例、五种比较、原目录移除后的 manifest/citations/重新审查及比较复验。不是仅凭单元测试冻结。
+- 本地最终全量 232 项中 230 passed、2 environment skips；两项目 SocketCAN 验收/审查/比较/独立复验成功，现场与 virtual CI 分开计量。完整 gate 表和现场报告哈希见 [P20 验收记录](p20-acceptance.md)。
+- 状态：P20a–d 全部收口，P20 remote-accepted。随后纯文档状态回填使用 `[skip ci]`；实现验收只引用上述固定提交和 run，不把文档提交当新实现验证。
+- 已推进下一主阶段 P21（planned）：对象图稳定身份/有类型关系/来源，随后六类规则与两版变更影响。当前没有声称 P21 已实现，也不将 P20 的结果比较冒充配置影响分析。路线、首页、概览和下一任务已同步。
