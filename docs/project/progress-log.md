@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-24）
 
-当前阶段：`P21 — BSW 通信对象图与变更影响（local-accepted，远端待验收）`。本轮已实现稳定身份、类型关系、五类配置规则、两版影响传播及验收关联、独立快照复验；本地最终质量门已通过，待本轮七 job CI。P20 已 remote-accepted（`31ca4ef` / `35979820300`），历史基线保持。当前下一任务为 P21 跨平台验收与冻结，通过后进入 P22；平台实现和个人学习掌握分别验收。
+当前阶段：`P22 — ARXML 与工具桥接（planned，下一主阶段）`。P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success，两平台对象图场景与上传成功。P20 和历史基线保持。下一步按 [P22 计划](p22-arxml-bridge-plan.md)核对真实 ARXML 导出、版本与受限元素，再实现有来源的离线导入与三组 golden diff。平台实现和个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1129,3 +1129,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终回归 245 项：243 passed、2 environment skips；新增 13 组测试覆盖规则、实际 DBC 重叠/越界（含未映射信号）、不支持语义、变化传播、重排、范围隔离、definition/contract 漂移、迁移篡改、CLI 输出保护和非法输入。摘要 `output/p21-validation/tests-final/ci-test-summary.json`。首轮两处测试注入未实际改变数据，修正 fixture 变更值后通过；随后补充来源准确性和不支持语义回归。
 - 38 schema、58 schema-bound examples、23 syntax-only examples、Ruff、22 文件 mypy、CI topology、pip check 与 whitespace 通过。Windows/Ubuntu runtime-evidence 已接入独立场景和 artifact，保持七 job。
 - 状态：P21 local-accepted，当前实现尚未提交/推送，远端待执行；本地成功不等同远端验收。下一任务为本实现七 job 验收，通过后推进 P22 受限 ARXML 桥接。指南、验收表、首页与路线同步；个人 BSW 学习掌握不由本次自动化结果代替。
+
+
+## P21：整阶段远端冻结并进入 P22（2026-09-24）
+
+- 实现提交 `79d1f3bba43fa7f9dbf85e5965741d50e10e4bdd`；[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) completed/success。七个 job 均 success：Windows/Ubuntu core-contracts、runtime-evidence、controlled-rejections，以及 Python 3.14 runtime-currency。
+- 两平台 `Run communication graph scenarios` 与 `Upload communication graph evidence` 均 completed/success；产物为 `communication-graph-Windows`、`communication-graph-Linux`。公开 CLI 正例、故障、变化影响及迁移独立复验通过，既有 P20 场景与审查比较兼容路径同时通过。
+- 本地最终 245 tests（243 passed、2 environment skips）和全部质量门通过。范围与规则依据见 [P21 指南](p21-communication-graph-guide.md)，完整门表见 [验收记录](p21-acceptance.md)。未执行或声称新增物理 ECU/商业工具现场验证。
+- 状态：P21 remote-accepted，冻结。上一条 local-accepted/远端待执行是提交前状态，本条据实际 CI 更新。随后纯文档状态回填使用 `[skip ci]` 提交推送；不把文档提交算作新的实现验收。
+- 下一主阶段 P22 planned，已整理 [具体入口](p22-arxml-bridge-plan.md)：先核查真实生产者 ARXML XML、受限元素与版本；当前 DOCX/contract/issues 桥接不冒充 ARXML 导入。商业工具许可/环境与公开离线路径分别验收。

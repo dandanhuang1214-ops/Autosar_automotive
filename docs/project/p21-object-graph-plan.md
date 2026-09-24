@@ -1,12 +1,12 @@
 # P21：BSW 通信对象图与变更影响
 
-状态：implementing，2026-09-24。P20 已由实现提交 `31ca4ef`、run `35979820300` 七 job 和本地双项目 SocketCAN 完整流程验收；本轮已实现对象图、规则、影响传播与独立复验，正在完成质量门及跨平台 CI；操作与规则依据见 [指南](p21-communication-graph-guide.md)。不把 P20 的结果比较当作配置影响分析。
+状态：remote-accepted，2026-09-24。实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全绿，两平台对象图场景与上传均通过。完整证据见 [验收表](p21-acceptance.md)，操作与规则依据见 [指南](p21-communication-graph-guide.md)。下一阶段按 [P22 计划](p22-arxml-bridge-plan.md)开始。
 
 ## 用户结果
 
 给定同一项目两版配置，输出改变的通信对象、沿信号/PDU/路由的受影响范围，以及可能需要重跑的 P20 验收项；每条关系都有输入来源，无法证明的部分明确为 unknown。
 
-## 下一次从这里开始
+## 已完成的实施顺序
 
 1. 审计 P20 两项目 DBC/intent/runtime binding 中已有字段，定义稳定对象 ID、对象类型、方向、来源 locator 与有类型的关系。首批只覆盖 ComSignal、IPdu、PduR route、CanIf PDU，不把命名后缀当作 AUTOSAR 语义证明。
 2. 实现纯函数构图及闭合、版本化契约；保留现有 intent 与 P20 工作流兼容。支持两项目 Tx/Rx，重复身份、缺引用和无法解释的关系必须可定位。
