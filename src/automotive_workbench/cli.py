@@ -8,6 +8,7 @@ from automotive_workbench.adapters.generate_arxml import summarize_issue_report
 from automotive_workbench.adapters.dbc import inspect_dbc, validate_dbc_intent
 from automotive_workbench.adapters.canonical_contract import validate_contract_mapping
 from automotive_workbench.bsw_intent import trace_signal
+from automotive_workbench.communication_graph import run_graph, verify_graph_report
 from automotive_workbench.experiment import run_suite
 from automotive_workbench.can_runtime import run_can_lab
 from automotive_workbench.can_supervision import run_can_supervision
@@ -48,6 +49,16 @@ from automotive_workbench.project_comparison import (
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    graph_verify = commands.add_parser("verify-communication-graph", help="Replay embedded graph/impact sources and check saved conclusions")
+    graph_verify.add_argument("report", type=Path)
+    graph_parser = commands.add_parser("build-communication-graph", help="Build a source-bound communication configuration graph")
+    graph_parser.add_argument("project", type=Path)
+    graph_parser.add_argument("--output", type=Path, required=True)
+    impact_parser = commands.add_parser("compare-communication-config", help="Trace configuration changes to affected objects and acceptance IDs")
+    impact_parser.add_argument("project", type=Path)
+    impact_parser.add_argument("candidate", type=Path)
+    impact_parser.add_argument("--output", type=Path, required=True)
 
     plan_parser = commands.add_parser("plan-communication", help="Preflight declared CAN vectors without opening a bus or writing files")
     plan_parser.add_argument("dbc", type=Path)
@@ -324,6 +335,10 @@ def main() -> int:
                 result = summarize_dtc_intent(args.artifact)
             else:
                 result = summarize_issue_report(args.artifact)
+        elif args.command == "verify-communication-graph":
+            result = verify_graph_report(args.report)
+        elif args.command in {"build-communication-graph", "compare-communication-config"}:
+            result = run_graph(args.project, args.output, getattr(args, "candidate", None))
         elif args.command == "plan-communication":
             result = preflight_communication(args.dbc, args.intent, args.declaration)
         elif args.command == "run-declared-communication":

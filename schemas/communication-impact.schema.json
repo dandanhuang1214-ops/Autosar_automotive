@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/communication-impact.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "communication-impact-0.1"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "not-comparable"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "baseline": {
+      "$ref": "https://automotive-workbench.local/schemas/communication-graph.schema.json"
+    },
+    "candidate": {
+      "$ref": "https://automotive-workbench.local/schemas/communication-graph.schema.json"
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "added",
+              "removed",
+              "modified"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ]
+      }
+    },
+    "affected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "path"
+        ]
+      }
+    },
+    "vectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_changes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "locator_changes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "reason",
+    "baseline",
+    "candidate",
+    "changes",
+    "affected",
+    "vectors",
+    "requirements",
+    "unknowns",
+    "source_changes",
+    "locator_changes"
+  ]
+}

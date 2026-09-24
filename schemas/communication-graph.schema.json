@@ -1,0 +1,567 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/communication-graph.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "communication-graph-0.1"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "local_ecu": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ComSignal",
+              "IPdu",
+              "PduRRoute",
+              "CanIfPdu"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "tx",
+              "rx",
+              "unknown"
+            ]
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "dbc_message": {
+                "type": "string"
+              },
+              "dbc_signal": {
+                "type": "string"
+              },
+              "can_id": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "dlc": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "dbc": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "start_bit": {
+                        "type": "integer"
+                      },
+                      "bit_length": {
+                        "type": "integer"
+                      },
+                      "byte_order": {
+                        "enum": [
+                          "little_endian",
+                          "big_endian"
+                        ]
+                      },
+                      "is_signed": {
+                        "type": "boolean"
+                      },
+                      "scale": {
+                        "type": "number"
+                      },
+                      "offset": {
+                        "type": "number"
+                      },
+                      "minimum": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "maximum": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "unit": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "start_bit",
+                      "bit_length",
+                      "byte_order",
+                      "is_signed",
+                      "scale",
+                      "offset",
+                      "minimum",
+                      "maximum",
+                      "unit"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "frame_id": {
+                        "type": "integer"
+                      },
+                      "dlc": {
+                        "type": "integer"
+                      },
+                      "extended": {
+                        "type": "boolean"
+                      },
+                      "direction": {
+                        "enum": [
+                          "tx",
+                          "rx",
+                          "unknown"
+                        ]
+                      },
+                      "unsupported": {
+                        "type": "boolean"
+                      },
+                      "signals": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "start_bit": {
+                              "type": "integer"
+                            },
+                            "bit_length": {
+                              "type": "integer"
+                            },
+                            "byte_order": {
+                              "enum": [
+                                "little_endian",
+                                "big_endian"
+                              ]
+                            },
+                            "is_signed": {
+                              "type": "boolean"
+                            },
+                            "scale": {
+                              "type": "number"
+                            },
+                            "offset": {
+                              "type": "number"
+                            },
+                            "minimum": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "maximum": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "unit": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "start_bit",
+                            "bit_length",
+                            "byte_order",
+                            "is_signed",
+                            "scale",
+                            "offset",
+                            "minimum",
+                            "maximum",
+                            "unit"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "frame_id",
+                      "dlc",
+                      "extended",
+                      "direction",
+                      "unsupported",
+                      "signals"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "declared": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "start_bit": {
+                    "type": "integer"
+                  },
+                  "bit_length": {
+                    "type": "integer"
+                  },
+                  "byte_order": {
+                    "enum": [
+                      "little_endian",
+                      "big_endian"
+                    ]
+                  },
+                  "is_signed": {
+                    "type": "boolean"
+                  },
+                  "scale": {
+                    "type": "number"
+                  },
+                  "offset": {
+                    "type": "number"
+                  },
+                  "minimum": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "maximum": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                },
+                "required": []
+              },
+              "i_pdu": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "canif_pdu": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "dbc_message"
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "artifact": {
+                  "enum": [
+                    "intent",
+                    "dbc"
+                  ]
+                },
+                "locator": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "artifact",
+                "locator"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "direction",
+          "attributes",
+          "sources"
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "signal-in-pdu",
+              "pdu-route",
+              "route-canif"
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "artifact": {
+                  "enum": [
+                    "intent",
+                    "dbc"
+                  ]
+                },
+                "locator": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "artifact",
+                "locator"
+              ]
+            }
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind",
+          "sources"
+        ]
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "GRAPH-MISSING-REFERENCE",
+              "GRAPH-DUPLICATE-IDENTITY",
+              "GRAPH-DIRECTION",
+              "GRAPH-LENGTH-LAYOUT",
+              "GRAPH-ROUTE-ENDPOINT",
+              "GRAPH-UNSUPPORTED"
+            ]
+          },
+          "source": {
+            "enum": [
+              "intent",
+              "vectors"
+            ]
+          },
+          "locator": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "source",
+          "locator",
+          "detail"
+        ]
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "project",
+              "dbc",
+              "intent",
+              "contract",
+              "vectors"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "content_base64": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sha256",
+          "content_base64"
+        ]
+      }
+    },
+    "vectors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "message",
+          "direction",
+          "signals",
+          "timeout_seconds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$",
+            "not": {
+              "pattern": "[^A-Za-z0-9_.-]"
+            }
+          },
+          "message": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "direction": {
+            "enum": [
+              "tx",
+              "rx"
+            ]
+          },
+          "signals": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "additionalProperties": {
+              "type": "number",
+              "minimum": -1.7976931348623157e+308,
+              "maximum": 1.7976931348623157e+308
+            }
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 5
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "canonical",
+              "mapping",
+              "communication",
+              "generation"
+            ]
+          },
+          "pointer": {
+            "type": "string"
+          },
+          "expected": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "stage",
+          "pointer",
+          "expected"
+        ]
+      }
+    },
+    "generation": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "scope",
+    "namespace",
+    "local_ecu",
+    "status",
+    "nodes",
+    "edges",
+    "findings",
+    "unknowns",
+    "source_artifacts",
+    "vectors",
+    "requirements",
+    "generation"
+  ]
+}

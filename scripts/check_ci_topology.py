@@ -13,6 +13,7 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run communication graph scenarios": "runtime-evidence",
     "Run core tests": "core-contracts",
     "Smoke-test installed wheel distribution": "core-contracts",
     "Verify evidence capsule with installed wheel": "core-contracts",

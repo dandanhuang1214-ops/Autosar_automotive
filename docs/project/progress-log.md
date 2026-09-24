@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-24）
 
-当前阶段：`P21 — BSW 通信对象图与变更影响（planned，下一主阶段）`。P20 整阶段已 remote-accepted：实现提交 `31ca4ef`、run `35979820300` 七 job 全部通过，两项目本地 SocketCAN 项目/审查/比较全流程也已通过。P15–P19 历史基线继续有效。下一步从 [P21 实施计划](p21-object-graph-plan.md)的对象身份、类型关系与来源契约开始；平台实现与个人学习掌握分别验收。
+当前阶段：`P21 — BSW 通信对象图与变更影响（local-accepted，远端待验收）`。本轮已实现稳定身份、类型关系、五类配置规则、两版影响传播及验收关联、独立快照复验；本地最终质量门已通过，待本轮七 job CI。P20 已 remote-accepted（`31ca4ef` / `35979820300`），历史基线保持。当前下一任务为 P21 跨平台验收与冻结，通过后进入 P22；平台实现和个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1118,3 +1118,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地最终全量 232 项中 230 passed、2 environment skips；两项目 SocketCAN 验收/审查/比较/独立复验成功，现场与 virtual CI 分开计量。完整 gate 表和现场报告哈希见 [P20 验收记录](p20-acceptance.md)。
 - 状态：P20a–d 全部收口，P20 remote-accepted。随后纯文档状态回填使用 `[skip ci]`；实现验收只引用上述固定提交和 run，不把文档提交当新实现验证。
 - 已推进下一主阶段 P21（planned）：对象图稳定身份/有类型关系/来源，随后六类规则与两版变更影响。当前没有声称 P21 已实现，也不将 P20 的结果比较冒充配置影响分析。路线、首页、概览和下一任务已同步。
+
+## P21：通信对象图、规则与配置影响（2026-09-24）
+
+- 依据当前路线进入完整 P21 主阶段。新增纯构图核心、闭合 `communication-graph-0.1` / `communication-impact-0.1`，CLI `build-communication-graph`、`compare-communication-config`、`verify-communication-graph`。旧 intent/project/runtime/review/compare 消费路径不变。
+- 对象身份包含项目 comparison_key、本地 ECU、类型和名称；车窗 8 对象、ThermalControl 14 对象，覆盖 Tx/Rx 与多信号共享 route。类型依赖边和对象均带来源 locator，五来源原始快照以 Base64/SHA-256 保留，可离线迁移复算。
+- 配置规则覆盖断引用、重复身份、方向、长度/布局、路由端点；FD/multiplex/float 线编码拒绝。规则依据与正负例明确为平台 intent/DBC 约束，不冒充厂商 ECUC 或 AUTOSAR release 验证。
+- 第六类能力为配置影响：按稳定身份比较语义、新旧依赖图并集传播，保存对象变更、来源字节/locator 差异、影响路径及向量/验收 ID。不同项目/本地 ECU 或无效图不可比较；contract、generation 和无向量覆盖的未知边界保留。重命名按删除/新增处理，不预测运行结果。
+- 本地公开 CLI 10 场景全通过：两项目正常、稳定比较、跨项目拒绝、ThermalStatus 比例变化及五类真实配置失败；各场景独立 replay 通过，删除生成的候选源目录后迁移复验通过。比例变化要求重跑 thermal-status 及整体门，排除另外两条报文的向量级验收。证据 `output/p21-validation/scenarios-final/`。
+- 最终回归 245 项：243 passed、2 environment skips；新增 13 组测试覆盖规则、实际 DBC 重叠/越界（含未映射信号）、不支持语义、变化传播、重排、范围隔离、definition/contract 漂移、迁移篡改、CLI 输出保护和非法输入。摘要 `output/p21-validation/tests-final/ci-test-summary.json`。首轮两处测试注入未实际改变数据，修正 fixture 变更值后通过；随后补充来源准确性和不支持语义回归。
+- 38 schema、58 schema-bound examples、23 syntax-only examples、Ruff、22 文件 mypy、CI topology、pip check 与 whitespace 通过。Windows/Ubuntu runtime-evidence 已接入独立场景和 artifact，保持七 job。
+- 状态：P21 local-accepted，当前实现尚未提交/推送，远端待执行；本地成功不等同远端验收。下一任务为本实现七 job 验收，通过后推进 P22 受限 ARXML 桥接。指南、验收表、首页与路线同步；个人 BSW 学习掌握不由本次自动化结果代替。
