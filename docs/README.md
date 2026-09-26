@@ -8,7 +8,8 @@
 - [长期升级路线 v3](project/roadmap.md)：产品目标、24 周六阶段、个人投入与完整验收规则。
 - [P20 多项目通信实施计划](project/p20-multi-project-plan.md)：已完成阶段的四个实施包与验收门。
 - [P20 整阶段验收记录](project/p20-acceptance.md)：实现提交、七 job、现场门与边界。
-- [P22 ARXML 桥接计划](project/p22-arxml-bridge-plan.md)：下一主阶段的真实导出审计、受限语义与验收门。
+- [P22 ARXML 桥接计划](project/p22-arxml-bridge-plan.md)：当前主阶段的项目接入与整阶段验收门。
+- [P22 离线 ARXML 使用指南](project/p22-arxml-guide.md)：真实导出、受限导入、三组 golden 与快照复验。
 - [P21 使用及规则覆盖](project/p21-communication-graph-guide.md)：构图、影响传播、验收关联和独立复验。
 - [P21 验收记录](project/p21-acceptance.md)：本轮质量门与远端状态。
 - [P21 对象图与变更影响计划](project/p21-object-graph-plan.md)：已完成阶段的实施顺序与验收门。

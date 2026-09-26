@@ -2,11 +2,11 @@
 
 平台路线、升级状态、环境记录和技术调研统一从 [`docs/README.md`](docs/README.md) 进入。每次功能或环境升级都必须同步更新 [`docs/project/progress-log.md`](docs/project/progress-log.md)。
 
-长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；P20 声明驱动的多项目通信验证已完成，P21 通信对象图与变更影响已完成，下一主阶段为 P22 ARXML 桥接，完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
+长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；P20 声明驱动的多项目通信验证已完成，P21 通信对象图与变更影响已完成，当前主阶段为 P22 ARXML 桥接（implementing），完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
 
 P20 已实现 [声明式多项目完整流程](docs/project/p20-multi-project-guide.md)：车窗与 ThermalControl 共用项目运行、路径绑定、审查、比较与迁移复验；整阶段已通过七 job 远端验收及本地双项目 SocketCAN 全流程，见 [验收记录](docs/project/p20-acceptance.md)。
 
-P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph-guide.md)：构图、两版配置影响及快照独立复验；实现 `79d1f3b` 已通过七 job 远端验收，见 [验收记录](docs/project/p21-acceptance.md)。下一步按 [P22 计划](docs/project/p22-arxml-bridge-plan.md)推进真实 ARXML 语义导入。
+P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph-guide.md)：构图、两版配置影响及快照独立复验；实现 `79d1f3b` 已通过七 job 远端验收，见 [验收记录](docs/project/p21-acceptance.md)。P22 已新增[真实 ARXML 离线导入、比较和迁移复验](docs/project/p22-arxml-guide.md)，本轮远端验收待执行；下一步为版本化项目接入与静态门控，见 [P22 计划](docs/project/p22-arxml-bridge-plan.md)。
 
 日常项目验收从 `run-project` 开始：
 

@@ -39,6 +39,7 @@ from automotive_workbench.evidence_bundle import (
 from automotive_workbench.evidence_capsule import export_evidence_capsule
 from automotive_workbench.evidence_capsule_verification import verify_evidence_capsule
 from automotive_workbench.project_workflow import run_project
+from automotive_workbench.arxml_bridge import run_arxml, verify_report
 from automotive_workbench.project_review import run_project_review
 from automotive_workbench.project_comparison import (
     compare_project_reports,
@@ -49,6 +50,16 @@ from automotive_workbench.project_comparison import (
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    for command in ("import-arxml", "compare-arxml"):
+        arxml_parser = commands.add_parser(command, help="Import/compare the audited SWC ARXML subset")
+        arxml_parser.add_argument("source", type=Path)
+        if command == "compare-arxml":
+            arxml_parser.add_argument("candidate", type=Path)
+        arxml_parser.add_argument("--provenance", type=Path)
+        arxml_parser.add_argument("--output", type=Path, required=True)
+    arxml_verify = commands.add_parser("verify-arxml", help="Replay embedded XML and verify import/comparison conclusions")
+    arxml_verify.add_argument("report", type=Path)
 
     graph_verify = commands.add_parser("verify-communication-graph", help="Replay embedded graph/impact sources and check saved conclusions")
     graph_verify.add_argument("report", type=Path)
@@ -335,6 +346,11 @@ def main() -> int:
                 result = summarize_dtc_intent(args.artifact)
             else:
                 result = summarize_issue_report(args.artifact)
+        elif args.command in {"import-arxml", "compare-arxml"}:
+            result = run_arxml(args.source, args.output, getattr(args, "candidate", None), args.provenance)
+        elif args.command == "verify-arxml":
+            verify_report(json.loads(args.report.read_text(encoding="utf-8")))
+            result = {"status": "passed", "verified": str(args.report)}
         elif args.command == "verify-communication-graph":
             result = verify_graph_report(args.report)
         elif args.command in {"build-communication-graph", "compare-communication-config"}:

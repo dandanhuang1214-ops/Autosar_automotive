@@ -1,0 +1,38 @@
+{
+  "tool": "Generate-Arxml",
+  "tool_version": "0.1.0",
+  "revision": "e912e404d52e671c7561d518d9989af3382fce51",
+  "repository": "https://github.com/dandanhuang1214-ops/Generate-Arxml",
+  "provenance_kind": "local-execution-record-not-producer-authentication",
+  "producer_archive_sha256": "bfb2d1834b85fb11f1e8b5fb4a46837735fb75753ec56dbb1dbd01cd5a06b0b8",
+  "producer_script_sha256": "aed933c9757923f0181ec320052ffc623dd470927132b99391604364826d244e",
+  "source_docx_sha256": "d38b21d3220ea4bef831aaec0ee4eeb7a7ca54ad652e054a1cf238a4db37362b",
+  "arxml_sha256": "d44c2ae60131ef6d0a75035fb35d54403f2ce2bc028370bf4822c1d497ddf6e6",
+  "arguments": [
+    "--input",
+    "source.docx",
+    "--contract",
+    "contract.json",
+    "--excel",
+    "model.xlsx",
+    "--report-json",
+    "issues.json",
+    "--mode",
+    "signal",
+    "--profile",
+    "signal_atomic_davinci",
+    "--arxml",
+    "model.arxml"
+  ],
+  "exit_code": 0,
+  "runtime": {
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "dependencies": {
+      "openpyxl": "3.1.5",
+      "lxml": "6.1.3",
+      "pydantic": "2.13.5",
+      "pyyaml": "6.0.3",
+      "python-docx": "1.2.0"
+    }
+  }
+}

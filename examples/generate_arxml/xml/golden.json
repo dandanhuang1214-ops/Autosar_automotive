@@ -1,0 +1,11 @@
+{
+  "objects": 36,
+  "references": 25,
+  "baseline_status": "passed",
+  "coverage": "supported-subset",
+  "dangling_codes": ["ARXML-DANGLING-REF"],
+  "stable_status": "stable",
+  "changed_status": "changed",
+  "changed_ids": ["/ComponentTypes/WindowControlSwc/WindowControlSwc_InternalBehavior/TMT_WindowControl_Step"],
+  "rejected_status": "not-comparable"
+}

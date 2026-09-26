@@ -1,6 +1,6 @@
 # Automotive Workbench 长期升级路线 v3
 
-更新：2026-09-24。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
+更新：2026-09-26。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
 ## 长期产品目标
 
@@ -28,7 +28,7 @@
 | 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | P20 已冻结两项目统一声明流程；P21 已补齐受限对象图与配置影响，下一缺口是 ARXML 语义桥接 |
 | 通信运行 | virtual/SocketCAN、双向证据、过滤与 blocked | project 0.3 已接入通用运行与路径绑定；旧项目保留兼容路径 |
 | BSW 映射 | Tx/Rx、DBC 属性、跨层引用一致性与 8 节点 trace | P21 已有四类稳定身份对象、规则覆盖与验收关联；仍不验证 vendor ECUC |
-| 外部工具 | 固定 Generate-Arxml DOCX/contract/issues 三例 | 尚未以 ARXML/ECU Extract/ECUC 的明确受限语义子集连接平台 |
+| 外部工具 | 固定 Generate-Arxml DOCX/contract/issues 三例 | P22 已有真实 SWC ARXML 受限离线导入/比较；项目接入待完成，ECU Extract/ECUC 未覆盖 |
 | ECU 执行 | OpenBSW 构建、CF01 客户端与历史现场证据 | 项目编排、独立 ECU 生命周期、构建配置和诊断结果尚未统一验收 |
 | 审查交付 | 确定性引用、拒答、项目比较、P19 HTML | 现有结果比较不等同于输入变更影响；检索审查不等同于通用语义诊断 |
 | 质量基线 | 七 job CI、安装后验证、证据迁移复验 | P21 当前实现七 job 已通过；后续实现仍需独立远端验收 |
@@ -50,11 +50,11 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P21 已冻结，进入 P22
+## 当前执行：P22 implementing
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
-3. 下一主阶段 P22 planned，按 [ARXML 桥接计划](p22-arxml-bridge-plan.md)推进：真实导出与元素/版本审计 → 受限导入与来源契约 → 正常/悬空引用/语义变化 golden → 项目接入及跨平台冻结。商业工具往返须有实际许可与执行证据，不能用公开离线结果替代。
+3. 当前 P22 implementing：真实导出审计、受限 XML 导入/比较/快照复验及三组 golden 已实现，本轮远端验收待执行。下一步按 [ARXML 桥接计划](p22-arxml-bridge-plan.md)接入版本化项目、静态门控及审查迁移，再冻结完整公开路径。商业工具往返仍须实际许可与执行证据。
 4. P20 结果比较与 P21 配置依赖影响分别保留；P22 只映射源 ARXML 真正提供的语义，不从 SWC/interface 名称补造 COM/PduR/CanIf ECUC。
 
 ## 持续升级的完成规则

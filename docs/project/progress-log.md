@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-24）
+## 当前总览（2026-09-26）
 
-当前阶段：`P22 — ARXML 与工具桥接（planned，下一主阶段）`。P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success，两平台对象图场景与上传成功。P20 和历史基线保持。下一步按 [P22 计划](p22-arxml-bridge-plan.md)核对真实 ARXML 导出、版本与受限元素，再实现有来源的离线导入与三组 golden diff。平台实现和个人学习掌握分别验收。
+当前阶段：`P22 — ARXML 与工具桥接（implementing）`。已完成固定生产者真实 XML 审计、受限结构语义导入/比较、来源快照复验和三组 golden；本轮实现远端验收待执行，见文末记录与 [P22 指南](p22-arxml-guide.md)。下一步为版本化项目接入、静态门控与完整公开路径验收；商业工具往返另行验证。P21 实现 `79d1f3b` / run `36022099415` 七 job remote-accepted 保持，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1138,3 +1138,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地最终 245 tests（243 passed、2 environment skips）和全部质量门通过。范围与规则依据见 [P21 指南](p21-communication-graph-guide.md)，完整门表见 [验收记录](p21-acceptance.md)。未执行或声称新增物理 ECU/商业工具现场验证。
 - 状态：P21 remote-accepted，冻结。上一条 local-accepted/远端待执行是提交前状态，本条据实际 CI 更新。随后纯文档状态回填使用 `[skip ci]` 提交推送；不把文档提交算作新的实现验收。
 - 下一主阶段 P22 planned，已整理 [具体入口](p22-arxml-bridge-plan.md)：先核查真实生产者 ARXML XML、受限元素与版本；当前 DOCX/contract/issues 桥接不冒充 ARXML 导入。商业工具许可/环境与公开离线路径分别验收。
+
+## P22：真实 XML 导出与受限离线桥接（2026-09-26）
+
+- 继续当前主阶段，新增固定生产者 `e912e404d52e671c7561d518d9989af3382fce51` 的真实 `--arxml` 重放脚本；只消费公开车窗 DOCX，未读取其他工程 XML。实际退出 0，原始 XML、输入/脚本/archive hash、命令参数与依赖版本已归档，基准产物和 provenance 纳入仓库。
+- 审计确认 r4.0 namespace / `AUTOSAR_4-3-0.xsd` 声明、36 SHORT-NAME 对象、25 引用。新增无第三方 XML 运行依赖的 `import-arxml`、`compare-arxml`、`verify-arxml` 及两份闭合 schema；保存完整 XML/Base64/SHA-256、结构 locator、对象字段、REF/TREF/DEST、unsupported 和明确未知边界。验证是已审计结构语义与引用完整性，不是完整 AUTOSAR XSD 或 ECUC 验证。
+- 保留实际抽象 APPLICATION-DATA-TYPE DEST 到 primitive 类型的关系；重复身份、悬空引用、DEST 冲突失败；未支持元素/属性覆盖为 partial，禁止稳定比较。UTF-8/版本/DTD/entity/大小/深度边界在创建输出前检查。UUID 与格式变化不算语义变化；两次真实工具导出虽字节不同，比较 stable/0 changes，证据 `output/p22-validation/real-producer-repeat/`。
+- 三组 golden 以真实 XML 为基准，唯一锚点构造悬空 TYPE-TREF 与 PERIOD 0.01→0.02；后者只改变 timing event 对象。五个真实 CLI 场景、原输入删除后的五份迁移快照复验均通过，证据 `output/p22-validation/scenarios-final/`。变体是显式注入，不冒充生产者错误导出。
+- 新增 11 组测试覆盖真实 XML/闭合报告、精确变化、UUID/重排、引用/身份失败、未知语义、非法 XML/版本/资源边界、篡改/畸形报告、来源 hash、输出保护与 CLI 无副作用。最终全量 256 项中 254 passed、2 environment skips，摘要 `output/p22-validation/tests-final/ci-test-summary.json`；40 schema、58 schema-bound examples、25 syntax-only examples、Ruff、25 文件 mypy、CI topology、pip check、compileall 和 whitespace 通过。
+- Windows/Ubuntu runtime-evidence 新增独立 ARXML 场景及 artifact 上传，保留七 job；CI 消费冻结公开导出，真实生产者运行独立记录。指南、首页、路线、总览与下一任务同步。
+- 状态：本轮离线路径 local-accepted，实现尚未提交/推送，远端待执行。P22 主阶段 implementing；下一任务为版本化项目输入快照、静态门控和审查/比较接入，再完成完整公开路径冻结。没有映射缺失的 COM/IPdu/PduR/CanIf，没有声称个人学习掌握或商业工具往返通过。默认 Vector 路径未发现匹配，只作为有限安装探测；商业许可/实际安装与真实导入仍未验证。
