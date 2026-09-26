@@ -6,7 +6,7 @@
 
 P20 已实现 [声明式多项目完整流程](docs/project/p20-multi-project-guide.md)：车窗与 ThermalControl 共用项目运行、路径绑定、审查、比较与迁移复验；整阶段已通过七 job 远端验收及本地双项目 SocketCAN 全流程，见 [验收记录](docs/project/p20-acceptance.md)。
 
-P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph-guide.md)：构图、两版配置影响及快照独立复验；实现 `79d1f3b` 已通过七 job 远端验收，见 [验收记录](docs/project/p21-acceptance.md)。P22 已新增[真实 ARXML 离线导入、比较和迁移复验](docs/project/p22-arxml-guide.md)，实现 `6166b80` 已通过 [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 远端验收；下一步为版本化项目接入与静态门控，见 [P22 计划](docs/project/p22-arxml-bridge-plan.md)。
+P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph-guide.md)：构图、两版配置影响及快照独立复验；实现 `79d1f3b` 已通过七 job 远端验收，见 [验收记录](docs/project/p21-acceptance.md)。P22 已新增[真实 ARXML 离线导入、比较和迁移复验](docs/project/p22-arxml-guide.md)，实现 `6166b80` 已通过 [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 远端验收；项目 0.4 静态门控、审查/比较和迁移路径已实现，正等待本轮远端验收，见 [P22 验收表](docs/project/p22-acceptance.md)。商业往返 blocked；公开路径验收后推进 P23。
 
 日常项目验收从 `run-project` 开始：
 

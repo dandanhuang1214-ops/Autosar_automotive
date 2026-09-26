@@ -1,6 +1,6 @@
 # P22：受限 ARXML 与工具桥接
 
-状态：implementing，2026-09-26。已完成真实生产者 XML 审计、受限离线导入/比较/快照复验与三组 golden，详见 [操作指南](p22-arxml-guide.md)。本轮实现的远端状态见进度账本；项目接入和完整阶段冻结仍待完成。
+状态：implementing，2026-09-27。已完成真实生产者 XML 审计、受限离线导入/比较/快照复验与三组 golden，详见 [操作指南](p22-arxml-guide.md)。本轮实现的远端状态见进度账本；项目 0.4 接入与公开场景已实现，完整远端冻结待完成。
 
 ## 用户结果
 
@@ -8,7 +8,7 @@
 
 ## 从这里继续
 
-当前下一任务为第 5 项：版本化项目接入与完整公开路径验收。第 1～4 项已有本轮实现；第 6 项商业环境仍需实际安装/许可及执行证据。
+当前第 5 项已实现项目快照、静态门控、审查/比较与迁移场景，下一任务为本轮七 job 远端验收，见 [验收表](p22-acceptance.md)。第 6 项有限安装探测未找到入口，商业往返 blocked；公开路径验收后按路线推进 P23。
 
 1. 审计固定 Generate-Arxml producer 的实际 ARXML 输出、AUTOSAR namespace/version、导出参数与现有 P16 重放证据。当前仓库 `examples/generate_arxml/bridge/` 保存 DOCX、contract、issues、intent、DBC 和 project；并未因目录名称含 arxml 就证明已消费 ARXML XML 文件。
 2. 根据实际产物固定第一版受支持元素、引用类别与版本；区分 SWC/interface、ECU Extract 和 ECUC。只有源文件真实包含的语义才能映射到 P21，缺失的 COM/PduR/CanIf 配置应输出 unknown，不能从 SWC 名称补造 BSW 对象。

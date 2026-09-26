@@ -473,7 +473,7 @@ def _build_comparison(
     if baseline_ids != candidate_ids:
         reasons.append("project requirement id set differs")
 
-    modern = any(r['schema_version'] == 'project-acceptance-0.3' for r in (baseline, candidate))
+    modern = any(r['schema_version'] in {'project-acceptance-0.3', 'project-acceptance-0.4'} for r in (baseline, candidate))
     if modern:
         if not _same(baseline.get('comparison_basis'), candidate.get('comparison_basis')):
             reasons.append('project comparison basis differs')

@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-26）
+## 当前总览（2026-09-27）
 
-当前阶段：`P22 — ARXML 与工具桥接（implementing）`。已完成固定生产者真实 XML 审计、受限结构语义导入/比较、来源快照复验和三组 golden；本轮实现 `6166b80` / [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 全绿，离线路径 remote-accepted，见文末记录与 [P22 指南](p22-arxml-guide.md)。下一步为版本化项目接入、静态门控与完整公开路径验收；商业工具往返另行验证。P21 实现 `79d1f3b` / run `36022099415` 七 job remote-accepted 保持，平台实现与个人学习掌握分别验收。
+当前阶段：`P22 — ARXML 与工具桥接（implementing）`。已完成固定生产者真实 XML 审计、受限结构语义导入/比较、来源快照复验和三组 golden；本轮实现 `6166b80` / [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 全绿，离线路径 remote-accepted，见文末记录与 [P22 指南](p22-arxml-guide.md)。项目 0.4 快照/静态门控/审查比较/迁移路径已实现，本轮独立远端验收待执行，见 [P22 验收表](p22-acceptance.md)；下一步是本轮七 job 验收，商业往返 blocked。P21 实现 `79d1f3b` / run `36022099415` 七 job remote-accepted 保持，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1157,3 +1157,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 两平台 `Run ARXML bridge scenarios` 和 `Upload ARXML bridge evidence` 均 completed/success，对应 `arxml-bridge-Windows` / `arxml-bridge-Linux`。正常、悬空引用、周期变化、拒绝比较及移除输入后的迁移复验获得双平台执行证据；既有 P20/P21 回归保持通过。实际 job/step 明细另存 `output/p22-validation/remote-ci.json`。
 - 状态：本轮离线导入/比较/复验 remote-accepted；P22 主阶段仍 implementing，未标记整阶段完成。下一项仍为版本化项目快照/静态门控和审查接入；商业工具往返仍未验证。平台执行证据不替代个人学习验收。
 - 这条记录及首页/路线为后续纯文档状态回填，使用 `[skip ci]` 提交推送，不把文档提交当新实现验收。上条 local-accepted/尚未推送是实现提交前记录，本条由实际远端结论更新。
+
+
+## P22：版本化项目集成与完整公开路径（2026-09-27）
+
+- 新增 project/report 0.4，强制 ARXML 与 provenance 输入快照，保留旧 0.1–0.3；独立 `arxml-project-gate-0.1` 内嵌原导入报告。非法 XML/版本/hash 在输出前拒绝；悬空引用与 partial 覆盖生成失败报告并跳过通信，不受验收条件是否声明 ARXML 影响。
+- 审查从快照重算 ARXML 阶段，引用 ERROR、覆盖和未知边界；篡改报告并更新库存 hash 仍会被重算拒绝。比较沿用 0.2，在 0.4 basis 绑定受限语义摘要，语义变化/无效输入与正常基线 not-comparable；具体对象变化由独立 ARXML diff 提供，格式变化仍 stable。不推断 XML 到 COM/PduR/CanIf 的未知映射。
+- 公开脚本四个真实 CLI 场景：normal passed、dangling failed、period-change passed、unsupported failed；两个失败均 communication skipped。周期仅改变 timing event；变体标注 synthetic-mutation。移除生成的输入并移动完整目录后，4/4 manifest、原引用、重审、comparison 和 XML 内嵌快照复验通过。证据 `output/p22-project-validation/release-scenarios/`。
+- 新增六组专项测试，最终全量 262 tests：260 passed、2 environment skips；41 schema、59 schema-bound examples、25 syntax-only examples、Ruff、27 文件 mypy、CI topology、pip check 和 whitespace gate 通过。首轮发现新增版本集合判断对非法 list 值抛 TypeError，已补字符串预检并完成回归；schema 冻结数量同步更新。最终摘要 `output/p22-project-validation/tests-final/ci-test-summary.json`。
+- Windows/Ubuntu runtime-evidence 接入公开脚本与 `arxml-project-{OS}` 上传，仍为七 job。指南提供项目运行/审查/比较入口；[验收表](p22-acceptance.md)记录边界和商业恢复路径。
+- 有限商业环境探测：PATH 三个候选命令无匹配，两个 Program Files 下无 Vector/DaVinci 一级目录，`C:/Vector` 不存在；未检查全盘、注册表或实际许可，不声称本机绝无安装。商业往返 blocked，需实际工具路径、版本、合法许可和公开工程后执行真实导入/回导。
+- 状态：本轮公开路径 local-accepted，实现尚未提交/推送，远端待执行；当前主阶段 P22 implementing。下一任务为本实现七 job 远端验收；通过后公开路径冻结，商业 blocked 单列并推进既定 P23。平台实现不代替个人学习掌握。

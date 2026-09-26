@@ -20,7 +20,8 @@
       "enum": [
         "project-acceptance-0.1",
         "project-acceptance-0.2",
-        "project-acceptance-0.3"
+        "project-acceptance-0.3",
+        "project-acceptance-0.4"
       ]
     },
     "name": {
@@ -138,6 +139,30 @@
               ]
             }
           }
+        },
+        "arxml": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "path"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "skipped"
+              ]
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
         }
       }
     },
@@ -172,7 +197,8 @@
               "canonical",
               "mapping",
               "communication",
-              "generation"
+              "generation",
+              "arxml"
             ]
           },
           "pointer": {
@@ -328,6 +354,10 @@
               }
             }
           }
+        },
+        "arxml_semantics": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
         }
       }
     }
@@ -337,7 +367,10 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "project-acceptance-0.3"
+            "enum": [
+              "project-acceptance-0.3",
+              "project-acceptance-0.4"
+            ]
           }
         }
       },
@@ -383,6 +416,58 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "project-acceptance-0.4"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stages": {
+            "required": [
+              "arxml"
+            ]
+          },
+          "comparison_basis": {
+            "required": [
+              "arxml_semantics"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "stages": {
+            "not": {
+              "required": [
+                "arxml"
+              ]
+            }
+          },
+          "comparison_basis": {
+            "not": {
+              "required": [
+                "arxml_semantics"
+              ]
+            }
+          },
+          "requirements": {
+            "items": {
+              "properties": {
+                "stage": {
+                  "not": {
+                    "const": "arxml"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   ]

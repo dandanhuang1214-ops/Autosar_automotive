@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from automotive_workbench.project_arxml import prepare_arxml_gate, semantic_digest
 from automotive_workbench.adapters.dbc import _cantools
 from automotive_workbench.can_io import BusConfig, sha256_file
 from automotive_workbench.communication_plan import compile_plan, parse_declaration
@@ -40,11 +41,15 @@ def prepare_declared_project(
             raise ValueError(f"Mapped path has no declared vector: {identity}")
     if not identities:
         raise ValueError("Declared projects require mapped communication paths")
-    return {
+    result = {
         "key": key,
         "local_ecu": intent["local_ecu"],
         "vectors": sorted(declaration["vectors"], key=lambda v: v["id"]),
     }
+
+    if project["schema_version"] == "workbench-project-0.4":
+        result["arxml_semantics"] = semantic_digest(prepare_arxml_gate(snapshots))
+    return result
 
 
 def bind_declared_paths(
@@ -167,8 +172,8 @@ def run_bound_communication(
 
 
 def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None:
-    """Validate 0.3 snapshot provenance after relocation, without writing anything."""
-    if report["schema_version"] != "project-acceptance-0.3":
+    """Validate 0.3/0.4 snapshot provenance after relocation, without writing anything."""
+    if report["schema_version"] not in {"project-acceptance-0.3", "project-acceptance-0.4"}:
         return
     root = report_path.parent.resolve()
     sources = report.get("source_artifacts", [])
@@ -198,6 +203,8 @@ def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None
             "vectors.json",
         ]
     }
+    if report["schema_version"] == "project-acceptance-0.4":
+        required.update({"bundle/inputs/arxml.arxml", "bundle/inputs/provenance.json"})
     required.update(
         "bundle/" + stage["path"]
         for stage in report["stages"].values()
@@ -214,6 +221,15 @@ def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None
         p.name: p.read_bytes() for p in (root / "inputs").iterdir() if p.is_file()
     }
     project = json.loads(snapshots["project.json"].decode("utf-8-sig"))
+    if project["schema_version"].replace("workbench-project", "project-acceptance") != report["schema_version"]:
+        raise ValueError("Project snapshot version disagrees with report")
+    if report["schema_version"] == "project-acceptance-0.4":
+        gate = prepare_arxml_gate(snapshots)
+        stage = report["stages"].get("arxml")
+        if stage != {"status": gate["status"], "path": "arxml.json"}:
+            raise ValueError("ARXML stage disagrees with snapshot")
+        if json.loads((root / "arxml.json").read_text(encoding="utf-8")) != gate:
+            raise ValueError("ARXML report disagrees with snapshot")
     expected = prepare_declared_project(project, snapshots)
 
     # JSON canonical bytes distinguish true from 1 and preserve full definitions.

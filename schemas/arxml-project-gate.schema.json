@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/arxml-project-gate.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "status",
+    "coverage",
+    "findings",
+    "import"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "arxml-project-gate"
+    },
+    "schema_version": {
+      "const": "arxml-project-gate-0.1"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "coverage": {
+      "enum": [
+        "supported-subset",
+        "partial"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "locator",
+          "message",
+          "severity"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "severity": {
+            "const": "ERROR"
+          }
+        }
+      }
+    },
+    "import": {
+      "$ref": "https://automotive-workbench.local/schemas/arxml-import.schema.json"
+    }
+  }
+}

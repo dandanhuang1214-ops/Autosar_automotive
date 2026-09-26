@@ -12,6 +12,7 @@ from typing import Any
 from automotive_workbench.adapters.canonical_contract import validate_contract_mapping
 from automotive_workbench.adapters.dbc import validate_dbc_intent
 from automotive_workbench.adapters.generation_gate import load_generation
+from automotive_workbench.project_arxml import prepare_arxml_gate
 from automotive_workbench.can_io import BusConfig, sha256_file
 from automotive_workbench.project_declared import (
     prepare_declared_project,
@@ -33,10 +34,12 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
     if not isinstance(project, dict):
         raise ValueError("Project must be an object")
     version = project.get("schema_version")
+    if not isinstance(version, str):
+        raise ValueError("Project schema_version must be a string")
     keys = {"schema_version", "name", "inputs", "requirements"}
     if version == "workbench-project-0.2":
         keys.add("generation")
-    if version == "workbench-project-0.3":
+    if version in {"workbench-project-0.3", "workbench-project-0.4"}:
         keys.add("comparison_key")
         if "generation" in project:
             keys.add("generation")
@@ -47,6 +50,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
             "workbench-project-0.1",
             "workbench-project-0.2",
             "workbench-project-0.3",
+            "workbench-project-0.4",
         }
         or set(project) != keys
     ):
@@ -55,8 +59,10 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         raise ValueError("Project name must be non-empty")
     inputs = project["inputs"]
     input_keys = {"dbc", "contract", "intent"} | (
-        {"vectors"} if version == "workbench-project-0.3" else set()
+        {"vectors"} if version in {"workbench-project-0.3", "workbench-project-0.4"} else set()
     )
+    if version == "workbench-project-0.4":
+        input_keys |= {"arxml", "provenance"}
     if not isinstance(inputs, dict) or set(inputs) != input_keys:
         raise ValueError("Project requires dbc, contract and intent inputs")
     snapshots = {"project.json": raw}
@@ -67,7 +73,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         if source.is_symlink() or not source.is_file():
             raise ValueError(f"Project input must be a regular file: {key}")
         content = source.read_bytes()
-        if key not in {"dbc", "vectors"}:
+        if key not in {"dbc", "vectors", "arxml", "provenance"}:
             payload = json.loads(content.decode("utf-8-sig"))
             if not isinstance(payload, dict) or not isinstance(
                 payload.get("signals"), list
@@ -75,7 +81,9 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
                 raise ValueError(
                     f"Project {key} requires a JSON object with a signals list"
                 )
-        snapshots[key + (".dbc" if key == "dbc" else ".json")] = content
+        snapshots[key + ({"dbc": ".dbc", "arxml": ".arxml"}.get(key, ".json"))] = content
+    if version == "workbench-project-0.4":
+        prepare_arxml_gate(snapshots)
     if "generation" in project:
         generated_sources, _ = load_generation(
             project["generation"], path.parent, snapshots["contract.json"]
@@ -104,7 +112,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         seen.add(item["id"])
         if item["stage"] not in STAGES | (
             {"generation"} if "generation" in project else set()
-        ):
+        ) | ({"arxml"} if version == "workbench-project-0.4" else set()):
             raise ValueError("Unknown requirement stage")
         if not item["pointer"].startswith("/") or re.search(
             r"~(?![01])", item["pointer"]
@@ -115,7 +123,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
             isinstance(expected, float) and not math.isfinite(expected)
         ):
             raise ValueError("Requirement expected value must be a finite JSON scalar")
-    if version == "workbench-project-0.3":
+    if version in {"workbench-project-0.3", "workbench-project-0.4"}:
         prepare_declared_project(project, snapshots)
     return project, snapshots
 
@@ -195,7 +203,7 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         config.interface not in {"virtual", "socketcan"}
         or config.fd
         or (
-            project["schema_version"] == "workbench-project-0.3"
+            project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4"}
             and (
                 config.receive_own_messages
                 or not isinstance(config.channel, str)
@@ -247,6 +255,9 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         ]
         reports = {"generation": reports["generation"], **reports}
         paths["generation"] = "generation.json"
+    if project["schema_version"] == "workbench-project-0.4":
+        reports["arxml"] = prepare_arxml_gate(snapshots)
+        paths["arxml"] = "arxml.json"
     for name, stage_report in reports.items():
         _write_json(bundle / paths[name], stage_report)
     stages = {
@@ -254,7 +265,7 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         for name, report in reports.items()
     }
     if all(report["status"] == "passed" for report in reports.values()):
-        if project["schema_version"] == "workbench-project-0.3":
+        if project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4"}:
             reports["communication"] = run_bound_communication(
                 dbc,
                 intent,
@@ -343,8 +354,8 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         "requirements": requirements,
         "source_artifacts": sources,
     }
-    if project["schema_version"] == "workbench-project-0.3":
-        result["schema_version"] = "project-acceptance-0.3"
+    if project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4"}:
+        result["schema_version"] = project["schema_version"].replace("workbench-project", "project-acceptance")
         result["comparison_basis"] = prepare_declared_project(project, snapshots)
         # Source paths are relative to portable output base, including runtime dependencies.
         result["source_artifacts"] = [

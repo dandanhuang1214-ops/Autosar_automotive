@@ -13,6 +13,8 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run ARXML project scenarios": "runtime-evidence",
+    "Upload ARXML project evidence": "runtime-evidence",
     "Run ARXML bridge scenarios": "runtime-evidence",
     "Upload ARXML bridge evidence": "runtime-evidence",
     "Run communication graph scenarios": "runtime-evidence",

@@ -15,8 +15,9 @@ SUPPORTED_REPORT_VERSIONS = {
     "project-acceptance-0.1",
     "project-acceptance-0.2",
     "project-acceptance-0.3",
+    "project-acceptance-0.4",
 }
-STAGE_ORDER = ("generation", "canonical", "mapping", "communication")
+STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication")
 
 
 def _sha256(path: Path) -> str:
@@ -217,6 +218,16 @@ def run_project_review(
             stage_report = stage_reports.get(stage_name)
             if stage_report is None:
                 continue
+            if stage_name == "arxml":
+                checks.append(_assertion_check(
+                    "ARXML-COVERAGE", "ARXML coverage is the recorded supported subset.",
+                    artifact_id, "/coverage", stage_report["coverage"],
+                ))
+                for index, boundary in enumerate(stage_report["import"]["boundaries"]):
+                    checks.append(_assertion_check(
+                        f"ARXML-BOUNDARY-{index}", boundary, artifact_id,
+                        f"/import/boundaries/{index}", boundary,
+                    ))
             findings = stage_report.get("findings", [])
             if not isinstance(findings, list):
                 continue

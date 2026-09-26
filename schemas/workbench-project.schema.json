@@ -14,7 +14,8 @@
       "enum": [
         "workbench-project-0.1",
         "workbench-project-0.2",
-        "workbench-project-0.3"
+        "workbench-project-0.3",
+        "workbench-project-0.4"
       ]
     },
     "name": {
@@ -43,6 +44,14 @@
           "pattern": "\\S"
         },
         "vectors": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "arxml": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "provenance": {
           "type": "string",
           "pattern": "\\S"
         }
@@ -75,7 +84,8 @@
               "canonical",
               "mapping",
               "communication",
-              "generation"
+              "generation",
+              "arxml"
             ]
           },
           "pointer": {
@@ -166,7 +176,10 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "workbench-project-0.3"
+            "enum": [
+              "workbench-project-0.3",
+              "workbench-project-0.4"
+            ]
           }
         }
       },
@@ -254,8 +267,59 @@
                   "enum": [
                     "canonical",
                     "mapping",
-                    "communication"
+                    "communication",
+                    "arxml"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "workbench-project-0.4"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "inputs": {
+            "required": [
+              "arxml",
+              "provenance"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "inputs": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "arxml"
+                  ]
+                },
+                {
+                  "required": [
+                    "provenance"
+                  ]
+                }
+              ]
+            }
+          },
+          "requirements": {
+            "items": {
+              "properties": {
+                "stage": {
+                  "not": {
+                    "const": "arxml"
+                  }
                 }
               }
             }
