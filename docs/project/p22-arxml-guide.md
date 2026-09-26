@@ -1,6 +1,6 @@
 # P22 公开 ARXML 离线桥接
 
-本轮交付真实 Generate-Arxml 导出的受限结构语义导入、引用检查、比较和快照复验。P22 主阶段仍为 implementing：项目工作流门控与完整阶段冻结尚待完成；这里的离线通过不代表商业工具导入成功。
+本轮交付真实 Generate-Arxml 导出的受限结构语义导入、引用检查、比较和快照复验。实现 `6166b80` 已通过 [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 与双平台场景/上传验收。P22 主阶段仍为 implementing：项目工作流门控与完整阶段冻结尚待完成；这里的离线通过不代表商业工具导入成功。
 
 ## 使用
 

@@ -54,7 +54,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
-3. 当前 P22 implementing：真实导出审计、受限 XML 导入/比较/快照复验及三组 golden 已实现，本轮远端验收待执行。下一步按 [ARXML 桥接计划](p22-arxml-bridge-plan.md)接入版本化项目、静态门控及审查迁移，再冻结完整公开路径。商业工具往返仍须实际许可与执行证据。
+3. 当前 P22 implementing：真实导出审计、受限 XML 导入/比较/快照复验及三组 golden 已实现，本轮实现 `6166b80` / run `36235450078` 七 job 全绿，离线路径 remote-accepted。下一步按 [ARXML 桥接计划](p22-arxml-bridge-plan.md)接入版本化项目、静态门控及审查迁移，再冻结完整公开路径。商业工具往返仍须实际许可与执行证据。
 4. P20 结果比较与 P21 配置依赖影响分别保留；P22 只映射源 ARXML 真正提供的语义，不从 SWC/interface 名称补造 COM/PduR/CanIf ECUC。
 
 ## 持续升级的完成规则

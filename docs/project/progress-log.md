@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-26）
 
-当前阶段：`P22 — ARXML 与工具桥接（implementing）`。已完成固定生产者真实 XML 审计、受限结构语义导入/比较、来源快照复验和三组 golden；本轮实现远端验收待执行，见文末记录与 [P22 指南](p22-arxml-guide.md)。下一步为版本化项目接入、静态门控与完整公开路径验收；商业工具往返另行验证。P21 实现 `79d1f3b` / run `36022099415` 七 job remote-accepted 保持，平台实现与个人学习掌握分别验收。
+当前阶段：`P22 — ARXML 与工具桥接（implementing）`。已完成固定生产者真实 XML 审计、受限结构语义导入/比较、来源快照复验和三组 golden；本轮实现 `6166b80` / [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 全绿，离线路径 remote-accepted，见文末记录与 [P22 指南](p22-arxml-guide.md)。下一步为版本化项目接入、静态门控与完整公开路径验收；商业工具往返另行验证。P21 实现 `79d1f3b` / run `36022099415` 七 job remote-accepted 保持，平台实现与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1148,3 +1148,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 新增 11 组测试覆盖真实 XML/闭合报告、精确变化、UUID/重排、引用/身份失败、未知语义、非法 XML/版本/资源边界、篡改/畸形报告、来源 hash、输出保护与 CLI 无副作用。最终全量 256 项中 254 passed、2 environment skips，摘要 `output/p22-validation/tests-final/ci-test-summary.json`；40 schema、58 schema-bound examples、25 syntax-only examples、Ruff、25 文件 mypy、CI topology、pip check、compileall 和 whitespace 通过。
 - Windows/Ubuntu runtime-evidence 新增独立 ARXML 场景及 artifact 上传，保留七 job；CI 消费冻结公开导出，真实生产者运行独立记录。指南、首页、路线、总览与下一任务同步。
 - 状态：本轮离线路径 local-accepted，实现尚未提交/推送，远端待执行。P22 主阶段 implementing；下一任务为版本化项目输入快照、静态门控和审查/比较接入，再完成完整公开路径冻结。没有映射缺失的 COM/IPdu/PduR/CanIf，没有声称个人学习掌握或商业工具往返通过。默认 Vector 路径未发现匹配，只作为有限安装探测；商业许可/实际安装与真实导入仍未验证。
+
+
+## P22：离线路径远端验收（2026-09-26）
+
+- 实现提交 `6166b8043c7f55238f9fbcd3999266829c8ef7fe`；[run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) completed/success，已核对 head SHA 与七个 job。
+- 七 job 均 success：core-contracts Windows `108386269592` / Ubuntu `108386269670`；runtime-evidence Windows `108386554672` / Ubuntu `108386554710`；controlled-rejections Windows `108386554712` / Ubuntu `108386554725`；Python 3.14 runtime-currency `108386269508`。
+- 两平台 `Run ARXML bridge scenarios` 和 `Upload ARXML bridge evidence` 均 completed/success，对应 `arxml-bridge-Windows` / `arxml-bridge-Linux`。正常、悬空引用、周期变化、拒绝比较及移除输入后的迁移复验获得双平台执行证据；既有 P20/P21 回归保持通过。实际 job/step 明细另存 `output/p22-validation/remote-ci.json`。
+- 状态：本轮离线导入/比较/复验 remote-accepted；P22 主阶段仍 implementing，未标记整阶段完成。下一项仍为版本化项目快照/静态门控和审查接入；商业工具往返仍未验证。平台执行证据不替代个人学习验收。
+- 这条记录及首页/路线为后续纯文档状态回填，使用 `[skip ci]` 提交推送，不把文档提交当新实现验收。上条 local-accepted/尚未推送是实现提交前记录，本条由实际远端结论更新。
