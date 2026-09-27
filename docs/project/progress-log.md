@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-27）
 
-当前阶段：`P23 — 独立 ECU 执行纳入项目（implementing）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。P23 固定构建、寻址绑定及独立 ECU 执行底座已实现，真实 CF01/无响应/错误 DID/ID/锁冲突和五份迁移报告通过；执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 全绿、remote-accepted。下一任务为统一项目快照/验收/审查接入，见 [P23 验收表](p23-acceptance.md)。平台实现证据与个人学习掌握分别验收。
+当前阶段：`P23 — 独立 ECU 执行纳入项目（implementing）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。P23 固定构建、寻址绑定及独立 ECU 执行底座已实现，真实 CF01/无响应/错误 DID/ID/锁冲突和五份迁移报告通过；执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 全绿、remote-accepted。项目 0.5 已完成统一快照/静态门控/诊断验收/审查比较，本机八案例与六份报告迁移复验通过；本轮七 job 待执行，通过后推进 P24 工程问题审查，见 [P23 验收表](p23-acceptance.md)。平台实现证据与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1202,3 +1202,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 两平台 `Run external ECU offline scenarios` 与 `Upload external ECU offline evidence` 均 completed/success，对应 `external-ecu-Windows` / `external-ecu-Linux`。这证明离线 blocked/拒绝/迁移及回归通过；真实 OpenBSW 构建与 SocketCAN 五场景仍独立记录为本机现场证据。
 - 本轮执行底座 remote-accepted；P23 主阶段仍 implementing，未冻结整阶段。下一任务为统一版本化项目快照、静态门控、诊断验收 locator 和审查引用，并完成剩余通道与整阶段门。个人学习验收不由这些自动化结论代替。
 - 本条及首页/路线/验收表为后续纯文档状态回填，使用 `[skip ci]` 提交推送；不把文档提交当作新的实现验证。首轮失败及修复过程保留，上述固定实现与成功 run 才是本轮远端验收依据。
+
+## P23：独立 ECU 纳入统一项目（2026-09-27）
+
+- 新增 project/report 0.5，在 ARXML 项目输入基础上声明 `inputs.execution`；保存原始 execution/build/profile、关键构建来源和实际 runner 输入快照。启动前强制 SocketCAN/channel 与构建一致，未声明 ID 漂移和通道漂移在输出前拒绝；旧项目 0.1–0.4 和独立执行契约保持兼容。
+- 静态 canonical/mapping/ARXML/可选 generation 门失败时，两类运行阶段均 skipped；通过后分别执行声明式通信与独立 `external_ecu`。后者保存可声明的诊断 locator、执行报告 hash、源码 commit、失败原因和明确范围；两阶段不推断 DBC/SWC 到 OpenBSW 内部映射。
+- 审查从完整快照/库存重算静态门、外部执行摘要、通信绑定和验收结果；改变阶段结果并重算其来源 hash 仍拒绝，布尔/整数混淆也拒绝。比较沿用 0.2，绑定构建内容、诊断 profile 和执行条件；不同 fault/launch_ecu/验收定义为 not-comparable。manifest 与引用保留可迁移路径，不在迁移审查中执行 ECU。
+- 本机实际 OpenBSW 项目八案例完成：正常 passed、静态失败 skipped 两阶段、条件变更 failed、无响应/错误 DID/ID failed、未声明 ID/通道漂移拒绝。六份报告移除生成输入并移动目录后，manifest、原引用、重审和比较复验全部通过；物理 ECU 越界声明拒答。证据 `output/p23-project-validation/live/`，hash 见 [P23 验收表](p23-acceptance.md)。上一轮真实锁冲突、启动/期限/信号/清理证据保持。
+- 双平台离线脚本五案例及三份迁移报告通过，明确标记 offline-blocked-only；已接入 runtime-evidence 的独立场景/上传，七 job 拓扑不变。固定构建仍限 vcan0；通道漂移提前拒绝，不以不同锁名单测声称另一通道 ECU 已执行。外部阶段持锁，不声称项目整体事务持锁。
+- 最终全量 283 tests：281 passed、2 environment skips；九组专项覆盖门控、schema/loader parity、来源篡改、布尔类型、原输入变化、可选 generation、比较与迁移。45 schema、61 schema-bound examples、25 syntax-only examples、Ruff、32 文件 mypy、Windows-target 新入口类型检查、topology、pip check、compileall 与 whitespace 通过。摘要 `output/p23-project-validation/tests-final/ci-test-summary.json`。
+- 实施中修复迁移时静态报告残留绝对路径、场景脚本引用复验 API 参数和脚本模块别名导致的 mypy 重复模块；最终专项和现场迁移复算通过。未修改原 OpenBSW 工作树，未发送外部贡献。
+- 状态：P23 整条固定 POSIX/vcan0 路径 local-accepted，本轮实现尚未提交/推送，远端待执行；不继承上一执行底座实现的 CI 结论。通过本轮七 job 后冻结 P23，推进 [P24 工程问题审查](p24-engineering-review-plan.md)。首页、路线、总览、指南和学习练习同步；平台证据与个人学习分别验收。

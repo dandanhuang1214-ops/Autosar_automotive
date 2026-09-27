@@ -15,7 +15,8 @@
         "workbench-project-0.1",
         "workbench-project-0.2",
         "workbench-project-0.3",
-        "workbench-project-0.4"
+        "workbench-project-0.4",
+        "workbench-project-0.5"
       ]
     },
     "name": {
@@ -54,6 +55,10 @@
         "provenance": {
           "type": "string",
           "pattern": "\\S"
+        },
+        "execution": {
+          "type": "string",
+          "pattern": "\\S"
         }
       }
     },
@@ -85,7 +90,8 @@
               "mapping",
               "communication",
               "generation",
-              "arxml"
+              "arxml",
+              "external_ecu"
             ]
           },
           "pointer": {
@@ -178,7 +184,8 @@
           "schema_version": {
             "enum": [
               "workbench-project-0.3",
-              "workbench-project-0.4"
+              "workbench-project-0.4",
+              "workbench-project-0.5"
             ]
           }
         }
@@ -268,7 +275,8 @@
                     "canonical",
                     "mapping",
                     "communication",
-                    "arxml"
+                    "arxml",
+                    "external_ecu"
                   ]
                 }
               }
@@ -281,7 +289,10 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "workbench-project-0.4"
+            "enum": [
+              "workbench-project-0.4",
+              "workbench-project-0.5"
+            ]
           }
         }
       },
@@ -319,6 +330,46 @@
                 "stage": {
                   "not": {
                     "const": "arxml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "workbench-project-0.5"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "inputs": {
+            "required": [
+              "execution"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "inputs": {
+            "not": {
+              "required": [
+                "execution"
+              ]
+            }
+          },
+          "requirements": {
+            "items": {
+              "properties": {
+                "stage": {
+                  "not": {
+                    "const": "external_ecu"
                   }
                 }
               }

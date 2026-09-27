@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/external-ecu-project-stage.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "status",
+    "reason",
+    "execution",
+    "execution_sha256",
+    "source_commit",
+    "launch_ecu",
+    "diagnostic",
+    "boundary"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "external-ecu-project-stage"
+    },
+    "schema_version": {
+      "const": "external-ecu-project-stage-0.1"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "execution": {
+      "const": "external-ecu/external-ecu-report.json"
+    },
+    "execution_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "launch_ecu": {
+      "type": "boolean"
+    },
+    "diagnostic": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reason",
+            "request_payload_hex",
+            "response_payload_hex",
+            "expected_data_hex",
+            "actual_data_hex",
+            "status",
+            "negative_response_code"
+          ],
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "request_payload_hex": {
+              "type": "string"
+            },
+            "response_payload_hex": {
+              "type": "string"
+            },
+            "expected_data_hex": {
+              "type": "string"
+            },
+            "actual_data_hex": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked"
+              ]
+            },
+            "negative_response_code": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      ]
+    },
+    "boundary": {
+      "type": "string"
+    }
+  }
+}

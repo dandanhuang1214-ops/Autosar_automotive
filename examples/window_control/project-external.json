@@ -1,0 +1,79 @@
+{
+  "schema_version": "workbench-project-0.5",
+  "name": "Window configuration and independent OpenBSW diagnostics",
+  "comparison_key": "window-openbsw-v1",
+  "inputs": {
+    "dbc": "window_control.dbc",
+    "contract": "canonical_contract.json",
+    "intent": "bsw_intent.json",
+    "vectors": "communication_vectors.json",
+    "arxml": "../generate_arxml/xml/model.arxml",
+    "provenance": "../generate_arxml/xml/provenance.json",
+    "execution": "../openbsw/execution.json"
+  },
+  "requirements": [
+    {
+      "id": "ARXML",
+      "text": "Supported ARXML references pass before communication",
+      "stage": "arxml",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "CANONICAL",
+      "text": "canonical checks pass",
+      "stage": "canonical",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "MAPPING",
+      "text": "mapping checks pass",
+      "stage": "mapping",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "COMMUNICATION",
+      "text": "communication checks pass",
+      "stage": "communication",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "window-status",
+      "text": "WindowStatus declared tx passes",
+      "stage": "communication",
+      "pointer": "/vectors/window-status/status",
+      "expected": "passed"
+    },
+    {
+      "id": "window-request",
+      "text": "WindowCommand declared rx passes",
+      "stage": "communication",
+      "pointer": "/vectors/window-request/status",
+      "expected": "passed"
+    },
+    {
+      "id": "BOUND",
+      "text": "All declared mapped paths bind",
+      "stage": "communication",
+      "pointer": "/bound_count",
+      "expected": 2
+    },
+    {
+      "id": "ECU-STATUS",
+      "text": "Independent external ECU diagnostic passes",
+      "stage": "external_ecu",
+      "pointer": "/status",
+      "expected": "passed"
+    },
+    {
+      "id": "CF01-DATA",
+      "text": "CF01 returns the expected 24 bytes",
+      "stage": "external_ecu",
+      "pointer": "/diagnostic/actual_data_hex",
+      "expected": "010200022202160F0100006D2F0000010600008FE0000001"
+    }
+  ]
+}

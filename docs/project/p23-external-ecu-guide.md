@@ -1,6 +1,6 @@
 # P23 独立 ECU 执行底座
 
-当前 P23 implementing。本轮交付固定构建、独立进程执行与现场故障证据；实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 已通过。统一 `run-project` 快照/验收/审查接入仍待实现。P22 公开路径冻结保持，商业工具往返仍 blocked。
+当前 P23 implementing。本轮交付固定构建、独立进程执行与现场故障证据；实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 已通过。统一 `run-project` 快照/验收/审查现已由项目 0.5 接入，详见 [项目指南](p23-project-guide.md)；本轮项目实现仍需独立远端验收。P22 公开路径冻结保持，商业工具往返仍 blocked。
 
 ## 从干净构建到诊断报告
 
@@ -44,6 +44,6 @@ PYTHONPATH=src .venv/bin/python scripts/run_external_ecu_scenarios.py \
 
 12 组专项回归覆盖来源/声明非法与无副作用、schema、快照篡改、缺失二进制、锁隔离、进程早退、客户端启动失败、客户端总期限、实际 SIGTERM、中断和 KILL 升级等。测试中的进程替身、mock probe 与既有 virtual ISO-TP peer 均不计作 OpenBSW 现场证据。
 
-## 后续阶段门
+## 项目集成与剩余验收
 
-下一步将已验证执行底座接入版本化项目：定义执行输入与验收 locator，绑定项目快照、运行报告与审查引用，保留静态门控及旧项目兼容；随后完成整阶段交付。当前固定构建只支持 vcan0，不把另一个锁名的互斥测试当成不同通道的 ECU 运行。项目集成、其他通道构建及整阶段远端冻结均不能由本轮运行底座验收替代。
+项目 0.5 已接入版本化快照、静态门控、诊断结果、验收 locator 和审查/比较；正常及失败项目在本机完整运行并完成迁移复验。本轮远端七 job 尚待执行，通过后冻结 P23 的固定 POSIX/vcan0 范围，推进 P24。其他通道或其他 ECU 构建不在本次已验证范围；错误客户端通道已由项目预检拒绝，不能仅改通道名声称另一配置可运行。见 [验收记录](p23-acceptance.md)。

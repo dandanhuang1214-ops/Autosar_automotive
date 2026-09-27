@@ -47,8 +47,11 @@ def prepare_declared_project(
         "vectors": sorted(declaration["vectors"], key=lambda v: v["id"]),
     }
 
-    if project["schema_version"] == "workbench-project-0.4":
+    if project["schema_version"] in {"workbench-project-0.4", "workbench-project-0.5"}:
         result["arxml_semantics"] = semantic_digest(prepare_arxml_gate(snapshots))
+    if project["schema_version"] == "workbench-project-0.5":
+        from automotive_workbench.project_external import execution_basis
+        result["external_execution"] = execution_basis(snapshots)
     return result
 
 
@@ -173,7 +176,7 @@ def run_bound_communication(
 
 def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None:
     """Validate 0.3/0.4 snapshot provenance after relocation, without writing anything."""
-    if report["schema_version"] not in {"project-acceptance-0.3", "project-acceptance-0.4"}:
+    if report["schema_version"] not in {"project-acceptance-0.3", "project-acceptance-0.4", "project-acceptance-0.5"}:
         return
     root = report_path.parent.resolve()
     sources = report.get("source_artifacts", [])
@@ -203,7 +206,7 @@ def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None
             "vectors.json",
         ]
     }
-    if report["schema_version"] == "project-acceptance-0.4":
+    if report["schema_version"] in {"project-acceptance-0.4", "project-acceptance-0.5"}:
         required.update({"bundle/inputs/arxml.arxml", "bundle/inputs/provenance.json"})
     required.update(
         "bundle/" + stage["path"]
@@ -217,13 +220,17 @@ def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None
         and "bundle/communication/runtime/declared-runtime-report.json" not in seen
     ):
         raise ValueError("Runtime source is missing from inventory")
+    if report["schema_version"] == "project-acceptance-0.5":
+        actual_sources = {"bundle/" + p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file() and p not in {root / "index.html", report_path.resolve()}}
+        if actual_sources != seen or any(p.is_symlink() for p in root.rglob("*")):
+            raise ValueError("External project requires complete portable inventory")
     snapshots = {
         p.name: p.read_bytes() for p in (root / "inputs").iterdir() if p.is_file()
     }
     project = json.loads(snapshots["project.json"].decode("utf-8-sig"))
     if project["schema_version"].replace("workbench-project", "project-acceptance") != report["schema_version"]:
         raise ValueError("Project snapshot version disagrees with report")
-    if report["schema_version"] == "project-acceptance-0.4":
+    if report["schema_version"] in {"project-acceptance-0.4", "project-acceptance-0.5"}:
         gate = prepare_arxml_gate(snapshots)
         stage = report["stages"].get("arxml")
         if stage != {"status": gate["status"], "path": "arxml.json"}:
@@ -244,3 +251,7 @@ def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None
     ]
     if canonical(definitions) != canonical(project["requirements"]):
         raise ValueError("Requirement definitions disagree with project snapshot")
+
+    if report["schema_version"] == "project-acceptance-0.5":
+        from automotive_workbench.project_external import validate_project_external
+        validate_project_external(root, report, snapshots)

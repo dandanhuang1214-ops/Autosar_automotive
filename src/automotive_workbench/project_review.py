@@ -16,8 +16,9 @@ SUPPORTED_REPORT_VERSIONS = {
     "project-acceptance-0.2",
     "project-acceptance-0.3",
     "project-acceptance-0.4",
+    "project-acceptance-0.5",
 }
-STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication")
+STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication", "external_ecu")
 
 
 def _sha256(path: Path) -> str:
@@ -218,6 +219,18 @@ def run_project_review(
             stage_report = stage_reports.get(stage_name)
             if stage_report is None:
                 continue
+            if stage_name == "external_ecu":
+                for field in ("reason", "source_commit", "boundary", "launch_ecu"):
+                    checks.append(_assertion_check(
+                        f"EXTERNAL-{field.upper()}", f"External ECU {field}: {stage_report[field]}",
+                        artifact_id, "/" + field, stage_report[field],
+                    ))
+                if stage_report["diagnostic"]:
+                    for field, value in stage_report["diagnostic"].items():
+                        checks.append(_assertion_check(
+                            f"EXTERNAL-DIAGNOSTIC-{field.upper()}", f"Diagnostic {field}: {value}",
+                            artifact_id, "/diagnostic/" + field, value,
+                        ))
             if stage_name == "arxml":
                 checks.append(_assertion_check(
                     "ARXML-COVERAGE", "ARXML coverage is the recorded supported subset.",

@@ -21,7 +21,8 @@
         "project-acceptance-0.1",
         "project-acceptance-0.2",
         "project-acceptance-0.3",
-        "project-acceptance-0.4"
+        "project-acceptance-0.4",
+        "project-acceptance-0.5"
       ]
     },
     "name": {
@@ -163,6 +164,30 @@
               ]
             }
           }
+        },
+        "external_ecu": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "path"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "skipped"
+              ]
+            },
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
         }
       }
     },
@@ -198,7 +223,8 @@
               "mapping",
               "communication",
               "generation",
-              "arxml"
+              "arxml",
+              "external_ecu"
             ]
           },
           "pointer": {
@@ -358,6 +384,10 @@
         "arxml_semantics": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$"
+        },
+        "external_execution": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
         }
       }
     }
@@ -369,7 +399,8 @@
           "schema_version": {
             "enum": [
               "project-acceptance-0.3",
-              "project-acceptance-0.4"
+              "project-acceptance-0.4",
+              "project-acceptance-0.5"
             ]
           }
         }
@@ -422,7 +453,10 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": "project-acceptance-0.4"
+            "enum": [
+              "project-acceptance-0.4",
+              "project-acceptance-0.5"
+            ]
           }
         }
       },
@@ -462,6 +496,58 @@
                 "stage": {
                   "not": {
                     "const": "arxml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "project-acceptance-0.5"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stages": {
+            "required": [
+              "external_ecu"
+            ]
+          },
+          "comparison_basis": {
+            "required": [
+              "external_execution"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "stages": {
+            "not": {
+              "required": [
+                "external_ecu"
+              ]
+            }
+          },
+          "comparison_basis": {
+            "not": {
+              "required": [
+                "external_execution"
+              ]
+            }
+          },
+          "requirements": {
+            "items": {
+              "properties": {
+                "stage": {
+                  "not": {
+                    "const": "external_ecu"
                   }
                 }
               }

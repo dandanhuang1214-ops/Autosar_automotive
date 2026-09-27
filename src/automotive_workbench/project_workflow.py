@@ -13,6 +13,7 @@ from automotive_workbench.adapters.canonical_contract import validate_contract_m
 from automotive_workbench.adapters.dbc import validate_dbc_intent
 from automotive_workbench.adapters.generation_gate import load_generation
 from automotive_workbench.project_arxml import prepare_arxml_gate
+from automotive_workbench.project_external import capture_execution, validate_backend, run_project_external, portable_static
 from automotive_workbench.can_io import BusConfig, sha256_file
 from automotive_workbench.project_declared import (
     prepare_declared_project,
@@ -39,7 +40,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
     keys = {"schema_version", "name", "inputs", "requirements"}
     if version == "workbench-project-0.2":
         keys.add("generation")
-    if version in {"workbench-project-0.3", "workbench-project-0.4"}:
+    if version in {"workbench-project-0.3", "workbench-project-0.4", "workbench-project-0.5"}:
         keys.add("comparison_key")
         if "generation" in project:
             keys.add("generation")
@@ -51,6 +52,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
             "workbench-project-0.2",
             "workbench-project-0.3",
             "workbench-project-0.4",
+            "workbench-project-0.5",
         }
         or set(project) != keys
     ):
@@ -59,10 +61,12 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         raise ValueError("Project name must be non-empty")
     inputs = project["inputs"]
     input_keys = {"dbc", "contract", "intent"} | (
-        {"vectors"} if version in {"workbench-project-0.3", "workbench-project-0.4"} else set()
+        {"vectors"} if version in {"workbench-project-0.3", "workbench-project-0.4", "workbench-project-0.5"} else set()
     )
-    if version == "workbench-project-0.4":
+    if version in {"workbench-project-0.4", "workbench-project-0.5"}:
         input_keys |= {"arxml", "provenance"}
+    if version == "workbench-project-0.5":
+        input_keys.add("execution")
     if not isinstance(inputs, dict) or set(inputs) != input_keys:
         raise ValueError("Project requires dbc, contract and intent inputs")
     snapshots = {"project.json": raw}
@@ -73,6 +77,9 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         if source.is_symlink() or not source.is_file():
             raise ValueError(f"Project input must be a regular file: {key}")
         content = source.read_bytes()
+        if key == "execution":
+            snapshots.update(capture_execution(source))
+            continue
         if key not in {"dbc", "vectors", "arxml", "provenance"}:
             payload = json.loads(content.decode("utf-8-sig"))
             if not isinstance(payload, dict) or not isinstance(
@@ -82,7 +89,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
                     f"Project {key} requires a JSON object with a signals list"
                 )
         snapshots[key + ({"dbc": ".dbc", "arxml": ".arxml"}.get(key, ".json"))] = content
-    if version == "workbench-project-0.4":
+    if version in {"workbench-project-0.4", "workbench-project-0.5"}:
         prepare_arxml_gate(snapshots)
     if "generation" in project:
         generated_sources, _ = load_generation(
@@ -112,7 +119,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         seen.add(item["id"])
         if item["stage"] not in STAGES | (
             {"generation"} if "generation" in project else set()
-        ) | ({"arxml"} if version == "workbench-project-0.4" else set()):
+        ) | ({"arxml"} if version in {"workbench-project-0.4", "workbench-project-0.5"} else set()) | ({"external_ecu"} if version == "workbench-project-0.5" else set()):
             raise ValueError("Unknown requirement stage")
         if not item["pointer"].startswith("/") or re.search(
             r"~(?![01])", item["pointer"]
@@ -123,7 +130,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
             isinstance(expected, float) and not math.isfinite(expected)
         ):
             raise ValueError("Requirement expected value must be a finite JSON scalar")
-    if version in {"workbench-project-0.3", "workbench-project-0.4"}:
+    if version in {"workbench-project-0.3", "workbench-project-0.4", "workbench-project-0.5"}:
         prepare_declared_project(project, snapshots)
     return project, snapshots
 
@@ -199,11 +206,13 @@ def _render_html(result: dict[str, Any]) -> str:
 
 def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str, Any]:
     project, snapshots = load_project(project_path)
+    if project["schema_version"] == "workbench-project-0.5":
+        validate_backend(snapshots, config)
     if (
         config.interface not in {"virtual", "socketcan"}
         or config.fd
         or (
-            project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4"}
+            project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4", "workbench-project-0.5"}
             and (
                 config.receive_own_messages
                 or not isinstance(config.channel, str)
@@ -255,17 +264,19 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         ]
         reports = {"generation": reports["generation"], **reports}
         paths["generation"] = "generation.json"
-    if project["schema_version"] == "workbench-project-0.4":
+    if project["schema_version"] in {"workbench-project-0.4", "workbench-project-0.5"}:
         reports["arxml"] = prepare_arxml_gate(snapshots)
         paths["arxml"] = "arxml.json"
     for name, stage_report in reports.items():
+        if project["schema_version"] == "workbench-project-0.5" and name in {"canonical", "mapping"}:
+            portable_static(stage_report)
         _write_json(bundle / paths[name], stage_report)
     stages = {
         name: {"status": report["status"], "path": paths[name]}
         for name, report in reports.items()
     }
     if all(report["status"] == "passed" for report in reports.values()):
-        if project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4"}:
+        if project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4", "workbench-project-0.5"}:
             reports["communication"] = run_bound_communication(
                 dbc,
                 intent,
@@ -286,6 +297,61 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         }
     else:
         stages["communication"] = {"status": "skipped", "path": None}
+    if project["schema_version"] == "workbench-project-0.5":
+        if all(reports[name]["status"] == "passed" for name in reports if name != "communication"):
+            reports["external_ecu"] = run_project_external(inputs, bundle)
+            paths["external_ecu"] = "external-ecu.json"
+            _write_json(bundle / paths["external_ecu"], reports["external_ecu"])
+            stages["external_ecu"] = {"status": reports["external_ecu"]["status"], "path": paths["external_ecu"]}
+        else:
+            stages["external_ecu"] = {"status": "skipped", "path": None}
+    requirements, status = evaluate_requirements(project, reports, paths, stages, bundle)
+    sources = [
+        {"source": str(path), "sha256": sha256_file(path)}
+        for path in sorted(inputs.iterdir())
+    ]
+    sources.extend(
+        {"source": str(bundle / path), "sha256": sha256_file(bundle / path)}
+        for path in paths.values()
+    )
+    result = {
+        "artifact_type": "project-acceptance",
+        "schema_version": "project-acceptance-0.2"
+        if "generation" in project
+        else "project-acceptance-0.1",
+        "name": project["name"],
+        "status": status,
+        "stages": stages,
+        "requirements": requirements,
+        "source_artifacts": sources,
+    }
+    if project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4", "workbench-project-0.5"}:
+        result["schema_version"] = project["schema_version"].replace("workbench-project", "project-acceptance")
+        result["comparison_basis"] = prepare_declared_project(project, snapshots)
+        # Source paths are relative to portable output base, including runtime dependencies.
+        result["source_artifacts"] = [
+            {"source": path.relative_to(output).as_posix(), "sha256": sha256_file(path)}
+            for path in sorted(bundle.rglob("*"))
+            if path.is_file()
+        ]
+    _write_json(bundle / "project-report.json", result)
+    (bundle / "index.html").write_text(_render_html(result), encoding="utf-8")
+    create_evidence_bundle_manifest(
+        bundle, output / "manifest.json", "workbench run-project", base=output
+    )
+    verification = verify_evidence_bundle(
+        bundle, output / "manifest.json", output / "verification", base=output
+    )
+    return {
+        "status": status if verification["status"] == "passed" else "failed",
+        "project_status": status,
+        "integrity_status": verification["status"],
+        "report": str(bundle / "index.html"),
+        "report_json": str(bundle / "project-report.json"),
+    }
+
+
+def evaluate_requirements(project: dict, reports: dict, paths: dict, stages: dict, bundle: Path) -> tuple[list, str]:
     requirements = []
     for item in project["requirements"]:
         stage = item["stage"]
@@ -335,46 +401,4 @@ def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str
         if "blocked" in statuses
         else "passed"
     )
-    sources = [
-        {"source": str(path), "sha256": sha256_file(path)}
-        for path in sorted(inputs.iterdir())
-    ]
-    sources.extend(
-        {"source": str(bundle / path), "sha256": sha256_file(bundle / path)}
-        for path in paths.values()
-    )
-    result = {
-        "artifact_type": "project-acceptance",
-        "schema_version": "project-acceptance-0.2"
-        if "generation" in project
-        else "project-acceptance-0.1",
-        "name": project["name"],
-        "status": status,
-        "stages": stages,
-        "requirements": requirements,
-        "source_artifacts": sources,
-    }
-    if project["schema_version"] in {"workbench-project-0.3", "workbench-project-0.4"}:
-        result["schema_version"] = project["schema_version"].replace("workbench-project", "project-acceptance")
-        result["comparison_basis"] = prepare_declared_project(project, snapshots)
-        # Source paths are relative to portable output base, including runtime dependencies.
-        result["source_artifacts"] = [
-            {"source": path.relative_to(output).as_posix(), "sha256": sha256_file(path)}
-            for path in sorted(bundle.rglob("*"))
-            if path.is_file()
-        ]
-    _write_json(bundle / "project-report.json", result)
-    (bundle / "index.html").write_text(_render_html(result), encoding="utf-8")
-    create_evidence_bundle_manifest(
-        bundle, output / "manifest.json", "workbench run-project", base=output
-    )
-    verification = verify_evidence_bundle(
-        bundle, output / "manifest.json", output / "verification", base=output
-    )
-    return {
-        "status": status if verification["status"] == "passed" else "failed",
-        "project_status": status,
-        "integrity_status": verification["status"],
-        "report": str(bundle / "index.html"),
-        "report_json": str(bundle / "project-report.json"),
-    }
+    return requirements, status

@@ -25,13 +25,13 @@
 
 | 领域 | 已有能力 | 本轮查证的缺口 |
 |---|---|---|
-| 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | P20 已冻结两项目统一声明流程；P21 已补齐受限对象图与配置影响，下一缺口是 ARXML 语义桥接 |
+| 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | P20 已冻结两项目统一声明流程；P21 已补齐受限对象图与配置影响，P22 公开 ARXML 桥接已验收，P23 项目 0.5 本轮待远端验收 |
 | 通信运行 | virtual/SocketCAN、双向证据、过滤与 blocked | project 0.3 已接入通用运行与路径绑定；旧项目保留兼容路径 |
 | BSW 映射 | Tx/Rx、DBC 属性、跨层引用一致性与 8 节点 trace | P21 已有四类稳定身份对象、规则覆盖与验收关联；仍不验证 vendor ECUC |
 | 外部工具 | 固定 Generate-Arxml DOCX/contract/issues 三例 | P22 已有真实 SWC ARXML 受限离线导入/比较；项目 0.4 公开路径已远端验收，ECU Extract/ECUC 未覆盖 |
-| ECU 执行 | OpenBSW 构建、CF01 客户端与历史现场证据 | 项目编排、独立 ECU 生命周期、构建配置和诊断结果尚未统一验收 |
+| ECU 执行 | 固定 OpenBSW 构建、CF01、独立进程生命周期及现场故障证据 | 项目 0.5 已统一快照/门控/诊断/审查，本轮待远端验收 |
 | 审查交付 | 确定性引用、拒答、项目比较、P19 HTML | 现有结果比较不等同于输入变更影响；检索审查不等同于通用语义诊断 |
-| 质量基线 | 七 job CI、安装后验证、证据迁移复验 | P22 当前实现七 job 已通过；后续实现仍需独立远端验收 |
+| 质量基线 | 七 job CI、安装后验证、证据迁移复验 | P23 执行底座七 job 已通过；本轮项目集成需独立远端验收 |
 
 P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已由实现提交 `88c24e2`、远端 run `35748563878` 的七 job 全绿完成冻结。P19 属于既有工作流的易用性补强，不是新的长期产品方向。
 
@@ -54,7 +54,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
-3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。当前 P23 implementing：固定干净构建、寻址绑定、独立进程及诊断底座已实现，vcan0 已恢复，正常/无响应/错误 DID/ID/锁冲突及迁移现场通过。执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job remote-accepted；下一步接入统一项目快照/验收/审查，见 [验收表](p23-acceptance.md)与[执行指南](p23-external-ecu-guide.md)。
+3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。当前 P23 implementing：固定干净构建、寻址绑定、独立进程及诊断底座已实现，vcan0 已恢复，正常/无响应/错误 DID/ID/锁冲突及迁移现场通过。执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job remote-accepted；项目 0.5 已完成快照/门控/诊断验收/审查/比较及本地现场迁移验收，本轮七 job 待执行，见 [验收表](p23-acceptance.md)与[项目指南](p23-project-guide.md)。通过后冻结固定 POSIX/vcan0 范围的 P23，推进 [P24 工程问题审查](p24-engineering-review-plan.md)。
 4. P20 结果比较与 P21 配置依赖影响分别保留；P22 只映射源 ARXML 真正提供的语义，不从 SWC/interface 名称补造 COM/PduR/CanIf ECUC。
 
 ## 持续升级的完成规则
