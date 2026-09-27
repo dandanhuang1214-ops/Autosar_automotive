@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-27）
 
-当前阶段：`P23 — 独立 ECU 执行纳入项目（implementing）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。P23 固定构建、寻址绑定及独立 ECU 执行底座已实现，真实 CF01/无响应/错误 DID/ID/锁冲突和五份迁移报告通过；本轮远端验收待执行。下一任务为统一项目快照/验收/审查接入，见 [P23 验收表](p23-acceptance.md)。平台实现证据与个人学习掌握分别验收。
+当前阶段：`P23 — 独立 ECU 执行纳入项目（implementing）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。P23 固定构建、寻址绑定及独立 ECU 执行底座已实现，真实 CF01/无响应/错误 DID/ID/锁冲突和五份迁移报告通过；执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 全绿、remote-accepted。下一任务为统一项目快照/验收/审查接入，见 [P23 验收表](p23-acceptance.md)。平台实现证据与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1193,3 +1193,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 首个实现 `2cff77a` 已推送；run `36323201947` 实际结论 failure。Ubuntu core-contracts 和 Python 3.14 runtime-currency success；Windows core tests 通过，但 scoped mypy 对 Linux 专有 `fcntl.flock/LOCK_*`、`os.killpg`、`signal.SIGKILL` 报八项 attr-defined，Windows core job failure，runtime-evidence/controlled-rejections 因依赖未通过而 skipped。
 - 在锁与进程组清理入口增加显式 Windows 拒绝分支，使平台边界同时对运行时与类型检查可见；不关闭类型检查，也不放宽七 job 验收。修复后进行 Linux/Windows-target mypy 与 P23 专项复验，后续实现须独立远端验收。该失败 run 不计作 acceptance。
+
+
+## P23：执行底座远端验收（2026-09-27）
+
+- 最终实现提交 `320defd6b23d22800520b7434bd0ae739164e6ce`；[run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) completed/success，已核对完整 head SHA。原始明细保存于 `output/p23-validation/remote-ci.json`。
+- 七 job 全部 success：core-contracts Windows `108631515656` / Ubuntu `108631515699`；runtime-evidence Windows `108631852777` / Ubuntu `108631852718`；controlled-rejections Windows `108631852765` / Ubuntu `108631852783`；Python 3.14 runtime-currency `108631515576`。
+- 两平台 `Run external ECU offline scenarios` 与 `Upload external ECU offline evidence` 均 completed/success，对应 `external-ecu-Windows` / `external-ecu-Linux`。这证明离线 blocked/拒绝/迁移及回归通过；真实 OpenBSW 构建与 SocketCAN 五场景仍独立记录为本机现场证据。
+- 本轮执行底座 remote-accepted；P23 主阶段仍 implementing，未冻结整阶段。下一任务为统一版本化项目快照、静态门控、诊断验收 locator 和审查引用，并完成剩余通道与整阶段门。个人学习验收不由这些自动化结论代替。
+- 本条及首页/路线/验收表为后续纯文档状态回填，使用 `[skip ci]` 提交推送；不把文档提交当作新的实现验证。首轮失败及修复过程保留，上述固定实现与成功 run 才是本轮远端验收依据。

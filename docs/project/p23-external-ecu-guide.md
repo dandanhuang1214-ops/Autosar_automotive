@@ -1,6 +1,6 @@
 # P23 独立 ECU 执行底座
 
-当前 P23 implementing。本轮交付固定构建、独立进程执行与现场故障证据；统一 `run-project` 快照/验收/审查接入仍待实现。P22 公开路径冻结保持，商业工具往返仍 blocked。
+当前 P23 implementing。本轮交付固定构建、独立进程执行与现场故障证据；实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 已通过。统一 `run-project` 快照/验收/审查接入仍待实现。P22 公开路径冻结保持，商业工具往返仍 blocked。
 
 ## 从干净构建到诊断报告
 

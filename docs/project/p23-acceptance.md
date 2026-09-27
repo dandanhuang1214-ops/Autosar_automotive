@@ -1,6 +1,6 @@
 # P23 验收记录
 
-更新：2026-09-27。当前主阶段 implementing；本轮独立执行底座本地通过，远端待执行。项目统一接入未完成，不标记整阶段完成。
+更新：2026-09-27。当前主阶段 implementing；本轮独立执行底座 remote-accepted：实现 `320defd6b23d22800520b7434bd0ae739164e6ce` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 全部 success。项目统一接入未完成，不标记整阶段完成。
 
 | 阶段门 | 实际证据 | 状态 |
 |---|---|---|
@@ -10,7 +10,7 @@
 | 环境 blocked 与隔离 | 缺失构建离线 blocked；现场同通道锁冲突无进程启动；单测不同锁名 | 本地通过；不同通道 ECU 尚未验收 |
 | 超时/异常/信号清理 | 客户端期限、早退/部分启动、实际 SIGTERM、强制 KILL 回归 | 本地通过（编排替身） |
 | 快照与迁移 | 移除变体输入、移动目录后 5/5 现场报告复验；离线合成 1/1 | 本地通过 |
-| 七 job CI | 已接入两平台离线场景/上传，Linux 生命周期测试 | 待远端 |
+| 七 job CI | 两平台离线场景/上传 success，Linux 生命周期测试与 Windows blocked 回归通过 | remote-accepted |
 | 统一项目快照/验收/审查 | 待接入版本化项目；不替换既有 0.1–0.4 | 待实现 |
 
 本地证据：`output/p23-validation/build/`、`live-scenarios/`、`offline/`、`tests-final/`。构建与现场日志为本机证据，不提交 Git；CI 上传离线证据，明确不等同现场运行。
