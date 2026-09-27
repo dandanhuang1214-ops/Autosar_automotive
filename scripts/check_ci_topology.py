@@ -13,6 +13,8 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run external ECU offline scenarios": "runtime-evidence",
+    "Upload external ECU offline evidence": "runtime-evidence",
     "Run ARXML project scenarios": "runtime-evidence",
     "Upload ARXML project evidence": "runtime-evidence",
     "Run ARXML bridge scenarios": "runtime-evidence",

@@ -26,3 +26,5 @@ PYTHONPATH=src .venv/bin/python -m automotive_workbench.cli read-uds-did \
 自动回归通过独立的 virtual ISO-TP peer 覆盖多帧成功、数据不符、NRC、短响应、错误 DID、无响应和错误响应 CAN ID。该测试 peer 只存在于测试中；`--interface virtual` 仍要求调用方另行提供同进程的 virtual ECU。
 
 2026-09-12 留存的 OpenBSW 实测结果位于 `output/upgrade-20260912/openbsw-live/`，观察到 `22CF01`、`62CF01` 和 SF/FF/FC/CF 完整链路。该目录是本机证据，不随 Git 分发。
+
+P23 新增构建绑定与进程管理入口：见 [独立 ECU 执行指南](../../docs/project/p23-external-ecu-guide.md)。完成固定干净构建后可运行本目录 `execution.json`，自动取得通道锁、启动独立 OpenBSW 与客户端并记录清理；原有手动 `read-uds-did` 入口保持不变。

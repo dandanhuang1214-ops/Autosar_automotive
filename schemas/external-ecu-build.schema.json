@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/external-ecu-build.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_commit",
+    "preset",
+    "configuration",
+    "bindings",
+    "commands",
+    "tools",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "external-ecu-build-0.1"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "preset": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "configuration": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channel",
+        "request_id",
+        "response_id",
+        "did",
+        "expected_data_hex"
+      ],
+      "properties": {
+        "channel": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,15}$"
+        },
+        "request_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2047
+        },
+        "response_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2047
+        },
+        "did": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "expected_data_hex": {
+          "type": "string",
+          "pattern": "^(?:[0-9A-F]{2}){1,4092}$"
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cmake",
+        "compiler",
+        "ninja"
+      ],
+      "properties": {
+        "cmake": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        },
+        "compiler": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        },
+        "ninja": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000]+$"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "executable",
+              "cache",
+              "can_source",
+              "docan_source",
+              "uds_source",
+              "configure_log",
+              "build_log"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\u0000]+$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

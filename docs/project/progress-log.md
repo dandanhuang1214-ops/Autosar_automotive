@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-27）
 
-当前阶段：`P23 — 独立 ECU 执行纳入项目（planned）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。下一任务按 [P23 接入计划](p23-external-ecu-plan.md)实现绑定构建与寻址的外部执行声明、运行前检查和独立进程生命周期；现有 CF01 客户端继续复用。平台实现证据与个人学习掌握分别验收。
+当前阶段：`P23 — 独立 ECU 执行纳入项目（implementing）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。P23 固定构建、寻址绑定及独立 ECU 执行底座已实现，真实 CF01/无响应/错误 DID/ID/锁冲突和五份迁移报告通过；本轮远端验收待执行。下一任务为统一项目快照/验收/审查接入，见 [P23 验收表](p23-acceptance.md)。平台实现证据与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1178,3 +1178,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 状态：P22 公开路径 remote-accepted 并冻结；商业往返仍 blocked，按路线推进 P23 planned。本次为纯文档状态回填与下一阶段接入计划，使用 `[skip ci]` 提交；不把文档提交算作新的实现验收，也不声称 P23 已实现。
 - P23 只读入口核查：现有 `read_uds_did` 可复用；本机 OpenBSW HEAD 为 `dbd6e118a9aaa2db36e4461ce76655e8f285598d`，存在既有 CANFrameTest 修改，未改动；Release ELF 存在，但历史构建不能单凭存在视为本轮可复现构建。源码显示 vcan0、请求 0x02A、响应 0x0F0、CF01。沙箱内 netlink 查询被拒，提升权限后实际返回 `Device "vcan0" does not exist.`；这是通道缺失，不是诊断失败。
 - 下一任务：实现 P23 外部 ECU 声明与构建/寻址绑定、预检和进程生命周期，再纳入项目快照/验收；完整成功、无响应、错误 DID/ID、blocked、清理和隔离门见接入计划。现场恢复使用既有 `setup_vcan.sh --apply`，固定干净构建后执行，不能用历史 live 报告代替。
+
+## P23：固定构建与独立 ECU 执行底座（2026-09-27）
+
+- 按既定阶段新增 `external-ecu-build/execution/run-0.1` 三份闭合契约，CLI `run-external-ecu` 与 `verify-external-ecu`。输入先校验构建文件 hash、角色唯一性、时限、通道/请求响应 ID/DID/期望数据绑定；未声明的漂移在输出和进程创建之前拒绝。保留旧项目 0.1–0.4、virtual 和手动 DID 客户端。
+- `build_openbsw_execution.py` 要求固定干净 OpenBSW `dbd6e118a9aaa2db36e4461ce76655e8f285598d`，真实执行 configure/clean-first Release build，保存命令/工具、ELF、cache 与三份关键源码 hash。本次在独立 `/tmp/workbench-p23-openbsw` 完成 379-action 构建，未改动旧工作树及其 CANFrameTest 修改。
+- 执行器持同通道共享锁，先 probe，再启动独立 ECU 和独立诊断客户端；客户端复用既有只读 CF01 请求。启动等待、客户端总期限、进程组 TERM/KILL 和父进程 reap 均有界，清理限于自己创建的进程。报告保存 PID/退出码、日志、输入来源快照及可迁移库存；二进制仅存 hash，离线复验不执行它、不认证 ECU 身份。
+- vcan0 经已有幂等脚本恢复。实际场景 normal passed，完整 SF/FF/FC/CF 与 24 字节一致；no-response timeout、wrong-did negative_response、wrong-response-id timeout、lock-busy blocked 且无 ECU 启动。五份报告删除生成变体输入并移动目录后全部复验通过，报告 hash 见 [P23 验收表](p23-acceptance.md)，本机证据 `output/p23-validation/live-scenarios/`。错误 DID/ID 是明确的客户端故障变体，不冒充生产者缺陷。
+- 最终全量 274 tests：272 passed、2 environment skips；12 组专项包含实际 SIGTERM、早退、部分启动、客户端 deadline、KILL 升级、通道锁、schema、来源篡改及无副作用拒绝。首轮发现测试共用宿主锁目录受到沙箱限制，改为每测试独立临时锁目录；中断用例揭示 InterruptedError 被一般 OSError 分支归类，已修复并定向复验。摘要 `output/p23-validation/tests-final/ci-test-summary.json`。
+- 44 schema、60 schema-bound examples、25 syntax-only examples、Ruff、30 文件 mypy、CI topology、pip check 和 whitespace gate 通过。Windows/Ubuntu runtime-evidence 新增离线 blocked/漂移拒绝/迁移场景及独立上传；该合成证据不替代本机 OpenBSW。Linux 核心回归执行真实进程生命周期替身测试；Windows 对 Linux 专有进程测试显式跳过。
+- 状态：执行底座 local-accepted，实现尚未提交/推送，远端待执行；P23 主阶段仍 implementing。下一任务为版本化项目快照、验收 locator、静态门控与审查引用接入，以及剩余通道/整阶段门。首页、路线、概览、指南、学习练习与下一项任务同步；不以本轮执行底座冒充整阶段完成或个人学习掌握。

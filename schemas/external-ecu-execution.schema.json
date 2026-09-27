@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/external-ecu-execution.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "build",
+    "profile",
+    "channel",
+    "startup_delay_s",
+    "shutdown_timeout_s",
+    "launch_ecu",
+    "fault"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "external-ecu-execution-0.1"
+    },
+    "build": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "profile": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "channel": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,15}$"
+    },
+    "startup_delay_s": {
+      "type": "number",
+      "minimum": 0.05,
+      "maximum": 10
+    },
+    "shutdown_timeout_s": {
+      "type": "number",
+      "minimum": 0.05,
+      "maximum": 5
+    },
+    "launch_ecu": {
+      "type": "boolean"
+    },
+    "fault": {
+      "enum": [
+        "none",
+        "wrong-did",
+        "wrong-response-id"
+      ]
+    }
+  }
+}

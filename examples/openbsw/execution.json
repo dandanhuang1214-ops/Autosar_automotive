@@ -1,0 +1,10 @@
+{
+  "schema_version": "external-ecu-execution-0.1",
+  "build": "../../output/p23-build/build.json",
+  "profile": "read_cf01.json",
+  "channel": "vcan0",
+  "startup_delay_s": 1.0,
+  "shutdown_timeout_s": 1.0,
+  "launch_ecu": true,
+  "fault": "none"
+}

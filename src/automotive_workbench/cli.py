@@ -9,6 +9,7 @@ from automotive_workbench.adapters.dbc import inspect_dbc, validate_dbc_intent
 from automotive_workbench.adapters.canonical_contract import validate_contract_mapping
 from automotive_workbench.bsw_intent import trace_signal
 from automotive_workbench.communication_graph import run_graph, verify_graph_report
+from automotive_workbench.external_ecu import run_external_ecu, verify_external_ecu
 from automotive_workbench.experiment import run_suite
 from automotive_workbench.can_runtime import run_can_lab
 from automotive_workbench.can_supervision import run_can_supervision
@@ -187,6 +188,12 @@ def build_parser() -> argparse.ArgumentParser:
     uds_lab_parser.add_argument("--interface", default="virtual")
     uds_lab_parser.add_argument("--channel", default="workbench")
     uds_lab_parser.add_argument("--output", type=Path, default=Path("output") / "uds-lab")
+
+    external_parser = commands.add_parser("run-external-ecu", help="Run a build-bound external ECU and bounded diagnostic client")
+    external_parser.add_argument("execution", type=Path)
+    external_parser.add_argument("--output", type=Path, required=True)
+    external_verify = commands.add_parser("verify-external-ecu", help="Verify saved external ECU inventory and diagnostic bindings offline")
+    external_verify.add_argument("report", type=Path)
 
     did_parser = commands.add_parser("read-uds-did", help="Read and verify one DID from an independently running ECU")
     did_parser.add_argument("profile", type=Path)
@@ -419,6 +426,10 @@ def main() -> int:
             result = compare_project_reports(
                 args.baseline, args.candidate, args.output
             )
+        elif args.command == "run-external-ecu":
+            result = run_external_ecu(args.execution, args.output)
+        elif args.command == "verify-external-ecu":
+            result = verify_external_ecu(args.report)
         elif args.command == "read-uds-did":
             result = read_uds_did(args.profile, BusConfig(args.interface, args.channel), args.output)
         elif args.command == "probe-uds-backend":

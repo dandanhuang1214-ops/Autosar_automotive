@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/external-ecu-run.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "status",
+    "reason",
+    "channel",
+    "evidence_kind",
+    "target_identity_verified",
+    "source_commit",
+    "launch_ecu",
+    "profile_timeout_s",
+    "ecu_pid",
+    "client_pid",
+    "lock",
+    "cleanup",
+    "diagnostic",
+    "inventory"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "external-ecu-run"
+    },
+    "schema_version": {
+      "const": "external-ecu-run-0.1"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,15}$"
+    },
+    "evidence_kind": {
+      "const": "external-process-socketcan"
+    },
+    "target_identity_verified": {
+      "const": false
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "launch_ecu": {
+      "type": "boolean"
+    },
+    "profile_timeout_s": {
+      "type": "number",
+      "minimum": 0.05,
+      "maximum": 30
+    },
+    "ecu_pid": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "client_pid": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "lock": {
+      "enum": [
+        "held",
+        "not_acquired"
+      ]
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ecu": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pid",
+            "returncode",
+            "term_sent",
+            "kill_sent",
+            "reaped"
+          ],
+          "properties": {
+            "pid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "returncode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "term_sent": {
+              "type": "boolean"
+            },
+            "kill_sent": {
+              "type": "boolean"
+            },
+            "reaped": {
+              "type": "boolean"
+            }
+          }
+        },
+        "client": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pid",
+            "returncode",
+            "term_sent",
+            "kill_sent",
+            "reaped"
+          ],
+          "properties": {
+            "pid": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "returncode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "term_sent": {
+              "type": "boolean"
+            },
+            "kill_sent": {
+              "type": "boolean"
+            },
+            "reaped": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "diagnostic": {
+      "enum": [
+        null,
+        "diagnostic/uds-did-report.json"
+      ]
+    },
+    "inventory": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\u0000]+$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

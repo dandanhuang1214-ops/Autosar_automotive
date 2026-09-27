@@ -50,11 +50,11 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P23 planned
+## 当前执行：P23 implementing
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
-3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。当前推进 P23 planned，按 [接入计划](p23-external-ecu-plan.md)先绑定固定构建、寻址配置与外部进程生命周期，再统一项目验收；当前 vcan0 缺失，现场门须恢复后独立执行。
+3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。当前 P23 implementing：固定干净构建、寻址绑定、独立进程及诊断底座已实现，vcan0 已恢复，正常/无响应/错误 DID/ID/锁冲突及迁移现场通过。本轮远端验收待执行；下一步接入统一项目快照/验收/审查，见 [验收表](p23-acceptance.md)与[执行指南](p23-external-ecu-guide.md)。
 4. P20 结果比较与 P21 配置依赖影响分别保留；P22 只映射源 ARXML 真正提供的语义，不从 SWC/interface 名称补造 COM/PduR/CanIf ECUC。
 
 ## 持续升级的完成规则
