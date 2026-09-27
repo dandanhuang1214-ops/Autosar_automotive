@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-27）
 
-当前阶段：`P22 — ARXML 与工具桥接（implementing）`。已完成固定生产者真实 XML 审计、受限结构语义导入/比较、来源快照复验和三组 golden；本轮实现 `6166b80` / [run `36235450078`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36235450078) 七 job 全绿，离线路径 remote-accepted，见文末记录与 [P22 指南](p22-arxml-guide.md)。项目 0.4 快照/静态门控/审查比较/迁移路径已实现，本轮独立远端验收待执行，见 [P22 验收表](p22-acceptance.md)；下一步是本轮七 job 验收，商业往返 blocked。P21 实现 `79d1f3b` / run `36022099415` 七 job remote-accepted 保持，平台实现与个人学习掌握分别验收。
+当前阶段：`P23 — 独立 ECU 执行纳入项目（planned）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。下一任务按 [P23 接入计划](p23-external-ecu-plan.md)实现绑定构建与寻址的外部执行声明、运行前检查和独立进程生命周期；现有 CF01 客户端继续复用。平台实现证据与个人学习掌握分别验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1168,3 +1168,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - Windows/Ubuntu runtime-evidence 接入公开脚本与 `arxml-project-{OS}` 上传，仍为七 job。指南提供项目运行/审查/比较入口；[验收表](p22-acceptance.md)记录边界和商业恢复路径。
 - 有限商业环境探测：PATH 三个候选命令无匹配，两个 Program Files 下无 Vector/DaVinci 一级目录，`C:/Vector` 不存在；未检查全盘、注册表或实际许可，不声称本机绝无安装。商业往返 blocked，需实际工具路径、版本、合法许可和公开工程后执行真实导入/回导。
 - 状态：本轮公开路径 local-accepted，实现尚未提交/推送，远端待执行；当前主阶段 P22 implementing。下一任务为本实现七 job 远端验收；通过后公开路径冻结，商业 blocked 单列并推进既定 P23。平台实现不代替个人学习掌握。
+
+
+## P22：公开路径远端冻结并推进 P23（2026-09-27）
+
+- 实现提交 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23`；[run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) completed/success，已核对 head SHA。
+- 七 job 全部 success：core-contracts Windows `108446048332` / Ubuntu `108446048550`；runtime-evidence Windows `108446389755` / Ubuntu `108446389743`；controlled-rejections Windows `108446389719` / Ubuntu `108446389709`；Python 3.14 runtime-currency `108446048545`。
+- Windows/Ubuntu 的 `Run ARXML project scenarios` 与 `Upload ARXML project evidence` 均 completed/success；正常、悬空、周期变化、未知语义与迁移复验已通过双平台场景。原始 job/step 明细存于 `output/p22-project-validation/remote-ci.json`。
+- 状态：P22 公开路径 remote-accepted 并冻结；商业往返仍 blocked，按路线推进 P23 planned。本次为纯文档状态回填与下一阶段接入计划，使用 `[skip ci]` 提交；不把文档提交算作新的实现验收，也不声称 P23 已实现。
+- P23 只读入口核查：现有 `read_uds_did` 可复用；本机 OpenBSW HEAD 为 `dbd6e118a9aaa2db36e4461ce76655e8f285598d`，存在既有 CANFrameTest 修改，未改动；Release ELF 存在，但历史构建不能单凭存在视为本轮可复现构建。源码显示 vcan0、请求 0x02A、响应 0x0F0、CF01。沙箱内 netlink 查询被拒，提升权限后实际返回 `Device "vcan0" does not exist.`；这是通道缺失，不是诊断失败。
+- 下一任务：实现 P23 外部 ECU 声明与构建/寻址绑定、预检和进程生命周期，再纳入项目快照/验收；完整成功、无响应、错误 DID/ID、blocked、清理和隔离门见接入计划。现场恢复使用既有 `setup_vcan.sh --apply`，固定干净构建后执行，不能用历史 live 报告代替。
