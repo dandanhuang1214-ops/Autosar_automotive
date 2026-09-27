@@ -191,6 +191,8 @@ def load_execution(path: Path) -> tuple[dict, dict, dict, dict[str, bytes], list
 
 @contextmanager
 def channel_lock(channel: str) -> Iterator[str]:
+    if sys.platform == "win32":
+        raise RuntimeError("SocketCAN channel locks require Linux")
     import fcntl
 
     directory = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "automotive-workbench"
@@ -222,6 +224,8 @@ def _interrupts() -> Iterator[None]:
 
 def stop_process(process: subprocess.Popen, timeout: float) -> dict:
     """Kill only our new session; include descendants even after parent exits."""
+    if sys.platform == "win32":
+        raise RuntimeError("External ECU process groups require Linux")
     result = {
         "pid": process.pid,
         "returncode": None,

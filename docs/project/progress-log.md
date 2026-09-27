@@ -1188,3 +1188,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终全量 274 tests：272 passed、2 environment skips；12 组专项包含实际 SIGTERM、早退、部分启动、客户端 deadline、KILL 升级、通道锁、schema、来源篡改及无副作用拒绝。首轮发现测试共用宿主锁目录受到沙箱限制，改为每测试独立临时锁目录；中断用例揭示 InterruptedError 被一般 OSError 分支归类，已修复并定向复验。摘要 `output/p23-validation/tests-final/ci-test-summary.json`。
 - 44 schema、60 schema-bound examples、25 syntax-only examples、Ruff、30 文件 mypy、CI topology、pip check 和 whitespace gate 通过。Windows/Ubuntu runtime-evidence 新增离线 blocked/漂移拒绝/迁移场景及独立上传；该合成证据不替代本机 OpenBSW。Linux 核心回归执行真实进程生命周期替身测试；Windows 对 Linux 专有进程测试显式跳过。
 - 状态：执行底座 local-accepted，实现尚未提交/推送，远端待执行；P23 主阶段仍 implementing。下一任务为版本化项目快照、验收 locator、静态门控与审查引用接入，以及剩余通道/整阶段门。首页、路线、概览、指南、学习练习与下一项任务同步；不以本轮执行底座冒充整阶段完成或个人学习掌握。
+
+### P23 本轮 CI 平台类型修正
+
+- 首个实现 `2cff77a` 已推送；run `36323201947` 实际结论 failure。Ubuntu core-contracts 和 Python 3.14 runtime-currency success；Windows core tests 通过，但 scoped mypy 对 Linux 专有 `fcntl.flock/LOCK_*`、`os.killpg`、`signal.SIGKILL` 报八项 attr-defined，Windows core job failure，runtime-evidence/controlled-rejections 因依赖未通过而 skipped。
+- 在锁与进程组清理入口增加显式 Windows 拒绝分支，使平台边界同时对运行时与类型检查可见；不关闭类型检查，也不放宽七 job 验收。修复后进行 Linux/Windows-target mypy 与 P23 专项复验，后续实现须独立远端验收。该失败 run 不计作 acceptance。
