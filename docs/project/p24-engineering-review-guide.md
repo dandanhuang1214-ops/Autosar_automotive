@@ -4,6 +4,8 @@
 
 ## 使用
 
+2026-09-29 新增 `search-engineering-questions` 目录检索与对象级/严重度分项评测，见[冻结与评测制度](p24-evaluation-protocol.md)。检索仅帮助选择固定问题，命中不代表工程结论成立；原 30 题目录与已有答案验证保持兼容。
+
 在已安装开发依赖的环境运行；源码执行时设置 `PYTHONPATH=src`。
 
 ```bash

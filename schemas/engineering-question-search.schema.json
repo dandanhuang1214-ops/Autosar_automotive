@@ -1,0 +1,99 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "engineering-question-search-0.1"
+    },
+    "status": {
+      "enum": [
+        "matches",
+        "no-match"
+      ]
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "input_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "catalog_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "method": {
+      "const": "idf-overlap-ascii-words-and-cjk-bigrams-0.1"
+    },
+    "candidates": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "input_version": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "matched_tokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "policy": {
+            "enum": [
+              "scope-refusal",
+              "recorded-facts"
+            ]
+          }
+        },
+        "required": [
+          "question_id",
+          "question",
+          "input_version",
+          "score",
+          "matched_tokens",
+          "policy"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "boundary": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "query",
+    "limit",
+    "input_version",
+    "catalog_sha256",
+    "method",
+    "candidates",
+    "boundary"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/engineering-question-search.schema.json"
+}

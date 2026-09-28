@@ -924,6 +924,24 @@ def validate_citations(request_path: Path, result: dict[str, Any]) -> dict[str, 
                 "REVIEW-CITATION-INVALID",
                 f"Drift catalog is invalid: {exc}",
             ))
+    # Finding summaries are also user-visible evidence. Valid scalar citations
+    # must not hide a downgraded, omitted or invented finding in the same report.
+    source_findings: list[dict[str, Any]] = []
+    artifacts, _ = _load_artifacts(request_path, request)
+    for artifact in artifacts:
+        if artifact.path.suffix.casefold() != ".json":
+            continue
+        try:
+            payload = json.loads(artifact.path.read_text(encoding="utf-8-sig"))
+            _, extracted = _normalize_json(payload, artifact)
+        except (OSError, UnicodeError, ValueError):
+            continue  # run_review already refuses invalid source artifacts.
+        source_findings.extend(extracted)
+    if json.dumps(result.get("findings"), sort_keys=True) != json.dumps(source_findings, sort_keys=True):
+        reasons.append(_reason(
+            "REVIEW-CITATION-INVALID",
+            "Finding summaries differ from scoped sources (including severity)",
+        ))
     return {
         "status": "passed" if not reasons else "failed",
         "citation_count": len(result.get("citations", [])),

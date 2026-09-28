@@ -1,0 +1,1265 @@
+{
+  "evaluation_version": "p24-assessment-development-0.1",
+  "split": "development",
+  "formation": "Stronger assertions audited against the previously accepted development evidence; not independent held-out.",
+  "catalog_sha256": "428427a19e16d60bf613ae51a3b1718cce553401ab4cfeee47d3fd90a2351fde",
+  "cases": [
+    {
+      "question_id": "impact-acceptance",
+      "source": "graph/scale-impact/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/2/value",
+          "operator": "equals",
+          "value": [
+            "thermal-status"
+          ]
+        },
+        {
+          "pointer": "/facts/1/value",
+          "operator": "contains",
+          "value": "thermal-status"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/reason"
+            ],
+            [
+              "/requirements"
+            ],
+            [
+              "/vectors"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "impact-paths",
+      "source": "graph/scale-impact/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": [
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/CanIfPdu/ThermalStatus_CanIfPdu",
+              "path": [
+                "thermal_control-communication-v1/THERMAL_ECU/CanIfPdu/ThermalStatus_CanIfPdu"
+              ]
+            },
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/ComSignal/ComSig_CoolantTemperature",
+              "path": [
+                "thermal_control-communication-v1/THERMAL_ECU/ComSignal/ComSig_CoolantTemperature"
+              ]
+            },
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/ComSignal/ComSig_FanDuty",
+              "path": [
+                "thermal_control-communication-v1/THERMAL_ECU/IPdu/ThermalStatus_IPdu",
+                "thermal_control-communication-v1/THERMAL_ECU/ComSignal/ComSig_FanDuty"
+              ]
+            },
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/IPdu/ThermalStatus_IPdu",
+              "path": [
+                "thermal_control-communication-v1/THERMAL_ECU/IPdu/ThermalStatus_IPdu"
+              ]
+            },
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/PduRRoute/PduR_ThermalStatus",
+              "path": [
+                "thermal_control-communication-v1/THERMAL_ECU/CanIfPdu/ThermalStatus_CanIfPdu",
+                "thermal_control-communication-v1/THERMAL_ECU/PduRRoute/PduR_ThermalStatus"
+              ]
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/reason"
+            ],
+            [
+              "/affected"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "impact-objects",
+      "source": "graph/scale-impact/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": [
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/CanIfPdu/ThermalStatus_CanIfPdu",
+              "kind": "modified"
+            },
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/ComSignal/ComSig_CoolantTemperature",
+              "kind": "modified"
+            },
+            {
+              "id": "thermal_control-communication-v1/THERMAL_ECU/IPdu/ThermalStatus_IPdu",
+              "kind": "modified"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/reason"
+            ],
+            [
+              "/changes"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "impact-comparability",
+      "source": "graph/different-project/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "not-comparable"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/status"
+            ],
+            [
+              "/reason"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "impact-unknowns",
+      "source": "graph/scale-impact/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": [
+            "Vendor ECUC configuration and physical ECU behavior",
+            "Vendor ECUC, controller/hardware mapping, scheduling and runtime behavior are unverified"
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/unknowns"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "graph-references",
+      "source": "graph/missing-reference/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/selected",
+          "operator": "equals",
+          "value": [
+            {
+              "code": "GRAPH-MISSING-REFERENCE",
+              "source": "intent",
+              "locator": "/signals/0/i_pdu",
+              "detail": "Unresolved i_pdu"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/findings"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "graph-identities",
+      "source": "graph/duplicate-identity/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/selected",
+          "operator": "equals",
+          "value": [
+            {
+              "code": "GRAPH-DUPLICATE-IDENTITY",
+              "source": "intent",
+              "locator": "/signals/1/com_signal",
+              "detail": "thermal_control-communication-v1/THERMAL_ECU/ComSignal/ComSig_CoolantTemperature"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/findings"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "graph-directions",
+      "source": "graph/direction-conflict/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/selected",
+          "operator": "equals",
+          "value": [
+            {
+              "code": "GRAPH-DIRECTION",
+              "source": "intent",
+              "locator": "/signals/0/direction",
+              "detail": "Signal and message directions differ"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/findings"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "graph-layout",
+      "source": "graph/length-conflict/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/selected",
+          "operator": "equals",
+          "value": [
+            {
+              "code": "GRAPH-LENGTH-LAYOUT",
+              "source": "intent",
+              "locator": "/messages/0",
+              "detail": "DBC frame ID or DLC differs from intent"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/findings"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "graph-routes",
+      "source": "graph/route-endpoint/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/selected",
+          "operator": "equals",
+          "value": [
+            {
+              "code": "GRAPH-ROUTE-ENDPOINT",
+              "source": "intent",
+              "locator": "/signals/0/canif_pdu",
+              "detail": "Endpoint belongs to a different message"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/findings"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "arxml-version",
+      "source": "arxml/relocated/normal/arxml-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "4-3-0"
+        },
+        {
+          "pointer": "/facts/2/value",
+          "operator": "equals",
+          "value": "supported-subset"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/autosar_version"
+            ],
+            [
+              "/namespace"
+            ],
+            [
+              "/coverage"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "arxml-unsupported",
+      "source": "arxml/partial.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "partial"
+        },
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": [
+            {
+              "locator": "/AUTOSAR[1]/AR-PACKAGES[1]/AR-PACKAGE[3]/ELEMENTS[1]/APPLICATION-SW-COMPONENT-TYPE[1]/INTERNAL-BEHAVIORS[1]/SWC-INTERNAL-BEHAVIOR[1]/EVENTS[1]/TIMING-EVENT[1]/PERIOD[1]/@UNRECOGNIZED",
+              "kind": "attribute",
+              "name": "UNRECOGNIZED"
+            }
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/coverage"
+            ],
+            [
+              "/unsupported"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "arxml-references",
+      "source": "arxml/relocated/dangling/arxml-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "failed"
+        },
+        {
+          "pointer": "/facts/1/value/0/code",
+          "operator": "equals",
+          "value": "ARXML-DANGLING-REF"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/status"
+            ],
+            [
+              "/findings"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "arxml-timing",
+      "source": "arxml/relocated/changed/arxml-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "changed"
+        },
+        {
+          "pointer": "/selected/0/id",
+          "operator": "equals",
+          "value": "/ComponentTypes/WindowControlSwc/WindowControlSwc_InternalBehavior/TMT_WindowControl_Step"
+        },
+        {
+          "pointer": "/selected/0/before/facts/1/value",
+          "operator": "equals",
+          "value": "0.01"
+        },
+        {
+          "pointer": "/selected/0/after/facts/1/value",
+          "operator": "equals",
+          "value": "0.02"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/status"
+            ],
+            [
+              "/changes"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "arxml-ecuc",
+      "source": "arxml/relocated/normal/arxml-report.json",
+      "expected_status": "refused",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": [
+            "Structural values and reference integrity only; no XSD or full AUTOSAR validation.",
+            "COM, IPdu, PduR and CanIf ECUC mapping unknown; no inferred BSW objects.",
+            "No DaVinci import, RTE generation, runtime or physical ECU evidence.",
+            "UUID and formatting are non-semantic; numeric text is not unit-normalized."
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/boundaries"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "project-gates",
+      "source": "project/static-failure/bundle/project-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/1/value/communication/status",
+          "operator": "equals",
+          "value": "skipped"
+        },
+        {
+          "pointer": "/facts/1/value/external_ecu/status",
+          "operator": "equals",
+          "value": "skipped"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/status"
+            ],
+            [
+              "/stages"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "project-requirements",
+      "source": "project/static-failure/bundle/project-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/selected",
+          "operator": "project",
+          "fields": [
+            "id",
+            "status",
+            "reason",
+            "actual"
+          ],
+          "value": [
+            [
+              "CANONICAL",
+              "failed",
+              "value_mismatch",
+              "failed"
+            ],
+            [
+              "COMMUNICATION",
+              "blocked",
+              "stage_not_run",
+              null
+            ],
+            [
+              "window-status",
+              "blocked",
+              "stage_not_run",
+              null
+            ],
+            [
+              "window-request",
+              "blocked",
+              "stage_not_run",
+              null
+            ],
+            [
+              "BOUND",
+              "blocked",
+              "stage_not_run",
+              null
+            ],
+            [
+              "ECU-STATUS",
+              "blocked",
+              "stage_not_run",
+              null
+            ],
+            [
+              "CF01-DATA",
+              "blocked",
+              "stage_not_run",
+              null
+            ]
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/requirements"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "project-runtime",
+      "source": "project/static-failure/bundle/project-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value/status",
+          "operator": "equals",
+          "value": "skipped"
+        },
+        {
+          "pointer": "/facts/1/value/status",
+          "operator": "equals",
+          "value": "skipped"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/stages/communication"
+            ],
+            [
+              "/stages/external_ecu"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "project-basis",
+      "source": "project/static-failure/bundle/project-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value/key",
+          "operator": "equals",
+          "value": "window-openbsw-v1"
+        },
+        {
+          "pointer": "/facts/0/value/local_ecu",
+          "operator": "equals",
+          "value": "BODY_ECU"
+        },
+        {
+          "pointer": "/facts/0/value/vectors",
+          "operator": "equals",
+          "value": [
+            {
+              "id": "window-request",
+              "message": "WindowCommand",
+              "direction": "rx",
+              "signals": {
+                "RequestedDirection": 2
+              },
+              "timeout_seconds": 0.5
+            },
+            {
+              "id": "window-status",
+              "message": "WindowStatus",
+              "direction": "tx",
+              "signals": {
+                "WindowPosition": 42,
+                "AntiPinchActive": 0,
+                "MotorRequest": 1
+              },
+              "timeout_seconds": 0.5
+            }
+          ]
+        },
+        {
+          "pointer": "/facts/0/value/arxml_semantics",
+          "operator": "equals",
+          "value": "bc3d5f660f514cb7057098364eafdf2a077164110e683a3ce5f1f46785faaa7e"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/comparison_basis"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "project-dbc-ecu",
+      "source": "project/static-failure/bundle/project-report.json",
+      "expected_status": "refused",
+      "checks": [
+        {
+          "pointer": "/facts/0/value/external_ecu/status",
+          "operator": "equals",
+          "value": "skipped"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/stages"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ecu-diagnostic",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "blocked"
+        },
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": "missing_build_files:executable"
+        },
+        {
+          "pointer": "/facts/2/value",
+          "operator": "equals",
+          "value": null
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/status"
+            ],
+            [
+              "/reason"
+            ],
+            [
+              "/diagnostic"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ecu-build",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "0000000000000000000000000000000000000000"
+        },
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": "p23-absent"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/source_commit"
+            ],
+            [
+              "/channel"
+            ],
+            [
+              "/evidence_kind"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ecu-lifecycle",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": null
+        },
+        {
+          "pointer": "/facts/2/value",
+          "operator": "equals",
+          "value": null
+        },
+        {
+          "pointer": "/facts/3/value",
+          "operator": "equals",
+          "value": {}
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/launch_ecu"
+            ],
+            [
+              "/ecu_pid"
+            ],
+            [
+              "/client_pid"
+            ],
+            [
+              "/cleanup"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ecu-lock",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "not_acquired"
+        },
+        {
+          "pointer": "/facts/1/value",
+          "operator": "equals",
+          "value": "blocked"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/lock"
+            ],
+            [
+              "/status"
+            ],
+            [
+              "/reason"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ecu-root-cause",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "refused",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "blocked"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/status"
+            ],
+            [
+              "/reason"
+            ],
+            [
+              "/diagnostic"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "source-drift",
+      "source": "graph/scale-impact/report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "contains",
+          "value": "dbc"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/source_changes"
+            ],
+            [
+              "/locator_changes"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "source-producer",
+      "source": "arxml/relocated/normal/arxml-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/2/value",
+          "operator": "equals",
+          "value": {
+            "tool": "Generate-Arxml",
+            "tool_version": "0.1.0",
+            "revision": "e912e404d52e671c7561d518d9989af3382fce51",
+            "repository": "https://github.com/dandanhuang1214-ops/Generate-Arxml",
+            "provenance_kind": "local-execution-record-not-producer-authentication",
+            "producer_archive_sha256": "bfb2d1834b85fb11f1e8b5fb4a46837735fb75753ec56dbb1dbd01cd5a06b0b8",
+            "producer_script_sha256": "aed933c9757923f0181ec320052ffc623dd470927132b99391604364826d244e",
+            "source_docx_sha256": "d38b21d3220ea4bef831aaec0ee4eeb7a7ca54ad652e054a1cf238a4db37362b",
+            "arxml_sha256": "d44c2ae60131ef6d0a75035fb35d54403f2ce2bc028370bf4822c1d497ddf6e6",
+            "arguments": [
+              "--input",
+              "source.docx",
+              "--contract",
+              "contract.json",
+              "--excel",
+              "model.xlsx",
+              "--report-json",
+              "issues.json",
+              "--mode",
+              "signal",
+              "--profile",
+              "signal_atomic_davinci",
+              "--arxml",
+              "model.arxml"
+            ],
+            "exit_code": 0,
+            "runtime": {
+              "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+              "dependencies": {
+                "openpyxl": "3.1.5",
+                "lxml": "6.1.3",
+                "pydantic": "2.13.5",
+                "pyyaml": "6.0.3",
+                "python-docx": "1.2.0"
+              }
+            }
+          }
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/source/name"
+            ],
+            [
+              "/source/sha256"
+            ],
+            [
+              "/source/producer"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "source-project",
+      "source": "project/static-failure/bundle/project-report.json",
+      "expected_status": "answered",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "project",
+          "fields": [
+            "source"
+          ],
+          "value": [
+            [
+              "bundle/arxml.json"
+            ],
+            [
+              "bundle/canonical.json"
+            ],
+            [
+              "bundle/inputs/arxml.arxml"
+            ],
+            [
+              "bundle/inputs/contract.json"
+            ],
+            [
+              "bundle/inputs/dbc.dbc"
+            ],
+            [
+              "bundle/inputs/external-build.json"
+            ],
+            [
+              "bundle/inputs/external-build_log.txt"
+            ],
+            [
+              "bundle/inputs/external-cache.txt"
+            ],
+            [
+              "bundle/inputs/external-can_source.txt"
+            ],
+            [
+              "bundle/inputs/external-configure_log.txt"
+            ],
+            [
+              "bundle/inputs/external-docan_source.txt"
+            ],
+            [
+              "bundle/inputs/external-execution.json"
+            ],
+            [
+              "bundle/inputs/external-profile.json"
+            ],
+            [
+              "bundle/inputs/external-uds_source.txt"
+            ],
+            [
+              "bundle/inputs/intent.json"
+            ],
+            [
+              "bundle/inputs/project.json"
+            ],
+            [
+              "bundle/inputs/provenance.json"
+            ],
+            [
+              "bundle/inputs/runner-build.json"
+            ],
+            [
+              "bundle/inputs/runner-execution.json"
+            ],
+            [
+              "bundle/inputs/runner-profile.json"
+            ],
+            [
+              "bundle/inputs/vectors.json"
+            ],
+            [
+              "bundle/mapping.json"
+            ]
+          ]
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/source_artifacts"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "source-identity",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "refused",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": false
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/target_identity_verified"
+            ],
+            [
+              "/evidence_kind"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "source-physical",
+      "source": "project/baseline/bundle/external-ecu/external-ecu-report.json",
+      "expected_status": "refused",
+      "checks": [
+        {
+          "pointer": "/facts/0/value",
+          "operator": "equals",
+          "value": "external-process-socketcan"
+        },
+        {
+          "pointer": "/facts",
+          "operator": "project",
+          "fields": [
+            "pointer"
+          ],
+          "value": [
+            [
+              "/evidence_kind"
+            ],
+            [
+              "/channel"
+            ],
+            [
+              "/target_identity_verified"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "retrieval": [
+    {
+      "query": "哪些验收项需要重跑",
+      "expected_first": "impact-acceptance"
+    },
+    {
+      "query": "配置对象的依赖路径",
+      "expected_first": "impact-paths"
+    },
+    {
+      "query": "信号布局冲突",
+      "expected_first": "graph-layout"
+    },
+    {
+      "query": "通信方向不一致",
+      "expected_first": "graph-directions"
+    },
+    {
+      "query": "XML 引用错误位置",
+      "expected_first": "arxml-references"
+    },
+    {
+      "query": "AUTOSAR 版本命名空间",
+      "expected_first": "arxml-version"
+    },
+    {
+      "query": "ARXML 时序变化",
+      "expected_first": "arxml-timing"
+    },
+    {
+      "query": "ECU 进程清理",
+      "expected_first": "ecu-lifecycle"
+    },
+    {
+      "query": "通道锁是否获得",
+      "expected_first": "ecu-lock"
+    },
+    {
+      "query": "目标 ECU 身份认证",
+      "expected_first": "source-identity"
+    },
+    {
+      "query": "物理 ECU 量产通过",
+      "expected_first": "source-physical"
+    },
+    {
+      "query": "源文件字节变化",
+      "expected_first": "source-drift"
+    },
+    {
+      "query": "arxml version",
+      "expected_first": "arxml-version"
+    },
+    {
+      "query": "impact acceptance",
+      "expected_first": "impact-acceptance"
+    },
+    {
+      "query": "ecu lifecycle",
+      "expected_first": "ecu-lifecycle"
+    },
+    {
+      "query": "project requirements",
+      "expected_first": "project-requirements"
+    },
+    {
+      "query": "hash identity",
+      "expected_first": "source-identity"
+    },
+    {
+      "query": "检验机械轴承磨损程度",
+      "expected_first": null
+    }
+  ],
+  "severity_expected": [
+    {
+      "code": "MAP-NUMERIC-MISMATCH",
+      "severity": "ERROR",
+      "message": "resolution: DBC=1, canonical='2'",
+      "source_artifact": "inputs/contract.json",
+      "kind": "cross-stage-mapping",
+      "field": "resolution",
+      "location": "WindowStatus.WindowPosition -> WindowPosition",
+      "status": "open"
+    }
+  ]
+}

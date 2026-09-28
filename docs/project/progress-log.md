@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-28）
+## 当前总览（2026-09-29）
 
-当前主阶段：`P24 — 工程问题审查（implementing）`。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 P22 公开路径保持冻结，商业往返仍 blocked。P24 首批六类 30 题、结构化引用、来源复验及开发评测已 remote-accepted：实现 `92bf90ae777bc7fad83ea929e2c245a1bacae4cc` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 全部 success，两平台 30 题场景与上传均 success。独立未参与开发负例和分项计量尚未完成，不标记 P24 整阶段验收；平台实现与个人学习掌握分别计量。
+当前主阶段：`P24 — 工程问题审查（implementing）`。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 P22 公开路径保持冻结，商业往返仍 blocked。P24 首批六类 30 题、结构化引用、来源复验及开发评测已 remote-accepted：实现 `92bf90ae777bc7fad83ea929e2c245a1bacae4cc` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 全部 success，两平台 30 题场景与上传均 success。本轮目录检索、对象级 gold、严重度与条件差异分项已本地通过，正冻结实现后形成负例；本轮远端待执行，不标记 P24 整阶段验收；平台实现与个人学习掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1248,3 +1248,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - Windows/Ubuntu 的 `Run engineering review development scenarios`、`Upload engineering review development evidence` 均 completed/success，产物 `engineering-review-Windows`、`engineering-review-Linux`；完整开发问题、来源重算和移除原目录后的 30 份迁移复验通过。首次 Windows cp1252 失败由最终实现修复，不使用失败 run 作为验收依据。
 - 本轮消费者与开发基线 remote-accepted；P24 整阶段仍 implementing。下一项为在固定开发策略之后形成独立未参与调优负例、加强对象级 gold 与严重度/检索分项计量，再依据实际解释缺口决定可选模型。当前固定查询与拒答不声称自然语言推理能力；平台结果不替代个人学习验收。
 - 本条与首页/路线/验收表是后续纯文档状态回填，使用 `[skip ci]` 提交推送；实现验收只引用上面的固定提交和 run，不把文档提交作为新实现验证。开发问题目录与 gold hash 保持上一条记录。
+
+
+## P24：分项评测与策略冻结前验证（2026-09-29）
+
+- 新增中英文词法问题目录检索 `search-engineering-questions`，只导航固定题，不自动回答自由文本断言。保留原 30 题目录 hash、`engineering-review-0.1` 与旧审查接口。
+- 原开发基线另增增强 gold：影响对象/传播路径、精确规则位置、XML 周期前后值、完整未通过验收项及来源清单；检索、确定性、引用、严重度、条件比较与可选模型分别计量。
+- 实际复现严重度漏洞：保留原引用、只将 Finding 摘要从 ERROR 改成 WARNING，旧 `validate_citations` 仍返回 passed。已增加所有许可范围来源 Finding 的严格复算比较，降级、遗漏、伪造摘要均拒绝；原正常/拒答契约保持兼容，不凭无等级 XML 发明 severity。
+- 开发分项通过：目录 top-1/hit@3 17/17、无匹配 1/1；确定性 gold 30/30、引用 30/30；ERROR/缺失等级保真 2/2、摘要篡改拒绝 3/3；合成缺失构建项目的源码提交变化和 timeout 变化比较 2/2 not-comparable。证据 `output/p24-assessment-validation/development-final/`。首轮评分器错误读取顶层 reasons，已按既有 comparison basis 契约修正并复跑；这发生在负例形成之前。
+- 全量 303 tests：301 passed、2 environment skips；定向审查/检索检查、47 schema、61 schema-bound examples、25 syntax-only examples、Ruff、36 文件 mypy、topology、pip check 与 whitespace 通过。全量摘要 `output/p24-assessment-validation/tests-freeze/ci-test-summary.json`。
+- 当前阶段 P24 implementing，本轮开发部分 local-accepted。下一步立即冻结实际提交，再形成并预登记未参与调优的负例清单，按冻结 hash 执行；此时尚未声称独立负例或整阶段通过。形成规则和限定见 [评测制度](p24-evaluation-protocol.md)。个人学习仍单列。

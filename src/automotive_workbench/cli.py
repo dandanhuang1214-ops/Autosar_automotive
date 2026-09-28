@@ -46,6 +46,7 @@ from automotive_workbench.project_review import run_project_review
 from automotive_workbench.engineering_review import (
     catalog, run_engineering_review, verify_engineering_review,
 )
+from automotive_workbench.engineering_search import search_questions
 from automotive_workbench.project_comparison import (
     compare_project_reports,
     validate_project_comparison,
@@ -67,6 +68,10 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     commands.add_parser("list-engineering-questions", help="List bounded, versioned P21-P23 evidence questions")
+    search = commands.add_parser("search-engineering-questions", help="Find catalog questions; matches are not engineering conclusions")
+    search.add_argument("query")
+    search.add_argument("--limit", type=int, default=5)
+    search.add_argument("--input-version")
     engineering = commands.add_parser("review-engineering", help="Answer a fixed engineering question with replay-verified structured citations")
     engineering.add_argument("report", type=Path)
     engineering.add_argument("--question", required=True)
@@ -444,6 +449,8 @@ def main() -> int:
             result = run_project_review(args.report, args.output, args.claim)
         elif args.command == "list-engineering-questions":
             result = catalog()
+        elif args.command == "search-engineering-questions":
+            result = search_questions(args.query, args.limit, args.input_version)
         elif args.command == "review-engineering":
             result = run_engineering_review(args.report, args.question, args.output)
         elif args.command == "verify-engineering-review":

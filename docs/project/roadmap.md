@@ -1,6 +1,6 @@
 # Automotive Workbench 长期升级路线 v3
 
-更新：2026-09-28。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
+更新：2026-09-29。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
 ## 长期产品目标
 
@@ -54,7 +54,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
-3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 当前推进 [P24 工程问题审查](p24-engineering-review-plan.md)：首批固定 30 题、P21/P22/P23 来源复验消费者与开发评测已由实现 `92bf90a` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 验收，见 [P24 验收表](p24-acceptance.md)；下一项为独立负例、检索/严重度分项计量及完整阶段冻结仍待完成。
+3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 当前推进 [P24 工程问题审查](p24-engineering-review-plan.md)：首批固定 30 题、P21/P22/P23 来源复验消费者与开发评测已由实现 `92bf90a` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 验收，见 [P24 验收表](p24-acceptance.md)；目录检索、对象级/严重度分项本轮已本地通过；下一项为冻结实现后形成并执行独立负例，再做本实现七 job 验收和整阶段冻结。
 4. P20 结果比较与 P21 配置依赖影响分别保留；P22 只映射源 ARXML 真正提供的语义，不从 SWC/interface 名称补造 COM/PduR/CanIf ECUC。
 
 ## 持续升级的完成规则
