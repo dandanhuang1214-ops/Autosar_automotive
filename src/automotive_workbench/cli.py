@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from automotive_workbench.adapters.generate_arxml import summarize_issue_report
@@ -49,6 +50,16 @@ from automotive_workbench.project_comparison import (
     compare_project_reports,
     validate_project_comparison,
 )
+
+
+def _print_json(result: dict) -> None:
+    """Keep redirected JSON valid on consoles that cannot encode source text."""
+    text = json.dumps(result, ensure_ascii=False, indent=2)
+    try:
+        text.encode(getattr(sys.stdout, "encoding", None) or "utf-8")
+    except UnicodeEncodeError:
+        text = json.dumps(result, ensure_ascii=True, indent=2)
+    print(text)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -515,9 +526,9 @@ def main() -> int:
                 args.output,
             )
     except (OSError, ValueError, KeyError, RuntimeError, json.JSONDecodeError) as exc:
-        print(json.dumps({"status": "error", "message": str(exc)}, ensure_ascii=False, indent=2))
+        _print_json({"status": "error", "message": str(exc)})
         return 1
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    _print_json(result)
     if result.get("status") in {
         "failed",
         "partial",

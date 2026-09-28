@@ -1231,3 +1231,10 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 开发基线 30/30 题、30/30 引用复算、5/5 拒答通过；来源包括两个公开通信项目、公开 XML 的合成故障、合成缺失构建的离线项目。删除原位置后 30/30 答案随整个目录迁移复验通过，最终场景证据记录于 `output/p24-validation/release/`。开发集 SHA-256 `0eb5ce7db782d76678a60df28609128a514103da9a9a247299e584552843b0bc`，问题目录 SHA-256 `428427a19e16d60bf613ae51a3b1718cce553401ab4cfeee47d3fd90a2351fde`。本轮没有新增现场 ECU/商业工具成功声明。
 - Windows/Ubuntu runtime-evidence 接入独立开发场景和上传，七 job 拓扑不变；Python 3.14 currency 保留。官方资料核对 AUTOSAR R25-11 与 NIST AI 600-1，具体选择和边界见 [P24 指南](p24-engineering-review-guide.md)，个人练习见 [学习记录](../learning/p24-evidence-review.md)。公开新版本不自动扩大现有 XML 4.3.0 子集支持。
 - 状态：P24 implementing，本轮开发基线 local-accepted，待提交推送和独立远端验收。30 题参与开发，不是独立 held-out；固定指针不算自然语言检索，模型未运行。下一项为冻结开发基线后形成未参与规则调优的负例、加强对象级 gold 与严重度/检索分项计量并评估解释缺口；不标记 P24 整阶段完成，不提前切换 P25。首页、路线、总览和验收表同步。
+
+
+### P24：中文 JSON 输出的兼容性补强
+
+- 首次实现 `7d42b1b` 已推送，run `36414801501` 已触发。随后本机用 `PYTHONIOENCODING=ascii` 实际复现 `list-engineering-questions` 的 UnicodeEncodeError；这是补查发现，不归因于尚在执行的远端 CI。
+- CLI 在输出流不能编码原文时改用 JSON Unicode 转义，保留数据内容、文件 UTF-8 和退出码；覆盖正常目录查询及拒答输出。新增专项后 13 组消费者测试通过，后续修复提交须自己的远端验收，不能继承首次实现运行结论。
+- 修复后最终全量 296 tests：294 passed、2 environment skips，摘要 `output/p24-validation/tests-encoding-final/ci-test-summary.json`；13 组专项、Ruff 和 whitespace 通过。问题目录和开发 gold 未改变，最终远端仍重跑完整 30 题及迁移场景。

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -42,6 +45,22 @@ class EngineeringReviewTests(unittest.TestCase):
         self.assertEqual(len({q["category"] for q in questions}), 6)
         self.assertEqual({q["id"] for q in questions}, {q["question_id"] for q in gold["cases"]})
         self.assertEqual(gold["split"], "development")
+
+    def test_cli_keeps_chinese_questions_valid_in_ascii_redirected_output(self) -> None:
+        commands = [
+            (["list-engineering-questions"], 0),
+            (["review-engineering", str(self.source), "--question", "arxml-ecuc", "--output", str(self.root / "cli-answer")], 2),
+        ]
+        for args, expected in commands:
+            process = subprocess.run(
+                [sys.executable, "-m", "automotive_workbench.cli", *args],
+                env={**os.environ, "PYTHONIOENCODING": "ascii"},
+                capture_output=True, text=True, encoding="ascii", timeout=60,
+            )
+            self.assertEqual(process.returncode, expected, process.stderr)
+            result = json.loads(process.stdout)
+            question = result.get("question") or result["questions"][0]["question"]
+            self.assertTrue(any(ord(char) > 127 for char in question))
 
     def test_structured_citations_schema_and_replay(self) -> None:
         result = self.review()
