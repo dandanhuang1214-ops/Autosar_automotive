@@ -124,7 +124,7 @@ jobs:
       - name: Run engineering review development scenarios
         run: python scripts/run_engineering_review_scenarios.py --output output/engineering-review
       - name: Assess engineering review components
-        run: python scripts/run_p24_assessment.py --development output/engineering-review --output output/p24-assessment
+        run: python scripts/run_p24_assessment.py --development output/engineering-review --output output/p24-assessment --held-out tests/fixtures/p24-held-out-0.1.json
       - name: Upload engineering review assessment
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
