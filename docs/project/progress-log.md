@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-28）
 
-当前主阶段：`P24 — 工程问题审查（implementing）`。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 P22 公开路径保持冻结，商业往返仍 blocked。P24 本轮实现六类 30 个固定问题、版本绑定的结构化引用、来源复验及开发集评测，已完成本地验证，本实现远端待执行。独立未参与开发负例和分项计量尚未完成，不标记 P24 整阶段验收；平台实现与个人学习掌握分别计量。
+当前主阶段：`P24 — 工程问题审查（implementing）`。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 P22 公开路径保持冻结，商业往返仍 blocked。P24 首批六类 30 题、结构化引用、来源复验及开发评测已 remote-accepted：实现 `92bf90ae777bc7fad83ea929e2c245a1bacae4cc` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 全部 success，两平台 30 题场景与上传均 success。独立未参与开发负例和分项计量尚未完成，不标记 P24 整阶段验收；平台实现与个人学习掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1238,3 +1238,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 首次实现 `7d42b1b` 已推送，run `36414801501` 已触发。随后本机用 `PYTHONIOENCODING=ascii` 实际复现 `list-engineering-questions` 的 UnicodeEncodeError；这是补查发现，不归因于尚在执行的远端 CI。
 - CLI 在输出流不能编码原文时改用 JSON Unicode 转义，保留数据内容、文件 UTF-8 和退出码；覆盖正常目录查询及拒答输出。新增专项后 13 组消费者测试通过，后续修复提交须自己的远端验收，不能继承首次实现运行结论。
 - 修复后最终全量 296 tests：294 passed、2 environment skips，摘要 `output/p24-validation/tests-encoding-final/ci-test-summary.json`；13 组专项、Ruff 和 whitespace 通过。问题目录和开发 gold 未改变，最终远端仍重跑完整 30 题及迁移场景。
+- 首轮 run `36414801501` 随后实际结论 failure；已读取日志，Windows runtime-evidence 在 `impact-acceptance` 的 CLI JSON 输出触发 cp1252 UnicodeEncodeError，和本机补查一致。该失败 run 不计 acceptance；修复提交 `92bf90a` 已推送，run `36415173355` 正在独立验收。
+
+
+## P24：首批开发基线远端验收（2026-09-28）
+
+- 实现 `92bf90ae777bc7fad83ea929e2c245a1bacae4cc` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 全部 success，两平台 30 题场景与上传均 success。已核对完整 head SHA 和每个 job/step，原始明细存于 `output/p24-validation/remote-ci.json`。
+- 实际 job：core-contracts (windows-latest) `108904484624` success；runtime-currency `108904484894` success；core-contracts (ubuntu-22.04) `108904484973` success；runtime-evidence (windows-latest) `108905321693` success；runtime-evidence (ubuntu-22.04) `108905321722` success；controlled-rejections (ubuntu-22.04) `108905321749` success；controlled-rejections (windows-latest) `108905321898` success。
+- Windows/Ubuntu 的 `Run engineering review development scenarios`、`Upload engineering review development evidence` 均 completed/success，产物 `engineering-review-Windows`、`engineering-review-Linux`；完整开发问题、来源重算和移除原目录后的 30 份迁移复验通过。首次 Windows cp1252 失败由最终实现修复，不使用失败 run 作为验收依据。
+- 本轮消费者与开发基线 remote-accepted；P24 整阶段仍 implementing。下一项为在固定开发策略之后形成独立未参与调优负例、加强对象级 gold 与严重度/检索分项计量，再依据实际解释缺口决定可选模型。当前固定查询与拒答不声称自然语言推理能力；平台结果不替代个人学习验收。
+- 本条与首页/路线/验收表是后续纯文档状态回填，使用 `[skip ci]` 提交推送；实现验收只引用上面的固定提交和 run，不把文档提交作为新实现验证。开发问题目录与 gold hash 保持上一条记录。
