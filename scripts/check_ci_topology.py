@@ -13,6 +13,8 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run engineering review development scenarios": "runtime-evidence",
+    "Upload engineering review development evidence": "runtime-evidence",
     "Run external ECU project scenarios": "runtime-evidence",
     "Upload external ECU project evidence": "runtime-evidence",
     "Run external ECU offline scenarios": "runtime-evidence",

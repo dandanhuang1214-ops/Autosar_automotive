@@ -1,6 +1,6 @@
 # Automotive Workbench 长期升级路线 v3
 
-更新：2026-09-27。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
+更新：2026-09-28。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
 ## 长期产品目标
 
@@ -25,13 +25,13 @@
 
 | 领域 | 已有能力 | 本轮查证的缺口 |
 |---|---|---|
-| 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | P20 已冻结两项目统一声明流程；P21 已补齐受限对象图与配置影响，P22 公开 ARXML 桥接已验收，P23 项目 0.5 本轮待远端验收 |
+| 工程入口 | P15/P16 项目执行、输入快照、实际生成器导出消费 | P20 已冻结两项目统一声明流程；P21 已补齐受限对象图与配置影响，P22 公开 ARXML 桥接已验收，P23 项目 0.5 已远端验收，当前推进 P24 |
 | 通信运行 | virtual/SocketCAN、双向证据、过滤与 blocked | project 0.3 已接入通用运行与路径绑定；旧项目保留兼容路径 |
 | BSW 映射 | Tx/Rx、DBC 属性、跨层引用一致性与 8 节点 trace | P21 已有四类稳定身份对象、规则覆盖与验收关联；仍不验证 vendor ECUC |
 | 外部工具 | 固定 Generate-Arxml DOCX/contract/issues 三例 | P22 已有真实 SWC ARXML 受限离线导入/比较；项目 0.4 公开路径已远端验收，ECU Extract/ECUC 未覆盖 |
-| ECU 执行 | 固定 OpenBSW 构建、CF01、独立进程生命周期及现场故障证据 | 项目 0.5 已统一快照/门控/诊断/审查，本轮待远端验收 |
+| ECU 执行 | 固定 OpenBSW 构建、CF01、独立进程生命周期及现场故障证据 | 项目 0.5 已远端验收，现场与离线证据分开 |
 | 审查交付 | 确定性引用、拒答、项目比较、P19 HTML | 现有结果比较不等同于输入变更影响；检索审查不等同于通用语义诊断 |
-| 质量基线 | 七 job CI、安装后验证、证据迁移复验 | P23 执行底座七 job 已通过；本轮项目集成需独立远端验收 |
+| 质量基线 | 七 job CI、安装后验证、证据迁移复验 | P23 项目集成七 job 已通过；P24 新实现独立验收 |
 
 P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已由实现提交 `88c24e2`、远端 run `35748563878` 的七 job 全绿完成冻结。P19 属于既有工作流的易用性补强，不是新的长期产品方向。
 
@@ -50,11 +50,11 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P23 implementing
+## 当前执行：P24 implementing
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
-3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。当前 P23 implementing：固定干净构建、寻址绑定、独立进程及诊断底座已实现，vcan0 已恢复，正常/无响应/错误 DID/ID/锁冲突及迁移现场通过。执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job remote-accepted；项目 0.5 已完成快照/门控/诊断验收/审查/比较及本地现场迁移验收，本轮七 job 待执行，见 [验收表](p23-acceptance.md)与[项目指南](p23-project-guide.md)。通过后冻结固定 POSIX/vcan0 范围的 P23，推进 [P24 工程问题审查](p24-engineering-review-plan.md)。
+3. P22 公开路径 remote-accepted：项目 0.4 实现 `0e00245` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台项目场景与上传通过，见 [验收表](p22-acceptance.md)。商业工具往返仍 blocked，恢复需实际安装、许可与执行证据。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 当前推进 [P24 工程问题审查](p24-engineering-review-plan.md)：首批固定 30 题、P21/P22/P23 来源复验消费者与开发评测；独立负例、检索/严重度分项计量及完整阶段冻结仍待完成。
 4. P20 结果比较与 P21 配置依赖影响分别保留；P22 只映射源 ARXML 真正提供的语义，不从 SWC/interface 名称补造 COM/PduR/CanIf ECUC。
 
 ## 持续升级的完成规则

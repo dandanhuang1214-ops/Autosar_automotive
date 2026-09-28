@@ -729,7 +729,7 @@ def verify_graph_report(path: Path) -> dict[str, Any]:
             )
         else:
             raise ValueError("Unsupported graph report version")
-        if report != expected:
+        if json.dumps(report, sort_keys=True, allow_nan=False) != json.dumps(expected, sort_keys=True, allow_nan=False):
             raise ValueError("Report differs from source replay")
         return {"status": "passed", "reason": "Embedded input replay matches report"}
     except (ValueError, KeyError, TypeError, OSError) as exc:

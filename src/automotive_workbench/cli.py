@@ -42,6 +42,9 @@ from automotive_workbench.evidence_capsule_verification import verify_evidence_c
 from automotive_workbench.project_workflow import run_project
 from automotive_workbench.arxml_bridge import run_arxml, verify_report
 from automotive_workbench.project_review import run_project_review
+from automotive_workbench.engineering_review import (
+    catalog, run_engineering_review, verify_engineering_review,
+)
 from automotive_workbench.project_comparison import (
     compare_project_reports,
     validate_project_comparison,
@@ -51,6 +54,14 @@ from automotive_workbench.project_comparison import (
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    commands.add_parser("list-engineering-questions", help="List bounded, versioned P21-P23 evidence questions")
+    engineering = commands.add_parser("review-engineering", help="Answer a fixed engineering question with replay-verified structured citations")
+    engineering.add_argument("report", type=Path)
+    engineering.add_argument("--question", required=True)
+    engineering.add_argument("--output", type=Path, required=True)
+    engineering_verify = commands.add_parser("verify-engineering-review", help="Recompute an engineering answer and all source citations offline")
+    engineering_verify.add_argument("report", type=Path)
 
     for command in ("import-arxml", "compare-arxml"):
         arxml_parser = commands.add_parser(command, help="Import/compare the audited SWC ARXML subset")
@@ -420,6 +431,12 @@ def main() -> int:
             result = run_project(args.project, args.output, default_communication_config(args.interface, args.channel))
         elif args.command == "run-project-review":
             result = run_project_review(args.report, args.output, args.claim)
+        elif args.command == "list-engineering-questions":
+            result = catalog()
+        elif args.command == "review-engineering":
+            result = run_engineering_review(args.report, args.question, args.output)
+        elif args.command == "verify-engineering-review":
+            result = verify_engineering_review(args.report)
         elif args.command == "verify-project-comparison":
             result = validate_project_comparison(args.report)
         elif args.command == "compare-projects":

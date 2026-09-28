@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-27）
+## 当前总览（2026-09-28）
 
-当前阶段：`P23 — 独立 ECU 执行纳入项目（implementing）`。P22 公开路径已冻结：实现 `0e002459b07bd4c5e71bbfd8602eb0acd9136c23` / [run `36257173567`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36257173567) 七 job 全部 success，两平台 ARXML 项目场景与上传通过，见 [P22 验收表](p22-acceptance.md)。商业导入/回导仍 blocked，不计入公开路径完成。P23 固定构建、寻址绑定及独立 ECU 执行底座已实现，真实 CF01/无响应/错误 DID/ID/锁冲突和五份迁移报告通过；执行底座实现 `320defd` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 全绿、remote-accepted。项目 0.5 已完成统一快照/静态门控/诊断验收/审查比较，本机八案例与六份报告迁移复验通过；本轮七 job 待执行，通过后推进 P24 工程问题审查，见 [P23 验收表](p23-acceptance.md)。平台实现证据与个人学习掌握分别验收。
+当前主阶段：`P24 — 工程问题审查（implementing）`。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 P22 公开路径保持冻结，商业往返仍 blocked。P24 本轮实现六类 30 个固定问题、版本绑定的结构化引用、来源复验及开发集评测，已完成本地验证，本实现远端待执行。独立未参与开发负例和分项计量尚未完成，不标记 P24 整阶段验收；平台实现与个人学习掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1213,3 +1213,21 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终全量 283 tests：281 passed、2 environment skips；九组专项覆盖门控、schema/loader parity、来源篡改、布尔类型、原输入变化、可选 generation、比较与迁移。45 schema、61 schema-bound examples、25 syntax-only examples、Ruff、32 文件 mypy、Windows-target 新入口类型检查、topology、pip check、compileall 与 whitespace 通过。摘要 `output/p23-project-validation/tests-final/ci-test-summary.json`。
 - 实施中修复迁移时静态报告残留绝对路径、场景脚本引用复验 API 参数和脚本模块别名导致的 mypy 重复模块；最终专项和现场迁移复算通过。未修改原 OpenBSW 工作树，未发送外部贡献。
 - 状态：P23 整条固定 POSIX/vcan0 路径 local-accepted，本轮实现尚未提交/推送，远端待执行；不继承上一执行底座实现的 CI 结论。通过本轮七 job 后冻结 P23，推进 [P24 工程问题审查](p24-engineering-review-plan.md)。首页、路线、总览、指南和学习练习同步；平台证据与个人学习分别验收。
+
+
+## P23：项目集成远端冻结并推进 P24（2026-09-28）
+
+- 实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。
+- 实际 job：runtime-currency `108654216823` success；core-contracts (windows-latest) `108654216899` success；core-contracts (ubuntu-22.04) `108654216949` success；controlled-rejections (ubuntu-22.04) `108654627129` success；runtime-evidence (windows-latest) `108654627169` success；runtime-evidence (ubuntu-22.04) `108654627175` success；controlled-rejections (windows-latest) `108654627183` success。两平台 `Run external ECU project scenarios` 和 `Upload external ECU project evidence` 均 success，原始明细保存于 `output/p23-project-validation/remote-ci.json`。
+- 上一条“尚未提交/远端待执行”是实现提交前记录。本条核对既有实现和实际运行后冻结，不把本轮 P24 提交算作 P23 实现验收。下一主阶段 P24 已按路线启动。
+
+
+## P24：固定工程问题消费者与开发基线（2026-09-28）
+
+- P23 七 job 已核对并冻结后进入既定 P24 主阶段。新增 `list-engineering-questions`、`review-engineering`、`verify-engineering-review`，支持 P21 图/影响、P22 XML 导入/比较、P23 项目 0.5 和独立执行报告。复用已有领域来源复验与 JSON Pointer；不执行 ECU，不改变旧审查契约。
+- 首批固定六类 30 题，开发 gold 独立记录状态/值及禁止推断范围。`engineering-review-0.1` 保存问题目录 hash、源版本/相对路径/hash、完整结构化引用和筛选结果；保留 null/空集合与实际类型，无证据的内部映射、唯一根因、商业 ECUC、物理 ECU 和身份声明明确拒答。目录策略改变须版本化，不能静默使历史答案适配新问题。
+- 来源复验补强：图/ARXML 原先使用 Python 对象相等，可能接受 true 与 1（false 与 0）替换；现在使用严格 JSON 比较。新增 12 组测试覆盖真实源重算、类型替换、伪造版本/答案/引用/目录 hash、完整字段拒绝、迁移及无副作用输出保护。首轮两条测试误以为 is_signed 是顶层属性、ARXML finding 有 severity，按真实嵌套结构修正；缺失 severity 保留缺失，不人为增加等级。
+- 全量 295 tests：293 passed、2 environment skips。46 schema、61 schema-bound examples、25 syntax-only examples、Ruff、34 文件 mypy、Windows-target 新入口检查、CI topology、pip check 和 whitespace 通过。摘要 `output/p24-validation/tests-final/ci-test-summary.json`。
+- 开发基线 30/30 题、30/30 引用复算、5/5 拒答通过；来源包括两个公开通信项目、公开 XML 的合成故障、合成缺失构建的离线项目。删除原位置后 30/30 答案随整个目录迁移复验通过，最终场景证据记录于 `output/p24-validation/release/`。开发集 SHA-256 `0eb5ce7db782d76678a60df28609128a514103da9a9a247299e584552843b0bc`，问题目录 SHA-256 `428427a19e16d60bf613ae51a3b1718cce553401ab4cfeee47d3fd90a2351fde`。本轮没有新增现场 ECU/商业工具成功声明。
+- Windows/Ubuntu runtime-evidence 接入独立开发场景和上传，七 job 拓扑不变；Python 3.14 currency 保留。官方资料核对 AUTOSAR R25-11 与 NIST AI 600-1，具体选择和边界见 [P24 指南](p24-engineering-review-guide.md)，个人练习见 [学习记录](../learning/p24-evidence-review.md)。公开新版本不自动扩大现有 XML 4.3.0 子集支持。
+- 状态：P24 implementing，本轮开发基线 local-accepted，待提交推送和独立远端验收。30 题参与开发，不是独立 held-out；固定指针不算自然语言检索，模型未运行。下一项为冻结开发基线后形成未参与规则调优的负例、加强对象级 gold 与严重度/检索分项计量并评估解释缺口；不标记 P24 整阶段完成，不提前切换 P25。首页、路线、总览和验收表同步。

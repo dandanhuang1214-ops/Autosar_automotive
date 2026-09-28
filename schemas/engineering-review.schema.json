@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/engineering-review.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "engineering-review-0.1"
+    },
+    "status": {
+      "enum": [
+        "answered",
+        "refused"
+      ]
+    },
+    "question_id": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "impact",
+        "graph",
+        "arxml",
+        "project",
+        "external",
+        "provenance"
+      ]
+    },
+    "catalog_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "schema_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "schema_version"
+      ],
+      "additionalProperties": false
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "pointer": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "value": {},
+          "value_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "pointer",
+          "value",
+          "value_sha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "selected": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "refusal_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "boundary": {
+      "type": "string"
+    },
+    "method": {
+      "type": "object",
+      "properties": {
+        "retrieval": {
+          "const": "fixed-json-pointer"
+        },
+        "validation": {
+          "const": "domain-source-replay"
+        },
+        "model": {
+          "const": "not-run"
+        }
+      },
+      "required": [
+        "retrieval",
+        "validation",
+        "model"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "question_id",
+    "question",
+    "category",
+    "catalog_sha256",
+    "source",
+    "facts",
+    "selected",
+    "refusal_reason",
+    "boundary",
+    "method"
+  ]
+}

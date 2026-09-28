@@ -301,7 +301,7 @@ def _verify_report(report: dict[str, Any]) -> None:
         expected = compare_imports(report["baseline"], report["candidate"])
     else:
         raise ValueError("Unknown ARXML report version")
-    if report != expected:
+    if json.dumps(report, sort_keys=True, allow_nan=False) != json.dumps(expected, sort_keys=True, allow_nan=False):
         raise ValueError("ARXML report differs from embedded source replay")
 
 

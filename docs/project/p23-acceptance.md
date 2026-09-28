@@ -1,6 +1,6 @@
 # P23 验收记录
 
-更新：2026-09-27。当前主阶段 implementing；本轮独立执行底座 remote-accepted：实现 `320defd6b23d22800520b7434bd0ae739164e6ce` / [run `36323420799`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36323420799) 七 job 全部 success。项目 0.5 已完成本地整条路径，等待本轮独立远端验收后冻结整阶段。
+更新：2026-09-28。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。
 
 | 阶段门 | 实际证据 | 状态 |
 |---|---|---|
@@ -11,7 +11,7 @@
 | 超时/异常/信号清理 | 客户端期限、早退/部分启动、实际 SIGTERM、强制 KILL 回归 | 本地通过（编排替身） |
 | 快照与迁移 | 移除变体输入、移动目录后 5/5 现场报告复验；离线合成 1/1 | 本地通过 |
 | 七 job CI | 两平台离线场景/上传 success，Linux 生命周期测试与 Windows blocked 回归通过 | remote-accepted |
-| 统一项目快照/验收/审查 | project/report 0.5；快照/静态门控/诊断/审查比较及迁移已通过；旧 0.1–0.4 兼容 | 本地通过，本轮待远端 |
+| 统一项目快照/验收/审查 | project/report 0.5；快照/静态门控/诊断/审查比较及迁移已通过；旧 0.1–0.4 兼容 | remote-accepted（3e4c29a / 36331506323） |
 
 本地证据：`output/p23-validation/build/`、`live-scenarios/`、`offline/`、`tests-final/`。构建与现场日志为本机证据，不提交 Git；CI 上传离线证据，明确不等同现场运行。
 
@@ -27,7 +27,7 @@
 
 ELF、构建 provenance 及每份报告的输入 inventory 保存独立 hash。哈希绑定不认证 ECU 身份。范围为 Linux POSIX/vcan，非物理 ECU/量产 BSW；商业工具往返仍 blocked，个人学习掌握另行验收。复跑入口见 [执行指南](p23-external-ecu-guide.md)。
 
-## 项目 0.5 整条路径（本轮）
+## 项目 0.5 整条路径（已远端冻结）
 
 - 本地场景：正常项目 passed；canonical 静态失败使 communication/external_ecu 均 skipped；验收条件变化、无响应、错误 DID/响应 ID 为 failed；未声明 ID 漂移与通道漂移在创建输出前拒绝。
 - 六份报告删除生成源输入、移动目录后，manifest、原引用、重审和比较均通过。正常自比较 stable、静态回归 regressed；改变执行条件或验收定义为 not-comparable，物理 ECU 越界声明拒答。
