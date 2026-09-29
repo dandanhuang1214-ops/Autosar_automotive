@@ -13,6 +13,8 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Verify installed multi-project delivery": "runtime-evidence",
+    "Upload installed multi-project delivery": "runtime-evidence",
     "Assess engineering review components": "runtime-evidence",
     "Upload engineering review assessment": "runtime-evidence",
     "Run engineering review development scenarios": "runtime-evidence",

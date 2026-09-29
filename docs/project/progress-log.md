@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-29）
 
-当前主阶段：`P25 — 可复现平台交付（planned）`。P20–P23 已在各自记录范围验收；P22 商业往返仍 blocked，P23 现场证据沿用已记录的 POSIX/vcan0 运行。P24 固定工程问题、目录导航、对象级 gold、严重度保真与冻结后负例已 remote-accepted：实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。30 题、12 个冻结后负例和迁移复验均通过。下一项为[隔离安装后双项目与配置故障流程](p25-reproducible-delivery-plan.md)。平台实现与个人学习掌握分别计量。
+当前主阶段：`P25 — 可复现平台交付（implementing）`。P20–P23 已在各自记录范围验收；P22 商业往返仍 blocked，P23 现场证据沿用已记录的 POSIX/vcan0 运行。P24 固定工程问题、目录导航、对象级 gold、严重度保真与冻结后负例已 remote-accepted：实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。30 题、12 个冻结后负例和迁移复验均通过。[隔离安装后双项目与配置故障流程](p25-installed-delivery-guide.md)已本地通过，下一项为本实现七 job 远端验收与演示/能力证据映射。平台实现与个人学习掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1277,3 +1277,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 全量 303 tests：301 passed、2 环境跳过；完整检查口径见 P24 验收表。负例同维护者、共享公开来源家族，不宣称第三方盲测；模型未运行。
 - P24 在固定问题与词法目录导航范围完成，当前主阶段切换 P25 planned；下一项为 wheel 隔离安装后在仓库外运行车窗、ThermalControl 与配置故障/影响/审查复验。
 - 本次后续文档状态提交使用 `[skip ci]`；实现验收仍绑定 `6117b09`，不把文档提交当作另一次实现验收。
+
+
+### P25：安装后完整项目交付验证（2026-09-29）
+
+- 新增 `scripts/check_installed_projects.py`：构建 wheel 和平台适配 CAN 依赖 wheelhouse，在仓库外创建干净 venv；清除 PYTHONPATH/PYTHONHOME，验证 installed module 与解释器 prefix，offline 安装并执行 pip check。
+- 全部工程步骤使用安装后的 workbench；仅旧审查引用重放使用该解释器调用已有验证接口。车窗/ThermalControl 正常通过，真实 DBC 缩放变更引发静态失败并阻止通信；影响只命中 thermal-status，比较为 regressed。原目录移走后复验三组项目库存、三组审查引用及影响/比较/工程答案。
+- 保留 wheelhouse、输入、85 个迁移证据文件、commands/stdout/stderr/退出码与耗时、运行环境和 SHA-256；本地首次成功 `output/p25-installed-network/summary.json`，自动流程 40.799 秒，不计成人工十分钟演示。最初 sandbox 下载被代理网络限制拒绝，批准联网重跑后成功；不伪称首次环境运行成功。
+- 新增四项保护测试：隔离来源拒绝、样例包完整性及单文件变更、故障注入位置不存在拒绝、保留已有输出；CI topology 同步两个新步骤，双平台 runtime-evidence 上传完整交付归档。
+- 增加 Windows/Linux 安装与复跑指南及英文 README；P24 已冻结源代码和 gold 不变。当前 P25 implementing，本轮 local-accepted；远端、离线复用与全量最终计数待下条验收回填。人工演示、能力映射和真实外部反馈未验收。
