@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-29）
 
-当前主阶段：`P24 — 工程问题审查（implementing）`。实现 `3e4c29aba190f74cf0e17641af649892a37f415a` / [run `36331506323`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36331506323) 七 job 全部 success，Windows/Ubuntu 项目场景与上传均 success。P23 固定 POSIX/vcan0 范围 remote-accepted；现场证据沿用已记录的真实构建与诊断，不把远端离线验收当现场运行。 P22 公开路径保持冻结，商业往返仍 blocked。P24 首批六类 30 题、结构化引用、来源复验及开发评测已 remote-accepted：实现 `92bf90ae777bc7fad83ea929e2c245a1bacae4cc` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 全部 success，两平台 30 题场景与上传均 success。本轮目录检索、对象级 gold、严重度与条件差异分项已本地通过，正冻结实现后形成负例；本轮远端待执行，不标记 P24 整阶段验收；平台实现与个人学习掌握分别计量。
+当前主阶段：`P25 — 可复现平台交付（planned）`。P20–P23 已在各自记录范围验收；P22 商业往返仍 blocked，P23 现场证据沿用已记录的 POSIX/vcan0 运行。P24 固定工程问题、目录导航、对象级 gold、严重度保真与冻结后负例已 remote-accepted：实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。30 题、12 个冻结后负例和迁移复验均通过。下一项为[隔离安装后双项目与配置故障流程](p25-reproducible-delivery-plan.md)。平台实现与个人学习掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1258,3 +1258,22 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 开发分项通过：目录 top-1/hit@3 17/17、无匹配 1/1；确定性 gold 30/30、引用 30/30；ERROR/缺失等级保真 2/2、摘要篡改拒绝 3/3；合成缺失构建项目的源码提交变化和 timeout 变化比较 2/2 not-comparable。证据 `output/p24-assessment-validation/development-final/`。首轮评分器错误读取顶层 reasons，已按既有 comparison basis 契约修正并复跑；这发生在负例形成之前。
 - 全量 303 tests：301 passed、2 environment skips；定向审查/检索检查、47 schema、61 schema-bound examples、25 syntax-only examples、Ruff、36 文件 mypy、topology、pip check 与 whitespace 通过。全量摘要 `output/p24-assessment-validation/tests-freeze/ci-test-summary.json`。
 - 当前阶段 P24 implementing，本轮开发部分 local-accepted。下一步立即冻结实际提交，再形成并预登记未参与调优的负例清单，按冻结 hash 执行；此时尚未声称独立负例或整阶段通过。形成规则和限定见 [评测制度](p24-evaluation-protocol.md)。个人学习仍单列。
+
+
+## P24：冻结后负例首次验收（2026-09-29）
+
+- 开发策略冻结提交 `249a7307ef7b0db96c09c65a5187d5bd40f6e3f9`，该中间提交 `[skip ci]`，没有声称远端验收。随后形成并在首次执行前登记负例：提交 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46`，清单 SHA-256 `5c880470f931e0f103c9648b1cd34e0242f50574a4e386b6f893e1947f53df24`，绑定 154 个运行源码、评测/生成脚本、开发 gold 和公开输入文件。
+- 首轮结果：9/9 完整性拒绝、3/3 范围拒答、12/12 迁移复验；三个新目录查询 top-1/hit@3 3/3、两个无匹配查询 2/2。每例原输入 hash、实际退出码、结果和分类保存在 `output/p24-assessment-validation/held-out-first/`，同级 `held-out-first-summary.json` 保存完整冻结记录。消费者、排序、评分器、gold 和阈值均未据结果调整。
+- 独立性范围：在冻结后形成且未参与调优，复用公开项目家族、同一维护过程编写，不称第三方盲测/客户样本/物理 ECU。案例具体变化见[评测制度](p24-evaluation-protocol.md)；不把原开发负例改名成新负例。
+- 已推送，独立七 job run `36451604309` 正在执行；本轮尚未 remote-accepted。正在从全新目录复跑开发 + 分项 + 冻结负例的完整命令，P24 仍 implementing；通过后整阶段按受限范围冻结，并进入[既定 P25 交付计划](p25-reproducible-delivery-plan.md)，下一项为安装后两项目及故障竖切。
+
+
+### P24：整阶段远端验收与 P25 交接（2026-09-29）
+
+- 实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。
+- 实际 job：runtime-currency `109027461487` success；core-contracts (ubuntu-22.04) `109027461885` success；core-contracts (windows-latest) `109027461986` success；controlled-rejections (ubuntu-22.04) `109028565371` success；runtime-evidence (ubuntu-22.04) `109028565462` success；runtime-evidence (windows-latest) `109028565486` success；controlled-rejections (windows-latest) `109028565536` success。
+- 两平台 `Assess engineering review components` 与 `Upload engineering review assessment` 均 success；实际记录 `output/p24-assessment-validation/remote-ci.json`。
+- 从头生成来源后的完整本地重放 `output/p24-assessment-release/assessment/summary.json` passed。开发确定性/引用各 30/30，严重度 2/2、摘要篡改拒绝 3/3、条件比较 2/2；冻结后完整性拒绝 9/9、越界拒答 3/3、迁移 12/12。未在首次负例执行后调优代码或 gold。
+- 全量 303 tests：301 passed、2 环境跳过；完整检查口径见 P24 验收表。负例同维护者、共享公开来源家族，不宣称第三方盲测；模型未运行。
+- P24 在固定问题与词法目录导航范围完成，当前主阶段切换 P25 planned；下一项为 wheel 隔离安装后在仓库外运行车窗、ThermalControl 与配置故障/影响/审查复验。
+- 本次后续文档状态提交使用 `[skip ci]`；实现验收仍绑定 `6117b09`，不把文档提交当作另一次实现验收。

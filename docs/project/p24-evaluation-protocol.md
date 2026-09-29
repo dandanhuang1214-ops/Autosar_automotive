@@ -1,6 +1,6 @@
 # P24 分项评测与冻结制度
 
-更新：2026-09-29。当前开发实现已本地验证，尚未形成新负例集或宣称本轮远端验收。
+更新：2026-09-29。开发实现冻结于 `249a7307ef7b0db96c09c65a5187d5bd40f6e3f9`；随后负例登记提交 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46`。首轮本地负例和从头生成来源后的完整重放通过；实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。
 
 ## 分项口径
 
@@ -30,4 +30,17 @@ python scripts/run_engineering_review_scenarios.py --output output/engineering-r
 python scripts/run_p24_assessment.py --development output/engineering-review --output output/p24-assessment
 ```
 
-形成冻结负例清单后，最后一条命令增加 `--held-out <清单路径>`。总报告分别保存各分项分子、分母和明细；模型不参与判定。来源报告与答案不是单文件胶囊，迁移应保留相对目录关系。
+最后一条命令增加 `--held-out tests/fixtures/p24-held-out-0.1.json` 即运行冻结负例。总报告分别保存各分项分子、分母和明细；模型不参与判定。来源报告与答案不是单文件胶囊，迁移应保留相对目录关系。
+
+## 首轮后形成负例记录
+
+清单 SHA-256：`5c880470f931e0f103c9648b1cd34e0242f50574a4e386b6f893e1947f53df24`。154 个被测运行源码、脚本、开发 gold 和公开输入文件绑定于清单；具体形成 UTC 时间见清单。首次评测在登记提交之后进行，未根据结果修改清单、消费者、检索或评分器。
+
+| 类型 | 新扰动 | 首轮本地结果 |
+|---|---|---|
+| 9 个完整性负例 | 删除依赖边、错误影响路径、掩盖原始 XML 周期、遗漏引用、重算库存后保留过期 timeout 摘要、遗漏构建角色、删除嵌套命令日志、遗漏筛选 Finding、错误筛选周期分类 | 9/9 拒绝；预期错误原因逐项匹配 |
+| 3 个范围负例 | 生产者自称 ECUC 认证、工具标签自称物理量产认证、保存命令中的身份认证指令 | 3/3 拒答；元数据和命令始终作为数据，未执行 |
+| 5 个目录查询 | 三个新短语、两个无匹配领域查询 | top-1/hit@3 3/3，无匹配 2/2 |
+| 迁移 | 原目录改名后重验三类案例 | 12/12 保持拒绝/拒答结论 |
+
+原始首次证据为 `output/p24-assessment-validation/held-out-first/` 与同级 `held-out-first-summary.json`。它们与既有开发样例分别计量，不能合并宣称语言模型准确率或外部用户效果。

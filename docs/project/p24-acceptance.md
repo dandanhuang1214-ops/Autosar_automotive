@@ -1,17 +1,21 @@
 # P24 工程问题审查验收
 
-更新：2026-09-28。主阶段 implementing；本轮固定问题消费者与开发基线 remote-accepted：实现 `92bf90ae777bc7fad83ea929e2c245a1bacae4cc` / [run `36415173355`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36415173355) 七 job 全部 success，两平台 30 题场景与上传均 success。独立负例与完整分项计量未完成，不冻结整阶段。
+更新：2026-09-29。P24 固定问题与目录导航范围 **remote-accepted**。实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。
 
-| 门 | 当前证据 | 状态 |
+| 门 | 实际证据 | 状态 |
 |---|---|---|
-| 至少 30 个不同工程问题 | 六类各五题，固定版本、指针、gold 和禁止推断范围 | 开发基线通过 |
-| P21/P22/P23 消费与来源复验 | 图/影响、XML 导入/比较、项目 0.5、独立执行；旧审查接口兼容 | 本地及双平台 CI 通过 |
-| 精确引用与越界拒答 | 30/30 问题、30/30 引用复算、5/5 开发拒答、30/30 目录迁移 | 本地及双平台 CI 通过 |
-| 实际故障及篡改 | 合成配置/XML 故障和缺失构建 blocked；13 组单测含类型、来源、答案、迁移及无副作用拒绝 | 本地通过；没有新增现场 ECU 声明 |
-| 独立未参与开发负例 | 尚未形成，必须在开发策略冻结后独立记录 | 待完成 |
-| 分项计量 | 确定性、引用、拒答已有计数；固定指针不计作语义检索，模型未运行；严重度专门计量待补 | 部分完成 |
-| 独立七 job CI | 92bf90a / 36415173355，七 job 及两平台场景/上传 success | remote-accepted |
+| 至少 30 个不同工程问题 | 六类各五题；对象、路径、规则位置及周期前后值精确 gold 30/30 | 通过 |
+| P21/P22/P23 消费与来源复验 | 图/影响、XML、项目 0.5、独立执行；引用重算 30/30，原契约兼容 | 通过 |
+| 目录检索单独计量 | 开发 top-1 与 hit@3 各 17/17、无匹配 1/1；冻结后各 3/3、无匹配 2/2 | 通过 |
+| 严重度保真 | 原始 ERROR 与未标级 2/2；摘要降级、删除、伪造拒绝 3/3 | 通过 |
+| 条件差异解释 | 改变构建提交或诊断 timeout 后比较均 not-comparable，引用有效，2/2 | 通过 |
+| 未参与调优的冻结后负例 | 完整性拒绝 9/9、越界拒答 3/3、迁移重放 12/12 | 通过 |
+| 本轮七 job CI | 6117b09 / 36451604309，双平台评测和上传成功 | remote-accepted |
 
-复跑入口、来源范围和返回码见[指南](p24-engineering-review-guide.md)。本地全量 296 tests：294 passed、2 environment skips；46 schema、61 schema-bound examples、25 syntax-only examples、Ruff、34 文件 mypy、Windows-target 新入口检查、topology、pip check 和 whitespace 通过。开发脚本使用单独的 `development` 标记；不能把现有五个拒答算作独立负例。
+开发策略冻结提交 `249a7307ef7b0db96c09c65a5187d5bd40f6e3f9` 在先，负例登记提交 `6117b09` 在后，首次执行前已入 Git；冻结库存绑定 154 个文件。负例首次执行后未修改消费者、排序、评分器、gold 或阈值。负例与开发共享公开来源家族、由同一维护者形成，独立性限定为未用于调优，**不是第三方盲测或独立客户样本**。方法与 hash 见[评测制度](p24-evaluation-protocol.md)。
 
-下一项：本实现远端验收已完成，开发基线已固定；接着构建独立负例、加强对象级 gold 和严重度/检索分项计量，评估解释缺口；P24 未冻结前不切换 P25。
+本地全量 303 tests：301 passed、2 environment skips；47 schema、61 schema-bound examples、25 syntax-only examples、Ruff、36 文件 mypy、Windows-target 新入口检查、topology、pip check 和 whitespace 通过。从头生成来源后的完整重放 `output/p24-assessment-release/assessment/summary.json` 为 passed；实际远端记录保存在 `output/p24-assessment-validation/remote-ci.json`。
+
+目录检索仅导航固定问题，不代表语义证据检索；模型未运行。条件比较使用合成缺失构建的 blocked 项目，没有新增现场 ECU 运行。完整性验证不认证生产者身份；严重度未覆盖所有厂商等级。原首批基线 `92bf90a` / run `36415173355` 保留为历史，不替代本轮验收。
+
+下一主阶段为 [P25 可复现交付](p25-reproducible-delivery-plan.md)：先验证隔离安装后的 CLI 能在仓库外完成两个项目与配置故障流程。后续状态文档提交使用 `[skip ci]`，不作为实现验收提交。

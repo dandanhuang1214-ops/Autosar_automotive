@@ -1,6 +1,6 @@
 # P24 工程问题审查接入计划
 
-状态 implementing（2026-09-28）。P23 实现 `3e4c29a` / run `36331506323` 七 job 已验收。首批 30 题固定查询、P21/P22/P23 来源复验消费者与开发评测已实现，见[使用指南](p24-engineering-review-guide.md)。本轮开发基线实现 `92bf90a` / run `36415173355` 七 job 与双平台场景/上传已通过；独立负例与完整分项评测未完成，不冻结 P24 整阶段。
+状态 remote-accepted（2026-09-29）。实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。完整门和范围见[验收记录](p24-acceptance.md)。下一主阶段为 [P25 可复现交付](p25-reproducible-delivery-plan.md)。
 
 目标：利用 P20 多项目结果、P21 配置影响、P22 ARXML 和 P23 独立 ECU 证据，回答有来源的工程问题。沿用现有确定性审查、引用复验和拒答内核；先固定问题与判定，再判断是否存在需要可选模型解释的缺口。
 
@@ -12,6 +12,6 @@
 4. 分别计量检索、确定性判定、引用正确性、严重度保真和拒答；若增加可选模型，单独报告其增益和无证据断言，不混入确定性成功率。
 5. 提供可重放命令、报告与真实失败用例；本实现独立七 job CI 验收，上传评测证据，再更新首页、路线和下一任务。
 
-首批固定问题目录位于 `engineering_review.py`，开发 gold 位于 `tests/fixtures/engineering-review-development.json`。已覆盖影响验收项、静态失败下阶段状态、超时唯一根因拒答和内部 DBC 映射拒答；目前呈现事实与边界，不声称自由文本理解或完整因果解释。不同构建/诊断条件的对比解释及严重度保真专门计量留待下一批；不得把现有开发失败例改名成独立负例。
+首批固定问题目录位于 `engineering_review.py`，开发 gold 位于 `tests/fixtures/engineering-review-development.json`。已覆盖影响验收项、静态失败下阶段状态、超时唯一根因拒答和内部 DBC 映射拒答；目前呈现事实与边界，不声称自由文本理解或完整因果解释。不同构建/诊断条件比较、严重度保真与冻结后负例已按[评测制度](p24-evaluation-protocol.md)完成；模型未运行，未将开发失败例改名为独立负例。
 
 商业工具许可与物理 ECU 不作为本阶段已有事实；只引用已验收范围。平台实现与使用者自己的源码定位、协议解释和复跑学习分别记录。
