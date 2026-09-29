@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-09-29）
 
-当前主阶段：`P25 — 可复现平台交付（implementing）`。P20–P23 已在各自记录范围验收；P22 商业往返仍 blocked，P23 现场证据沿用已记录的 POSIX/vcan0 运行。P24 固定工程问题、目录导航、对象级 gold、严重度保真与冻结后负例已 remote-accepted：实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。30 题、12 个冻结后负例和迁移复验均通过。[隔离安装后双项目与配置故障流程](p25-installed-delivery-guide.md)已本地通过，下一项为本实现七 job 远端验收与演示/能力证据映射。平台实现与个人学习掌握分别计量。
+当前主阶段：`P25 — 可复现平台交付（implementing）`。P20–P23 已在各自记录范围验收；P22 商业往返仍 blocked，P23 现场证据沿用已记录的 POSIX/vcan0 运行。P24 固定工程问题、目录导航、对象级 gold、严重度保真与冻结后负例已 remote-accepted：实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。30 题、12 个冻结后负例和迁移复验均通过。[隔离安装后双项目与配置故障流程](p25-installed-delivery-guide.md)已 remote-accepted：实现 `911abc0e4e59d76fc72265fc73a75aea5b09c28a` / [run `36586481411`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36586481411) 七 job 全部 success；Windows/Ubuntu 的安装后双项目验证及完整归档上传均 success。指南、英文入口、能力证据表和演示脚本已提供；下一项为人工演示实测和真实外部反馈，P25 整阶段仍 implementing。平台实现与个人学习掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1286,3 +1286,15 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 保留 wheelhouse、输入、85 个迁移证据文件、commands/stdout/stderr/退出码与耗时、运行环境和 SHA-256；本地首次成功 `output/p25-installed-network/summary.json`，自动流程 40.799 秒，不计成人工十分钟演示。最初 sandbox 下载被代理网络限制拒绝，批准联网重跑后成功；不伪称首次环境运行成功。
 - 新增四项保护测试：隔离来源拒绝、样例包完整性及单文件变更、故障注入位置不存在拒绝、保留已有输出；CI topology 同步两个新步骤，双平台 runtime-evidence 上传完整交付归档。
 - 增加 Windows/Linux 安装与复跑指南及英文 README；P24 已冻结源代码和 gold 不变。当前 P25 implementing，本轮 local-accepted；远端、离线复用与全量最终计数待下条验收回填。人工演示、能力映射和真实外部反馈未验收。
+
+
+### P25：安装后双平台远端验收（2026-09-29）
+
+- 实现 `911abc0e4e59d76fc72265fc73a75aea5b09c28a` / [run `36586481411`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36586481411) 七 job 全部 success；Windows/Ubuntu 的安装后双项目验证及完整归档上传均 success。
+- 实际 job：runtime-currency `109468069349` success；core-contracts (windows-latest) `109468069706` success；core-contracts (ubuntu-22.04) `109468069735` success；runtime-evidence (ubuntu-22.04) `109469142697` success；runtime-evidence (windows-latest) `109469142705` success；controlled-rejections (ubuntu-22.04) `109469143026` success；controlled-rejections (windows-latest) `109469143214` success。
+- 两平台 `Verify installed multi-project delivery` 和 `Upload installed multi-project delivery` 均 success；实际记录 `output/p25-validation/remote-ci.json`，CI artifact 为 `installed-projects-Linux` 与 `installed-projects-Windows`，保留 wheelhouse/完整命令/输入/工程证据。
+- 本地从归档依赖再次离线安装并完整复跑通过：`output/p25-installed-offline/summary.json`，24.905 秒，85 个 portable 文件；首次联网准备成功运行 40.799 秒。均不是人工演示时长。
+- 全量 307 tests：305 passed、2 环境跳过；47 schema、61 schema-bound examples、25 syntax-only examples、Ruff、新脚本默认/Windows-target mypy、topology 与 whitespace 通过。远端 scoped type gate 与 Python 3.14 回归亦通过。
+- 完成 Windows/Linux 交付指南、英文入口、能力证据对应、待实测演示脚本和安装交付学习练习。平台实现和个人独立掌握分别记录。
+- 当前主阶段仍 P25 implementing；安装后交付门 remote-accepted。下一项为真实操作者人工演示实测与外部使用/投递反馈，模板已提供，未取得前不以代理自测替代或标记整阶段完成。不自动联系他人或发布外部贡献。
+- 本条及验收/首页/路线回填为后续纯文档 `[skip ci]` 提交；实现验收始终绑定 `911abc0` / `36586481411`，不把文档提交算作实现 CI。

@@ -25,7 +25,7 @@ For a subsequent offline check on the same platform/Python:
 .venv/bin/python scripts/check_installed_projects.py --wheelhouse output/installed-projects/wheelhouse --output output/installed-projects-replay
 ```
 
-See the [Windows/Linux delivery guide](docs/project/p25-installed-delivery-guide.md), [active roadmap](docs/project/roadmap.md) and [actual progress record](docs/project/progress-log.md). P25 delivery is in progress; installation checks do not substitute for a measured narrated demo or real external-user feedback.
+See the [Windows/Linux delivery guide](docs/project/p25-installed-delivery-guide.md), [active roadmap](docs/project/roadmap.md) and [actual progress record](docs/project/progress-log.md). The installed delivery flow at commit `911abc0` passed all seven [CI jobs](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36586481411), including Windows/Ubuntu execution and archive upload. P25 remains in progress: a measured narrated demo and real external-user feedback are still outstanding.
 
 ## Evidence boundaries
 

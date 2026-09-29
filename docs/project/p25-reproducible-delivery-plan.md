@@ -22,4 +22,8 @@
 
 ## 本轮实现状态
 
-安装后双项目与配置故障/影响/审查/迁移完整流程已本地通过，自动流程耗时 40.799 秒（含本次依赖准备，不等同人工十分钟演示）。新入口 `scripts/check_installed_projects.py`、[Windows/Linux 指南](p25-installed-delivery-guide.md)和[英文入口](../../README.en.md)已提供；Windows/Ubuntu 远端验收待本实现 CI。完整 P25 仍需人工演示、能力证据整理及真实外部反馈，不标记整阶段完成。
+安装后双项目与配置故障/影响/审查/迁移完整流程已本地通过，自动流程耗时 40.799 秒（含本次依赖准备，不等同人工十分钟演示）。新入口 `scripts/check_installed_projects.py`、[Windows/Linux 指南](p25-installed-delivery-guide.md)和[英文入口](../../README.en.md)已提供；实现 `911abc0e4e59d76fc72265fc73a75aea5b09c28a` / [run `36586481411`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36586481411) 七 job 全部 success；Windows/Ubuntu 的安装后双项目验证及完整归档上传均 success。完整 P25 仍需人工演示、能力证据整理及真实外部反馈，不标记整阶段完成。
+
+已整理[能力证据对应](p25-capability-evidence.md)和[演示脚本](p25-demo-runbook.md)，人工实测与真实外部反馈仍未取得。全量 307 tests：305 passed、2 环境跳过；归档依赖离线复跑 24.905 秒通过。本轮实现 `911abc0e4e59d76fc72265fc73a75aea5b09c28a` 已推送，远端 run `36586481411` 七 job 全部 success。
+
+本轮验收与剩余门见[P25 验收记录](p25-acceptance.md)。下一项为真实操作者人工演示记录与实际外部反馈，不用自动流程耗时代替讲解或外部使用。

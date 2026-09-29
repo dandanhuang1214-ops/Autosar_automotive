@@ -2,13 +2,19 @@
 
 ## 项目管理
 
+- [P25 验收与剩余门](project/p25-acceptance.md)：固定实现、实际 CI 与人工演示/外部反馈缺口。
+- [P25 安装后双项目交付](project/p25-installed-delivery-guide.md)：Windows/Linux 隔离安装、完整项目、配置故障和迁移复验。
+- [P25 能力与证据对应](project/p25-capability-evidence.md)：工具链与 BSW 集成的证据范围、独立练习。
+- [P25 十分钟演示脚本](project/p25-demo-runbook.md)：待人工实测的演示顺序和真实反馈记录模板。
+- [P24 审查验收](project/p24-acceptance.md)：固定问题、引用、严重度与冻结后负例。
+
 - [项目验收工作流](project-workflow.md)：一条命令从配置校验运行到 HTML 验收报告。
 
 - [平台升级进度账本](project/progress-log.md)：每次升级必须更新的唯一状态源。
 - [长期升级路线 v3](project/roadmap.md)：产品目标、24 周六阶段、个人投入与完整验收规则。
 - [P20 多项目通信实施计划](project/p20-multi-project-plan.md)：已完成阶段的四个实施包与验收门。
 - [P20 整阶段验收记录](project/p20-acceptance.md)：实现提交、七 job、现场门与边界。
-- [P22 ARXML 桥接计划](project/p22-arxml-bridge-plan.md)：当前主阶段的项目接入与整阶段验收门。
+- [P22 ARXML 桥接计划](project/p22-arxml-bridge-plan.md)：公开路径项目接入与商业工具剩余验收门。
 - [P22 离线 ARXML 使用指南](project/p22-arxml-guide.md)：真实导出、受限导入、三组 golden 与快照复验。
 - [P21 使用及规则覆盖](project/p21-communication-graph-guide.md)：构图、影响传播、验收关联和独立复验。
 - [P21 验收记录](project/p21-acceptance.md)：本轮质量门与远端状态。
@@ -19,6 +25,8 @@
 - [Git 项目管理常用指令与用法](project/git-workflow-cheatsheet.md)：提交、分支、远端同步、冲突和回滚速查。
 
 ## 环境与学习
+
+- [P25 安装交付练习](learning/p25-installed-delivery.md)：环境隔离、故障判定与迁移复验。
 
 - [WSL/SocketCAN 分阶段记录](learning/wsl-socketcan-stage-b.md)
 - [SocketCAN 操作说明](socketcan-wsl.md)
