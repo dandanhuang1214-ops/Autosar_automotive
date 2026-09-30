@@ -1,0 +1,1 @@
+Synthetic, hand-authored structural fixture. No vendor/customer data or executable code. The external behavior reference is deliberately outside selected ECUC scope; Unused is deliberately not selected.

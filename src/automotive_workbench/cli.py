@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from automotive_workbench.ecuc_project import run_inspection, verify_inspection
 from automotive_workbench.adapters.generate_arxml import summarize_issue_report
 from automotive_workbench.adapters.dbc import inspect_dbc, validate_dbc_intent
 from automotive_workbench.adapters.canonical_contract import validate_contract_mapping
@@ -66,6 +67,12 @@ def _print_json(result: dict) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    ecuc = commands.add_parser("inspect-ecuc-project", help="Inspect selected DPA/ECUC structure without invoking vendor tools")
+    ecuc.add_argument("project", type=Path)
+    ecuc.add_argument("--output", type=Path, required=True)
+    ecuc_verify = commands.add_parser("verify-ecuc-inspection", help="Replay a portable ECUC inspection snapshot")
+    ecuc_verify.add_argument("report", type=Path)
 
     commands.add_parser("list-engineering-questions", help="List bounded, versioned P21-P23 evidence questions")
     search = commands.add_parser("search-engineering-questions", help="Find catalog questions; matches are not engineering conclusions")
@@ -371,7 +378,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
-        if args.command == "inspect":
+        if args.command == "inspect-ecuc-project":
+            result = run_inspection(args.project, args.output)
+        elif args.command == "verify-ecuc-inspection":
+            result = verify_inspection(args.report)
+        elif args.command == "inspect":
             if args.artifact.suffix.casefold() == ".dbc":
                 result = inspect_dbc(args.artifact)
             elif args.artifact.name == "uds_intent.json":
@@ -536,6 +547,8 @@ def main() -> int:
         _print_json({"status": "error", "message": str(exc)})
         return 1
     _print_json(result)
+    if result.get("status") == "attention-required":
+        return 2
     if result.get("status") in {
         "failed",
         "partial",

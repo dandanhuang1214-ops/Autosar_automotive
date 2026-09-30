@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/ecuc-project-inspection.schema.json",
+  "title": "Selected ECUC project structural inspection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "project",
+    "scope",
+    "sources",
+    "selected_modules",
+    "modules",
+    "unselected_module_paths",
+    "references",
+    "findings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ecuc-project-inspection-0.1"
+    },
+    "status": {
+      "enum": [
+        "attention-required",
+        "no-issues-in-scope"
+      ]
+    },
+    "project": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "role",
+          "sha256",
+          "bytes",
+          "schema_location"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "project",
+              "collection",
+              "module"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "schema_location": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "selected_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "name",
+          "definition",
+          "source",
+          "container_counts"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "xpath",
+              "object_path"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "xpath": {
+                "type": "string"
+              },
+              "object_path": {
+                "type": "string"
+              }
+            }
+          },
+          "container_counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "unselected_module_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "references": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resolved",
+        "ambiguous",
+        "missing_selected_object",
+        "empty",
+        "unassessed"
+      ],
+      "properties": {
+        "resolved": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ambiguous": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_selected_object": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "empty": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unassessed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "severity",
+          "source",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "ECUC-MODULE-SELECTION",
+              "ECUC-DUPLICATE-SELECTION",
+              "ECUC-AMBIGUOUS-PATH",
+              "ECUC-MISSING-REFERENCE",
+              "ECUC-TASK-UNBOUND"
+            ]
+          },
+          "severity": {
+            "const": "WARNING"
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "xpath",
+              "object_path"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "xpath": {
+                "type": "string"
+              },
+              "object_path": {
+                "type": "string"
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

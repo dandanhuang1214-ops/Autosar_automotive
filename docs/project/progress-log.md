@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-09-29）
+## 当前总览（2026-10-01）
 
-当前主阶段：`P25 — 可复现平台交付（implementing）`。P20–P23 已在各自记录范围验收；P22 商业往返仍 blocked，P23 现场证据沿用已记录的 POSIX/vcan0 运行。P24 固定工程问题、目录导航、对象级 gold、严重度保真与冻结后负例已 remote-accepted：实现 `6117b09e7ab80e7fdebca5a4654cdc4159f29a46` / [run `36451604309`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36451604309) 七 job 全部 success；Windows/Ubuntu 开发场景、分项评测及证据上传均 success。30 题、12 个冻结后负例和迁移复验均通过。[隔离安装后双项目与配置故障流程](p25-installed-delivery-guide.md)已 remote-accepted：实现 `911abc0e4e59d76fc72265fc73a75aea5b09c28a` / [run `36586481411`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36586481411) 七 job 全部 success；Windows/Ubuntu 的安装后双项目验证及完整归档上传均 success。指南、英文入口、能力证据表和演示脚本已提供；下一项为人工演示实测和真实外部反馈，P25 整阶段仍 implementing。平台实现与个人学习掌握分别计量。
+当前主实现阶段：`P26 — 真实 ECUC 配置体检与跨层定位（implementing）`。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，公开场景及全量 316 项回归通过（2 项环境跳过），完整历史审查重放与远端验收进行中。下一项为首轮七 job 验收，再连接 COM/PduR/CanIf/Can 引用链。平台实现与个人掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1298,3 +1298,21 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 完成 Windows/Linux 交付指南、英文入口、能力证据对应、待实测演示脚本和安装交付学习练习。平台实现和个人独立掌握分别记录。
 - 当前主阶段仍 P25 implementing；安装后交付门 remote-accepted。下一项为真实操作者人工演示实测与外部使用/投递反馈，模板已提供，未取得前不以代理自测替代或标记整阶段完成。不自动联系他人或发布外部贡献。
 - 本条及验收/首页/路线回填为后续纯文档 `[skip ci]` 提交；实现验收始终绑定 `911abc0` / `36586481411`，不把文档提交算作实现 CI。
+
+
+### P26：真实 ECUC 项目体检首轮实现（2026-09-30）
+
+- 用户授权基于本地工程分析继续升级，新增 P26 用户能力阶段；P25 人工门保留未完成，当前唯一代码主线为 P26。本地工程及分析/快照只存忽略目录，未上传。
+- 新增 `inspect-ecuc-project` / `verify-ecuc-inspection`，按 DPA 文件与 collection 模块选择读取配置，输出来源 hash、XML/对象定位、容器/引用计数与五类结构发现；独立版本 0.1 不扩大原 SWC ARXML 契约声明。
+- 快照支持原路径移除后重算，结论/来源/额外库存篡改拒绝。外部定义与实例引用明确 unassessed，不把结构检查当厂商 XSD、生成或硬件验收。
+- 合成正常/未绑定/缺引用/歧义四场景及迁移、篡改拒绝已本地通过；真实本地输入的模块识别和未绑定任务发现已复核，细节保持本地。
+- 源码变化后 P24 冻结不重写：新增明确 `--historical-regression`、报告 0.2 与当前源码 hash，原 strict held-out 仍要求原冻结；原负例清单不改，当前结果不冒充独立测试。
+- 全量/历史回归及本实现远端 CI 待完成；通过后下一项为真实引用驱动的通信跨层链。指南与学习练习同步新增。
+
+
+### P26：首轮体检验收补全（2026-10-01）
+
+- 延续工作区已有首轮实现，补齐引用定位的 REFERENCE-VALUES 序号和损坏报告的受控输入错误；严格 P24 0.1 输出字段保持，历史回归另用 0.2。
+- 最终本地全量 316 tests：314 passed、2 环境跳过；定向 ECUC 9/9、公开四场景、原输入删除后的四份迁移复验和篡改拒绝全部通过。证据 `output/p26-validation-20261001/`；第一次场景命令因旧输出非空而按设计拒绝，改用新目录复跑，未覆盖旧证据。
+- 48 schema、61 schema-bound examples、25 syntax-only examples、Ruff、39-source scoped mypy、CI topology、pip check 和 whitespace 通过。完整 P24 开发/历史负例正在从头重建来源；当前无新增独立负例声明。
+- 本轮实现准备提交推送，七 job 远端待执行；未标记 remote-accepted。下一项仍为首轮验收完成后连接真实 VALUE-REF 通信跨层链。P26 整阶段 implementing；P25 人工门保留。

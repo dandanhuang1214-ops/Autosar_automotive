@@ -2,6 +2,8 @@
 
 ## 项目管理
 
+- [P26 ECUC 配置体检](project/p26-ecuc-inspection-guide.md)：当前模块选择、引用与任务绑定检查。
+
 - [P25 验收与剩余门](project/p25-acceptance.md)：固定实现、实际 CI 与人工演示/外部反馈缺口。
 - [P25 安装后双项目交付](project/p25-installed-delivery-guide.md)：Windows/Linux 隔离安装、完整项目、配置故障和迁移复验。
 - [P25 能力与证据对应](project/p25-capability-evidence.md)：工具链与 BSW 集成的证据范围、独立练习。
@@ -25,6 +27,8 @@
 - [Git 项目管理常用指令与用法](project/git-workflow-cheatsheet.md)：提交、分支、远端同步、冲突和回滚速查。
 
 ## 环境与学习
+
+- [P26 ECUC 体检练习](learning/p26-ecuc-inspection.md)
 
 - [P25 安装交付练习](learning/p25-installed-delivery.md)：环境隔离、故障判定与迁移复验。
 

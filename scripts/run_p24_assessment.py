@@ -181,11 +181,21 @@ def verify_seal(manifest: dict[str, Any]) -> None:
         raise ValueError("Frozen question catalog changed")
 
 
-def held_out(development: Path, output: Path, path: Path) -> dict[str, Any]:
+def cohort_context(manifest: dict[str, Any], historical: bool = False) -> dict[str, Any]:
+    if not historical:
+        verify_seal(manifest)
+    return {"split": "historical-regression" if historical else "held-out-after-freeze",
+            "freeze_verified": not historical,
+            "original_freeze": manifest["freeze"],
+            "current_runtime_sha256": {p.relative_to(ROOT).as_posix(): digest(p.read_bytes())
+                                       for p in sorted((ROOT / "src").rglob("*.py"))}}
+
+
+def held_out(development: Path, output: Path, path: Path, historical: bool = False) -> dict[str, Any]:
     manifest = read(path)
     if manifest["split"] != "held-out-after-freeze":
         raise ValueError("Held-out split is required")
-    verify_seal(manifest)
+    context = cohort_context(manifest, historical)
     rows = []
     if len({c["id"] for c in manifest["cases"]}) != len(manifest["cases"]) or not manifest["cases"]:
         raise ValueError("Held-out case IDs must be unique and non-empty")
@@ -250,11 +260,14 @@ def held_out(development: Path, output: Path, path: Path) -> dict[str, Any]:
     finally:
         moved.rename(output)
     metrics["migration"] = measure(migration_passed, len(manifest["cases"]))
-    return {"manifest_sha256": digest(path.read_bytes()), "freeze": manifest["freeze"],
+    provenance = context if historical else {"freeze": manifest["freeze"]}
+    return {"manifest_sha256": digest(path.read_bytes()), **provenance,
             "formation": manifest["formation"], "metrics": metrics, "cases": rows, "retrieval_cases": searches}
 
 
-def run(development: Path, output: Path, heldout_path: Path | None = None) -> dict[str, Any]:
+def run(development: Path, output: Path, heldout_path: Path | None = None, historical_path: Path | None = None) -> dict[str, Any]:
+    if heldout_path and historical_path:
+        raise ValueError("Choose either frozen held-out or historical regression")
     if output.exists() or output.is_symlink():
         raise ValueError("Assessment output must be absent")
     development, output = development.resolve(), output.resolve()
@@ -302,13 +315,16 @@ def run(development: Path, output: Path, heldout_path: Path | None = None) -> di
         "condition_comparison": measure(sum(r["passed"] for r in comparison_rows), len(comparison_rows)),
         "model": {"status": "not-run", "reason": "No model needed to resolve these fixed evidence facts; causal explanation remains unverified."},
     }
-    independent = held_out(development, output / "held-out", heldout_path) if heldout_path else None
+    cohort_path = historical_path or heldout_path
+    independent = held_out(development, output / ("historical-regression" if historical_path else "held-out"), cohort_path, historical=historical_path is not None) if cohort_path else None
     all_metrics = [*metrics.values(), *(independent["metrics"].values() if independent else [])]
     passed = all(m["passed"] == m["total"] for m in all_metrics if isinstance(m, dict) and "total" in m)
-    result = {"evaluation_version": "p24-assessment-0.1", "status": "passed" if passed else "failed",
+    result = {"evaluation_version": "p24-assessment-0.2" if historical_path else "p24-assessment-0.1", "status": "passed" if passed else "failed",
               "development_dataset_sha256": digest(fixture.read_bytes()), "metrics": metrics,
               "cases": rows, "retrieval_cases": search_rows, "finding_tamper_cases": tamper,
-              "condition_cases": comparison_rows, "held_out": independent}
+              "condition_cases": comparison_rows, "held_out": None if historical_path else independent}
+    if historical_path:
+        result["historical_regression"] = independent
     write(output / "summary.json", result)
     if not passed:
         raise ValueError("P24 assessment failed; inspect saved summary")
@@ -319,7 +335,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--development", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--held-out", type=Path)
+    cohort = parser.add_mutually_exclusive_group()
+    cohort.add_argument("--held-out", type=Path)
+    cohort.add_argument("--historical-regression", type=Path, help="Replay known historical negatives without claiming freeze or independence")
     args = parser.parse_args()
-    result = run(args.development, args.output, args.held_out)
+    result = run(args.development, args.output, args.held_out, args.historical_regression)
     print(json.dumps({"status": result["status"], "metrics": result["metrics"]}, indent=2))
