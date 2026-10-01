@@ -27,4 +27,4 @@
 
 本轮必须同时具有：公开正负例、原路径移除后的复验、篡改拒绝、数据来源隔离、完整本地测试、本轮 Windows/Ubuntu 七 job 与 artifact。本地门已通过；修复提交 `c6320d5` / run `36813404620` 七 job 全部 success，双平台场景及上传通过，首轮门 remote-accepted，详见[验收表](p26-acceptance.md)。
 
-第 2 项通信跨层定位已实现，见[指南](p26-ecuc-communication-guide.md)：九场景、迁移与篡改本地通过，正在完成本轮七 job。其验收后下一项为第 3 项应用/OS/RTE 调度集成缺口解释。仍属于 P26，不为每个补丁新增阶段编号；P25 人工门独立保留。
+第 2 项通信跨层定位已 remote-accepted，见[指南](p26-ecuc-communication-guide.md)：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success，双平台九场景、迁移与篡改以及上传通过。下一项为第 3 项应用/OS/RTE 调度集成缺口解释。仍属于 P26，不为每个补丁新增阶段编号；P25 人工门独立保留。

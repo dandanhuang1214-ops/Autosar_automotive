@@ -1,6 +1,6 @@
-# P26 ECUC 体检首轮验收
+# P26 ECUC 体检与通信定位验收
 
-更新：2026-10-01。P26 整阶段 implementing；本表仅覆盖项目感知只读体检，该门 remote-accepted。
+更新：2026-10-01。P26 整阶段 implementing；项目感知只读体检与通信跨层定位两个门均 remote-accepted；后续集成检查和两版影响仍未完成。
 
 | 验收门 | 证据与结果 |
 |---|---|
@@ -14,11 +14,11 @@
 
 本地证据：`output/p26-validation-20261001/`。首轮 `84b5469` / run `36742954252` Windows 因新增测试未指定 UTF-8 失败，Ubuntu/Python 3.14 成功，下游跳过；该 run 不作为验收依据。
 
-后续通信引用链已实现并处于本轮验收，详见下表。P25 人工演示/真实反馈、商业工具生成和物理 ECU 验证保持原有未验收边界。
+通信引用链也已完成远端验收，详见下表。P25 人工演示/真实反馈、商业工具生成和物理 ECU 验证保持原有未验收边界。
 
 验收实现完整 SHA：`c6320d503d3d704bdce5d64e294dc84811444e0c`。job/step 原始记录 `output/p26-validation-20261001/remote-ci.json`；各 job ID 见[进度账本](progress-log.md)。本表为后续纯文档回填，不把文档提交当作新实现验证。
 
-## 通信跨层引用链验收（local-accepted，远端待执行）
+## 通信跨层引用链验收（remote-accepted）
 
 | 门 | 状态 |
 |---|---|
@@ -26,6 +26,8 @@
 | 范围与失败 | 缺失/外部/错误类型/歧义/方向/条件/无路径九场景通过，额外多目标和定位测试通过 |
 | 迁移与完整性 | 删除原输入后 9/9 复验，结论/来源/库存篡改 3/3 拒绝，旧 0.1 快照复验通过 |
 | 本地完整回归 | 327 tests：325 passed、2 环境跳过；49 schema/61 bound/25 syntax-only、Ruff、41-source mypy、topology、pip check 通过 |
-| 本轮七 job | 待固定提交和实际 run |
+| 本轮七 job | `b6718640364104153490adbbd2d876f3172887c2` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 全部 success；双平台通信链场景及上传 success |
 
-本地公开证据 `output/p26-chain-validation/`，真实工程只保存在忽略目录。通信链通过后的下一项为应用/OS/RTE 调度集成缺口解释；不将本轮结构结果当生成或物理 ECU 证据。
+本地公开证据 `output/p26-chain-validation/`，真实工程只保存在忽略目录。下一项为应用/OS/RTE 调度集成缺口解释；不将本轮结构结果当生成或物理 ECU 证据。
+
+通信链 job/step 原始记录 `output/p26-chain-validation/remote-ci.json`，各 job ID 见进度账本。该验收回填为后续 `[skip ci]` 文档提交，不代替实现提交自己的 CI。
