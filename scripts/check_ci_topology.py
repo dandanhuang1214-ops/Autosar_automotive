@@ -13,6 +13,8 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run ECUC communication chain scenarios": "runtime-evidence",
+    "Upload ECUC communication chain evidence": "runtime-evidence",
     "Run ECUC project inspection scenarios": "runtime-evidence",
     "Upload ECUC project inspection evidence": "runtime-evidence",
     "Verify installed multi-project delivery": "runtime-evidence",

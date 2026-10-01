@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from automotive_workbench.ecuc_project import run_inspection, verify_inspection
+from automotive_workbench.ecuc_communication import run_communication, verify_communication
 from automotive_workbench.adapters.generate_arxml import summarize_issue_report
 from automotive_workbench.adapters.dbc import inspect_dbc, validate_dbc_intent
 from automotive_workbench.adapters.canonical_contract import validate_contract_mapping
@@ -73,6 +74,11 @@ def build_parser() -> argparse.ArgumentParser:
     ecuc.add_argument("--output", type=Path, required=True)
     ecuc_verify = commands.add_parser("verify-ecuc-inspection", help="Replay a portable ECUC inspection snapshot")
     ecuc_verify.add_argument("report", type=Path)
+    ecuc_chain = commands.add_parser("trace-ecuc-communication", help="Trace explicit Com/PduR/CanIf/Can ECUC references")
+    ecuc_chain.add_argument("project", type=Path)
+    ecuc_chain.add_argument("--output", type=Path, required=True)
+    ecuc_chain_verify = commands.add_parser("verify-ecuc-communication", help="Replay ECUC communication chains from portable sources")
+    ecuc_chain_verify.add_argument("report", type=Path)
 
     commands.add_parser("list-engineering-questions", help="List bounded, versioned P21-P23 evidence questions")
     search = commands.add_parser("search-engineering-questions", help="Find catalog questions; matches are not engineering conclusions")
@@ -382,6 +388,10 @@ def main() -> int:
             result = run_inspection(args.project, args.output)
         elif args.command == "verify-ecuc-inspection":
             result = verify_inspection(args.report)
+        elif args.command == "trace-ecuc-communication":
+            result = run_communication(args.project, args.output)
+        elif args.command == "verify-ecuc-communication":
+            result = verify_communication(args.report)
         elif args.command == "inspect":
             if args.artifact.suffix.casefold() == ".dbc":
                 result = inspect_dbc(args.artifact)
@@ -547,7 +557,7 @@ def main() -> int:
         _print_json({"status": "error", "message": str(exc)})
         return 1
     _print_json(result)
-    if result.get("status") == "attention-required":
+    if result.get("status") in {"attention-required", "no-paths"}:
         return 2
     if result.get("status") in {
         "failed",

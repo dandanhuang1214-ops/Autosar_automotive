@@ -1,0 +1,452 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/ecuc-communication.schema.json",
+  "title": "Bounded explicit ECUC communication chains",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project",
+    "scope",
+    "sources",
+    "selected_modules",
+    "inspection_status",
+    "inspection_findings",
+    "nodes",
+    "edges",
+    "paths",
+    "unassessed_references",
+    "unsupported_containers",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ecuc-communication-0.1"
+    },
+    "project": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "role",
+          "sha256",
+          "bytes",
+          "schema_location"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "project",
+              "collection",
+              "module"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "schema_location": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "selected_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inspection_status": {
+      "enum": [
+        "attention-required",
+        "no-issues-in-scope"
+      ]
+    },
+    "inspection_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "severity",
+          "source",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "ECUC-MODULE-SELECTION",
+              "ECUC-DUPLICATE-SELECTION",
+              "ECUC-AMBIGUOUS-PATH",
+              "ECUC-MISSING-REFERENCE",
+              "ECUC-TASK-UNBOUND"
+            ]
+          },
+          "severity": {
+            "const": "WARNING"
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "xpath",
+              "object_path"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "xpath": {
+                "type": "string"
+              },
+              "object_path": {
+                "type": "string"
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "unassessed_references": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unassessed"
+      }
+    },
+    "unsupported_containers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unsupported"
+      }
+    },
+    "status": {
+      "enum": [
+        "resolved-in-scope",
+        "partial",
+        "no-paths"
+      ]
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "xpath",
+        "object_path"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "xpath": {
+          "type": "string"
+        },
+        "object_path": {
+          "type": "string"
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition",
+        "value",
+        "conditional",
+        "source"
+      ],
+      "properties": {
+        "definition": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node",
+        "group"
+      ],
+      "properties": {
+        "node": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "path",
+        "definition",
+        "parent",
+        "conditional",
+        "parameters",
+        "type",
+        "source"
+      ],
+      "properties": {
+        "module": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "type": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "owner",
+        "target",
+        "role",
+        "definition",
+        "source",
+        "expected_type",
+        "kind",
+        "resolution"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "expected_type": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "reference",
+            "containment",
+            "unassessed"
+          ]
+        },
+        "resolution": {
+          "enum": [
+            "resolved",
+            "ambiguous",
+            "conditional",
+            "empty",
+            "wrong-type",
+            "missing",
+            "unassessed"
+          ]
+        }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "com_ipdu",
+        "direction",
+        "members",
+        "route",
+        "canif_pdu",
+        "nodes",
+        "edge_ids",
+        "gaps",
+        "status"
+      ],
+      "properties": {
+        "com_ipdu": {
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "tx",
+            "rx",
+            "unknown"
+          ]
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/member"
+          }
+        },
+        "route": {
+          "type": "string"
+        },
+        "canif_pdu": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "edge_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "resolved",
+            "partial"
+          ]
+        }
+      }
+    },
+    "unassessed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "definition",
+        "target",
+        "conditional",
+        "kind",
+        "source",
+        "reason"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "unsupported": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "definition",
+        "source"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    }
+  }
+}

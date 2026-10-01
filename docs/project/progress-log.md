@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-01）
 
-当前主实现阶段：`P26 — 真实 ECUC 配置体检与跨层定位（implementing）`。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。下一项为 COM/PduR/CanIf/Can 真实引用链，P26 整阶段仍 implementing。平台实现与个人掌握分别计量。
+当前主实现阶段：`P26 — 真实 ECUC 配置体检与跨层定位（implementing）`。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。当前已实现 COM/PduR/CanIf/Can 真实引用链，正在完成本轮本地/远端验收；通过后下一项为应用/OS/RTE 调度集成缺口解释，P26 整阶段仍 implementing。平台实现与个人掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1328,3 +1328,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - Windows/Ubuntu 的 `Run ECUC project inspection scenarios`、`Upload ECUC project inspection evidence` 与 `Assess engineering review components` 均 success；归档 `ecuc-inspection-Windows`、`ecuc-inspection-Linux`，完整 job/step 记录 `output/p26-validation-20261001/remote-ci.json`。
 - 本轮仅项目感知体检门 remote-accepted，P26 整阶段 implementing。下一项为真实 VALUE-REF 驱动的 Com → EcuC/PduR → CanIf → Can 通信跨层定位；P25 人工门及商业/物理 ECU 限制保持。详见 [P26 验收表](p26-acceptance.md)。
 - 修复推送曾遇 TLS 连接中断，重试成功，无待恢复环境阻断。本条及首页/路线为后续纯文档状态提交，使用 `[skip ci]`；实现验收固定引用 `c6320d5` / `36813404620`，文档提交不算新实现 CI。
+
+
+### P26：通信跨层引用链实现（2026-10-01）
+
+- 新增 `trace-ecuc-communication` / `verify-ecuc-communication` 与闭合 `ecuc-communication-0.1`。从模块定义上下文、实际 VALUE-REF 和子容器关系连接 Com、EcuC Pdu、PduR 路由两端、CanIf Tx/Rx、Buffer/HTH/HRH、Can 硬件对象及控制器；不以对象名/后缀推断连接或方向。
+- ComIPduDirection 与 CanObjectType 校验方向；支持普通信号和组信号成员、多目标分支。重复身份、缺引用、错误类型、必需引用数量、条件配置及多 CanIf 配置选择歧义均保留 partial；零支持路径为 no-paths。未知字段/实例引用和未解释容器显式列出。
+- 共用项目解析器，旧体检 0.1 输出契约保持；已有旧快照实际复验通过。新报告从源快照重算全部结论，移除原输入后九场景复验及三类篡改拒绝通过。
+- 公开输入均为独立合成 fixture；本地工程真实导出已完成链路解析，细节和报告只存忽略目录。本次不运行厂商工具/生成器，不声称商业或物理 ECU 验收。
+- 定向 ECUC 20/20、九场景和迁移/篡改通过；49 schemas、61 bound examples、25 syntax-only examples、Ruff 与 topology 通过。本地全量 327 tests：325 passed、2 环境跳过；41-source mypy 与 pip check 通过。真实本地快照由最终实现重算复验 passed。证据 `output/p26-chain-validation/`；本轮 local-accepted，远端待本实现 CI，尚未标记 remote-accepted。新增指南、字段官方来源和独立学习练习。
+- 下一项先完成本轮七 job，再推进应用/OS/RTE 调度集成缺口解释；P26 整阶段 implementing，P25 人工门保持。

@@ -2,6 +2,8 @@
 
 ## 项目管理
 
+- [P26 通信跨层引用定位](project/p26-ecuc-communication-guide.md)：实际 ECUC Tx/Rx、组信号、路由与硬件引用链。
+
 - [P26 首轮验收](project/p26-acceptance.md)：实现、CI 与剩余跨层定位门。
 - [P26 ECUC 配置体检](project/p26-ecuc-inspection-guide.md)：当前模块选择、引用与任务绑定检查。
 

@@ -1,0 +1,1 @@
+Hand-authored synthetic two-direction reference topology. Names intentionally do not imply direction. No vendor/customer content. Com and CanIf use distinct EcuC PDU identities connected by explicit PduR endpoints.

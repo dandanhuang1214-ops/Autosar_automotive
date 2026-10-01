@@ -57,7 +57,7 @@ def xml(data: bytes, *, dpa: bool = False) -> ET.Element:
     return root
 
 
-def inspect(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
+def read_project(project: Path) -> tuple[dict[str, Any], dict[str, bytes], list[dict[str, Any]]]:
     project = project.resolve()
     root = project.parent
     sources: dict[str, bytes] = {}
@@ -95,13 +95,15 @@ def inspect(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
     parsed_files = {collection_file}
 
     def visit(node: ET.Element, file: str, path: str, xpath: str,
-              module: str = "", depth: int = 0) -> None:
+              module: str = "", depth: int = 0, parent: str = "",
+              conditional: bool = False) -> None:
         if depth > 200:
             raise ValueError("XML nesting exceeds supported depth")
         name = child_text(node, "SHORT-NAME")
         if name:
             path += "/" + name
         tag = local(node.tag)
+        conditional = conditional or node.find(f"{{{NS}}}VARIATION-POINT") is not None
         if tag == "ECUC-MODULE-CONFIGURATION-VALUES":
             module = path
             modules.append({"path": path, "name": name, "definition": child_text(node, "DEFINITION-REF"),
@@ -110,21 +112,36 @@ def inspect(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
             locations[path].append({"file": file, "xpath": xpath, "object_path": path})
         if tag == "ECUC-CONTAINER-VALUE" and module in selected:
             refs = []
+            parameters = []
+            for group_index, group in enumerate(node.findall(f"{{{NS}}}PARAMETER-VALUES"), 1):
+                counts_param: Counter[str] = Counter()
+                for parameter in group:
+                    counts_param[local(parameter.tag)] += 1
+                    parameters.append({"definition": child_text(parameter, "DEFINITION-REF"),
+                                       "value": child_text(parameter, "VALUE"),
+                                       "conditional": parameter.find(f".//{{{NS}}}VARIATION-POINT") is not None,
+                                       "source": {"file": file, "object_path": path,
+                                                  "xpath": f"{xpath}/PARAMETER-VALUES[{group_index}]/{local(parameter.tag)}[{counts_param[local(parameter.tag)]}]"}})
             for group_index, group in enumerate(node.findall(f"{{{NS}}}REFERENCE-VALUES"), 1):
                 for i, ref in enumerate(group, 1):
                     # Instance references have different semantics; preserve them as unassessed.
                     refs.append({"definition": child_text(ref, "DEFINITION-REF"),
                                  "target": child_text(ref, "VALUE-REF"),
+                                 "conditional": ref.find(f".//{{{NS}}}VARIATION-POINT") is not None,
                                  "kind": local(ref.tag),
                                  "source": {"file": file, "object_path": path,
                                             "xpath": f"{xpath}/REFERENCE-VALUES[{group_index}]/{local(ref.tag)}[{sum(1 for previous in list(group)[:i] if previous.tag == ref.tag)}]"}})
             containers.append({"module": module, "path": path,
+                               "definition": child_text(node, "DEFINITION-REF"),
+                               "parent": parent, "conditional": conditional,
+                               "parameters": parameters,
                                "type": child_text(node, "DEFINITION-REF").rsplit("/", 1)[-1],
                                "source": {"file": file, "xpath": xpath, "object_path": path}, "references": refs})
+            parent = path
         counts: Counter[str] = Counter()
         for sub in node:
             counts[local(sub.tag)] += 1
-            visit(sub, file, path, f"{xpath}/{local(sub.tag)}[{counts[local(sub.tag)]}]", module, depth + 1)
+            visit(sub, file, path, f"{xpath}/{local(sub.tag)}[{counts[local(sub.tag)]}]", module, depth + 1, parent, conditional)
 
     visit(collection, collection_file, "", "/AUTOSAR[1]")
     for splitter in dpa.findall("EcucSplitter/Splitter"):
@@ -181,6 +198,11 @@ def inspect(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
               "unselected_module_paths": sorted({m["path"] for m in modules if m["path"] not in selected}),
               "references": {key: references[key] for key in ("resolved", "ambiguous", "missing_selected_object", "empty", "unassessed")},
               "findings": findings}
+    return result, sources, containers
+
+
+def inspect(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
+    result, sources, _ = read_project(project)
     return result, sources
 
 
