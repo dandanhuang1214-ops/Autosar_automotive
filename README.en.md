@@ -30,3 +30,7 @@ See the [Windows/Linux delivery guide](docs/project/p25-installed-delivery-guide
 ## Evidence boundaries
 
 Default examples use synthetic public inputs and in-process virtual CAN. Vendor ECUC round-trip support, production certification and physical ECU acceptance are not claimed. Hashes and replay establish internal consistency, not producer identity. Existing SocketCAN/OpenBSW execution evidence has its own environment-specific acceptance record.
+
+## ECUC engineering review and change impact
+
+P26 now provides a combined DPA/ECUC review with explicit application ARXML, task-binding and BswM structural checks, separately labeled historical tool observations, and portable before/after impact evidence. See the [workflow guide](docs/project/p26-engineering-review-guide.md) and [acceptance record](docs/project/p26-acceptance.md). The new stage is undergoing its own remote acceptance; vendor generation, schedulability and physical ECU behavior remain outside this static scope.

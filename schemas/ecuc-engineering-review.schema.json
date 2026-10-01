@@ -1,0 +1,1228 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "scope",
+    "inputs",
+    "sources",
+    "selected_modules",
+    "objects",
+    "residuals",
+    "communication",
+    "integration",
+    "historical_tool_logs",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ecuc-engineering-review-0.1"
+    },
+    "status": {
+      "enum": [
+        "attention-required",
+        "no-issues-in-scope"
+      ]
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "applications",
+        "tool_logs"
+      ],
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tool_logs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "role",
+          "sha256",
+          "bytes",
+          "schema_location"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "project",
+              "collection",
+              "module",
+              "application",
+              "tool-log"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "schema_location": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "selected_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/object"
+      }
+    },
+    "residuals": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "communication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "project",
+        "scope",
+        "sources",
+        "selected_modules",
+        "inspection_status",
+        "inspection_findings",
+        "nodes",
+        "edges",
+        "paths",
+        "unassessed_references",
+        "unsupported_containers",
+        "status"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ecuc-communication-0.1"
+        },
+        "project": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "role",
+              "sha256",
+              "bytes",
+              "schema_location"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "project",
+                  "collection",
+                  "module"
+                ]
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "schema_location": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "selected_modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inspection_status": {
+          "enum": [
+            "attention-required",
+            "no-issues-in-scope"
+          ]
+        },
+        "inspection_findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "severity",
+              "source",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "enum": [
+                  "ECUC-MODULE-SELECTION",
+                  "ECUC-DUPLICATE-SELECTION",
+                  "ECUC-AMBIGUOUS-PATH",
+                  "ECUC-MISSING-REFERENCE",
+                  "ECUC-TASK-UNBOUND"
+                ]
+              },
+              "severity": {
+                "const": "WARNING"
+              },
+              "source": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "file",
+                  "xpath",
+                  "object_path"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "xpath": {
+                    "type": "string"
+                  },
+                  "object_path": {
+                    "type": "string"
+                  }
+                }
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_node"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_edge"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_path"
+          }
+        },
+        "unassessed_references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_unassessed"
+          }
+        },
+        "unsupported_containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_unsupported"
+          }
+        },
+        "status": {
+          "enum": [
+            "resolved-in-scope",
+            "partial",
+            "no-paths"
+          ]
+        }
+      }
+    },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applications",
+        "bindings",
+        "mode_rules",
+        "dependencies",
+        "findings",
+        "coverage"
+      ],
+      "properties": {
+        "applications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/application"
+          }
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
+        },
+        "mode_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mode"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dependency"
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "application",
+            "task_bindings",
+            "mode_rules",
+            "timing_and_runtime",
+            "vendor_validation"
+          ],
+          "properties": {
+            "application": {
+              "enum": [
+                "provided",
+                "unassessed"
+              ]
+            },
+            "task_bindings": {
+              "enum": [
+                "present",
+                "unassessed"
+              ]
+            },
+            "mode_rules": {
+              "enum": [
+                "present",
+                "unassessed"
+              ]
+            },
+            "timing_and_runtime": {
+              "const": "unassessed"
+            },
+            "vendor_validation": {
+              "const": "not-run"
+            }
+          }
+        }
+      }
+    },
+    "historical_tool_logs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "binding",
+          "records"
+        ],
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "binding": {
+            "const": "historical-unbound"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "line",
+                "severity",
+                "code",
+                "message",
+                "object_path",
+                "object_ids",
+                "association"
+              ],
+              "properties": {
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "severity": {
+                  "enum": [
+                    "ERROR",
+                    "WARNING",
+                    "INFO",
+                    "UNPARSED"
+                  ]
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "object_path": {
+                  "type": "string"
+                },
+                "object_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "association": {
+                  "enum": [
+                    "exact-path",
+                    "ambiguous",
+                    "unassessed"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "object_count",
+        "communication_paths",
+        "partial_paths",
+        "applications",
+        "task_bindings",
+        "mode_rules",
+        "structural_findings",
+        "historical_log_records"
+      ],
+      "properties": {
+        "object_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "communication_paths": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "partial_paths": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "applications": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "task_bindings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mode_rules": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "structural_findings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "historical_log_records": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/ecuc-engineering-review.schema.json",
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "xpath",
+        "object_path"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "xpath": {
+          "type": "string"
+        },
+        "object_path": {
+          "type": "string"
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition",
+        "value",
+        "conditional",
+        "source"
+      ],
+      "properties": {
+        "definition": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition",
+        "target",
+        "conditional",
+        "kind",
+        "source"
+      ],
+      "properties": {
+        "definition": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "domain",
+        "module",
+        "definition",
+        "parent",
+        "conditional",
+        "opaque_sha256",
+        "id",
+        "path",
+        "owned_sha256",
+        "parameters",
+        "references",
+        "source"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "domain": {
+          "enum": [
+            "ecuc",
+            "application"
+          ]
+        },
+        "module": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "opaque_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "owned_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "domain",
+        "module",
+        "definition",
+        "parent",
+        "conditional",
+        "opaque_sha256",
+        "parameters",
+        "references"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "domain": {
+          "enum": [
+            "ecuc",
+            "application"
+          ]
+        },
+        "module": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "opaque_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "definition",
+              "value",
+              "conditional"
+            ],
+            "properties": {
+              "definition": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "conditional": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "definition",
+              "target",
+              "conditional",
+              "kind"
+            ],
+            "properties": {
+              "definition": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "conditional": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "consumer",
+        "dependency",
+        "target",
+        "role",
+        "kind",
+        "source",
+        "resolution",
+        "assessment"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "consumer": {
+          "type": "string"
+        },
+        "dependency": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "reference",
+            "containment"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "resolution": {
+          "enum": [
+            "resolved",
+            "ambiguous",
+            "conditional",
+            "unassessed",
+            "empty",
+            "wrong-type",
+            "missing"
+          ]
+        },
+        "assessment": {
+          "enum": [
+            "supported",
+            "structural-only"
+          ]
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "severity",
+        "object_id",
+        "source",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "severity": {
+          "const": "WARNING"
+        },
+        "object_id": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instance",
+        "prototypes",
+        "types",
+        "status",
+        "gaps"
+      ],
+      "properties": {
+        "instance": {
+          "type": "string"
+        },
+        "prototypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "linked-in-scope",
+            "partial"
+          ]
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mapping",
+        "instance",
+        "events",
+        "tasks",
+        "entities",
+        "status",
+        "gaps",
+        "schedule_validation",
+        "reason"
+      ],
+      "properties": {
+        "mapping": {
+          "type": "string"
+        },
+        "instance": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "linked-in-scope",
+            "partial"
+          ]
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "schedule_validation": {
+          "const": "unassessed"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule",
+        "objects",
+        "status",
+        "gaps",
+        "behavior_validation"
+      ],
+      "properties": {
+        "rule": {
+          "type": "string"
+        },
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "linked-in-scope",
+            "partial"
+          ]
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "behavior_validation": {
+          "const": "unassessed"
+        }
+      }
+    },
+    "comm_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "xpath",
+        "object_path"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "xpath": {
+          "type": "string"
+        },
+        "object_path": {
+          "type": "string"
+        }
+      }
+    },
+    "comm_parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition",
+        "value",
+        "conditional",
+        "source"
+      ],
+      "properties": {
+        "definition": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/comm_source"
+        }
+      }
+    },
+    "comm_member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node",
+        "group"
+      ],
+      "properties": {
+        "node": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        }
+      }
+    },
+    "comm_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "path",
+        "definition",
+        "parent",
+        "conditional",
+        "parameters",
+        "type",
+        "source"
+      ],
+      "properties": {
+        "module": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_parameter"
+          }
+        },
+        "type": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/comm_source"
+        }
+      }
+    },
+    "comm_edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "owner",
+        "target",
+        "role",
+        "definition",
+        "source",
+        "expected_type",
+        "kind",
+        "resolution"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/comm_source"
+        },
+        "expected_type": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "reference",
+            "containment",
+            "unassessed"
+          ]
+        },
+        "resolution": {
+          "enum": [
+            "resolved",
+            "ambiguous",
+            "conditional",
+            "empty",
+            "wrong-type",
+            "missing",
+            "unassessed"
+          ]
+        }
+      }
+    },
+    "comm_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "com_ipdu",
+        "direction",
+        "members",
+        "route",
+        "canif_pdu",
+        "nodes",
+        "edge_ids",
+        "gaps",
+        "status"
+      ],
+      "properties": {
+        "com_ipdu": {
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "tx",
+            "rx",
+            "unknown"
+          ]
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/comm_member"
+          }
+        },
+        "route": {
+          "type": "string"
+        },
+        "canif_pdu": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "edge_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "resolved",
+            "partial"
+          ]
+        }
+      }
+    },
+    "comm_unassessed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "definition",
+        "target",
+        "conditional",
+        "kind",
+        "source",
+        "reason"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/comm_source"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "comm_unsupported": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "definition",
+        "source"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/comm_source"
+        }
+      }
+    }
+  }
+}

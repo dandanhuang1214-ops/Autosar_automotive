@@ -1,0 +1,1 @@
+Synthetic structural fixtures for communication + flat application composition + RTE/BSW task bindings + BswM references. Tool log is deliberately fabricated historical test data, not evidence of tool execution. No vendor/customer content or XSD-conformance claim.

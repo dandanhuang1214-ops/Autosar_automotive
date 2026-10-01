@@ -1,0 +1,501 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "scope",
+    "reviews",
+    "reasons",
+    "changes",
+    "unassessed_changes",
+    "affected_objects",
+    "communication_impacts",
+    "binding_impacts",
+    "mode_impacts",
+    "unresolved_dependency_counts",
+    "historical_logs_changed",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ecuc-configuration-impact-0.1"
+    },
+    "status": {
+      "enum": [
+        "not-comparable",
+        "partial",
+        "changed-in-scope",
+        "unchanged-in-scope"
+      ]
+    },
+    "scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reviews": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before",
+        "after"
+      ],
+      "properties": {
+        "before": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "before/ecuc-review.json"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "after": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "const": "after/ecuc-review.json"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "object_id",
+          "kind",
+          "fields",
+          "before",
+          "after",
+          "before_source",
+          "after_source"
+        ],
+        "properties": {
+          "object_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "added",
+              "removed",
+              "modified"
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/semantic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/semantic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "before_source": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/source"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after_source": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/source"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "unassessed_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "identity",
+          "message"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "affected_objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "snapshot",
+          "object_id",
+          "origin",
+          "dependency_edges",
+          "source"
+        ],
+        "properties": {
+          "snapshot": {
+            "enum": [
+              "before",
+              "after"
+            ]
+          },
+          "object_id": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "dependency_edges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "$ref": "#/$defs/source"
+          }
+        }
+      }
+    },
+    "communication_impacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "snapshot",
+          "path_index",
+          "com_ipdu",
+          "direction",
+          "route",
+          "canif_pdu",
+          "affected_members"
+        ],
+        "properties": {
+          "snapshot": {
+            "enum": [
+              "before",
+              "after"
+            ]
+          },
+          "path_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "com_ipdu": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "tx",
+              "rx",
+              "unknown"
+            ]
+          },
+          "route": {
+            "type": "string"
+          },
+          "canif_pdu": {
+            "type": "string"
+          },
+          "affected_members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "binding_impacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "snapshot",
+          "mapping",
+          "affected_members"
+        ],
+        "properties": {
+          "snapshot": {
+            "enum": [
+              "before",
+              "after"
+            ]
+          },
+          "mapping": {
+            "type": "string"
+          },
+          "affected_members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "mode_impacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "snapshot",
+          "rule",
+          "affected_members"
+        ],
+        "properties": {
+          "snapshot": {
+            "enum": [
+              "before",
+              "after"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "affected_members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "unresolved_dependency_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before",
+        "after"
+      ],
+      "properties": {
+        "before": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "after": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "historical_logs_changed": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changed_objects",
+        "affected_objects",
+        "communication_paths",
+        "task_bindings",
+        "mode_rules"
+      ],
+      "properties": {
+        "changed_objects": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "affected_objects": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "communication_paths": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "task_bindings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mode_rules": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/ecuc-configuration-impact.schema.json",
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "xpath",
+        "object_path"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "xpath": {
+          "type": "string"
+        },
+        "object_path": {
+          "type": "string"
+        }
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "domain",
+        "module",
+        "definition",
+        "parent",
+        "conditional",
+        "opaque_sha256",
+        "parameters",
+        "references"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "domain": {
+          "enum": [
+            "ecuc",
+            "application"
+          ]
+        },
+        "module": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "parent": {
+          "type": "string"
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "opaque_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "definition",
+              "value",
+              "conditional"
+            ],
+            "properties": {
+              "definition": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "conditional": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "definition",
+              "target",
+              "conditional",
+              "kind"
+            ],
+            "properties": {
+              "definition": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "conditional": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

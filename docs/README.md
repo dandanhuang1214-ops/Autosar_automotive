@@ -2,6 +2,9 @@
 
 ## 项目管理
 
+- [P26 工程审查与两版影响](project/p26-engineering-review-guide.md)：应用/任务/模式、历史日志、变更依赖见证、完整安装与迁移流程。
+- [P27 声明式配置变更验收计划](project/p27-configuration-acceptance-plan.md)：P26 完成后的下一主阶段。
+
 - [P26 通信跨层引用定位](project/p26-ecuc-communication-guide.md)：实际 ECUC Tx/Rx、组信号、路由与硬件引用链。
 
 - [P26 首轮验收](project/p26-acceptance.md)：实现、CI 与剩余跨层定位门。
@@ -30,6 +33,8 @@
 - [Git 项目管理常用指令与用法](project/git-workflow-cheatsheet.md)：提交、分支、远端同步、冲突和回滚速查。
 
 ## 环境与学习
+
+- [P26 工程审查独立练习](learning/p26-engineering-review.md)
 
 - [P26 ECUC 体检练习](learning/p26-ecuc-inspection.md)
 

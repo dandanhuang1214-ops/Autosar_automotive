@@ -7,6 +7,8 @@ from pathlib import Path
 
 from automotive_workbench.ecuc_project import run_inspection, verify_inspection
 from automotive_workbench.ecuc_communication import run_communication, verify_communication
+from automotive_workbench.ecuc_review import run_review as run_ecuc_review, verify_review as verify_ecuc_review
+from automotive_workbench.ecuc_impact import compare_reviews as compare_ecuc_reviews, verify_impact as verify_ecuc_impact
 from automotive_workbench.adapters.generate_arxml import summarize_issue_report
 from automotive_workbench.adapters.dbc import inspect_dbc, validate_dbc_intent
 from automotive_workbench.adapters.canonical_contract import validate_contract_mapping
@@ -79,6 +81,19 @@ def build_parser() -> argparse.ArgumentParser:
     ecuc_chain.add_argument("--output", type=Path, required=True)
     ecuc_chain_verify = commands.add_parser("verify-ecuc-communication", help="Replay ECUC communication chains from portable sources")
     ecuc_chain_verify.add_argument("report", type=Path)
+    ecuc_review = commands.add_parser("review-ecuc-project", help="Review ECUC communication, application/task binding, modes and historical logs")
+    ecuc_review.add_argument("project", type=Path)
+    ecuc_review.add_argument("--application", type=Path, action="append", default=[])
+    ecuc_review.add_argument("--tool-log", type=Path, action="append", default=[])
+    ecuc_review.add_argument("--output", type=Path, required=True)
+    ecuc_review_verify = commands.add_parser("verify-ecuc-review", help="Replay a portable ECUC engineering review")
+    ecuc_review_verify.add_argument("report", type=Path)
+    ecuc_compare = commands.add_parser("compare-ecuc-reviews", help="Compare verified ECUC snapshots and trace structural impact")
+    ecuc_compare.add_argument("before", type=Path)
+    ecuc_compare.add_argument("after", type=Path)
+    ecuc_compare.add_argument("--output", type=Path, required=True)
+    ecuc_impact_verify = commands.add_parser("verify-ecuc-impact", help="Replay a portable ECUC configuration impact bundle")
+    ecuc_impact_verify.add_argument("report", type=Path)
 
     commands.add_parser("list-engineering-questions", help="List bounded, versioned P21-P23 evidence questions")
     search = commands.add_parser("search-engineering-questions", help="Find catalog questions; matches are not engineering conclusions")
@@ -392,6 +407,14 @@ def main() -> int:
             result = run_communication(args.project, args.output)
         elif args.command == "verify-ecuc-communication":
             result = verify_communication(args.report)
+        elif args.command == "review-ecuc-project":
+            result = run_ecuc_review(args.project, args.output, args.application, args.tool_log)
+        elif args.command == "verify-ecuc-review":
+            result = verify_ecuc_review(args.report)
+        elif args.command == "compare-ecuc-reviews":
+            result = compare_ecuc_reviews(args.before, args.after, args.output)
+        elif args.command == "verify-ecuc-impact":
+            result = verify_ecuc_impact(args.report)
         elif args.command == "inspect":
             if args.artifact.suffix.casefold() == ".dbc":
                 result = inspect_dbc(args.artifact)

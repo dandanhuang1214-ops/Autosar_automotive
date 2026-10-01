@@ -51,6 +51,11 @@ MAX_PATHS = 20000
 
 def build(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
     inspection, sources, containers = read_project(project)
+    return build_model(inspection, sources, containers), sources
+
+
+def build_model(inspection: dict[str, Any], sources: dict[str, bytes],
+                containers: list[dict[str, Any]]) -> dict[str, Any]:
     module_types = {
         m["path"]: m["definition"].rsplit("/", 1)[-1] for m in inspection["modules"]
     }
@@ -378,7 +383,7 @@ def build(project: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
         if any(p["status"] == "partial" for p in paths)
         else "resolved-in-scope",
     }
-    return report, sources
+    return report
 
 
 def run_communication(project: Path, output: Path) -> dict[str, Any]:

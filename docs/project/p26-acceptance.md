@@ -31,3 +31,20 @@
 本地公开证据 `output/p26-chain-validation/`，真实工程只保存在忽略目录。下一项为应用/OS/RTE 调度集成缺口解释；不将本轮结构结果当生成或物理 ECU 证据。
 
 通信链 job/step 原始记录 `output/p26-chain-validation/remote-ci.json`，各 job ID 见进度账本。该验收回填为后续 `[skip ci]` 文档提交，不代替实现提交自己的 CI。
+
+## 整阶段收尾：工程审查与两版影响（local-accepted）
+
+| 验收门 | 证据 |
+|---|---|
+| 应用实例/组合与调度绑定 | 显式 prototype/type、事件/runnable 归属及 ASW/BSW→OsTask；缺失/错误类型/条件保持缺口 |
+| 模式与工具观察 | BswM 引用/环检查，日志始终 historical-unbound；不混入当前结构失败 |
+| 两版影响 | 对象参数/引用/增删及不透明内容；两侧依赖边见证，限定通信/任务/模式影响；重复身份 not-comparable |
+| 用户完整路径 | 四个 CLI、离线 HTML/JSON，before/after 自包含交付 |
+| 公开验证 | 十组审查/比较、10/10 移除原输入后的复验、结论/来源/HTML/库存四类拒绝；17 项专项测试 |
+| 全量本地 | 344 tests：342 passed、2 环境跳过；51 schema，47-source mypy 与质量门 |
+| 安装后流程 | 无项目依赖的隔离 wheel、仓库外同一完整流程和搬移副本复验；完整流程通过，证据 `installed-final-code/summary.json` |
+| 本实现七 job | 待提交和实际 run，尚未 remote-accepted |
+
+公开证据 `output/p26-stage-validation/`，本地真实工程仍只在忽略目录。初次安装后检查因验证脚本 resolve 了 venv 解释器符号链接、误用基础解释器而失败，已保留启动器路径修复。未知 XML 混合文本变化检测和有限 HTML 展示已补强。
+
+P26 完成的范围为受限静态结构审查与快照影响，不包含厂商生成、实时调度、商业工具或物理 ECU。其验收后转入[P27 声明式配置变更验收](p27-configuration-acceptance-plan.md)；P25 人工门独立保留。
