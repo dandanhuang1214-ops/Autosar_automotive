@@ -2,6 +2,7 @@
 
 ## 项目管理
 
+- [P26 首轮验收](project/p26-acceptance.md)：实现、CI 与剩余跨层定位门。
 - [P26 ECUC 配置体检](project/p26-ecuc-inspection-guide.md)：当前模块选择、引用与任务绑定检查。
 
 - [P25 验收与剩余门](project/p25-acceptance.md)：固定实现、实际 CI 与人工演示/外部反馈缺口。

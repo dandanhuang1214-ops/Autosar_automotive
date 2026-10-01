@@ -59,9 +59,9 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 用户提供工程后的路线补充（2026-09-30）
 
-用户先要求分析本地 BSW 配置工程，再授权继续升级。新增 [P26 真实 ECUC 配置体检与跨层定位](p26-ecuc-inspection-plan.md)，作为当前唯一代码实现主阶段：项目感知导入/引用体检 → 通信跨层定位 → 应用与调度集成检查 → 两版配置影响。当前完成首轮实现和本地验证，远端待本实现 CI。
+用户先要求分析本地 BSW 配置工程，再授权继续升级。新增 [P26 真实 ECUC 配置体检与跨层定位](p26-ecuc-inspection-plan.md)，作为当前唯一代码实现主阶段：项目感知导入/引用体检 → 通信跨层定位 → 应用与调度集成检查 → 两版配置影响。首轮项目体检实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success，双平台场景和上传通过，首轮门 remote-accepted。
 
-P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍待取得，不把新工程的代理分析算作 P25 人工验收，也不宣称 P25 整阶段完成。本地输入和细节不进入公共仓库，公开回归用合成 fixture。下一项为 P26 首轮七 job 验收，然后实现 COM/PduR/CanIf/Can 引用链。
+P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍待取得，不把新工程的代理分析算作 P25 人工验收，也不宣称 P25 整阶段完成。本地输入和细节不进入公共仓库，公开回归用合成 fixture。下一项为 P26 真实 VALUE-REF 驱动的 COM/PduR/CanIf/Can 引用链，整阶段仍 implementing，见[P26 验收表](p26-acceptance.md)。
 
 ## 持续升级的完成规则
 

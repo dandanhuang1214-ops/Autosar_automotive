@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-01）
 
-当前主实现阶段：`P26 — 真实 ECUC 配置体检与跨层定位（implementing）`。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，公开场景及全量 316 项回归通过（2 项环境跳过），完整历史审查重放与远端验收进行中。下一项为首轮七 job 验收，再连接 COM/PduR/CanIf/Can 引用链。平台实现与个人掌握分别计量。
+当前主实现阶段：`P26 — 真实 ECUC 配置体检与跨层定位（implementing）`。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。下一项为 COM/PduR/CanIf/Can 真实引用链，P26 整阶段仍 implementing。平台实现与个人掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1319,3 +1319,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 首轮实现 `84b5469372ca48da1549716211daab06af2bfef4` / run `36742954252`：Ubuntu core 与 Python 3.14 success，Windows core 失败、下游 skipped。实际原因为新增测试读取含中文负例清单时未显式指定 UTF-8，Windows cp1252 解码失败；已修正新增测试与场景脚本的文本读取，等待修复提交自己的 CI，不以失败 run 验收。
 - 完整本地 P24 重放已通过：30/30 开发 gold/引用/迁移，历史完整性拒绝 9/9、范围拒答 3/3、迁移 12/12，目录检索与严重度分项全部通过；`assessment/summary.json` 明确版本 0.2、`freeze_verified: false`。
+
+
+### P26：项目感知体检首轮远端验收（2026-10-01）
+
+- 最终实现 `c6320d503d3d704bdce5d64e294dc84811444e0c` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；已核对完整 head SHA。首轮失败记录保留，修复后的验收不引用失败 run。
+- 实际 job：runtime-currency `110213164930` success；core-contracts (windows-latest) `110213165047` success；core-contracts (ubuntu-22.04) `110213165203` success；controlled-rejections (windows-latest) `110213917490` success；runtime-evidence (windows-latest) `110213917561` success；runtime-evidence (ubuntu-22.04) `110213917610` success；controlled-rejections (ubuntu-22.04) `110213917630` success。
+- Windows/Ubuntu 的 `Run ECUC project inspection scenarios`、`Upload ECUC project inspection evidence` 与 `Assess engineering review components` 均 success；归档 `ecuc-inspection-Windows`、`ecuc-inspection-Linux`，完整 job/step 记录 `output/p26-validation-20261001/remote-ci.json`。
+- 本轮仅项目感知体检门 remote-accepted，P26 整阶段 implementing。下一项为真实 VALUE-REF 驱动的 Com → EcuC/PduR → CanIf → Can 通信跨层定位；P25 人工门及商业/物理 ECU 限制保持。详见 [P26 验收表](p26-acceptance.md)。
+- 修复推送曾遇 TLS 连接中断，重试成功，无待恢复环境阻断。本条及首页/路线为后续纯文档状态提交，使用 `[skip ci]`；实现验收固定引用 `c6320d5` / `36813404620`，文档提交不算新实现 CI。
