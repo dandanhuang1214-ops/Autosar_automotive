@@ -140,6 +140,9 @@ def build_parser() -> argparse.ArgumentParser:
     declared_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
     declared_parser.add_argument("--channel")
 
+    ecuc_project_verify = commands.add_parser("verify-ecuc-project", help="Replay a static ECUC project-acceptance-0.6 bundle")
+    ecuc_project_verify.add_argument("report", type=Path)
+
     project_parser = commands.add_parser("run-project", help="Validate and run a project with requirement acceptance evidence")
     project_parser.add_argument("project", type=Path)
     project_parser.add_argument("--output", type=Path, required=True)
@@ -487,6 +490,9 @@ def main() -> int:
                 BusConfig(args.interface, args.channel),
                 args.output,
             )
+        elif args.command == "verify-ecuc-project":
+            from automotive_workbench.project_ecuc import verify
+            result = verify(args.report)
         elif args.command == "run-project":
             result = run_project(args.project, args.output, default_communication_config(args.interface, args.channel))
         elif args.command == "run-project-review":
@@ -585,6 +591,7 @@ def main() -> int:
     if result.get("status") in {
         "failed",
         "partial",
+        "unassessed",
         "refused",
         "regressed",
         "changed",

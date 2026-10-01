@@ -1,0 +1,33 @@
+{
+  "schema_version": "workbench-project-0.6",
+  "name": "transmitter static configuration acceptance",
+  "comparison_key": "ecuc-transmitter-v1",
+  "inputs": {
+    "baseline": {
+      "project": "transmitter/demo.dpa",
+      "applications": [],
+      "tool_logs": []
+    },
+    "candidate": {
+      "project": "transmitter/demo.dpa",
+      "applications": [],
+      "tool_logs": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "COMMUNICATION",
+      "text": "Require communication structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/communication/status",
+      "expected": "passed"
+    },
+    {
+      "id": "IMPACT",
+      "text": "Require impact structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/impact/status",
+      "expected": "passed"
+    }
+  ]
+}

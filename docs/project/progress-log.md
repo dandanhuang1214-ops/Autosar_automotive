@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-01）
+## 当前总览（2026-10-02）
 
-当前主实现阶段：`P27 — 声明式 ECUC 配置变更验收（planned）`；P26 受限静态审查整阶段 remote-accepted。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。通信跨层引用链已 remote-accepted：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success，双平台场景/上传通过；本轮按整阶段交付应用/OS/RTE/BswM 集成缺口和两版配置影响，含 HTML/快照及安装后完整流程；实现 `6433e1cdf360e07d4d09e9294922380f68730018` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部 success。下一任务为 P27 新项目版本的 ECUC 输入/基线/检查契约和正常/缺口阻止接受的端到端路径。平台实现与个人掌握分别计量。
+当前主实现阶段：`P27 — 声明式 ECUC 配置变更验收（implementing）`；P26 受限静态审查整阶段 remote-accepted。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。通信跨层引用链已 remote-accepted：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success，双平台场景/上传通过；本轮按整阶段交付应用/OS/RTE/BswM 集成缺口和两版配置影响，含 HTML/快照及安装后完整流程；实现 `6433e1cdf360e07d4d09e9294922380f68730018` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部 success。P27 已实现 0.6 声明式 ECUC 项目、五检查四状态、两种工程及完整安装/审查/比较流程；下一任务为本实现最终本地与七 job 远端验收，详见 [P27 验收表](p27-acceptance.md)。平台实现与个人掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1374,3 +1374,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终本地 344 tests：342 passed、2 环境跳过；17/17 专项、51 schema、47-source mypy、Ruff、topology、pip check 通过。隔离 wheel 的十场景、10/10 迁移、4/4 拒绝及最终副本复验通过。真实本地工程 15,694 对象、621 通信路径、99 任务映射，复验 passed；应用/模式输入缺口保持 unassessed。HTML 595,018 字节，完整对象证据保留于 JSON；私有输入未提交。
 - P26 四项静态能力按公开受限范围 remote-accepted；厂商生成、可调度性、商业往返及物理 ECU 未验收，P25 人工演示/外部反馈保留。当前主阶段切换 P27 planned；下一项冻结声明式 ECUC 项目契约并贯通正常/缺口两路径。
 - 本条及总览/路线为后续纯文档 `[skip ci]` 状态提交，不作为新的实现验收；固定引用 `6433e1c` / `36864006903`。
+
+### P27：声明式 ECUC 配置变更验收整阶段实现（2026-10-02）
+
+- 新 workbench-project/project-acceptance 0.6 接入 `run-project`，复用 P26 捕获/审查/影响内核；一次冻结基线和候选原字节，不开 CAN、不执行生成。旧 0.1–0.5 保持，新增比较 0.3 容纳 unassessed。
+- 通信/应用/任务/模式/影响五个显式检查；通过条件固定为 passed，不允许将 unknown 设为接受目标。只聚合声明项；失败/阻塞/未评估均阻止接受。没有应用输入时任务关联保留 unassessed；历史日志独立，不当当前故障。
+- 完整集成与精简单 Tx 两工程无需内核分支；八场景覆盖正常、任务/通信缺口、未知字段、应用缺失、重复身份及历史日志。项目/阶段/来源/策略均可重算，来源移除和整树二次搬移后的审查/比较复验；四类 CLI 篡改拒绝。
+- 新 `verify-ecuc-project`、来源检查接入项目审查/比较；每项保留来源指针和影响对象。重算拒绝只修改结论并重新计算哈希的伪造；不提供签名或外部来源身份认证。
+- 开发中初次场景和安装检查因旧审查契约要求标量断言而失败，改为逐条对象和证据路径引用，完整数组留在阶段 JSON；一次源码场景跨越规则修改导致复验不一致，最终固定代码后全流程重跑。最终测试/安装与远端结果待下条回填。
+- 指南、独立练习、验收表和下一阶段 P28 对象级策略计划同步。当前 P27 implementing，不沿用 P26 的 CI 结论，也不代替 P25 人工或商业/物理门。
+
+- 最终本地验收：359 tests（357 passed、2 环境跳过），15 项专项；52 schemas、63 bound examples、25 syntax-only examples、49-source mypy、Ruff、topology、pip check 全通过。最终隔离 wheel 八场景、8/8 项目迁移复验与审查、4/4 篡改拒绝、项目回归比较和第二次搬移复验通过，证据 `output/p27-validation/installed-release/summary.json`。本轮 local-accepted，待固定实现的七 job。

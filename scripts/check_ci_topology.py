@@ -13,6 +13,9 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run declarative ECUC project scenarios": "runtime-evidence",
+    "Verify installed ECUC project acceptance": "runtime-evidence",
+    "Upload declarative ECUC project evidence": "runtime-evidence",
     "Run ECUC engineering stage scenarios": "runtime-evidence",
     "Verify installed ECUC engineering workflow": "runtime-evidence",
     "Upload ECUC engineering stage evidence": "runtime-evidence",

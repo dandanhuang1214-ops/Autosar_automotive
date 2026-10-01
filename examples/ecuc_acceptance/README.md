@@ -1,0 +1,1 @@
+Public synthetic ECUC inputs, not vendor/customer exports. Integration has Tx/Rx, ASW/BSW bindings and BswM; transmitter has only one Tx route, five selected modules, and no declared application/task/mode checks. Historical tool.log is fabricated test data. Baseline and candidate initially share the same inputs; copy candidate inputs before editing.

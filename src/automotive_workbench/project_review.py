@@ -17,8 +17,9 @@ SUPPORTED_REPORT_VERSIONS = {
     "project-acceptance-0.3",
     "project-acceptance-0.4",
     "project-acceptance-0.5",
+    "project-acceptance-0.6",
 }
-STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication", "external_ecu")
+STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication", "external_ecu", "ecuc")
 
 
 def _sha256(path: Path) -> str:
@@ -61,7 +62,7 @@ def load_project_report(path: Path) -> dict[str, Any]:
         raise ValueError("Project review requires a project-acceptance report")
     if report.get("schema_version") not in SUPPORTED_REPORT_VERSIONS:
         raise ValueError("Unsupported project-acceptance schema_version")
-    if report.get("status") not in {"passed", "failed", "blocked"}:
+    if report.get("status") not in ({"passed", "failed", "blocked"} | ({"unassessed"} if report["schema_version"] == "project-acceptance-0.6" else set())):
         raise ValueError("Project report requires a valid status")
     if not isinstance(report.get("name"), str) or not report["name"]:
         raise ValueError("Project report requires a non-empty name")
@@ -176,7 +177,7 @@ def run_project_review(
         if stage is None:
             continue
         if not isinstance(stage, dict) or stage.get("status") not in {
-            "passed", "failed", "blocked", "skipped"
+            "passed", "failed", "blocked", "skipped", "unassessed"
         }:
             raise ValueError(f"Project report has invalid {stage_name} stage")
         source = _stage_source(report_path, stage.get("path"))
@@ -219,6 +220,18 @@ def run_project_review(
             stage_report = stage_reports.get(stage_name)
             if stage_report is None:
                 continue
+            if stage_name == "ecuc":
+                for check_name in stage_report["selected_checks"]:
+                    check = stage_report["checks"][check_name]
+                    values = [(field, check[field]) for field in ("status", "reason")]
+                    values += [("evidence/" + field, check["evidence"][field]) for field in ("path", "pointer")]
+                    values += [(f"affected_objects/{i}", value) for i, value in enumerate(check["affected_objects"][:100])]
+                    for field, value in values:
+                        checks.append(_assertion_check(
+                            _check_id(f"ECUC-{check_name}-{field}"),
+                            f"ECUC {check_name} {field} is recorded by the static acceptance policy.",
+                            artifact_id, f"/checks/{check_name}/{field}", value,
+                        ))
             if stage_name == "external_ecu":
                 for field in ("reason", "source_commit", "boundary", "launch_ecu"):
                     checks.append(_assertion_check(
@@ -272,7 +285,7 @@ def run_project_review(
             if (
                 not isinstance(requirement_id, str)
                 or not requirement_id
-                or status not in {"failed", "blocked"}
+                or status not in {"failed", "blocked", "unassessed"}
                 or not isinstance(reason, str)
                 or not reason
             ):

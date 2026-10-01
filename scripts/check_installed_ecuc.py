@@ -20,9 +20,10 @@ from check_installed_distribution import (  # noqa: E402
     _venv_paths,
 )
 from run_ecuc_engineering_scenarios import run  # noqa: E402
+from run_ecuc_acceptance_scenarios import run as run_projects  # noqa: E402
 
 
-def check(output: Path) -> dict[str, Any]:
+def check(output: Path, project_acceptance: bool = False) -> dict[str, Any]:
     if output.is_symlink() or output.exists():
         raise ValueError("Installed ECUC output must be absent")
     output = output.resolve()
@@ -74,7 +75,9 @@ def check(output: Path) -> dict[str, Any]:
         ):
             raise ValueError("Installed ECUC consumer is not isolated")
         _run([str(python), "-m", "pip", "check"], cwd=isolated, env=env)
-        result = run(isolated / "flow", python)
+        result = (run_projects if project_acceptance else run)(
+            isolated / "flow", python
+        )
         shutil.copytree(isolated / "flow", output / "evidence")
         # Verify copied final evidence from outside the repository with the installed interpreter.
         replay = json.loads(
@@ -83,9 +86,16 @@ def check(output: Path) -> dict[str, Any]:
                     str(python),
                     "-m",
                     "automotive_workbench.cli",
-                    "verify-ecuc-impact",
+                    "verify-ecuc-project"
+                    if project_acceptance
+                    else "verify-ecuc-impact",
                     str(
-                        output / "evidence/portable/comparisons/signal/ecuc-impact.json"
+                        output
+                        / (
+                            "evidence/delivery/projects/integration/bundle/project-report.json"
+                            if project_acceptance
+                            else "evidence/portable/comparisons/signal/ecuc-impact.json"
+                        )
                     ),
                 ],
                 cwd=isolated,
@@ -118,4 +128,6 @@ def check(output: Path) -> dict[str, Any]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    print(json.dumps(check(parser.parse_args().output), indent=2))
+    parser.add_argument("--project-acceptance", action="store_true")
+    args = parser.parse_args()
+    print(json.dumps(check(args.output, args.project_acceptance), indent=2))

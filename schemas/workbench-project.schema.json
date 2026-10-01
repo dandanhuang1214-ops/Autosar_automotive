@@ -1,14 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://automotive-workbench.local/schemas/workbench-project.schema.json",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "name",
-    "inputs",
-    "requirements"
-  ],
   "properties": {
     "schema_version": {
       "enum": [
@@ -16,223 +8,342 @@
         "workbench-project-0.2",
         "workbench-project-0.3",
         "workbench-project-0.4",
-        "workbench-project-0.5"
+        "workbench-project-0.5",
+        "workbench-project-0.6"
       ]
-    },
-    "name": {
-      "type": "string",
-      "pattern": "\\S"
-    },
-    "inputs": {
+    }
+  },
+  "oneOf": [
+    {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "dbc",
-        "contract",
-        "intent"
+        "schema_version",
+        "name",
+        "inputs",
+        "requirements"
       ],
       "properties": {
-        "dbc": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "contract": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "intent": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "vectors": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "arxml": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "provenance": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "execution": {
-          "type": "string",
-          "pattern": "\\S"
-        }
-      }
-    },
-    "requirements": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "text",
-          "stage",
-          "pointer",
-          "expected"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]+$"
-          },
-          "text": {
-            "type": "string",
-            "pattern": "\\S"
-          },
-          "stage": {
-            "enum": [
-              "canonical",
-              "mapping",
-              "communication",
-              "generation",
-              "arxml",
-              "external_ecu"
-            ]
-          },
-          "pointer": {
-            "type": "string",
-            "pattern": "^/(?:[^~]|~[01])*$"
-          },
-          "expected": {
-            "type": [
-              "string",
-              "number",
-              "boolean",
-              "null"
-            ]
-          }
-        }
-      }
-    },
-    "generation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "tool",
-        "revision",
-        "exit_code",
-        "source_docx",
-        "issue_report",
-        "sha256"
-      ],
-      "properties": {
-        "tool": {
-          "const": "Generate-Arxml"
-        },
-        "revision": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{40}$"
-        },
-        "exit_code": {
-          "type": "integer",
+        "schema_version": {
           "enum": [
-            0,
-            1
+            "workbench-project-0.1",
+            "workbench-project-0.2",
+            "workbench-project-0.3",
+            "workbench-project-0.4",
+            "workbench-project-0.5"
           ]
         },
-        "source_docx": {
+        "name": {
           "type": "string",
           "pattern": "\\S"
         },
-        "issue_report": {
-          "type": "string",
-          "pattern": "\\S"
-        },
-        "sha256": {
+        "inputs": {
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "source_docx",
-            "issue_report",
-            "contract"
+            "dbc",
+            "contract",
+            "intent"
           ],
           "properties": {
-            "source_docx": {
+            "dbc": {
               "type": "string",
-              "pattern": "^[0-9a-f]{64}$"
-            },
-            "issue_report": {
-              "type": "string",
-              "pattern": "^[0-9a-f]{64}$"
+              "pattern": "\\S"
             },
             "contract": {
               "type": "string",
-              "pattern": "^[0-9a-f]{64}$"
+              "pattern": "\\S"
+            },
+            "intent": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "vectors": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "arxml": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "provenance": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "execution": {
+              "type": "string",
+              "pattern": "\\S"
             }
           }
-        }
-      }
-    },
-    "comparison_key": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9_.-]+$",
-      "not": {
-        "pattern": "[^A-Za-z0-9_.-]"
-      }
-    }
-  },
-  "$comment": "Loader additionally requires unique requirement IDs, finite numbers and readable input files. Paths resolve relative to project file.",
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "schema_version": {
-            "enum": [
-              "workbench-project-0.3",
-              "workbench-project-0.4",
-              "workbench-project-0.5"
-            ]
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "comparison_key"
-        ],
-        "properties": {
-          "inputs": {
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
             "required": [
-              "vectors"
-            ]
+              "id",
+              "text",
+              "stage",
+              "pointer",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.-]+$"
+              },
+              "text": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "stage": {
+                "enum": [
+                  "canonical",
+                  "mapping",
+                  "communication",
+                  "generation",
+                  "arxml",
+                  "external_ecu"
+                ]
+              },
+              "pointer": {
+                "type": "string",
+                "pattern": "^/(?:[^~]|~[01])*$"
+              },
+              "expected": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
           }
-        }
-      },
-      "else": {
-        "allOf": [
-          {
-            "if": {
+        },
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "revision",
+            "exit_code",
+            "source_docx",
+            "issue_report",
+            "sha256"
+          ],
+          "properties": {
+            "tool": {
+              "const": "Generate-Arxml"
+            },
+            "revision": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "exit_code": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            },
+            "source_docx": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "issue_report": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "sha256": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "source_docx",
+                "issue_report",
+                "contract"
+              ],
               "properties": {
-                "schema_version": {
-                  "const": "workbench-project-0.2"
+                "source_docx": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "issue_report": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "contract": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
                 }
               }
+            }
+          }
+        },
+        "comparison_key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+$",
+          "not": {
+            "pattern": "[^A-Za-z0-9_.-]"
+          }
+        }
+      },
+      "$comment": "Loader additionally requires unique requirement IDs, finite numbers and readable input files. Paths resolve relative to project file.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "schema_version": {
+                "enum": [
+                  "workbench-project-0.3",
+                  "workbench-project-0.4",
+                  "workbench-project-0.5"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "comparison_key"
+            ],
+            "properties": {
+              "inputs": {
+                "required": [
+                  "vectors"
+                ]
+              }
+            }
+          },
+          "else": {
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "schema_version": {
+                      "const": "workbench-project-0.2"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "generation"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "required": [
+                      "generation"
+                    ]
+                  },
+                  "properties": {
+                    "requirements": {
+                      "items": {
+                        "properties": {
+                          "stage": {
+                            "enum": [
+                              "canonical",
+                              "mapping",
+                              "communication"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "not": {
+              "required": [
+                "comparison_key"
+              ]
             },
-            "then": {
+            "properties": {
+              "inputs": {
+                "not": {
+                  "required": [
+                    "vectors"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
               "required": [
                 "generation"
               ]
-            },
-            "else": {
-              "not": {
-                "required": [
-                  "generation"
+            }
+          },
+          "then": {
+            "properties": {
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "stage": {
+                      "enum": [
+                        "canonical",
+                        "mapping",
+                        "communication",
+                        "arxml",
+                        "external_ecu"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "schema_version": {
+                "enum": [
+                  "workbench-project-0.4",
+                  "workbench-project-0.5"
                 ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "inputs": {
+                "required": [
+                  "arxml",
+                  "provenance"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "inputs": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "arxml"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "provenance"
+                      ]
+                    }
+                  ]
+                }
               },
-              "properties": {
-                "requirements": {
-                  "items": {
-                    "properties": {
-                      "stage": {
-                        "enum": [
-                          "canonical",
-                          "mapping",
-                          "communication"
-                        ]
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "stage": {
+                      "not": {
+                        "const": "arxml"
                       }
                     }
                   }
@@ -240,141 +351,182 @@
               }
             }
           }
-        ],
-        "not": {
-          "required": [
-            "comparison_key"
-          ]
         },
-        "properties": {
-          "inputs": {
-            "not": {
-              "required": [
-                "vectors"
-              ]
+        {
+          "if": {
+            "properties": {
+              "schema_version": {
+                "const": "workbench-project-0.5"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "inputs": {
+                "required": [
+                  "execution"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "inputs": {
+                "not": {
+                  "required": [
+                    "execution"
+                  ]
+                }
+              },
+              "requirements": {
+                "items": {
+                  "properties": {
+                    "stage": {
+                      "not": {
+                        "const": "external_ecu"
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
-      }
+      ]
     },
     {
-      "if": {
-        "not": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "name",
+        "comparison_key",
+        "inputs",
+        "requirements"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "workbench-project-0.6"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "comparison_key": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
           "required": [
-            "generation"
-          ]
-        }
-      },
-      "then": {
-        "properties": {
-          "requirements": {
-            "items": {
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "canonical",
-                    "mapping",
-                    "communication",
-                    "arxml",
-                    "external_ecu"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "schema_version": {
-            "enum": [
-              "workbench-project-0.4",
-              "workbench-project-0.5"
-            ]
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "inputs": {
-            "required": [
-              "arxml",
-              "provenance"
-            ]
-          }
-        }
-      },
-      "else": {
-        "properties": {
-          "inputs": {
-            "not": {
-              "anyOf": [
-                {
-                  "required": [
-                    "arxml"
-                  ]
-                },
-                {
-                  "required": [
-                    "provenance"
-                  ]
-                }
-              ]
-            }
-          },
-          "requirements": {
-            "items": {
-              "properties": {
-                "stage": {
-                  "not": {
-                    "const": "arxml"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "schema_version": {
-            "const": "workbench-project-0.5"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "inputs": {
-            "required": [
-              "execution"
-            ]
-          }
-        }
-      },
-      "else": {
-        "properties": {
-          "inputs": {
-            "not": {
+            "baseline",
+            "candidate"
+          ],
+          "properties": {
+            "baseline": {
+              "type": "object",
+              "additionalProperties": false,
               "required": [
-                "execution"
-              ]
-            }
-          },
-          "requirements": {
-            "items": {
+                "project",
+                "applications",
+                "tool_logs"
+              ],
               "properties": {
-                "stage": {
-                  "not": {
-                    "const": "external_ecu"
-                  }
+                "project": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "applications": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
+                },
+                "tool_logs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
+                }
+              }
+            },
+            "candidate": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "project",
+                "applications",
+                "tool_logs"
+              ],
+              "properties": {
+                "project": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "applications": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
+                },
+                "tool_logs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
                 }
               }
             }
           }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "text",
+              "stage",
+              "pointer",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.-]+$"
+              },
+              "text": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "stage": {
+                "const": "ecuc"
+              },
+              "pointer": {
+                "enum": [
+                  "/checks/communication/status",
+                  "/checks/application/status",
+                  "/checks/task_bindings/status",
+                  "/checks/mode_rules/status",
+                  "/checks/impact/status"
+                ]
+              },
+              "expected": {
+                "const": "passed"
+              }
+            }
+          },
+          "minItems": 1
         }
       }
     }

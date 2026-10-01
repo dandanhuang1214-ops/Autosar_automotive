@@ -3,47 +3,159 @@
   "$id": "https://automotive-workbench.local/schemas/project-comparison.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["artifact_type", "schema_version", "status", "baseline", "candidate", "basis", "stages", "requirements", "findings", "summary", "evidence_validation"],
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "status",
+    "baseline",
+    "candidate",
+    "basis",
+    "stages",
+    "requirements",
+    "findings",
+    "summary",
+    "evidence_validation"
+  ],
   "properties": {
-    "artifact_type": {"const": "project-comparison"},
-    "schema_version": {"enum": ["project-comparison-0.1", "project-comparison-0.2"]},
-    "status": {"enum": ["stable", "regressed", "improved", "changed", "not-comparable"]},
-    "baseline": {"$ref": "#/$defs/source"},
-    "candidate": {"$ref": "#/$defs/source"},
+    "artifact_type": {
+      "const": "project-comparison"
+    },
+    "schema_version": {
+      "enum": [
+        "project-comparison-0.1",
+        "project-comparison-0.2",
+        "project-comparison-0.3"
+      ]
+    },
+    "status": {
+      "enum": [
+        "stable",
+        "regressed",
+        "improved",
+        "changed",
+        "not-comparable"
+      ]
+    },
+    "baseline": {
+      "$ref": "#/$defs/source"
+    },
+    "candidate": {
+      "$ref": "#/$defs/source"
+    },
     "basis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "stage_names", "requirement_ids", "reasons"],
+      "required": [
+        "status",
+        "stage_names",
+        "requirement_ids",
+        "reasons"
+      ],
       "properties": {
-        "status": {"enum": ["matched", "not-comparable"]},
-        "stage_names": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "requirement_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "reasons": {"type": "array", "items": {"type": "string"}}
+        "status": {
+          "enum": [
+            "matched",
+            "not-comparable"
+          ]
+        },
+        "stage_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "requirement_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-    "stages": {"type": "array", "items": {"$ref": "#/$defs/stageComparison"}},
-    "requirements": {"type": "array", "items": {"$ref": "#/$defs/requirementComparison"}},
-    "findings": {"type": "array", "items": {"$ref": "#/$defs/findingChange"}},
+    "stages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stageComparison"
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/requirementComparison"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/findingChange"
+      }
+    },
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stage_change_count", "requirement_change_count", "finding_added_count", "finding_removed_count"],
+      "required": [
+        "stage_change_count",
+        "requirement_change_count",
+        "finding_added_count",
+        "finding_removed_count"
+      ],
       "properties": {
-        "stage_change_count": {"type": "integer", "minimum": 0},
-        "requirement_change_count": {"type": "integer", "minimum": 0},
-        "finding_added_count": {"type": "integer", "minimum": 0},
-        "finding_removed_count": {"type": "integer", "minimum": 0}
+        "stage_change_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requirement_change_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "finding_added_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "finding_removed_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "evidence_validation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "reference_count", "valid_count", "reasons"],
+      "required": [
+        "status",
+        "reference_count",
+        "valid_count",
+        "reasons"
+      ],
       "properties": {
-        "status": {"enum": ["passed", "failed"]},
-        "reference_count": {"type": "integer", "minimum": 0},
-        "valid_count": {"type": "integer", "minimum": 0},
-        "reasons": {"type": "array", "items": {"type": "string"}}
+        "status": {
+          "enum": [
+            "passed",
+            "failed"
+          ]
+        },
+        "reference_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -51,70 +163,277 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["role", "source", "sha256"],
+      "required": [
+        "role",
+        "source",
+        "sha256"
+      ],
       "properties": {
-        "role": {"enum": ["baseline", "candidate"]},
-        "source": {"type": "string", "minLength": 1},
-        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        "role": {
+          "enum": [
+            "baseline",
+            "candidate"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["evidence_id", "role", "source", "source_sha256", "pointer", "value"],
+      "required": [
+        "evidence_id",
+        "role",
+        "source",
+        "source_sha256",
+        "pointer",
+        "value"
+      ],
       "properties": {
-        "evidence_id": {"type": "string", "pattern": "^project-evidence-[0-9a-f]{24}$"},
-        "role": {"enum": ["baseline", "candidate"]},
-        "source": {"type": "string", "minLength": 1},
-        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "pointer": {"type": "string", "pattern": "^/(?:[^~]|~[01])*$"},
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^project-evidence-[0-9a-f]{24}$"
+        },
+        "role": {
+          "enum": [
+            "baseline",
+            "candidate"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "pointer": {
+          "type": "string",
+          "pattern": "^/(?:[^~]|~[01])*$"
+        },
         "value": {}
       }
     },
-    "classification": {"enum": ["stable", "regressed", "improved", "changed"]},
+    "classification": {
+      "enum": [
+        "stable",
+        "regressed",
+        "improved",
+        "changed"
+      ]
+    },
     "stageComparison": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stage", "baseline", "candidate", "classification", "evidence"],
+      "required": [
+        "stage",
+        "baseline",
+        "candidate",
+        "classification",
+        "evidence"
+      ],
       "properties": {
-        "stage": {"type": "string", "minLength": 1},
-        "baseline": {"enum": ["passed", "failed", "blocked", "skipped"]},
-        "candidate": {"enum": ["passed", "failed", "blocked", "skipped"]},
-        "classification": {"$ref": "#/$defs/classification"},
-        "evidence": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/evidence"}}
+        "stage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "skipped",
+            "unassessed"
+          ]
+        },
+        "candidate": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "skipped",
+            "unassessed"
+          ]
+        },
+        "classification": {
+          "$ref": "#/$defs/classification"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
       }
     },
     "requirementState": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "reason"],
+      "required": [
+        "status",
+        "reason"
+      ],
       "properties": {
-        "status": {"enum": ["passed", "failed", "blocked"]},
-        "reason": {"type": "string", "minLength": 1}
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "unassessed"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "requirementComparison": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "baseline", "candidate", "classification", "evidence"],
+      "required": [
+        "id",
+        "baseline",
+        "candidate",
+        "classification",
+        "evidence"
+      ],
       "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "baseline": {"$ref": "#/$defs/requirementState"},
-        "candidate": {"$ref": "#/$defs/requirementState"},
-        "classification": {"$ref": "#/$defs/classification"},
-        "evidence": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/evidence"}}
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline": {
+          "$ref": "#/$defs/requirementState"
+        },
+        "candidate": {
+          "$ref": "#/$defs/requirementState"
+        },
+        "classification": {
+          "$ref": "#/$defs/classification"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
       }
     },
     "findingChange": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["change", "stage", "finding", "evidence"],
+      "required": [
+        "change",
+        "stage",
+        "finding",
+        "evidence"
+      ],
       "properties": {
-        "change": {"enum": ["added", "removed"]},
-        "stage": {"type": "string", "minLength": 1},
-        "finding": {"type": "object"},
-        "evidence": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+        "change": {
+          "enum": [
+            "added",
+            "removed"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finding": {
+          "type": "object"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "enum": [
+              "project-comparison-0.1",
+              "project-comparison-0.2"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stages": {
+            "type": "array",
+            "items": {
+              "properties": {
+                "baseline": {
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "blocked",
+                    "skipped"
+                  ]
+                },
+                "candidate": {
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "blocked",
+                    "skipped"
+                  ]
+                }
+              }
+            }
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "properties": {
+                "baseline": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "passed",
+                        "failed",
+                        "blocked"
+                      ]
+                    }
+                  }
+                },
+                "candidate": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "passed",
+                        "failed",
+                        "blocked"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

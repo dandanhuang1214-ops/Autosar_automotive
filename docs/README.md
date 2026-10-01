@@ -79,3 +79,8 @@
 - 本仓保存所有直接指导平台设计、开发、测试和运行环境的文档。
 - `D:\work\improve` 继续保存职业路线、Sprint 学习记录、面试题、复盘和项目证据索引。
 - 平台代码升级必须同步更新 `project/progress-log.md`；路线改变再更新 `project/roadmap.md`。
+
+- [P27 声明式 ECUC 配置验收指南](project/p27-ecuc-acceptance-guide.md)
+- [P27 验收表](project/p27-acceptance.md)
+- [P27 独立练习](learning/p27-ecuc-acceptance.md)
+- [P28 对象级策略计划](project/p28-object-acceptance-plan.md)

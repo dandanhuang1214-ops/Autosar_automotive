@@ -1,0 +1,62 @@
+{
+  "schema_version": "workbench-project-0.6",
+  "name": "integration static configuration acceptance",
+  "comparison_key": "ecuc-integration-v1",
+  "inputs": {
+    "baseline": {
+      "project": "integration/demo.dpa",
+      "applications": [
+        "integration/application.arxml"
+      ],
+      "tool_logs": [
+        "integration/tool.log"
+      ]
+    },
+    "candidate": {
+      "project": "integration/demo.dpa",
+      "applications": [
+        "integration/application.arxml"
+      ],
+      "tool_logs": [
+        "integration/tool.log"
+      ]
+    }
+  },
+  "requirements": [
+    {
+      "id": "COMMUNICATION",
+      "text": "Require communication structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/communication/status",
+      "expected": "passed"
+    },
+    {
+      "id": "APPLICATION",
+      "text": "Require application structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/application/status",
+      "expected": "passed"
+    },
+    {
+      "id": "TASK-BINDINGS",
+      "text": "Require task_bindings structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/task_bindings/status",
+      "expected": "passed"
+    },
+    {
+      "id": "MODE-RULES",
+      "text": "Require mode_rules structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/mode_rules/status",
+      "expected": "passed"
+    },
+    {
+      "id": "IMPACT",
+      "text": "Require impact structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/impact/status",
+      "expected": "passed"
+    }
+  ]
+}
