@@ -1316,3 +1316,6 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终本地全量 316 tests：314 passed、2 环境跳过；定向 ECUC 9/9、公开四场景、原输入删除后的四份迁移复验和篡改拒绝全部通过。证据 `output/p26-validation-20261001/`；第一次场景命令因旧输出非空而按设计拒绝，改用新目录复跑，未覆盖旧证据。
 - 48 schema、61 schema-bound examples、25 syntax-only examples、Ruff、39-source scoped mypy、CI topology、pip check 和 whitespace 通过。完整 P24 开发/历史负例正在从头重建来源；当前无新增独立负例声明。
 - 本轮实现准备提交推送，七 job 远端待执行；未标记 remote-accepted。下一项仍为首轮验收完成后连接真实 VALUE-REF 通信跨层链。P26 整阶段 implementing；P25 人工门保留。
+
+- 首轮实现 `84b5469372ca48da1549716211daab06af2bfef4` / run `36742954252`：Ubuntu core 与 Python 3.14 success，Windows core 失败、下游 skipped。实际原因为新增测试读取含中文负例清单时未显式指定 UTF-8，Windows cp1252 解码失败；已修正新增测试与场景脚本的文本读取，等待修复提交自己的 CI，不以失败 run 验收。
+- 完整本地 P24 重放已通过：30/30 开发 gold/引用/迁移，历史完整性拒绝 9/9、范围拒答 3/3、迁移 12/12，目录检索与严重度分项全部通过；`assessment/summary.json` 明确版本 0.2、`freeze_verified: false`。

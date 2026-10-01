@@ -24,7 +24,7 @@ class EcucProjectTests(unittest.TestCase):
 
     def change(self, old: str, new: str) -> None:
         p = self.source / 'modules.arxml'
-        p.write_text(p.read_text().replace(old, new), encoding='utf-8')
+        p.write_text(p.read_text(encoding="utf-8").replace(old, new), encoding='utf-8')
 
     def test_selection_external_scope_and_schema(self) -> None:
         from jsonschema import Draft202012Validator
@@ -35,7 +35,7 @@ class EcucProjectTests(unittest.TestCase):
         self.assertEqual(report['references']['unassessed'], 1)
         self.assertEqual(report['references']['resolved'], 1)
         self.assertFalse(report['findings'])
-        schema = json.loads((ROOT / 'schemas/ecuc-project-inspection.schema.json').read_text())
+        schema = json.loads((ROOT / 'schemas/ecuc-project-inspection.schema.json').read_text(encoding="utf-8"))
         Draft202012Validator(schema).validate(report)
         forged = {**report, 'sources': [{**report['sources'][0], 'sha256': 'bad'}]}
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(forged)))
@@ -69,7 +69,7 @@ class EcucProjectTests(unittest.TestCase):
         out.rename(moved)
         path = moved / 'ecuc-inspection.json'
         self.assertEqual(verify_inspection(path)['status'], 'passed')
-        original = path.read_text()
+        original = path.read_text(encoding="utf-8")
         report = json.loads(original)
         report['references']['resolved'] = True
         path.write_text(json.dumps(report))
@@ -86,12 +86,12 @@ class EcucProjectTests(unittest.TestCase):
 
     def test_escaping_input_and_source_output_are_rejected(self) -> None:
         for value in ['../outside.arxml', 'C:\\outside.arxml', '/outside.arxml']:
-            text = (FIXTURE / 'demo.dpa').read_text().replace('modules.arxml', value)
+            text = (FIXTURE / 'demo.dpa').read_text(encoding="utf-8").replace('modules.arxml', value)
             self.project.write_text(text)
             with self.assertRaises(ValueError):
                 run_inspection(self.project, self.root / 'out')
             self.assertFalse((self.root / 'out').exists())
-        self.project.write_text((FIXTURE / 'demo.dpa').read_text())
+        self.project.write_text((FIXTURE / 'demo.dpa').read_text(encoding="utf-8"))
         with self.assertRaisesRegex(ValueError, 'outside'):
             run_inspection(self.project, self.source / 'output')
         out = self.root / 'out'
@@ -99,7 +99,7 @@ class EcucProjectTests(unittest.TestCase):
         (out / 'keep').write_text('keep')
         with self.assertRaisesRegex(ValueError, 'empty'):
             run_inspection(self.project, out)
-        self.assertEqual((out / 'keep').read_text(), 'keep')
+        self.assertEqual((out / 'keep').read_text(encoding="utf-8"), 'keep')
 
     def test_xml_entity_and_namespace_rejection(self) -> None:
         for data in [b'<!DOCTYPE AUTOSAR [<!ENTITY x "value">]><AUTOSAR/>', b'<AUTOSAR/>', b'<broken', b'\xff']:
@@ -115,7 +115,7 @@ class EcucProjectTests(unittest.TestCase):
                     verify_inspection(path)
 
     def test_historical_regression_does_not_claim_independence(self) -> None:
-        manifest = json.loads((ROOT / 'tests/fixtures/p24-held-out-0.1.json').read_text())
+        manifest = json.loads((ROOT / 'tests/fixtures/p24-held-out-0.1.json').read_text(encoding="utf-8"))
         with self.assertRaisesRegex(ValueError, 'Frozen'):
             cohort_context(manifest)
         context = cohort_context(manifest, historical=True)

@@ -43,7 +43,7 @@ def run(output: Path) -> dict[str, Any]:
         shutil.copytree(ROOT / "tests/fixtures/ecuc-project", source)
         if before is not None and after is not None:
             p = source / "modules.arxml"
-            p.write_text(p.read_text().replace(before, after), encoding="utf-8")
+            p.write_text(p.read_text(encoding="utf-8").replace(before, after), encoding="utf-8")
         result = cli(name, ["inspect-ecuc-project", str(source / "demo.dpa"), "--output", str(work / "reports" / name)], 0 if name == "normal" else 2)
         if name in codes and codes[name] not in {f["code"] for f in result["findings"]}:
             raise RuntimeError("Expected structural finding absent")
