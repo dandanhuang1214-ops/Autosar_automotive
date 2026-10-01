@@ -59,9 +59,9 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 用户提供工程后的路线补充（2026-09-30）
 
-用户先要求分析本地 BSW 配置工程，再授权继续升级。新增 [P26 真实 ECUC 配置体检与跨层定位](p26-ecuc-inspection-plan.md)，作为当前唯一代码实现主阶段：项目感知导入/引用体检 → 通信跨层定位 → 应用与调度集成检查 → 两版配置影响。首轮项目体检实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success，双平台场景和上传通过，首轮门 remote-accepted。
+用户先要求分析本地 BSW 配置工程，再授权继续升级。新增 [P26 真实 ECUC 配置体检与跨层定位](p26-ecuc-inspection-plan.md)，作为当时唯一代码实现主阶段：项目感知导入/引用体检 → 通信跨层定位 → 应用与调度集成检查 → 两版配置影响。首轮项目体检实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success，双平台场景和上传通过，首轮门 remote-accepted。
 
-P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍待取得，不把新工程的代理分析算作 P25 人工验收，也不宣称 P25 整阶段完成。本地输入和细节不进入公共仓库，公开回归用合成 fixture。P26 真实 VALUE-REF 驱动的 COM/PduR/CanIf/Can 引用链已 remote-accepted：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success；Tx/Rx、组信号、路由分支、硬件对象/控制器与迁移复验通过，见[通信定位指南](p26-ecuc-communication-guide.md)。本轮合并交付应用/OS/RTE/BswM 集成缺口与两版快照影响，含安装后完整审查/比较/迁移流程；本地通过，本实现远端待验收，见[P26 验收表](p26-acceptance.md)。通过后下一主阶段为[P27 声明式 ECUC 配置变更验收](p27-configuration-acceptance-plan.md)，将现有消费者接入统一项目声明和验收交付。
+P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍待取得，不把新工程的代理分析算作 P25 人工验收，也不宣称 P25 整阶段完成。本地输入和细节不进入公共仓库，公开回归用合成 fixture。P26 真实 VALUE-REF 驱动的 COM/PduR/CanIf/Can 引用链已 remote-accepted：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success；Tx/Rx、组信号、路由分支、硬件对象/控制器与迁移复验通过，见[通信定位指南](p26-ecuc-communication-guide.md)。本轮合并交付应用/OS/RTE/BswM 集成缺口与两版快照影响，含安装后完整审查/比较/迁移流程；实现 `6433e1cdf360e07d4d09e9294922380f68730018` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部 success，见[P26 验收表](p26-acceptance.md)。当前下一主阶段（planned）为[P27 声明式 ECUC 配置变更验收](p27-configuration-acceptance-plan.md)，将现有消费者接入统一项目声明和验收交付。
 
 ## 持续升级的完成规则
 

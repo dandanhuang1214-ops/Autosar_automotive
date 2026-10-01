@@ -1,6 +1,6 @@
 # P26 ECUC 体检与通信定位验收
 
-更新：2026-10-01。P26 整阶段 implementing；项目感知只读体检与通信跨层定位两个门均 remote-accepted；后续集成检查和两版影响仍未完成。
+更新：2026-10-01。P26 受限静态工程审查与两版配置影响整阶段 remote-accepted；四项既定静态能力均通过各自实现验收。下一主阶段为 P27（planned），环境与人工门独立保留。
 
 | 验收门 | 证据与结果 |
 |---|---|
@@ -28,11 +28,11 @@
 | 本地完整回归 | 327 tests：325 passed、2 环境跳过；49 schema/61 bound/25 syntax-only、Ruff、41-source mypy、topology、pip check 通过 |
 | 本轮七 job | `b6718640364104153490adbbd2d876f3172887c2` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 全部 success；双平台通信链场景及上传 success |
 
-本地公开证据 `output/p26-chain-validation/`，真实工程只保存在忽略目录。下一项为应用/OS/RTE 调度集成缺口解释；不将本轮结构结果当生成或物理 ECU 证据。
+本地公开证据 `output/p26-chain-validation/`，真实工程只保存在忽略目录。当时下一项为应用/OS/RTE 调度集成缺口解释，现已随下述整阶段验收；不将本轮结构结果当生成或物理 ECU 证据。
 
 通信链 job/step 原始记录 `output/p26-chain-validation/remote-ci.json`，各 job ID 见进度账本。该验收回填为后续 `[skip ci]` 文档提交，不代替实现提交自己的 CI。
 
-## 整阶段收尾：工程审查与两版影响（local-accepted）
+## 整阶段收尾：工程审查与两版影响（remote-accepted）
 
 | 验收门 | 证据 |
 |---|---|
@@ -43,8 +43,10 @@
 | 公开验证 | 十组审查/比较、10/10 移除原输入后的复验、结论/来源/HTML/库存四类拒绝；17 项专项测试 |
 | 全量本地 | 344 tests：342 passed、2 环境跳过；51 schema，47-source mypy 与质量门 |
 | 安装后流程 | 无项目依赖的隔离 wheel、仓库外同一完整流程和搬移副本复验；完整流程通过，证据 `installed-final-code/summary.json` |
-| 本实现七 job | 待提交和实际 run，尚未 remote-accepted |
+| 本实现七 job | 实现 `6433e1cdf360e07d4d09e9294922380f68730018` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部 success；双平台新增场景、安装流程和上传均 success |
 
 公开证据 `output/p26-stage-validation/`，本地真实工程仍只在忽略目录。初次安装后检查因验证脚本 resolve 了 venv 解释器符号链接、误用基础解释器而失败，已保留启动器路径修复。未知 XML 混合文本变化检测和有限 HTML 展示已补强。
 
-P26 完成的范围为受限静态结构审查与快照影响，不包含厂商生成、实时调度、商业工具或物理 ECU。其验收后转入[P27 声明式配置变更验收](p27-configuration-acceptance-plan.md)；P25 人工门独立保留。
+P26 完成的范围为受限静态结构审查与快照影响，不包含厂商生成、实时调度、商业工具或物理 ECU。现转入[P27 声明式配置变更验收](p27-configuration-acceptance-plan.md)；P25 人工门独立保留。
+
+本次 job ID、完整步骤与下一任务见进度账本；验收回填是后续纯文档 `[skip ci]` 提交，固定引用上述实现及 run。

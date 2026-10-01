@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-01）
 
-当前主实现阶段：`P26 — 真实 ECUC 配置体检与跨层定位（implementing）`。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。通信跨层引用链已 remote-accepted：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success，双平台场景/上传通过；本轮按整阶段交付应用/OS/RTE/BswM 集成缺口和两版配置影响，含 HTML/快照及安装后完整流程；本地通过，远端待本实现验收。验收后转入 P27 声明式 ECUC 配置变更验收。平台实现与个人掌握分别计量。
+当前主实现阶段：`P27 — 声明式 ECUC 配置变更验收（planned）`；P26 受限静态审查整阶段 remote-accepted。用户提供本地 BSW 工程、要求分析后决定方向并授权继续升级，现推进[项目感知只读体检](p26-ecuc-inspection-plan.md)。P25 安装交付实现 `911abc0` / run `36586481411` 七 job 验收保持，人工演示及真实外部反馈仍待完成；P24 原冻结验收保持，当前源码上的旧负例明确转为历史回归；P22 商业往返仍需实际环境。本轮新增独立 ECUC 契约和快照复验，首轮项目体检已 remote-accepted：实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 全部 success；双平台 ECUC 场景和上传通过，完整 P24 历史回归通过。通信跨层引用链已 remote-accepted：实现 `b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部 success，双平台场景/上传通过；本轮按整阶段交付应用/OS/RTE/BswM 集成缺口和两版配置影响，含 HTML/快照及安装后完整流程；实现 `6433e1cdf360e07d4d09e9294922380f68730018` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部 success。下一任务为 P27 新项目版本的 ECUC 输入/基线/检查契约和正常/缺口阻止接受的端到端路径。平台实现与个人掌握分别计量。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1359,3 +1359,18 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 新增仓库外隔离 wheel 完整流程验收；初次脚本因 resolve 解释器 symlink 使用基础 Python 而失败，已改为保留 venv 启动路径并成功复跑，最终产物已归档 `output/p26-stage-validation/installed-final-code/`。未连接网络安装运行依赖，不把源码运行当安装验收。
 - 本地真实工程执行审查与快照复验，未知应用/模式和未绑定任务保持缺口；输入和细节均未提交。为大工程缩减 HTML 原始库存重复展示，完整 JSON 保留全部证据。
 - 本轮 local-accepted，七 job 远端待本实现提交；P26 尚未整阶段 remote-accepted。通过后按公开受限结构范围冻结 P26，主阶段进入已规划 P27；P25 人工/外部反馈及商业生成/物理 ECU 门仍未验收。
+
+### P26：整阶段远端验收与 P27 交接（2026-10-01）
+
+- 实现 `6433e1cdf360e07d4d09e9294922380f68730018` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部 success。
+- `core-contracts (ubuntu-22.04)`：job `110374883543`，success。
+- `runtime-currency`：job `110374883950`，success。
+- `core-contracts (windows-latest)`：job `110374884005`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `110375922633`，success。
+- `runtime-evidence (windows-latest)`：job `110375922719`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `110375922734`，success。
+- `controlled-rejections (windows-latest)`：job `110375922772`，success。
+- Windows/Ubuntu 的 ECUC engineering scenarios、installed workflow、evidence upload 三步骤均 success；实际记录 `output/p26-stage-validation/remote-ci.json`，归档 `ecuc-engineering-Windows` / `ecuc-engineering-Linux`。既有工程审查历史回归也随本实现通过。
+- 最终本地 344 tests：342 passed、2 环境跳过；17/17 专项、51 schema、47-source mypy、Ruff、topology、pip check 通过。隔离 wheel 的十场景、10/10 迁移、4/4 拒绝及最终副本复验通过。真实本地工程 15,694 对象、621 通信路径、99 任务映射，复验 passed；应用/模式输入缺口保持 unassessed。HTML 595,018 字节，完整对象证据保留于 JSON；私有输入未提交。
+- P26 四项静态能力按公开受限范围 remote-accepted；厂商生成、可调度性、商业往返及物理 ECU 未验收，P25 人工演示/外部反馈保留。当前主阶段切换 P27 planned；下一项冻结声明式 ECUC 项目契约并贯通正常/缺口两路径。
+- 本条及总览/路线为后续纯文档 `[skip ci]` 状态提交，不作为新的实现验收；固定引用 `6433e1c` / `36864006903`。
