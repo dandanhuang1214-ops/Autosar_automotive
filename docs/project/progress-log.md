@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-02）
 
-当前主实现阶段：`P28 — 对象级配置变更验收策略（planned）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。下一任务为[P28 精确对象选择与不可变条件契约](p28-object-acceptance-plan.md)，先贯通信号参数和任务引用的允许/拒绝变更路径。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
+当前主实现阶段：`P28 — 对象级配置变更验收策略（local-accepted，等待远端）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已实现；最终本地与隔离安装已通过；下一任务完成本实现七 job 验收，见[验收表](p28-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1400,3 +1400,16 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终源码八场景、8/8 原输入删除与迁移复验、8/8 审查、回归比较、4/4 拒绝及整树二次搬移通过，见 `output/p27-validation/scenarios-release/summary.json`；安装证据 `installed-release/summary.json`，完整回归 359 tests（357 passed、2 环境跳过）。
 - P27 按声明式静态验收范围 remote-accepted；当前下一主阶段 P28 planned，先冻结精确对象选择与不可变条件，连接具体信号参数/任务引用变更与接受策略。商业工具生成、实时调度、物理 ECU 和 P25 人工门未验收。
 - 本条及总览/路线为后续纯文档 `[skip ci]` 状态提交，固定引用实现 `55e208f` 与 run `36901660485`；文档提交不计作新的实现验收。
+
+
+### P28：对象级配置保护策略实现（2026-10-02）
+
+- 新项目/报告 0.7 与阶段 0.2，旧 0.1–0.6 保持。完整身份选择对象和字段，前后结构存在/完整及参数或引用不可变；每条策略强制参与接受。
+- 两侧实际值、对象/字段/依赖见证进入可重算阶段报告和审查断言；策略哈希纳入比较基础，策略变更不得伪装同策略回归。未知范围采用保守阻断，不能从未出现在影响列表推断安全。
+- 两套合成工程复用同一内核；16 CLI 场景包含信号位宽/有效任务改绑拒绝、两工程允许变化、缺对象、未知字段、重复身份及策略漂移。安装/迁移/审查/比较沿用既有消费者。
+- 开发验证发现前后影响对象重复列出，已去重；歧义场景同时存在其他失败时聚合沿用 failed 优先，改为独立验证歧义保护项的 blocked 状态。最终结果待后续回填。
+- 当前 implementing，下一步完成全量检查、最终场景、仓库外安装及本实现远端七 job。P25 人工门、商业生成/物理 ECU 保持未验收。
+
+- 最终本地：374 tests（372 passed、2 环境跳过），15 项对象策略专项；52 schema/65 bound/25 syntax-only、50-source mypy、Ruff、topology、compileall、pip check 通过。源码与隔离 wheel 各 16 场景、16/16 迁移复验与审查、4/4 篡改拒绝，通信/信号/任务回归及策略漂移比较和再次搬移均通过。最终证据 `output/p28-validation/scenarios-final/`、`installed-final/`，源码复制归档后的项目与比较复验通过（38/38 引用）。
+- 全量回归发现非法版本列表触发 TypeError，已恢复受控拒绝；场景脚本修正既有 not-comparable 退出码为 2；大小写不同策略的审查断言增加稳定区分，专项通过。最终固定代码重跑，不使用开发中旧快照代替验收。
+- 本轮 local-accepted；下一步推送固定实现并记录真实七 job。通过后按当前受限静态保护范围冻结 P28，进入已规划[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)。

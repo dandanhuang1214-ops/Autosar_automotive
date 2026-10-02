@@ -10,6 +10,7 @@ from typing import Any
 from automotive_workbench import __version__
 from automotive_workbench.ecuc_impact import compute, verify_impact
 from automotive_workbench.ecuc_model import canonical
+from automotive_workbench.ecuc_policy import evaluate, validate_policies
 from automotive_workbench.ecuc_project import sha
 from automotive_workbench.ecuc_review import build, check_output, read_verified, render
 from automotive_workbench.evidence_bundle import (
@@ -35,14 +36,21 @@ def encoded(value: Any) -> bytes:
 
 
 def declaration(project: Any) -> dict[str, Any]:
+    modern = (
+        isinstance(project, dict)
+        and project.get("schema_version") == "workbench-project-0.7"
+    )
     if (
         not isinstance(project, dict)
         or set(project)
-        != {"schema_version", "name", "comparison_key", "inputs", "requirements"}
-        or project.get("schema_version") != VERSION
+        != (
+            {"schema_version", "name", "comparison_key", "inputs", "requirements"}
+            | ({"policies"} if modern else set())
+        )
+        or project.get("schema_version") not in (VERSION, "workbench-project-0.7")
     ):
         raise ValueError(
-            "ECUC project requires closed workbench-project-0.6 declaration"
+            "ECUC project requires closed workbench-project-0.6/0.7 declaration"
         )
     for field in ("name", "comparison_key"):
         if not isinstance(project[field], str) or not project[field].strip():
@@ -70,6 +78,10 @@ def declaration(project: Any) -> dict[str, Any]:
                 raise ValueError(
                     "ECUC additional paths must be unique nonempty strings"
                 )
+    policy_ids = validate_policies(project["policies"]) if modern else set()
+    allowed = {f"/checks/{c}/status" for c in CHECKS} | {
+        f"/checks/policy.{i}/status" for i in policy_ids
+    }
     requirements = project["requirements"]
     if not isinstance(requirements, list) or not requirements:
         raise ValueError("ECUC acceptance requires explicit checks")
@@ -98,13 +110,17 @@ def declaration(project: Any) -> dict[str, Any]:
             item["stage"] != "ecuc"
             or item["expected"] != "passed"
             or not isinstance(item["pointer"], str)
-            or item["pointer"] not in {f"/checks/{c}/status" for c in CHECKS}
+            or item["pointer"] not in allowed
         ):
             raise ValueError("ECUC requirement must demand a supported check passes")
         if item["pointer"] in pointers:
             raise ValueError("Duplicate ECUC check")
         ids.add(item["id"])
         pointers.add(item["pointer"])
+    if any(f"/checks/policy.{i}/status" not in pointers for i in policy_ids):
+        raise ValueError(
+            "Every object policy must be a mandatory acceptance requirement"
+        )
     return project
 
 
@@ -224,12 +240,15 @@ def stage_report(
             "evidence": {"path": path, "pointer": pointer},
             "affected_objects": sorted(affected),
         }
+    for policy in project.get("policies", []):
+        checks["policy." + policy["id"]] = evaluate(policy, before, after, impact)
+    engine = "ecuc-project-acceptance-0.2" if "policies" in project else ENGINE
     selected = [x["pointer"].split("/")[2] for x in project["requirements"]]
     return {
-        "schema_version": ENGINE,
+        "schema_version": engine,
         "status": aggregate([checks[n]["status"] for n in selected]),
         "scope": SCOPE,
-        "producer": {"engine": ENGINE, "workbench_version": __version__},
+        "producer": {"engine": engine, "workbench_version": __version__},
         "selected_checks": selected,
         "checks": checks,
         "summary": {
@@ -260,14 +279,21 @@ def project_report(
         )
     return {
         "artifact_type": "project-acceptance",
-        "schema_version": REPORT_VERSION,
+        "schema_version": project["schema_version"].replace(
+            "workbench-project", "project-acceptance"
+        ),
         "name": project["name"],
         "status": stage["status"],
         "stages": {"ecuc": {"status": stage["status"], "path": "ecuc-stage.json"}},
         "requirements": requirements,
         "comparison_basis": {
             "comparison_key": project["comparison_key"],
-            "engine": ENGINE,
+            "engine": stage["schema_version"],
+            **(
+                {"policy_sha256": sha(canonical(project["policies"]).encode())}
+                if "policies" in project
+                else {}
+            ),
             "baseline_sha256": sha(
                 (bundle / "ecuc/before/ecuc-review.json").read_bytes()
             ),
@@ -321,7 +347,10 @@ def run(
     (bundle / "index.html").write_text(render_project(report), encoding="utf-8")
     validate(bundle / "project-report.json", report)
     create_evidence_bundle_manifest(
-        bundle, output / "manifest.json", "workbench run-project ECUC 0.6", base=output
+        bundle,
+        output / "manifest.json",
+        "workbench run-project ECUC " + project["schema_version"].rsplit("-", 1)[-1],
+        base=output,
     )
     verification = verify_evidence_bundle(
         bundle, output / "manifest.json", output / "verification", base=output
@@ -381,8 +410,11 @@ def validate(path: Path, report: dict[str, Any]) -> None:
 
 def verify(path: Path) -> dict[str, Any]:
     report = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(report, dict) or report.get("schema_version") != REPORT_VERSION:
-        raise ValueError("verify-ecuc-project requires project-acceptance-0.6")
+    if not isinstance(report, dict) or report.get("schema_version") not in (
+        REPORT_VERSION,
+        "project-acceptance-0.7",
+    ):
+        raise ValueError("verify-ecuc-project requires project-acceptance-0.6/0.7")
     validate(path, report)
     return {
         "status": "passed",

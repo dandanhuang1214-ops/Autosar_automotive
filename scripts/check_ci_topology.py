@@ -13,6 +13,9 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run object policy acceptance scenarios": "runtime-evidence",
+    "Verify installed object policy acceptance": "runtime-evidence",
+    "Upload object policy acceptance evidence": "runtime-evidence",
     "Run declarative ECUC project scenarios": "runtime-evidence",
     "Verify installed ECUC project acceptance": "runtime-evidence",
     "Upload declarative ECUC project evidence": "runtime-evidence",

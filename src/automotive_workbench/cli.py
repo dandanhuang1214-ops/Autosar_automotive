@@ -140,7 +140,7 @@ def build_parser() -> argparse.ArgumentParser:
     declared_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
     declared_parser.add_argument("--channel")
 
-    ecuc_project_verify = commands.add_parser("verify-ecuc-project", help="Replay a static ECUC project-acceptance-0.6 bundle")
+    ecuc_project_verify = commands.add_parser("verify-ecuc-project", help="Replay a static ECUC project-acceptance-0.6/0.7 bundle")
     ecuc_project_verify.add_argument("report", type=Path)
 
     project_parser = commands.add_parser("run-project", help="Validate and run a project with requirement acceptance evidence")

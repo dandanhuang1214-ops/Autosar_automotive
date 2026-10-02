@@ -50,7 +50,7 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P28 planned（P27 已验收，P25 人工验收待完成）
+## 当前执行：P28 local-accepted（远端待验收）（P27 已验收，P25 人工验收待完成）
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
@@ -83,4 +83,8 @@ P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍
 
 ## P27 当前交付与下一项（2026-10-02）
 
-0.6 声明式 ECUC 项目、两工程、四状态接受条件、审查/比较/搬移与隔离安装流程已实现；实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success，见[P27 验收表](p27-acceptance.md)。当前下一主阶段（planned）为[P28 对象级配置变更验收策略](p28-object-acceptance-plan.md)，先完成精确对象存在/完整及不可变参数或引用的最小闭环。
+0.6 声明式 ECUC 项目、两工程、四状态接受条件、审查/比较/搬移与隔离安装流程已实现；实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success，见[P27 验收表](p27-acceptance.md)。当前主阶段（local-accepted，远端待验收）为[P28 对象级配置变更验收策略](p28-object-acceptance-plan.md)，先完成精确对象存在/完整及不可变参数或引用的最小闭环。
+
+P28 已实现版本化精确对象保护与字段不可变条件，旧契约保持；最终本地/隔离安装已通过；下一任务完成本实现七 job 验收，见[P28 验收表](p28-acceptance.md)。
+
+P28 全部验收后进入[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)（planned）：将对象级接受条件连接到已有 P20/P23 验证证据，先冻结显式身份绑定与缺证据边界；当前不并行开启第二实现主阶段。

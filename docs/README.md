@@ -3,7 +3,7 @@
 ## 项目管理
 
 - [P26 工程审查与两版影响](project/p26-engineering-review-guide.md)：应用/任务/模式、历史日志、变更依赖见证、完整安装与迁移流程。
-- [P27 声明式配置变更验收计划](project/p27-configuration-acceptance-plan.md)：P26 完成后的下一主阶段。
+- [P27 声明式配置变更验收计划](project/p27-configuration-acceptance-plan.md)：已完成远端验收，保留 0.6 声明式项目路径。
 
 - [P26 通信跨层引用定位](project/p26-ecuc-communication-guide.md)：实际 ECUC Tx/Rx、组信号、路由与硬件引用链。
 
@@ -84,3 +84,6 @@
 - [P27 验收表](project/p27-acceptance.md)
 - [P27 独立练习](learning/p27-ecuc-acceptance.md)
 - [P28 对象级策略计划](project/p28-object-acceptance-plan.md)
+
+- [P28 对象保护操作指南](project/p28-object-policy-guide.md)与[验收表](project/p28-acceptance.md)：精确结构/字段保护及允许、拒绝变更。
+- [P29 配置验收与运行证据关联计划](project/p29-configuration-runtime-plan.md)：P28 验收后的下一主阶段。

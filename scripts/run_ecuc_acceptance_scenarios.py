@@ -32,7 +32,9 @@ def write(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
-def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
+def run(
+    output: Path, cli_python: Path | None = None, object_policies: bool = False
+) -> dict[str, Any]:
     if output.is_symlink() or output.exists():
         raise ValueError("ECUC project scenarios require absent output")
     output = output.resolve()
@@ -73,10 +75,27 @@ def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
             )
         return json.loads(proc.stdout)
 
+    cases = dict(CASES)
+    if object_policies:
+        cases.update(
+            {
+                "signal-change": "failed",
+                "task-change": "failed",
+                "allowed-change": "passed",
+                "unsupported-field": "unassessed",
+                "missing-object": "failed",
+                "policy-drift": "passed",
+                "transmitter-change": "failed",
+                "transmitter-allowed": "passed",
+            }
+        )
     reports = {}
-    for name, expected in CASES.items():
-        kind = "transmitter" if name == "transmitter" else "integration"
-        project = read(source / (kind + ".project.json"))
+    for name, expected in cases.items():
+        kind = "transmitter" if name.startswith("transmitter") else "integration"
+        project = read(
+            source
+            / (kind + (".protected" if object_policies else "") + ".project.json")
+        )
         candidate = source / (name + "-candidate")
         shutil.copytree(source / kind, candidate)
         project["inputs"]["candidate"] = {
@@ -88,6 +107,27 @@ def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
             for k, v in project["inputs"]["candidate"].items()
         }
         mutation = {
+            "signal-change": ("modules.arxml", "<VALUE>8</VALUE>", "<VALUE>12</VALUE>"),
+            "transmitter-change": (
+                "modules.arxml",
+                "<VALUE>8</VALUE>",
+                "<VALUE>12</VALUE>",
+            ),
+            "allowed-change": (
+                "modules.arxml",
+                "<VALUE>8</VALUE>",
+                "<VALUE>12</VALUE>",
+            ),
+            "transmitter-allowed": (
+                "modules.arxml",
+                "<VALUE>8</VALUE>",
+                "<VALUE>12</VALUE>",
+            ),
+            "task-change": (
+                "modules.arxml",
+                "/Demo/Os/TaskA</VALUE-REF>",
+                "/Demo/Os/TaskB</VALUE-REF>",
+            ),
             "task-gap": ("modules.arxml", "/Demo/Os/TaskA</VALUE-REF>", "</VALUE-REF>"),
             "communication-gap": (
                 "modules.arxml",
@@ -118,7 +158,27 @@ def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
             )
         if name == "missing-application":
             project["inputs"]["candidate"]["applications"] = []
-        if name == "ambiguous":
+        if object_policies and name in {"allowed-change", "transmitter-allowed"}:
+            project["policies"] = [
+                p for p in project["policies"] if p["id"] != "SIGNAL_SIZE"
+            ]
+            project["requirements"] = [
+                r for r in project["requirements"] if r["id"] != "SIGNAL_SIZE"
+            ]
+        if object_policies and name == "unsupported-field":
+            project["policies"][1]["definition"] = "/Synthetic/ComSignal/VendorUnknown"
+        if object_policies and name == "missing-object":
+            project["policies"][0]["object_id"] = "ecuc:/Demo/Com/Absent"
+        if object_policies and name == "policy-drift":
+            project["policies"][0]["object_id"] = "ecuc:/Demo/Com/PacketA"
+        if name == "ambiguous" and object_policies:
+            project["policies"] = [
+                p for p in project["policies"] if p["id"] == "TASK_REF"
+            ]
+            project["requirements"] = [
+                r for r in project["requirements"] if r["id"] in {"TASK_REF", "IMPACT"}
+            ]
+        if name == "ambiguous" and not object_policies:
             project["requirements"] = [
                 x for x in project["requirements"] if x["id"] == "IMPACT"
             ]
@@ -143,7 +203,7 @@ def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
     }
     for name, path in reports.items():
         result = cli(name + "-replay", ["verify-ecuc-project", str(path)])
-        if result["project_status"] != CASES[name]:
+        if result["project_status"] != cases[name]:
             raise ValueError("Replay changed the recorded acceptance status")
         review = cli(
             name + "-review",
@@ -174,6 +234,33 @@ def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
         "verify-compare",
         ["verify-project-comparison", str(comparison / "project-comparison.json")],
     )
+    if object_policies:
+        for label, other, expected, code in [
+            ("signal-regression", "signal-change", "regressed", 2),
+            ("task-regression", "task-change", "regressed", 2),
+            ("policy-drift", "policy-drift", "not-comparable", 2),
+        ]:
+            directory = portable / label
+            result = cli(
+                label,
+                [
+                    "compare-projects",
+                    str(reports["integration"]),
+                    str(reports[other]),
+                    "--output",
+                    str(directory),
+                ],
+                code,
+            )
+            if result["status"] != expected:
+                raise ValueError("Object policy comparison mismatch")
+            cli(
+                label + "-replay",
+                [
+                    "verify-project-comparison",
+                    str(directory / "project-comparison.json"),
+                ],
+            )
     rejected = []
     for name in ("conclusion", "source", "policy", "inventory"):
         target = output / "tampered" / name
@@ -220,7 +307,7 @@ def run(output: Path, cli_python: Path | None = None) -> dict[str, Any]:
     )
     summary = {
         "status": "passed",
-        "cases": CASES,
+        "cases": cases,
         "relocated_projects": len(reports),
         "reviews": len(reports),
         "tamper_rejections": rejected,
@@ -236,5 +323,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--cli-python", type=Path)
+    parser.add_argument("--object-policies", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(run(args.output, args.cli_python), indent=2))
+    print(json.dumps(run(args.output, args.cli_python, args.object_policies), indent=2))

@@ -1,0 +1,116 @@
+{
+  "schema_version": "workbench-project-0.7",
+  "name": "integration static configuration acceptance",
+  "comparison_key": "ecuc-integration-v1",
+  "inputs": {
+    "baseline": {
+      "project": "integration/demo.dpa",
+      "applications": [
+        "integration/application.arxml"
+      ],
+      "tool_logs": [
+        "integration/tool.log"
+      ]
+    },
+    "candidate": {
+      "project": "integration/demo.dpa",
+      "applications": [
+        "integration/application.arxml"
+      ],
+      "tool_logs": [
+        "integration/tool.log"
+      ]
+    }
+  },
+  "requirements": [
+    {
+      "id": "COMMUNICATION",
+      "text": "Require communication structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/communication/status",
+      "expected": "passed"
+    },
+    {
+      "id": "APPLICATION",
+      "text": "Require application structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/application/status",
+      "expected": "passed"
+    },
+    {
+      "id": "TASK-BINDINGS",
+      "text": "Require task_bindings structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/task_bindings/status",
+      "expected": "passed"
+    },
+    {
+      "id": "MODE-RULES",
+      "text": "Require mode_rules structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/mode_rules/status",
+      "expected": "passed"
+    },
+    {
+      "id": "IMPACT",
+      "text": "Require impact structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/impact/status",
+      "expected": "passed"
+    },
+    {
+      "id": "SIGNAL_PRESENT",
+      "text": "Protect SIGNAL_PRESENT",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.SIGNAL_PRESENT/status",
+      "expected": "passed"
+    },
+    {
+      "id": "SIGNAL_SIZE",
+      "text": "Protect SIGNAL_SIZE",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.SIGNAL_SIZE/status",
+      "expected": "passed"
+    },
+    {
+      "id": "TASK_REF",
+      "text": "Protect TASK_REF",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.TASK_REF/status",
+      "expected": "passed"
+    },
+    {
+      "id": "TASK_PRESENT",
+      "text": "Protect TASK_PRESENT",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.TASK_PRESENT/status",
+      "expected": "passed"
+    }
+  ],
+  "policies": [
+    {
+      "id": "SIGNAL_PRESENT",
+      "object_id": "ecuc:/Demo/Com/ValueA",
+      "condition": "exists_complete"
+    },
+    {
+      "id": "SIGNAL_SIZE",
+      "object_id": "ecuc:/Demo/Com/ValueA",
+      "condition": "unchanged",
+      "field_group": "parameters",
+      "definition": "/Synthetic/ComSignal/ComBitSize"
+    },
+    {
+      "id": "TASK_REF",
+      "object_id": "ecuc:/Demo/Rte/Instance/Mapping",
+      "condition": "unchanged",
+      "field_group": "references",
+      "definition": "/Synthetic/RteEventToTaskMapping/RteMappedToTaskRef"
+    },
+    {
+      "id": "TASK_PRESENT",
+      "object_id": "ecuc:/Demo/Rte/Instance/Mapping",
+      "condition": "exists_complete"
+    }
+  ]
+}

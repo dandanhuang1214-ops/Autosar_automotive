@@ -1,1 +1,3 @@
 Public synthetic ECUC inputs, not vendor/customer exports. Integration has Tx/Rx, ASW/BSW bindings and BswM; transmitter has only one Tx route, five selected modules, and no declared application/task/mode checks. Historical tool.log is fabricated test data. Baseline and candidate initially share the same inputs; copy candidate inputs before editing.
+
+The `*.protected.project.json` files use project 0.7: exact signal structure and bit-size protection, plus task structure/reference protection for the integration example. See [the object policy guide](../../docs/project/p28-object-policy-guide.md). Policy changes are not comparable with the previous policy; unknown scope cannot silently pass a protection.

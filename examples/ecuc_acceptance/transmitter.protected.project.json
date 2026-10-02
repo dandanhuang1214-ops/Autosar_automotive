@@ -1,0 +1,61 @@
+{
+  "schema_version": "workbench-project-0.7",
+  "name": "transmitter static configuration acceptance",
+  "comparison_key": "ecuc-transmitter-v1",
+  "inputs": {
+    "baseline": {
+      "project": "transmitter/demo.dpa",
+      "applications": [],
+      "tool_logs": []
+    },
+    "candidate": {
+      "project": "transmitter/demo.dpa",
+      "applications": [],
+      "tool_logs": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "COMMUNICATION",
+      "text": "Require communication structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/communication/status",
+      "expected": "passed"
+    },
+    {
+      "id": "IMPACT",
+      "text": "Require impact structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/impact/status",
+      "expected": "passed"
+    },
+    {
+      "id": "SIGNAL_PRESENT",
+      "text": "Protect SIGNAL_PRESENT",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.SIGNAL_PRESENT/status",
+      "expected": "passed"
+    },
+    {
+      "id": "SIGNAL_SIZE",
+      "text": "Protect SIGNAL_SIZE",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.SIGNAL_SIZE/status",
+      "expected": "passed"
+    }
+  ],
+  "policies": [
+    {
+      "id": "SIGNAL_PRESENT",
+      "object_id": "ecuc:/Telemetry/Com/ValueA",
+      "condition": "exists_complete"
+    },
+    {
+      "id": "SIGNAL_SIZE",
+      "object_id": "ecuc:/Telemetry/Com/ValueA",
+      "condition": "unchanged",
+      "field_group": "parameters",
+      "definition": "/Synthetic/ComSignal/ComBitSize"
+    }
+  ]
+}

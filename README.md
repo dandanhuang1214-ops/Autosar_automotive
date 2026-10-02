@@ -2,7 +2,7 @@
 
 平台路线、升级状态、环境记录和技术调研统一从 [`docs/README.md`](docs/README.md) 进入。每次功能或环境升级都必须同步更新 [`docs/project/progress-log.md`](docs/project/progress-log.md)。
 
-长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；P20 声明驱动的多项目通信验证已完成，P21 通信对象图与变更影响已完成，P22 ARXML 公开桥接路径已完成，P23 独立 ECU 项目执行已完成，P24 工程问题审查已完成，P26 ECUC 静态工程审查与配置影响已远端验收，P27 声明式配置变更验收已远端通过，下一主实现阶段为 P28 对象级验收策略（planned），P25 人工验收仍待完成，完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
+长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；P20 声明驱动的多项目通信验证已完成，P21 通信对象图与变更影响已完成，P22 ARXML 公开桥接路径已完成，P23 独立 ECU 项目执行已完成，P24 工程问题审查已完成，P26 ECUC 静态工程审查与配置影响已远端验收，P27 声明式配置变更验收已远端通过，当前主实现阶段为 [P28 对象级验收策略](docs/project/p28-object-policy-guide.md)（local-accepted，等待本实现远端 CI），P25 人工验收仍待完成，完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
 
 P20 已实现 [声明式多项目完整流程](docs/project/p20-multi-project-guide.md)：车窗与 ThermalControl 共用项目运行、路径绑定、审查、比较与迁移复验；整阶段已通过七 job 远端验收及本地双项目 SocketCAN 全流程，见 [验收记录](docs/project/p20-acceptance.md)。
 

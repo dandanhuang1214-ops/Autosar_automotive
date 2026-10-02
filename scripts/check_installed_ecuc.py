@@ -23,7 +23,10 @@ from run_ecuc_engineering_scenarios import run  # noqa: E402
 from run_ecuc_acceptance_scenarios import run as run_projects  # noqa: E402
 
 
-def check(output: Path, project_acceptance: bool = False) -> dict[str, Any]:
+def check(
+    output: Path, project_acceptance: bool = False, object_policies: bool = False
+) -> dict[str, Any]:
+    project_acceptance = project_acceptance or object_policies
     if output.is_symlink() or output.exists():
         raise ValueError("Installed ECUC output must be absent")
     output = output.resolve()
@@ -75,8 +78,10 @@ def check(output: Path, project_acceptance: bool = False) -> dict[str, Any]:
         ):
             raise ValueError("Installed ECUC consumer is not isolated")
         _run([str(python), "-m", "pip", "check"], cwd=isolated, env=env)
-        result = (run_projects if project_acceptance else run)(
-            isolated / "flow", python
+        result = (
+            run_projects(isolated / "flow", python, object_policies)
+            if project_acceptance
+            else run(isolated / "flow", python)
         )
         shutil.copytree(isolated / "flow", output / "evidence")
         # Verify copied final evidence from outside the repository with the installed interpreter.
@@ -129,5 +134,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--project-acceptance", action="store_true")
+    parser.add_argument("--object-policies", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(check(args.output, args.project_acceptance), indent=2))
+    print(
+        json.dumps(
+            check(args.output, args.project_acceptance, args.object_policies), indent=2
+        )
+    )

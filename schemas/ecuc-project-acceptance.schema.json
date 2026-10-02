@@ -1,386 +1,537 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://automotive-workbench.local/schemas/ecuc-project-acceptance.schema.json",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "status",
-    "scope",
-    "producer",
-    "selected_checks",
-    "checks",
-    "summary"
-  ],
   "properties": {
     "schema_version": {
-      "const": "ecuc-project-acceptance-0.1"
-    },
-    "status": {
       "enum": [
-        "passed",
-        "failed",
-        "unassessed",
-        "blocked"
+        "ecuc-project-acceptance-0.1",
+        "ecuc-project-acceptance-0.2"
       ]
-    },
-    "scope": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "\\S"
-      },
-      "minItems": 1
-    },
-    "producer": {
+    }
+  },
+  "oneOf": [
+    {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "engine",
-        "workbench_version"
+        "schema_version",
+        "status",
+        "scope",
+        "producer",
+        "selected_checks",
+        "checks",
+        "summary"
       ],
       "properties": {
-        "engine": {
+        "schema_version": {
           "const": "ecuc-project-acceptance-0.1"
         },
-        "workbench_version": {
-          "type": "string",
-          "pattern": "\\S"
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "minItems": 1
+        },
+        "producer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "engine",
+            "workbench_version"
+          ],
+          "properties": {
+            "engine": {
+              "const": "ecuc-project-acceptance-0.1"
+            },
+            "workbench_version": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          }
+        },
+        "selected_checks": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "communication",
+              "application",
+              "task_bindings",
+              "mode_rules",
+              "impact"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "communication",
+            "application",
+            "task_bindings",
+            "mode_rules",
+            "impact"
+          ],
+          "properties": {
+            "communication": {
+              "$ref": "#/$defs/check"
+            },
+            "application": {
+              "$ref": "#/$defs/check"
+            },
+            "task_bindings": {
+              "$ref": "#/$defs/check"
+            },
+            "mode_rules": {
+              "$ref": "#/$defs/check"
+            },
+            "impact": {
+              "$ref": "#/$defs/check"
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "changed_objects",
+            "affected_objects"
+          ],
+          "properties": {
+            "changed_objects": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "affected_objects": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
         }
       }
     },
-    "selected_checks": {
-      "type": "array",
-      "items": {
-        "enum": [
-          "communication",
-          "application",
-          "task_bindings",
-          "mode_rules",
-          "impact"
-        ]
-      },
-      "minItems": 1,
-      "uniqueItems": true
-    },
-    "checks": {
+    {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "communication",
-        "application",
-        "task_bindings",
-        "mode_rules",
-        "impact"
+        "schema_version",
+        "status",
+        "scope",
+        "producer",
+        "selected_checks",
+        "checks",
+        "summary"
       ],
       "properties": {
-        "communication": {
+        "schema_version": {
+          "const": "ecuc-project-acceptance-0.2"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "minItems": 1
+        },
+        "producer": {
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "status",
-            "reason",
-            "evidence",
-            "affected_objects"
+            "engine",
+            "workbench_version"
           ],
           "properties": {
-            "status": {
-              "enum": [
-                "passed",
-                "failed",
-                "unassessed",
-                "blocked"
-              ]
+            "engine": {
+              "const": "ecuc-project-acceptance-0.2"
             },
-            "reason": {
-              "enum": [
-                "snapshots_not_comparable",
-                "impact_coverage_incomplete",
-                "explicit_dependencies_assessed",
-                "coverage_missing",
-                "structural_gap",
-                "linked_in_scope"
-              ]
-            },
-            "evidence": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "path",
-                "pointer"
-              ],
-              "properties": {
-                "path": {
-                  "enum": [
-                    "ecuc/after/ecuc-review.json",
-                    "ecuc/ecuc-impact.json"
-                  ]
-                },
-                "pointer": {
-                  "type": "string",
-                  "pattern": "\\S"
-                }
-              }
-            },
-            "affected_objects": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "\\S"
-              },
-              "uniqueItems": true
+            "workbench_version": {
+              "type": "string",
+              "pattern": "\\S"
             }
           }
         },
-        "application": {
+        "selected_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(communication|application|task_bindings|mode_rules|impact|policy\\.[A-Za-z0-9_.-]+)$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "checks": {
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "status",
-            "reason",
-            "evidence",
-            "affected_objects"
+            "communication",
+            "application",
+            "task_bindings",
+            "mode_rules",
+            "impact"
           ],
           "properties": {
-            "status": {
-              "enum": [
-                "passed",
-                "failed",
-                "unassessed",
-                "blocked"
-              ]
+            "communication": {
+              "$ref": "#/$defs/check"
             },
-            "reason": {
-              "enum": [
-                "snapshots_not_comparable",
-                "impact_coverage_incomplete",
-                "explicit_dependencies_assessed",
-                "coverage_missing",
-                "structural_gap",
-                "linked_in_scope"
-              ]
+            "application": {
+              "$ref": "#/$defs/check"
             },
-            "evidence": {
+            "task_bindings": {
+              "$ref": "#/$defs/check"
+            },
+            "mode_rules": {
+              "$ref": "#/$defs/check"
+            },
+            "impact": {
+              "$ref": "#/$defs/check"
+            }
+          },
+          "patternProperties": {
+            "^policy\\.[A-Za-z0-9_.-]+$": {
               "type": "object",
               "additionalProperties": false,
               "required": [
-                "path",
-                "pointer"
+                "status",
+                "reason",
+                "evidence",
+                "affected_objects",
+                "policy",
+                "observations"
               ],
               "properties": {
-                "path": {
+                "status": {
                   "enum": [
-                    "ecuc/after/ecuc-review.json",
-                    "ecuc/ecuc-impact.json"
+                    "passed",
+                    "failed",
+                    "unassessed",
+                    "blocked"
                   ]
                 },
-                "pointer": {
+                "reason": {
                   "type": "string",
                   "pattern": "\\S"
+                },
+                "evidence": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "path",
+                    "pointer"
+                  ],
+                  "properties": {
+                    "path": {
+                      "enum": [
+                        "ecuc/after/ecuc-review.json",
+                        "ecuc/ecuc-impact.json"
+                      ]
+                    },
+                    "pointer": {
+                      "type": "string",
+                      "pattern": "\\S"
+                    }
+                  }
+                },
+                "affected_objects": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
+                },
+                "policy": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "object_id",
+                    "condition"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_.-]+$"
+                    },
+                    "object_id": {
+                      "type": "string",
+                      "pattern": "^ecuc:/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+                    },
+                    "condition": {
+                      "enum": [
+                        "exists_complete",
+                        "unchanged"
+                      ]
+                    },
+                    "field_group": {
+                      "enum": [
+                        "parameters",
+                        "references"
+                      ]
+                    },
+                    "definition": {
+                      "type": "string",
+                      "pattern": "^/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "condition": {
+                            "const": "unchanged"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "field_group",
+                          "definition"
+                        ]
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "field_group"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "definition"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                "observations": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "before",
+                    "after"
+                  ],
+                  "properties": {
+                    "before": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "reason",
+                        "object_pointers",
+                        "field_pointers",
+                        "values",
+                        "witness_pointers",
+                        "path"
+                      ],
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "passed",
+                            "failed",
+                            "unassessed",
+                            "blocked"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string",
+                          "pattern": "\\S"
+                        },
+                        "path": {
+                          "enum": [
+                            "ecuc/before/ecuc-review.json",
+                            "ecuc/after/ecuc-review.json"
+                          ]
+                        },
+                        "object_pointers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "field_pointers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "witness_pointers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "after": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "status",
+                        "reason",
+                        "object_pointers",
+                        "field_pointers",
+                        "values",
+                        "witness_pointers",
+                        "path"
+                      ],
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "passed",
+                            "failed",
+                            "unassessed",
+                            "blocked"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string",
+                          "pattern": "\\S"
+                        },
+                        "path": {
+                          "enum": [
+                            "ecuc/before/ecuc-review.json",
+                            "ecuc/after/ecuc-review.json"
+                          ]
+                        },
+                        "object_pointers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "field_pointers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "witness_pointers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
-            },
-            "affected_objects": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "\\S"
-              },
-              "uniqueItems": true
             }
           }
         },
-        "task_bindings": {
+        "summary": {
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "status",
-            "reason",
-            "evidence",
+            "changed_objects",
             "affected_objects"
           ],
           "properties": {
-            "status": {
-              "enum": [
-                "passed",
-                "failed",
-                "unassessed",
-                "blocked"
-              ]
-            },
-            "reason": {
-              "enum": [
-                "snapshots_not_comparable",
-                "impact_coverage_incomplete",
-                "explicit_dependencies_assessed",
-                "coverage_missing",
-                "structural_gap",
-                "linked_in_scope"
-              ]
-            },
-            "evidence": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "path",
-                "pointer"
-              ],
-              "properties": {
-                "path": {
-                  "enum": [
-                    "ecuc/after/ecuc-review.json",
-                    "ecuc/ecuc-impact.json"
-                  ]
-                },
-                "pointer": {
-                  "type": "string",
-                  "pattern": "\\S"
-                }
-              }
+            "changed_objects": {
+              "type": "integer",
+              "minimum": 0
             },
             "affected_objects": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "\\S"
-              },
-              "uniqueItems": true
-            }
-          }
-        },
-        "mode_rules": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "status",
-            "reason",
-            "evidence",
-            "affected_objects"
-          ],
-          "properties": {
-            "status": {
-              "enum": [
-                "passed",
-                "failed",
-                "unassessed",
-                "blocked"
-              ]
-            },
-            "reason": {
-              "enum": [
-                "snapshots_not_comparable",
-                "impact_coverage_incomplete",
-                "explicit_dependencies_assessed",
-                "coverage_missing",
-                "structural_gap",
-                "linked_in_scope"
-              ]
-            },
-            "evidence": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "path",
-                "pointer"
-              ],
-              "properties": {
-                "path": {
-                  "enum": [
-                    "ecuc/after/ecuc-review.json",
-                    "ecuc/ecuc-impact.json"
-                  ]
-                },
-                "pointer": {
-                  "type": "string",
-                  "pattern": "\\S"
-                }
-              }
-            },
-            "affected_objects": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "\\S"
-              },
-              "uniqueItems": true
-            }
-          }
-        },
-        "impact": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "status",
-            "reason",
-            "evidence",
-            "affected_objects"
-          ],
-          "properties": {
-            "status": {
-              "enum": [
-                "passed",
-                "failed",
-                "unassessed",
-                "blocked"
-              ]
-            },
-            "reason": {
-              "enum": [
-                "snapshots_not_comparable",
-                "impact_coverage_incomplete",
-                "explicit_dependencies_assessed",
-                "coverage_missing",
-                "structural_gap",
-                "linked_in_scope"
-              ]
-            },
-            "evidence": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "path",
-                "pointer"
-              ],
-              "properties": {
-                "path": {
-                  "enum": [
-                    "ecuc/after/ecuc-review.json",
-                    "ecuc/ecuc-impact.json"
-                  ]
-                },
-                "pointer": {
-                  "type": "string",
-                  "pattern": "\\S"
-                }
-              }
-            },
-            "affected_objects": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "\\S"
-              },
-              "uniqueItems": true
+              "type": "integer",
+              "minimum": 0
             }
           }
         }
       }
-    },
-    "summary": {
+    }
+  ],
+  "$defs": {
+    "check": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "changed_objects",
+        "status",
+        "reason",
+        "evidence",
         "affected_objects"
       ],
       "properties": {
-        "changed_objects": {
-          "type": "integer",
-          "minimum": 0
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "snapshots_not_comparable",
+            "impact_coverage_incomplete",
+            "explicit_dependencies_assessed",
+            "coverage_missing",
+            "structural_gap",
+            "linked_in_scope"
+          ]
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "pointer"
+          ],
+          "properties": {
+            "path": {
+              "enum": [
+                "ecuc/after/ecuc-review.json",
+                "ecuc/ecuc-impact.json"
+              ]
+            },
+            "pointer": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          }
         },
         "affected_objects": {
-          "type": "integer",
-          "minimum": 0
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
         }
       }
     }
