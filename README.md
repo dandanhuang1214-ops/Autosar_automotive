@@ -2,7 +2,7 @@
 
 平台路线、升级状态、环境记录和技术调研统一从 [`docs/README.md`](docs/README.md) 进入。每次功能或环境升级都必须同步更新 [`docs/project/progress-log.md`](docs/project/progress-log.md)。
 
-长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；P20 声明驱动的多项目通信验证已完成，P21 通信对象图与变更影响已完成，P22 ARXML 公开桥接路径已完成，P23 独立 ECU 项目执行已完成，P24 工程问题审查已完成，P26 ECUC 静态工程审查与配置影响已远端验收，当前主实现阶段为 P27 声明式配置变更验收（implementing），P25 人工验收仍待完成，完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
+长期目标是可维护的汽车软件配置与验证工作台：连接配置输入、跨层影响分析、运行验证和工程审查。当前已落地统一契约、静态映射、确定性实验和可审计证据；P20 声明驱动的多项目通信验证已完成，P21 通信对象图与变更影响已完成，P22 ARXML 公开桥接路径已完成，P23 独立 ECU 项目执行已完成，P24 工程问题审查已完成，P26 ECUC 静态工程审查与配置影响已远端验收，P27 声明式配置变更验收已远端通过，下一主实现阶段为 P28 对象级验收策略（planned），P25 人工验收仍待完成，完整六阶段计划见 [长期路线 v3](docs/project/roadmap.md)。
 
 P20 已实现 [声明式多项目完整流程](docs/project/p20-multi-project-guide.md)：车窗与 ThermalControl 共用项目运行、路径绑定、审查、比较与迁移复验；整阶段已通过七 job 远端验收及本地双项目 SocketCAN 全流程，见 [验收记录](docs/project/p20-acceptance.md)。
 
@@ -194,4 +194,4 @@ adapters/
 
 当前 GitHub Actions 将 Windows/Ubuntu 22.04 Python 3.11 拆为 `core-contracts`、`runtime-evidence` 和 `controlled-rejections` 三类职责，并用 Ubuntu 22.04/Python 3.14 执行独立 runtime-currency 全量回归。`core-contracts` 会在 Windows/Linux 中额外构建、隔离安装并调用 wheel，并用安装后的命令复验迁移胶囊；运行证据和拒绝证据分别重建输入，不跨 job 共享可变目录；拓扑门禁固定关键步骤归属和四个预期失败。现在只有 CI，没有 CD；wheel 只用于临时 smoke 且不上传，等出现正式发布需求后再设计发布、签名和验证流程。
 
-新增 [P27 声明式 ECUC 配置验收](docs/project/p27-ecuc-acceptance-guide.md)：一个 0.6 项目声明基线/候选与静态接受条件，直接完成工程审查、影响追踪和便携证据；两种工程、故障和隔离安装验收进行中，见[验收表](docs/project/p27-acceptance.md)。
+新增 [P27 声明式 ECUC 配置验收](docs/project/p27-ecuc-acceptance-guide.md)：一个 0.6 项目声明基线/候选与静态接受条件，直接完成工程审查、影响追踪和便携证据；两种工程、故障与隔离安装流程已远端验收：`55e208f` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部通过，见[验收表](docs/project/p27-acceptance.md)。

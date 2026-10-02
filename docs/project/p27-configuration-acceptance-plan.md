@@ -1,4 +1,4 @@
-# P27 声明式 ECUC 配置变更验收（implementing）
+# P27 声明式 ECUC 配置变更验收（remote-accepted）
 
 P26 受限静态审查阶段验收后进入本阶段。目标用户能力是：工程人员在同一个项目配置中声明基线/候选 ECUC 输入、所需检查和接受条件，一次运行产生可重放的变更验收与交付包，无需手工拼接多个命令。
 
@@ -18,4 +18,4 @@ P26 受限静态审查阶段验收后进入本阶段。目标用户能力是：�
 
 ## 本轮实现（2026-10-02）
 
-已实现 0.6 项目、五检查四状态、两种公开工程、审查/比较及原输入移除后的复验；旧项目兼容。当前最终本地与远端验收进行中，见[验收表](p27-acceptance.md)和[指南](p27-ecuc-acceptance-guide.md)。阶段通过后下一项为[P28 对象级配置变更验收策略](p28-object-acceptance-plan.md)。
+已实现 0.6 项目、五检查四状态、两种公开工程、审查/比较及原输入移除后的复验；旧项目兼容。实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success，见[验收表](p27-acceptance.md)和[指南](p27-ecuc-acceptance-guide.md)。下一主阶段为[P28 对象级配置变更验收策略](p28-object-acceptance-plan.md)。
