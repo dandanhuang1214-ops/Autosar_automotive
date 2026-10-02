@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-02）
 
-当前主实现阶段：`P28 — 对象级配置变更验收策略（local-accepted，等待远端）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已实现；最终本地与隔离安装已通过；下一任务完成本实现七 job 验收，见[验收表](p28-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
+当前主实现阶段：`P29 — 配置验收与运行证据关联（planned）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。下一任务为[P29 显式配置与运行证据绑定契约](p29-configuration-runtime-plan.md)，先核对既有 P20/P23 身份与对象策略的可绑定范围。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1413,3 +1413,19 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终本地：374 tests（372 passed、2 环境跳过），15 项对象策略专项；52 schema/65 bound/25 syntax-only、50-source mypy、Ruff、topology、compileall、pip check 通过。源码与隔离 wheel 各 16 场景、16/16 迁移复验与审查、4/4 篡改拒绝，通信/信号/任务回归及策略漂移比较和再次搬移均通过。最终证据 `output/p28-validation/scenarios-final/`、`installed-final/`，源码复制归档后的项目与比较复验通过（38/38 引用）。
 - 全量回归发现非法版本列表触发 TypeError，已恢复受控拒绝；场景脚本修正既有 not-comparable 退出码为 2；大小写不同策略的审查断言增加稳定区分，专项通过。最终固定代码重跑，不使用开发中旧快照代替验收。
 - 本轮 local-accepted；下一步推送固定实现并记录真实七 job。通过后按当前受限静态保护范围冻结 P28，进入已规划[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)。
+
+
+### P28：整阶段远端验收与 P29 交接（2026-10-02）
+
+- 实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success。
+- `core-contracts (windows-latest)`：job `110899801407`，success。
+- `core-contracts (ubuntu-22.04)`：job `110899801439`，success。
+- `runtime-currency`：job `110899801460`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `110901007087`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `110901007261`，success。
+- `controlled-rejections (windows-latest)`：job `110901007278`，success。
+- `runtime-evidence (windows-latest)`：job `110901007366`，success。
+- Windows/Ubuntu 的 `Run object policy acceptance scenarios`、`Verify installed object policy acceptance`、`Upload object policy acceptance evidence` 三步骤均 success；已核对完整 head SHA 与每项结论。原始记录 `output/p28-validation/remote-ci.json`，归档 `ecuc-policies-Windows` / `ecuc-policies-Linux`。
+- 最终本地 374 tests（372 passed、2 环境跳过），15 项对象策略专项；源码和隔离安装各 16 场景、16 迁移复验/审查、4 篡改拒绝、通信/信号/任务回归与策略漂移比较及再次搬移通过。52 schema、65 bound/25 syntax-only、50-source mypy、Ruff、topology、compileall、pip check 通过。
+- P28 按精确对象存在/受限结构及字段不可变范围 remote-accepted。下一主阶段 P29 planned，先冻结已有通信/诊断路径与配置策略的显式身份绑定。P25 人工反馈、商业生成、可调度性及物理 ECU 门仍待真实证据，不等同本人能力已掌握。
+- 本条及首页/路线/验收表为后续纯文档 `[skip ci]` 回填，固定引用实现 `2269714` / run `37025748404`，文档提交不作为新实现 CI。

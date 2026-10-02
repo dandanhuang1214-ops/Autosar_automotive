@@ -85,5 +85,5 @@
 - [P27 独立练习](learning/p27-ecuc-acceptance.md)
 - [P28 对象级策略计划](project/p28-object-acceptance-plan.md)
 
-- [P28 对象保护操作指南](project/p28-object-policy-guide.md)与[验收表](project/p28-acceptance.md)：精确结构/字段保护及允许、拒绝变更。
-- [P29 配置验收与运行证据关联计划](project/p29-configuration-runtime-plan.md)：P28 验收后的下一主阶段。
+- [P28 对象保护操作指南](project/p28-object-policy-guide.md)与[验收表](project/p28-acceptance.md)：精确结构/字段保护及允许、拒绝变更，已远端验收。
+- [P29 配置验收与运行证据关联计划](project/p29-configuration-runtime-plan.md)：当前下一主阶段（planned）。
