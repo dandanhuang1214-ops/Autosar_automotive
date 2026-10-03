@@ -11,4 +11,12 @@ P28 将具体对象变化与接受策略相连。下一项用户能力是：对�
 
 P25 人工演示/真实反馈及 P22 商业往返仍单列等待，不把代理运行算作本人独立掌握或外部用户验收。
 
-2026-10-03：CAN 首轮已实现项目 0.8、双工程 Tx/Rx/单 Tx、严格静态门控、同次上下文绑定和便携审查；验收见[P29 验收表](p29-acceptance.md)。当前先完成本实现七 job 与 SocketCAN 条件门；下一门仍属 P29，为独立 ECU 诊断配置/证据关联，需固定 P23 执行身份与对象映射，不将现有 CAN 本地端点充作外部 ECU。
+2026-10-03：CAN 首轮已实现项目 0.8、双工程 Tx/Rx/单 Tx、严格静态门控、同次上下文绑定和便携审查；验收见[P29 验收表](p29-acceptance.md)。CAN 关联门已 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success，本机 SocketCAN 双工程通过；下一门仍属 P29，为独立 ECU 诊断配置/证据关联，需固定 P23 执行身份与对象映射，不将现有 CAN 本地端点充作外部 ECU。
+
+## 独立 ECU 诊断门的下一步依据
+
+本轮已核对现有消费者：`external_ecu.load_execution` 验证固定 source_commit、构建文件哈希、工具版本，以及 build/profile 的 channel、request_id、response_id、DID 和 expected_data_hex；这些身份可以继续复用。现有 ECUC 通信/集成规则没有 Dcm/CanTp 对象语义，不能把 ComSignal 名称或历史 CF01 成功补写成 Dcm 配置到生成代码的映射。
+
+下一步先区分两种声明：保护策略通过后要求一次独立诊断验收的显式依赖，以及有真实配置/构建来源支持的语义关联。先贯通前者的配置门控、同次执行上下文和便携复验；后者缺少 Dcm/CanTp/生成来源时保留 unassessed，不自动接受。扩展项目契约需新版本，保持已交付 0.8 CAN 契约；独立进程、锁、只读客户端与清理由 P23 内核负责。
+
+现场前置检查（2026-10-03）：历史 P23 构建清单仍在，但清单引用的执行文件、cache、can_source/docan_source/uds_source 均已不存在；build/configure 日志存在且哈希匹配。下一轮恢复须按固定 source_commit 重建并生成新清单；旧归档仅作为历史复验材料。这个环境缺口不替代或取消项目契约、静态门控与离线拒绝路径的实现。

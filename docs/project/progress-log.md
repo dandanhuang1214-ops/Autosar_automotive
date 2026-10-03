@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-03）
 
-当前主实现阶段：`P29 — 配置验收与运行证据关联（implementing）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。P29 [CAN 关联首轮](p29-runtime-link-guide.md)已实现，最终回归、隔离安装、本机 SocketCAN 已通过；下一任务完成本实现七 job；其后继续同阶段独立 ECU 诊断绑定，见[验收表](p29-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
+当前主实现阶段：`P29 — 配置验收与运行证据关联（implementing）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。P29 [CAN 关联门](p29-runtime-link-guide.md)已 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success；本机 SocketCAN 双工程已通过。下一任务为同阶段独立 ECU 诊断绑定，见[验收表](p29-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1443,3 +1443,19 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终本地：385 tests（383 passed、2 环境跳过），11 项新增运行关联测试；53 schema、71 bound/25 syntax-only、52-source mypy、Ruff、topology、compileall、pip check 全通过。最终源码与隔离 wheel 各 9 份运行/迁移复验/审查、5 类篡改拒绝、失败回归/映射漂移/重复运行比较及再次搬移通过；证据 `output/p29-validation/scenarios-release/`、`installed-release/`。
 - SocketCAN vcan0：完整工程 Tx/Rx 2/2、单 Tx 1/1，持有现有通道锁；两工程审查通过，最终代码离线复验通过，比较引用分别 50/50、22/22；`socketcan/summary.json` 与 host probe/全部报告已归档。源码临时目录移除后的最终归档复验 50/50 通过。
 - CAN 关联门 local-accepted；等待本实现提交与七 job。P29 整阶段仍 implementing，下一门为独立 ECU 诊断身份/配置策略关联，未用本轮本地端点替代。
+
+
+### P29：CAN 关联门远端验收（2026-10-03）
+
+- 实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success；已核对完整 head SHA 与各 job 最终结论。
+- `runtime-currency`：job `111113435766`，success。
+- `core-contracts (ubuntu-22.04)`：job `111113436033`，success。
+- `core-contracts (windows-latest)`：job `111113436055`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `111113984160`，success。
+- `controlled-rejections (windows-latest)`：job `111113984206`，success。
+- `runtime-evidence (windows-latest)`：job `111113984218`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `111113984223`，success。
+- Windows/Ubuntu 的 `Run configuration runtime link scenarios`、`Verify installed configuration runtime links`、`Upload configuration runtime link evidence` 全部 success；归档 `ecuc-runtime-links-Linux` / `ecuc-runtime-links-Windows`，原始记录 `output/p29-validation/remote-ci.json`。
+- 最终本地 385 tests（383 passed、2 环境跳过）；源码与隔离安装各 9 份结果和 5 类篡改拒绝；vcan0 完整工程 Tx/Rx 2/2、单 Tx 1/1，审查/比较及搬移复验通过。CAN 门按显式声明映射范围 remote-accepted，P29 整阶段仍 implementing。
+- 下一项为独立 ECU 诊断关联：复用 P23 生命周期，将静态保护策略与同次只读诊断验收建立显式依赖；没有 Dcm/CanTp 或生成来源的配置到代码语义不得推断为通过。检查现有 P23 构建清单发现原执行文件、cache 及三个源码角色路径已不存在，两个构建日志仍在且哈希一致。现场恢复需重建固定提交并生成新的构建清单，不能复用历史 CF01 成功充作本轮执行。
+- 本条及首页/路线/验收表为后续纯文档 `[skip ci]` 状态提交，固定引用 `b2da147` / `37091771686`，不作为新实现 CI。P25 人工验收、商业工具生成和物理 ECU 仍未验收。

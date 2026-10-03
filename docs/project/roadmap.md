@@ -89,4 +89,4 @@ P28 版本化精确对象保护与字段不可变条件已 remote-accepted，旧
 
 当前主阶段为[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)（implementing）：将对象级接受条件连接到已有 P20/P23 验证证据，先冻结显式身份绑定与缺证据边界；P28 按受限静态范围冻结，保持一个主实现阶段。
 
-P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)与[验收表](p29-acceptance.md)。本地/隔离安装及本机 SocketCAN 条件验收已通过；当前下一任务为固定实现七 job；之后继续同阶段独立 ECU 诊断配置/运行证据绑定。两端 CAN 进程内实验不代替 P23 外部执行，未提前标记 P29 整阶段完成。
+P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)与[验收表](p29-acceptance.md)。本地/隔离安装及本机 SocketCAN 条件验收已通过；实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success，CAN 关联门 remote-accepted；当前下一任务为同阶段独立 ECU 诊断配置/运行证据绑定。两端 CAN 进程内实验不代替 P23 外部执行，未提前标记 P29 整阶段完成。
