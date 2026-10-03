@@ -183,7 +183,7 @@ def create_evidence_bundle_manifest(
                 )
             source = source_artifact.get("source")
             if source is None and payload.get("schema_version") in {
-                "communication-plan-0.1", "declared-communication-runtime-0.1"
+                "communication-plan-0.1", "declared-communication-runtime-0.1", "declared-communication-runtime-0.2"
             }:
                 source = source_artifact.get("path")
             sha256 = source_artifact.get("sha256")

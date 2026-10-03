@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench import __version__
+from automotive_workbench.can_io import BusConfig
 from automotive_workbench.ecuc_impact import compute, verify_impact
 from automotive_workbench.ecuc_model import canonical
 from automotive_workbench.ecuc_policy import evaluate, validate_policies
@@ -36,9 +37,13 @@ def encoded(value: Any) -> bytes:
 
 
 def declaration(project: Any) -> dict[str, Any]:
-    modern = (
+    modern = isinstance(project, dict) and project.get("schema_version") in (
+        "workbench-project-0.7",
+        "workbench-project-0.8",
+    )
+    linked = (
         isinstance(project, dict)
-        and project.get("schema_version") == "workbench-project-0.7"
+        and project.get("schema_version") == "workbench-project-0.8"
     )
     if (
         not isinstance(project, dict)
@@ -46,11 +51,13 @@ def declaration(project: Any) -> dict[str, Any]:
         != (
             {"schema_version", "name", "comparison_key", "inputs", "requirements"}
             | ({"policies"} if modern else set())
+            | ({"runtime"} if linked else set())
         )
-        or project.get("schema_version") not in (VERSION, "workbench-project-0.7")
+        or project.get("schema_version")
+        not in (VERSION, "workbench-project-0.7", "workbench-project-0.8")
     ):
         raise ValueError(
-            "ECUC project requires closed workbench-project-0.6/0.7 declaration"
+            "ECUC project requires closed workbench-project-0.6/0.7/0.8 declaration"
         )
     for field in ("name", "comparison_key"):
         if not isinstance(project[field], str) or not project[field].strip():
@@ -82,6 +89,12 @@ def declaration(project: Any) -> dict[str, Any]:
     allowed = {f"/checks/{c}/status" for c in CHECKS} | {
         f"/checks/policy.{i}/status" for i in policy_ids
     }
+    runtime_ids: set[str] = set()
+    if linked:
+        from automotive_workbench.ecuc_runtime import declaration as runtime_declaration
+
+        runtime_ids = runtime_declaration(project["runtime"], project["policies"])
+        allowed |= {f"/checks/runtime.{i}/status" for i in runtime_ids}
     requirements = project["requirements"]
     if not isinstance(requirements, list) or not requirements:
         raise ValueError("ECUC acceptance requires explicit checks")
@@ -121,6 +134,8 @@ def declaration(project: Any) -> dict[str, Any]:
         raise ValueError(
             "Every object policy must be a mandatory acceptance requirement"
         )
+    if any(f"/checks/runtime.{i}/status" not in pointers for i in runtime_ids):
+        raise ValueError("Every runtime binding must be a mandatory requirement")
     return project
 
 
@@ -140,6 +155,10 @@ def capture(path: Path, project: dict[str, Any], raw: bytes) -> dict[str, bytes]
             "ECUC engineering review", report
         ).encode()
         snapshots.update({prefix + "snapshot/" + k: v for k, v in sources.items()})
+    if "runtime" in project:
+        from automotive_workbench.ecuc_runtime import capture as capture_runtime
+
+        snapshots.update(capture_runtime(path, project))
     return snapshots
 
 
@@ -151,7 +170,11 @@ def aggregate(statuses: list[str]) -> str:
 
 
 def stage_report(
-    project: dict[str, Any], before: dict, after: dict, impact: dict
+    project: dict[str, Any],
+    before: dict,
+    after: dict,
+    impact: dict,
+    runtime_checks: dict | None = None,
 ) -> dict[str, Any]:
     checks: dict[str, Any] = {}
     for name in CHECKS:
@@ -244,6 +267,12 @@ def stage_report(
         checks["policy." + policy["id"]] = evaluate(policy, before, after, impact)
     engine = "ecuc-project-acceptance-0.2" if "policies" in project else ENGINE
     selected = [x["pointer"].split("/")[2] for x in project["requirements"]]
+    if "runtime" in project:
+        if runtime_checks is None:
+            selected = [n for n in selected if not n.startswith("runtime.")]
+        else:
+            checks.update(runtime_checks)
+            engine = "ecuc-project-acceptance-0.3"
     return {
         "schema_version": engine,
         "status": aggregate([checks[n]["status"] for n in selected]),
@@ -294,6 +323,11 @@ def project_report(
                 if "policies" in project
                 else {}
             ),
+            **(
+                {"runtime_basis": runtime_basis(project, bundle)}
+                if "runtime" in project
+                else {}
+            ),
             "baseline_sha256": sha(
                 (bundle / "ecuc/before/ecuc-review.json").read_bytes()
             ),
@@ -313,6 +347,11 @@ def project_report(
 def render_project(report: dict[str, Any]) -> str:
     from automotive_workbench.project_workflow import _render_html
 
+    if report["schema_version"] == "project-acceptance-0.8":
+        return _render_html(report).replace(
+            "通信实验验证所选 python-can 后端上的应用层行为，不证明目标 ECU 或量产配置。",
+            "本项目关联静态 ECUC 策略与同次 CAN 向量观测；显式合成映射不证明厂商生成 BSW、独立 ECU、可调度性或物理 ECU。",
+        )
     return _render_html(report).replace(
         "通信实验验证所选 python-can 后端上的应用层行为，不证明目标 ECU 或量产配置。",
         "本项目只执行静态 ECUC 检查；未声明项不算通过，历史日志不代表当前失败，亦不证明实时调度、厂商生成或物理 ECU。",
@@ -320,7 +359,11 @@ def render_project(report: dict[str, Any]) -> str:
 
 
 def run(
-    project: dict[str, Any], snapshots: dict[str, bytes], output: Path
+    project: dict[str, Any],
+    snapshots: dict[str, bytes],
+    output: Path,
+    *,
+    config: BusConfig | None = None,
 ) -> dict[str, Any]:
     check_output(output)
     output = output.resolve()
@@ -341,6 +384,15 @@ def run(
         render("ECUC configuration impact", impact), encoding="utf-8"
     )
     stage = stage_report(project, before, after, impact)
+    if "runtime" in project:
+        from automotive_workbench.ecuc_runtime import execute, replay
+
+        if config is None:
+            raise ValueError("Linked project requires explicit backend conditions")
+        execute(bundle, project, after, stage, config)
+        stage = stage_report(
+            project, before, after, impact, replay(bundle, project, after, stage)
+        )
     (bundle / "ecuc-stage.json").write_bytes(encoded(stage))
     report = project_report(project, stage, bundle)
     (bundle / "project-report.json").write_bytes(encoded(report))
@@ -376,13 +428,29 @@ def validate(path: Path, report: dict[str, Any]) -> None:
     project = declaration(
         json.loads((bundle / "inputs/project.json").read_text(encoding="utf-8-sig"))
     )
-    if {p.name for p in bundle.iterdir()} != {
+    roots = {
         "inputs",
         "ecuc",
         "ecuc-stage.json",
         "project-report.json",
         "index.html",
-    } or {p.name for p in (bundle / "inputs").iterdir()} != {"project.json"}:
+    }
+    input_names = {"project.json"}
+    if "runtime" in project:
+        from automotive_workbench.ecuc_runtime import FILES
+
+        roots.add("runtime-link.json")
+        if (bundle / "runtime").exists():
+            roots.add("runtime")
+            if {p.name for p in (bundle / "runtime").iterdir()} != {
+                "declared-runtime-report.json",
+                "declared-runtime-report.md",
+            }:
+                raise ValueError("Runtime inventory differs")
+        input_names.update(FILES.values())
+    if {p.name for p in bundle.iterdir()} != roots or {
+        p.name for p in (bundle / "inputs").iterdir()
+    } != input_names:
         raise ValueError("ECUC project inventory differs")
     verify_impact(bundle / "ecuc/ecuc-impact.json")
     before, after = [
@@ -397,6 +465,12 @@ def validate(path: Path, report: dict[str, Any]) -> None:
                 raise ValueError("Captured ECUC input count differs from declaration")
     impact = json.loads((bundle / "ecuc/ecuc-impact.json").read_text(encoding="utf-8"))
     stage = stage_report(project, before, after, impact)
+    if "runtime" in project:
+        from automotive_workbench.ecuc_runtime import replay
+
+        stage = stage_report(
+            project, before, after, impact, replay(bundle, project, after, stage)
+        )
     if canonical(
         json.loads((bundle / "ecuc-stage.json").read_text(encoding="utf-8"))
     ) != canonical(stage):
@@ -413,11 +487,30 @@ def verify(path: Path) -> dict[str, Any]:
     if not isinstance(report, dict) or report.get("schema_version") not in (
         REPORT_VERSION,
         "project-acceptance-0.7",
+        "project-acceptance-0.8",
     ):
-        raise ValueError("verify-ecuc-project requires project-acceptance-0.6/0.7")
+        raise ValueError("verify-ecuc-project requires project-acceptance-0.6/0.7/0.8")
     validate(path, report)
     return {
         "status": "passed",
         "project_status": report["status"],
         "report_sha256": sha(path.read_bytes()),
     }
+
+
+def runtime_basis(project: dict, bundle: Path) -> str:
+    from automotive_workbench.ecuc_runtime import FILES
+
+    record = json.loads((bundle / "runtime-link.json").read_text(encoding="utf-8"))
+    return sha(
+        canonical(
+            {
+                "declaration": project["runtime"],
+                "inputs": {
+                    k: sha((bundle / "inputs" / v).read_bytes())
+                    for k, v in FILES.items()
+                },
+                "backend": record["requested_config"],
+            }
+        ).encode()
+    )

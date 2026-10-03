@@ -1,0 +1,14 @@
+{
+  "schema_version": "communication-vectors-0.1",
+  "vectors": [
+    {
+      "id": "value-tx",
+      "message": "TelemetryStatus",
+      "direction": "tx",
+      "signals": {
+        "TelemetryValue": 42
+      },
+      "timeout_seconds": 0.2
+    }
+  ]
+}

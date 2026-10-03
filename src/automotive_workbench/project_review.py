@@ -19,6 +19,7 @@ SUPPORTED_REPORT_VERSIONS = {
     "project-acceptance-0.5",
     "project-acceptance-0.6",
     "project-acceptance-0.7",
+    "project-acceptance-0.8",
 }
 STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication", "external_ecu", "ecuc")
 
@@ -63,7 +64,7 @@ def load_project_report(path: Path) -> dict[str, Any]:
         raise ValueError("Project review requires a project-acceptance report")
     if report.get("schema_version") not in SUPPORTED_REPORT_VERSIONS:
         raise ValueError("Unsupported project-acceptance schema_version")
-    if report.get("status") not in ({"passed", "failed", "blocked"} | ({"unassessed"} if report["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7"} else set())):
+    if report.get("status") not in ({"passed", "failed", "blocked"} | ({"unassessed"} if report["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7", "project-acceptance-0.8"} else set())):
         raise ValueError("Project report requires a valid status")
     if not isinstance(report.get("name"), str) or not report["name"]:
         raise ValueError("Project report requires a non-empty name")
@@ -227,6 +228,11 @@ def run_project_review(
                     values = [(field, check[field]) for field in ("status", "reason")]
                     values += [("evidence/" + field, check["evidence"][field]) for field in ("path", "pointer")]
                     values += [(f"affected_objects/{i}", value) for i, value in enumerate(check["affected_objects"][:100])]
+                    if "binding" in check:
+                        values += [(field, check[field]) for field in ("run_id", "runtime_path", "runtime_pointer")]
+                        values += [("binding/" + field, value) for field, value in check["binding"].items() if not isinstance(value, list)]
+                        values += [(f"binding/policy_ids/{i}", value) for i, value in enumerate(check["binding"]["policy_ids"])]
+                        values += [(f"witness_pointers/{i}", value) for i, value in enumerate(check["witness_pointers"])]
                     if "policy" in check:
                         values += [("policy/" + field, value) for field, value in check["policy"].items()]
                         for side, observation in check["observations"].items():
@@ -237,7 +243,7 @@ def run_project_review(
                                     values.append((f"observations/{side}/{field}", value))
                     for field, value in values:
                         checks.append(_assertion_check(
-                            _check_id(f"ECUC-{check_name}-{field}") + ("-" + hashlib.sha256(check_name.encode()).hexdigest()[:12] if "policy" in check else ""),
+                            _check_id(f"ECUC-{check_name}-{field}") + ("-" + hashlib.sha256(check_name.encode()).hexdigest()[:12] if "policy" in check or "binding" in check else ""),
                             f"ECUC {check_name} {field} is recorded by the static acceptance policy.",
                             artifact_id, f"/checks/{check_name}/{field}", value,
                         ))

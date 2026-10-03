@@ -1,0 +1,46 @@
+{
+  "schema_version": "bsw-intent-0.2",
+  "model_status": "research-intent",
+  "source": "public window_control.dbc learning sample",
+  "local_ecu": "BODY_ECU",
+  "messages": [
+    {
+      "dbc_message": "TelemetryStatus",
+      "can_id": 768,
+      "dlc": 8,
+      "sender": "BODY_ECU",
+      "receiver": "TESTER",
+      "direction": "tx",
+      "i_pdu": "WindowStatus_IPdu",
+      "canif_pdu": "WindowStatus_CanIfTxPdu"
+    }
+  ],
+  "signals": [
+    {
+      "dbc_message": "TelemetryStatus",
+      "dbc_signal": "TelemetryValue",
+      "start_bit": 0,
+      "bit_length": 8,
+      "byte_order": "little_endian",
+      "is_signed": false,
+      "scale": 1,
+      "offset": 0,
+      "minimum": 0,
+      "maximum": 100,
+      "unit": "%",
+      "direction": "tx",
+      "canonical_signal": "WindowPosition",
+      "swc_data_element": "WindowPosition",
+      "swc_port": "PpWindowStatus",
+      "com_signal": "ComSig_WindowPosition",
+      "i_pdu": "WindowStatus_IPdu",
+      "pdur_route": "PduRRoute_WindowStatus_Tx",
+      "canif_pdu": "WindowStatus_CanIfTxPdu",
+      "unknowns": [
+        "Vendor BSWMD container paths",
+        "Actual ECU communication controller and hardware object",
+        "OEM timeout and update-bit policy"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": "bsw-intent-0.2",
+  "model_status": "research-intent",
+  "source": "public window_control.dbc learning sample",
+  "local_ecu": "BODY_ECU",
+  "messages": [
+    {
+      "dbc_message": "WindowStatus",
+      "can_id": 256,
+      "dlc": 8,
+      "sender": "BODY_ECU",
+      "receiver": "TESTER",
+      "direction": "tx",
+      "i_pdu": "WindowStatus_IPdu",
+      "canif_pdu": "WindowStatus_CanIfTxPdu"
+    },
+    {
+      "dbc_message": "WindowCommand",
+      "can_id": 512,
+      "dlc": 8,
+      "sender": "TESTER",
+      "receiver": "BODY_ECU",
+      "direction": "rx",
+      "i_pdu": "WindowCommand_IPdu",
+      "canif_pdu": "WindowCommand_CanIfRxPdu"
+    }
+  ],
+  "signals": [
+    {
+      "dbc_message": "WindowStatus",
+      "dbc_signal": "WindowPosition",
+      "start_bit": 0,
+      "bit_length": 8,
+      "byte_order": "little_endian",
+      "is_signed": false,
+      "scale": 1,
+      "offset": 0,
+      "minimum": 0,
+      "maximum": 100,
+      "unit": "%",
+      "direction": "tx",
+      "canonical_signal": "WindowPosition",
+      "swc_data_element": "WindowPosition",
+      "swc_port": "PpWindowStatus",
+      "com_signal": "ComSig_WindowPosition",
+      "i_pdu": "WindowStatus_IPdu",
+      "pdur_route": "PduRRoute_WindowStatus_Tx",
+      "canif_pdu": "WindowStatus_CanIfTxPdu",
+      "unknowns": [
+        "Vendor BSWMD container paths",
+        "Actual ECU communication controller and hardware object",
+        "OEM timeout and update-bit policy"
+      ]
+    },
+    {
+      "dbc_message": "WindowCommand",
+      "dbc_signal": "RequestedDirection",
+      "start_bit": 0,
+      "bit_length": 2,
+      "byte_order": "little_endian",
+      "is_signed": false,
+      "scale": 1,
+      "offset": 0,
+      "minimum": 0,
+      "maximum": 3,
+      "unit": "",
+      "direction": "rx",
+      "canonical_signal": "RequestedDirection",
+      "swc_data_element": "RequestedDirection",
+      "swc_port": "RpWindowCommand",
+      "com_signal": "ComSig_RequestedDirection",
+      "i_pdu": "WindowCommand_IPdu",
+      "pdur_route": "PduRRoute_WindowCommand_Rx",
+      "canif_pdu": "WindowCommand_CanIfRxPdu",
+      "unknowns": [
+        "Vendor BSWMD container paths",
+        "Actual ECU communication controller and hardware object",
+        "OEM timeout and invalid-value policy"
+      ]
+    }
+  ]
+}

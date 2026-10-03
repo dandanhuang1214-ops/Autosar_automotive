@@ -10,7 +10,8 @@
         "project-acceptance-0.4",
         "project-acceptance-0.5",
         "project-acceptance-0.6",
-        "project-acceptance-0.7"
+        "project-acceptance-0.7",
+        "project-acceptance-0.8"
       ]
     }
   },
@@ -937,6 +938,205 @@
               "pattern": "^[a-f0-9]{64}$"
             },
             "policy_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "source_artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source",
+              "sha256"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_type",
+        "schema_version",
+        "name",
+        "status",
+        "stages",
+        "requirements",
+        "comparison_basis",
+        "source_artifacts"
+      ],
+      "properties": {
+        "artifact_type": {
+          "const": "project-acceptance"
+        },
+        "schema_version": {
+          "const": "project-acceptance-0.8"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "stages": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ecuc"
+          ],
+          "properties": {
+            "ecuc": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "path"
+              ],
+              "properties": {
+                "status": {
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "unassessed",
+                    "blocked"
+                  ]
+                },
+                "path": {
+                  "const": "ecuc-stage.json"
+                }
+              }
+            }
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "text",
+              "stage",
+              "pointer",
+              "expected",
+              "status",
+              "reason",
+              "actual",
+              "evidence"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.-]+$"
+              },
+              "text": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "stage": {
+                "const": "ecuc"
+              },
+              "pointer": {
+                "type": "string",
+                "pattern": "^/checks/(communication|application|task_bindings|mode_rules|impact|policy\\.[A-Za-z0-9_.-]+|runtime\\.[A-Za-z0-9_.-]+)/status$"
+              },
+              "expected": {
+                "const": "passed"
+              },
+              "status": {
+                "enum": [
+                  "passed",
+                  "failed",
+                  "unassessed",
+                  "blocked"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "actual": {
+                "enum": [
+                  "passed",
+                  "failed",
+                  "unassessed",
+                  "blocked"
+                ]
+              },
+              "evidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "pointer",
+                  "sha256"
+                ],
+                "properties": {
+                  "path": {
+                    "const": "ecuc-stage.json"
+                  },
+                  "pointer": {
+                    "type": "string",
+                    "pattern": "^/checks/(communication|application|task_bindings|mode_rules|impact|policy\\.[A-Za-z0-9_.-]+|runtime\\.[A-Za-z0-9_.-]+)/status$"
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "comparison_basis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "comparison_key",
+            "engine",
+            "baseline_sha256",
+            "policy_sha256",
+            "runtime_basis"
+          ],
+          "properties": {
+            "comparison_key": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "engine": {
+              "const": "ecuc-project-acceptance-0.3"
+            },
+            "baseline_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "policy_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "runtime_basis": {
               "type": "string",
               "pattern": "^[a-f0-9]{64}$"
             }

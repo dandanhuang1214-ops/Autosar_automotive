@@ -22,7 +22,10 @@
       "const": "declared-communication-runtime"
     },
     "schema_version": {
-      "const": "declared-communication-runtime-0.1"
+      "enum": [
+        "declared-communication-runtime-0.1",
+        "declared-communication-runtime-0.2"
+      ]
     },
     "started_at": {
       "type": "string",
@@ -445,9 +448,84 @@
           }
         }
       }
+    },
+    "execution_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "candidate_sha256",
+        "policy_sha256",
+        "runtime_declaration_sha256",
+        "input_sha256"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runtime_declaration_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_sha256": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dbc",
+            "intent",
+            "vectors"
+          ],
+          "properties": {
+            "dbc": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "intent": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "vectors": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
     }
   },
+  "title": "Declared classic CAN runtime evidence",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "declared-communication-runtime-0.1"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "execution_context"
+          ]
+        }
+      },
+      "else": {
+        "required": [
+          "execution_context"
+        ]
+      }
+    }
+  ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/automotive-workbench/declared-communication-runtime.schema.json",
-  "title": "Declared classic CAN runtime evidence"
+  "$id": "https://example.invalid/automotive-workbench/declared-communication-runtime.schema.json"
 }

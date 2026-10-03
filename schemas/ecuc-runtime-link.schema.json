@@ -1,0 +1,205 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "context",
+    "requested_config",
+    "bus_config",
+    "runtime_path",
+    "runtime_sha256",
+    "preflight",
+    "boundary",
+    "producer"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ecuc-runtime-link-0.1"
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "candidate_sha256",
+        "policy_sha256",
+        "runtime_declaration_sha256",
+        "input_sha256"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runtime_declaration_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_sha256": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dbc",
+            "intent",
+            "vectors"
+          ],
+          "properties": {
+            "dbc": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "intent": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "vectors": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "requested_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interface",
+        "channel",
+        "receive_own_messages",
+        "fd"
+      ],
+      "properties": {
+        "interface": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "channel": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "receive_own_messages": {
+          "const": false
+        },
+        "fd": {
+          "const": false
+        }
+      }
+    },
+    "bus_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interface",
+        "channel",
+        "receive_own_messages",
+        "fd"
+      ],
+      "properties": {
+        "interface": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "channel": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "receive_own_messages": {
+          "const": false
+        },
+        "fd": {
+          "const": false
+        }
+      }
+    },
+    "runtime_path": {
+      "enum": [
+        "",
+        "runtime/declared-runtime-report.json"
+      ]
+    },
+    "runtime_sha256": {
+      "type": "string",
+      "pattern": "^([a-f0-9]{64})?$"
+    },
+    "preflight": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_.-]+$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason",
+            "witness_pointers"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "blocked",
+                "unassessed"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "witness_pointers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    },
+    "boundary": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workbench",
+        "python",
+        "python_can",
+        "cantools"
+      ],
+      "properties": {
+        "workbench": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "python": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "python_can": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "cantools": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/ecuc-runtime-link.schema.json"
+}

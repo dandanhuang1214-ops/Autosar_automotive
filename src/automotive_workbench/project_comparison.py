@@ -473,7 +473,7 @@ def _build_comparison(
     if baseline_ids != candidate_ids:
         reasons.append("project requirement id set differs")
 
-    modern = any(r['schema_version'] in {'project-acceptance-0.3', 'project-acceptance-0.4', 'project-acceptance-0.5', 'project-acceptance-0.6', 'project-acceptance-0.7'} for r in (baseline, candidate))
+    modern = any(r['schema_version'] in {'project-acceptance-0.3', 'project-acceptance-0.4', 'project-acceptance-0.5', 'project-acceptance-0.6', 'project-acceptance-0.7', 'project-acceptance-0.8'} for r in (baseline, candidate))
     if modern:
         if not _same(baseline.get('comparison_basis'), candidate.get('comparison_basis')):
             reasons.append('project comparison basis differs')
@@ -579,7 +579,7 @@ def _build_comparison(
         status = "changed"
     result: dict[str, Any] = {
         "artifact_type": "project-comparison",
-        "schema_version": "project-comparison-0.3" if any(r["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7"} for r in (baseline, candidate)) else "project-comparison-0.2" if modern else "project-comparison-0.1",
+        "schema_version": "project-comparison-0.3" if any(r["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7", "project-acceptance-0.8"} for r in (baseline, candidate)) else "project-comparison-0.2" if modern else "project-comparison-0.1",
         "status": status,
         "baseline": _source("baseline", baseline_path, output),
         "candidate": _source("candidate", candidate_path, output),

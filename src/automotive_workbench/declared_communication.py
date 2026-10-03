@@ -146,6 +146,7 @@ def run_declared_communication(
     declaration: Path,
     config: BusConfig,
     output: Path,
+    *, execution_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # Every input/config/output rejection precedes probe (which itself opens a bus).
     if config.interface not in {"virtual", "socketcan"}:
@@ -222,6 +223,9 @@ def run_declared_communication(
         "passed_count": sum(item["status"] == "passed" for item in vectors.values()),
         "vectors": vectors,
     }
+    if execution_context is not None:
+        report["schema_version"] = "declared-communication-runtime-0.2"
+        report["execution_context"] = execution_context
     output.mkdir(parents=True, exist_ok=True)
     (output / "declared-runtime-report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n",

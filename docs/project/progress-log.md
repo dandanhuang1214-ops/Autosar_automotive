@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-02）
+## 当前总览（2026-10-03）
 
-当前主实现阶段：`P29 — 配置验收与运行证据关联（planned）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。下一任务为[P29 显式配置与运行证据绑定契约](p29-configuration-runtime-plan.md)，先核对既有 P20/P23 身份与对象策略的可绑定范围。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
+当前主实现阶段：`P29 — 配置验收与运行证据关联（implementing）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。P29 [CAN 关联首轮](p29-runtime-link-guide.md)已实现，最终回归、隔离安装、本机 SocketCAN 已通过；下一任务完成本实现七 job；其后继续同阶段独立 ECU 诊断绑定，见[验收表](p29-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1429,3 +1429,17 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终本地 374 tests（372 passed、2 环境跳过），15 项对象策略专项；源码和隔离安装各 16 场景、16 迁移复验/审查、4 篡改拒绝、通信/信号/任务回归与策略漂移比较及再次搬移通过。52 schema、65 bound/25 syntax-only、50-source mypy、Ruff、topology、compileall、pip check 通过。
 - P28 按精确对象存在/受限结构及字段不可变范围 remote-accepted。下一主阶段 P29 planned，先冻结已有通信/诊断路径与配置策略的显式身份绑定。P25 人工反馈、商业生成、可调度性及物理 ECU 门仍待真实证据，不等同本人能力已掌握。
 - 本条及首页/路线/验收表为后续纯文档 `[skip ci]` 回填，固定引用实现 `2269714` / run `37025748404`，文档提交不作为新实现 CI。
+
+
+### P29：配置接受与同次 CAN 证据关联实现（2026-10-03）
+
+- 新项目/报告 0.8、ECUC 阶段 0.3、带上下文的 P20 运行报告 0.2；旧 0.1–0.7 保留。复用既有 CAN 执行内核，显式绑定保护策略、精确信号、通信路径三元组、向量、方向及候选 CanIf 地址。
+- 静态失败或任一映射无法判断时整份运行计划不打开总线；保留失败/blocked/unassessed 原因。候选、策略、三个运行输入与运行标识绑定，记录执行条件及工具版本；重放重新核对计划、原始帧、解码、清理与汇总，不重跑总线。
+- 完整 Tx/Rx 与单 Tx 两工程；八类场景加同配置第二次执行，9 份迁移复验与审查，通信失败回归及映射漂移不可比较，五类篡改拒绝、删除原输入与再次搬移。隔离 wheel 使用 CAN 依赖；依赖准备与 --no-index 安装分开记录。
+- 验证中纠正比较既有结果名 stable、增加 schema 固定计数 53，并补强执行计划漂移不能被覆盖、JSON bool/int 严格区分。最终结果待下条回填。
+- 本机 vcan0 原先不存在，已用现有 setup_vcan.sh --apply 幂等恢复；带通道锁双工程 SocketCAN 运行/审查/比较通过，最终复验及远端门待回填。公开输入仅合成 fixture；现场是 vcan0 本地两端，不是独立 OpenBSW 或物理 ECU。
+- P29 保持 implementing；CAN 门通过后继续同阶段独立 ECU 诊断绑定。P25 人工门、商业生成与物理 ECU 证据不由本轮替代。
+
+- 最终本地：385 tests（383 passed、2 环境跳过），11 项新增运行关联测试；53 schema、71 bound/25 syntax-only、52-source mypy、Ruff、topology、compileall、pip check 全通过。最终源码与隔离 wheel 各 9 份运行/迁移复验/审查、5 类篡改拒绝、失败回归/映射漂移/重复运行比较及再次搬移通过；证据 `output/p29-validation/scenarios-release/`、`installed-release/`。
+- SocketCAN vcan0：完整工程 Tx/Rx 2/2、单 Tx 1/1，持有现有通道锁；两工程审查通过，最终代码离线复验通过，比较引用分别 50/50、22/22；`socketcan/summary.json` 与 host probe/全部报告已归档。源码临时目录移除后的最终归档复验 50/50 通过。
+- CAN 关联门 local-accepted；等待本实现提交与七 job。P29 整阶段仍 implementing，下一门为独立 ECU 诊断身份/配置策略关联，未用本轮本地端点替代。

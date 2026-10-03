@@ -5,7 +5,8 @@
     "schema_version": {
       "enum": [
         "ecuc-project-acceptance-0.1",
-        "ecuc-project-acceptance-0.2"
+        "ecuc-project-acceptance-0.2",
+        "ecuc-project-acceptance-0.3"
       ]
     }
   },
@@ -208,6 +209,120 @@
           },
           "patternProperties": {
             "^policy\\.[A-Za-z0-9_.-]+$": {
+              "$ref": "#/$defs/policy_check"
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "changed_objects",
+            "affected_objects"
+          ],
+          "properties": {
+            "changed_objects": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "affected_objects": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "status",
+        "scope",
+        "producer",
+        "selected_checks",
+        "checks",
+        "summary"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "ecuc-project-acceptance-0.3"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "minItems": 1
+        },
+        "producer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "engine",
+            "workbench_version"
+          ],
+          "properties": {
+            "engine": {
+              "const": "ecuc-project-acceptance-0.3"
+            },
+            "workbench_version": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          }
+        },
+        "selected_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(communication|application|task_bindings|mode_rules|impact|policy\\.[A-Za-z0-9_.-]+|runtime\\.[A-Za-z0-9_.-]+)$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "communication",
+            "application",
+            "task_bindings",
+            "mode_rules",
+            "impact"
+          ],
+          "properties": {
+            "communication": {
+              "$ref": "#/$defs/check"
+            },
+            "application": {
+              "$ref": "#/$defs/check"
+            },
+            "task_bindings": {
+              "$ref": "#/$defs/check"
+            },
+            "mode_rules": {
+              "$ref": "#/$defs/check"
+            },
+            "impact": {
+              "$ref": "#/$defs/check"
+            }
+          },
+          "patternProperties": {
+            "^policy\\.[A-Za-z0-9_.-]+$": {
+              "$ref": "#/$defs/policy_check"
+            },
+            "^runtime\\.[A-Za-z0-9_.-]+$": {
               "type": "object",
               "additionalProperties": false,
               "required": [
@@ -215,8 +330,11 @@
                 "reason",
                 "evidence",
                 "affected_objects",
-                "policy",
-                "observations"
+                "binding",
+                "run_id",
+                "runtime_pointer",
+                "runtime_path",
+                "witness_pointers"
               ],
               "properties": {
                 "status": {
@@ -240,10 +358,7 @@
                   ],
                   "properties": {
                     "path": {
-                      "enum": [
-                        "ecuc/after/ecuc-review.json",
-                        "ecuc/ecuc-impact.json"
-                      ]
+                      "const": "runtime-link.json"
                     },
                     "pointer": {
                       "type": "string",
@@ -259,196 +374,95 @@
                   },
                   "uniqueItems": true
                 },
-                "policy": {
+                "binding": {
                   "type": "object",
                   "additionalProperties": false,
                   "required": [
                     "id",
+                    "policy_ids",
                     "object_id",
-                    "condition"
+                    "com_ipdu",
+                    "route",
+                    "canif_pdu",
+                    "vector_id",
+                    "message",
+                    "signal",
+                    "direction",
+                    "frame_id"
                   ],
                   "properties": {
                     "id": {
                       "type": "string",
                       "pattern": "^[A-Za-z0-9_.-]+$"
                     },
+                    "policy_ids": {
+                      "type": "array",
+                      "minItems": 1,
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]+$"
+                      }
+                    },
                     "object_id": {
                       "type": "string",
                       "pattern": "^ecuc:/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
                     },
-                    "condition": {
-                      "enum": [
-                        "exists_complete",
-                        "unchanged"
-                      ]
-                    },
-                    "field_group": {
-                      "enum": [
-                        "parameters",
-                        "references"
-                      ]
-                    },
-                    "definition": {
+                    "com_ipdu": {
                       "type": "string",
                       "pattern": "^/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+                    },
+                    "route": {
+                      "type": "string",
+                      "pattern": "^/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+                    },
+                    "canif_pdu": {
+                      "type": "string",
+                      "pattern": "^/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+                    },
+                    "vector_id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_.-]+$"
+                    },
+                    "message": {
+                      "type": "string",
+                      "pattern": "\\S"
+                    },
+                    "signal": {
+                      "type": "string",
+                      "pattern": "\\S"
+                    },
+                    "direction": {
+                      "enum": [
+                        "tx",
+                        "rx"
+                      ]
+                    },
+                    "frame_id": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2047
                     }
-                  },
-                  "allOf": [
-                    {
-                      "if": {
-                        "properties": {
-                          "condition": {
-                            "const": "unchanged"
-                          }
-                        }
-                      },
-                      "then": {
-                        "required": [
-                          "field_group",
-                          "definition"
-                        ]
-                      },
-                      "else": {
-                        "not": {
-                          "anyOf": [
-                            {
-                              "required": [
-                                "field_group"
-                              ]
-                            },
-                            {
-                              "required": [
-                                "definition"
-                              ]
-                            }
-                          ]
-                        }
-                      }
-                    }
+                  }
+                },
+                "run_id": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{32}$"
+                },
+                "runtime_pointer": {
+                  "type": "string"
+                },
+                "runtime_path": {
+                  "enum": [
+                    "",
+                    "runtime/declared-runtime-report.json"
                   ]
                 },
-                "observations": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "before",
-                    "after"
-                  ],
-                  "properties": {
-                    "before": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "required": [
-                        "status",
-                        "reason",
-                        "object_pointers",
-                        "field_pointers",
-                        "values",
-                        "witness_pointers",
-                        "path"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "passed",
-                            "failed",
-                            "unassessed",
-                            "blocked"
-                          ]
-                        },
-                        "reason": {
-                          "type": "string",
-                          "pattern": "\\S"
-                        },
-                        "path": {
-                          "enum": [
-                            "ecuc/before/ecuc-review.json",
-                            "ecuc/after/ecuc-review.json"
-                          ]
-                        },
-                        "object_pointers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "field_pointers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "values": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "witness_pointers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    },
-                    "after": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "required": [
-                        "status",
-                        "reason",
-                        "object_pointers",
-                        "field_pointers",
-                        "values",
-                        "witness_pointers",
-                        "path"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "passed",
-                            "failed",
-                            "unassessed",
-                            "blocked"
-                          ]
-                        },
-                        "reason": {
-                          "type": "string",
-                          "pattern": "\\S"
-                        },
-                        "path": {
-                          "enum": [
-                            "ecuc/before/ecuc-review.json",
-                            "ecuc/after/ecuc-review.json"
-                          ]
-                        },
-                        "object_pointers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "field_pointers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "values": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "witness_pointers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
+                "witness_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "\\S"
                   }
                 }
               }
@@ -532,6 +546,252 @@
             "pattern": "\\S"
           },
           "uniqueItems": true
+        }
+      }
+    },
+    "policy_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "evidence",
+        "affected_objects",
+        "policy",
+        "observations"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "pointer"
+          ],
+          "properties": {
+            "path": {
+              "enum": [
+                "ecuc/after/ecuc-review.json",
+                "ecuc/ecuc-impact.json"
+              ]
+            },
+            "pointer": {
+              "type": "string",
+              "pattern": "\\S"
+            }
+          }
+        },
+        "affected_objects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "object_id",
+            "condition"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]+$"
+            },
+            "object_id": {
+              "type": "string",
+              "pattern": "^ecuc:/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+            },
+            "condition": {
+              "enum": [
+                "exists_complete",
+                "unchanged"
+              ]
+            },
+            "field_group": {
+              "enum": [
+                "parameters",
+                "references"
+              ]
+            },
+            "definition": {
+              "type": "string",
+              "pattern": "^/[^\\s/*~]+(?:/[^\\s/*~]+)*$"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "condition": {
+                    "const": "unchanged"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "field_group",
+                  "definition"
+                ]
+              },
+              "else": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "field_group"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "definition"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "observations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "before",
+            "after"
+          ],
+          "properties": {
+            "before": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "reason",
+                "object_pointers",
+                "field_pointers",
+                "values",
+                "witness_pointers",
+                "path"
+              ],
+              "properties": {
+                "status": {
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "unassessed",
+                    "blocked"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "path": {
+                  "enum": [
+                    "ecuc/before/ecuc-review.json",
+                    "ecuc/after/ecuc-review.json"
+                  ]
+                },
+                "object_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "field_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "witness_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "after": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "reason",
+                "object_pointers",
+                "field_pointers",
+                "values",
+                "witness_pointers",
+                "path"
+              ],
+              "properties": {
+                "status": {
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "unassessed",
+                    "blocked"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "path": {
+                  "enum": [
+                    "ecuc/before/ecuc-review.json",
+                    "ecuc/after/ecuc-review.json"
+                  ]
+                },
+                "object_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "field_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "witness_pointers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

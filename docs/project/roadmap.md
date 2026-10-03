@@ -1,6 +1,6 @@
 # Automotive Workbench 长期升级路线 v3
 
-更新：2026-10-02。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
+更新：2026-10-03。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
 ## 长期产品目标
 
@@ -50,7 +50,7 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P29 planned（P28 已验收，P25 人工验收待完成）
+## 当前执行：P29 implementing（P28 已验收，P25 人工验收待完成）
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
@@ -87,4 +87,6 @@ P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍
 
 P28 版本化精确对象保护与字段不可变条件已 remote-accepted，旧契约保持；实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，双平台场景/安装/上传通过，见[P28 验收表](p28-acceptance.md)。
 
-当前下一主阶段为[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)（planned）：将对象级接受条件连接到已有 P20/P23 验证证据，先冻结显式身份绑定与缺证据边界；P28 按受限静态范围冻结，保持一个主实现阶段。
+当前主阶段为[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)（implementing）：将对象级接受条件连接到已有 P20/P23 验证证据，先冻结显式身份绑定与缺证据边界；P28 按受限静态范围冻结，保持一个主实现阶段。
+
+P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)与[验收表](p29-acceptance.md)。本地/隔离安装及本机 SocketCAN 条件验收已通过；当前下一任务为固定实现七 job；之后继续同阶段独立 ECU 诊断配置/运行证据绑定。两端 CAN 进程内实验不代替 P23 外部执行，未提前标记 P29 整阶段完成。

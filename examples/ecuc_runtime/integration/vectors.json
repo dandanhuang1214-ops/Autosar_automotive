@@ -1,0 +1,23 @@
+{
+  "schema_version": "communication-vectors-0.1",
+  "vectors": [
+    {
+      "id": "value-tx",
+      "message": "WindowStatus",
+      "direction": "tx",
+      "signals": {
+        "WindowPosition": 42
+      },
+      "timeout_seconds": 0.2
+    },
+    {
+      "id": "request-rx",
+      "message": "WindowCommand",
+      "direction": "rx",
+      "signals": {
+        "RequestedDirection": 2
+      },
+      "timeout_seconds": 0.2
+    }
+  ]
+}

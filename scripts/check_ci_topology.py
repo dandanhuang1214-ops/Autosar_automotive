@@ -13,6 +13,9 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run configuration runtime link scenarios": "runtime-evidence",
+    "Verify installed configuration runtime links": "runtime-evidence",
+    "Upload configuration runtime link evidence": "runtime-evidence",
     "Run object policy acceptance scenarios": "runtime-evidence",
     "Verify installed object policy acceptance": "runtime-evidence",
     "Upload object policy acceptance evidence": "runtime-evidence",

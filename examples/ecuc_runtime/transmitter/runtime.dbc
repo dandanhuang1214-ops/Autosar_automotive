@@ -1,0 +1,6 @@
+VERSION "P29 synthetic"
+NS_ :
+BS_:
+BU_: BODY_ECU TESTER
+BO_ 768 TelemetryStatus: 8 BODY_ECU
+ SG_ TelemetryValue : 0|8@1+ (1,0) [0|100] "%" TESTER

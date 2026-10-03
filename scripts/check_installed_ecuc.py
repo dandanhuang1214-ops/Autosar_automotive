@@ -21,12 +21,17 @@ from check_installed_distribution import (  # noqa: E402
 )
 from run_ecuc_engineering_scenarios import run  # noqa: E402
 from run_ecuc_acceptance_scenarios import run as run_projects  # noqa: E402
+from run_ecuc_runtime_scenarios import run as run_linked  # noqa: E402
 
 
 def check(
-    output: Path, project_acceptance: bool = False, object_policies: bool = False
+    output: Path,
+    project_acceptance: bool = False,
+    object_policies: bool = False,
+    linked_runtime: bool = False,
+    wheelhouse: Path | None = None,
 ) -> dict[str, Any]:
-    project_acceptance = project_acceptance or object_policies
+    project_acceptance = project_acceptance or object_policies or linked_runtime
     if output.is_symlink() or output.exists():
         raise ValueError("Installed ECUC output must be absent")
     output = output.resolve()
@@ -40,6 +45,28 @@ def check(
     if len(wheels) != 1:
         raise ValueError("Expected exactly one wheel")
     wheel = wheels[0]
+    dependencies = output / "wheelhouse"
+    if linked_runtime:
+        dependencies.mkdir()
+        if wheelhouse is not None:
+            for dependency in wheelhouse.glob("*.whl"):
+                if not dependency.name.startswith("automotive_workbench-"):
+                    shutil.copy2(dependency, dependencies / dependency.name)
+        else:
+            _run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "download",
+                    "--only-binary=:all:",
+                    "--dest",
+                    str(dependencies),
+                    str(wheel) + "[can]",
+                ],
+                cwd=ROOT,
+                env=env,
+            )
     with tempfile.TemporaryDirectory() as temporary:
         isolated = Path(temporary).resolve()
         environment = isolated / "venv"
@@ -51,9 +78,13 @@ def check(
                 "-m",
                 "pip",
                 "install",
-                "--no-deps",
                 "--no-index",
-                str(wheel),
+                *(
+                    ["--find-links", str(dependencies)]
+                    if linked_runtime
+                    else ["--no-deps"]
+                ),
+                str(wheel) + ("[can]" if linked_runtime else ""),
             ],
             cwd=isolated,
             env=env,
@@ -79,7 +110,9 @@ def check(
             raise ValueError("Installed ECUC consumer is not isolated")
         _run([str(python), "-m", "pip", "check"], cwd=isolated, env=env)
         result = (
-            run_projects(isolated / "flow", python, object_policies)
+            run_linked(isolated / "flow", python)
+            if linked_runtime
+            else run_projects(isolated / "flow", python, object_policies)
             if project_acceptance
             else run(isolated / "flow", python)
         )
@@ -97,7 +130,9 @@ def check(
                     str(
                         output
                         / (
-                            "evidence/delivery/projects/integration/bundle/project-report.json"
+                            "evidence/relocated/projects/integration/bundle/project-report.json"
+                            if linked_runtime
+                            else "evidence/delivery/projects/integration/bundle/project-report.json"
                             if project_acceptance
                             else "evidence/portable/comparisons/signal/ecuc-impact.json"
                         )
@@ -117,7 +152,9 @@ def check(
         "workflow": result,
         "copied_replay": replay,
         "checks": [
-            "offline-no-deps-install",
+            "offline-wheelhouse-install"
+            if linked_runtime
+            else "offline-no-deps-install",
             "checkout-import-excluded",
             "pip-check",
             "complete-engineering-flow",
@@ -135,9 +172,18 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--project-acceptance", action="store_true")
     parser.add_argument("--object-policies", action="store_true")
+    parser.add_argument("--linked-runtime", action="store_true")
+    parser.add_argument("--wheelhouse", type=Path)
     args = parser.parse_args()
     print(
         json.dumps(
-            check(args.output, args.project_acceptance, args.object_policies), indent=2
+            check(
+                args.output,
+                args.project_acceptance,
+                args.object_policies,
+                args.linked_runtime,
+                args.wheelhouse,
+            ),
+            indent=2,
         )
     )
