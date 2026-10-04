@@ -1,0 +1,10 @@
+{
+  "schema_version": "external-ecu-execution-0.1",
+  "build": "build.json",
+  "profile": "profile.json",
+  "channel": "p29-absent",
+  "startup_delay_s": 1,
+  "shutdown_timeout_s": 1,
+  "launch_ecu": true,
+  "fault": "none"
+}

@@ -176,7 +176,7 @@ def run_bound_communication(
 
 def validate_declared_sources(report_path: Path, report: dict[str, Any]) -> None:
     """Validate 0.3/0.4 snapshot provenance after relocation, without writing anything."""
-    if report["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7", "project-acceptance-0.8"}:
+    if report["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7", "project-acceptance-0.8", "project-acceptance-0.9"}:
         from automotive_workbench.project_ecuc import validate
         validate(report_path, report)
         return

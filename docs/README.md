@@ -89,3 +89,6 @@
 - [P29 配置验收与运行证据关联计划](project/p29-configuration-runtime-plan.md)：当前主阶段（implementing）。
 
 - [P29 配置与同次 CAN 运行关联指南](project/p29-runtime-link-guide.md)、[验收表](project/p29-acceptance.md)及[独立练习](learning/p29-runtime-link.md)。
+
+- [P29 配置与独立诊断依赖](project/p29-diagnostic-link-guide.md)
+- [P30 本地模型证据解释计划](project/p30-evidence-explanation-plan.md)

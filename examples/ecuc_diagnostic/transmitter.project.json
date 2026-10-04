@@ -1,0 +1,85 @@
+{
+  "schema_version": "workbench-project-0.9",
+  "name": "transmitter configuration and independent diagnostic acceptance",
+  "comparison_key": "ecuc-transmitter-v1",
+  "inputs": {
+    "baseline": {
+      "project": "transmitter/demo.dpa",
+      "applications": [],
+      "tool_logs": []
+    },
+    "candidate": {
+      "project": "transmitter/demo.dpa",
+      "applications": [],
+      "tool_logs": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "COMMUNICATION",
+      "text": "Require communication structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/communication/status",
+      "expected": "passed"
+    },
+    {
+      "id": "IMPACT",
+      "text": "Require impact structural evidence",
+      "stage": "ecuc",
+      "pointer": "/checks/impact/status",
+      "expected": "passed"
+    },
+    {
+      "id": "SIGNAL_PRESENT",
+      "text": "Protect SIGNAL_PRESENT",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.SIGNAL_PRESENT/status",
+      "expected": "passed"
+    },
+    {
+      "id": "SIGNAL_SIZE",
+      "text": "Protect SIGNAL_SIZE",
+      "stage": "ecuc",
+      "pointer": "/checks/policy.SIGNAL_SIZE/status",
+      "expected": "passed"
+    },
+    {
+      "id": "DIAGNOSTIC",
+      "text": "Require a same-run independent read-only diagnostic",
+      "stage": "ecuc",
+      "pointer": "/checks/diagnostic.read-version/status",
+      "expected": "passed"
+    }
+  ],
+  "policies": [
+    {
+      "id": "SIGNAL_PRESENT",
+      "object_id": "ecuc:/Telemetry/Com/ValueA",
+      "condition": "exists_complete"
+    },
+    {
+      "id": "SIGNAL_SIZE",
+      "object_id": "ecuc:/Telemetry/Com/ValueA",
+      "condition": "unchanged",
+      "field_group": "parameters",
+      "definition": "/Synthetic/ComSignal/ComBitSize"
+    }
+  ],
+  "diagnostic": {
+    "id": "read-version",
+    "execution": "execution.json",
+    "policy_ids": [
+      "SIGNAL_PRESENT",
+      "SIGNAL_SIZE"
+    ],
+    "relation": "acceptance-dependency",
+    "identity": {
+      "source_commit": "0000000000000000000000000000000000000000",
+      "channel": "p29-absent",
+      "request_id": 42,
+      "response_id": 240,
+      "did": 52993,
+      "expected_data_hex": "010200022202160F0100006D2F0000010600008FE0000001"
+    }
+  }
+}

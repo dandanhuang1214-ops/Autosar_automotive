@@ -40,10 +40,15 @@ def declaration(project: Any) -> dict[str, Any]:
     modern = isinstance(project, dict) and project.get("schema_version") in (
         "workbench-project-0.7",
         "workbench-project-0.8",
+        "workbench-project-0.9",
     )
     linked = (
         isinstance(project, dict)
         and project.get("schema_version") == "workbench-project-0.8"
+    )
+    diagnostic = (
+        isinstance(project, dict)
+        and project.get("schema_version") == "workbench-project-0.9"
     )
     if (
         not isinstance(project, dict)
@@ -52,12 +57,18 @@ def declaration(project: Any) -> dict[str, Any]:
             {"schema_version", "name", "comparison_key", "inputs", "requirements"}
             | ({"policies"} if modern else set())
             | ({"runtime"} if linked else set())
+            | ({"diagnostic"} if diagnostic else set())
         )
         or project.get("schema_version")
-        not in (VERSION, "workbench-project-0.7", "workbench-project-0.8")
+        not in (
+            VERSION,
+            "workbench-project-0.7",
+            "workbench-project-0.8",
+            "workbench-project-0.9",
+        )
     ):
         raise ValueError(
-            "ECUC project requires closed workbench-project-0.6/0.7/0.8 declaration"
+            "ECUC project requires closed workbench-project-0.6/0.7/0.8/0.9 declaration"
         )
     for field in ("name", "comparison_key"):
         if not isinstance(project[field], str) or not project[field].strip():
@@ -95,6 +106,14 @@ def declaration(project: Any) -> dict[str, Any]:
 
         runtime_ids = runtime_declaration(project["runtime"], project["policies"])
         allowed |= {f"/checks/runtime.{i}/status" for i in runtime_ids}
+    diagnostic_ids: set[str] = set()
+    if diagnostic:
+        from automotive_workbench.ecuc_diagnostic import (
+            declaration as diagnostic_declaration,
+        )
+
+        diagnostic_ids = diagnostic_declaration(project["diagnostic"], policy_ids)
+        allowed |= {f"/checks/diagnostic.{i}/status" for i in diagnostic_ids}
     requirements = project["requirements"]
     if not isinstance(requirements, list) or not requirements:
         raise ValueError("ECUC acceptance requires explicit checks")
@@ -136,6 +155,8 @@ def declaration(project: Any) -> dict[str, Any]:
         )
     if any(f"/checks/runtime.{i}/status" not in pointers for i in runtime_ids):
         raise ValueError("Every runtime binding must be a mandatory requirement")
+    if any(f"/checks/diagnostic.{i}/status" not in pointers for i in diagnostic_ids):
+        raise ValueError("Every diagnostic dependency must be a mandatory requirement")
     return project
 
 
@@ -159,6 +180,10 @@ def capture(path: Path, project: dict[str, Any], raw: bytes) -> dict[str, bytes]
         from automotive_workbench.ecuc_runtime import capture as capture_runtime
 
         snapshots.update(capture_runtime(path, project))
+    if "diagnostic" in project:
+        from automotive_workbench.ecuc_diagnostic import capture as capture_diagnostic
+
+        snapshots.update(capture_diagnostic(path, project))
     return snapshots
 
 
@@ -273,10 +298,21 @@ def stage_report(
         else:
             checks.update(runtime_checks)
             engine = "ecuc-project-acceptance-0.3"
+    if "diagnostic" in project:
+        if runtime_checks is None:
+            selected = [n for n in selected if not n.startswith("diagnostic.")]
+        else:
+            checks.update(runtime_checks)
+            engine = "ecuc-project-acceptance-0.4"
     return {
         "schema_version": engine,
         "status": aggregate([checks[n]["status"] for n in selected]),
-        "scope": SCOPE,
+        "scope": SCOPE
+        if "diagnostic" not in project
+        else [
+            "Explicit configuration acceptance dependency on an independent read-only diagnostic execution.",
+            "No Dcm/CanTp semantic mapping, generated-code provenance, physical ECU or ECU authentication is inferred.",
+        ],
         "producer": {"engine": engine, "workbench_version": __version__},
         "selected_checks": selected,
         "checks": checks,
@@ -290,6 +326,8 @@ def stage_report(
 def project_report(
     project: dict[str, Any], stage: dict[str, Any], bundle: Path
 ) -> dict[str, Any]:
+    from automotive_workbench.ecuc_diagnostic import comparison_basis
+
     requirements = []
     for item in project["requirements"]:
         check = stage["checks"][item["pointer"].split("/")[2]]
@@ -328,6 +366,11 @@ def project_report(
                 if "runtime" in project
                 else {}
             ),
+            **(
+                {"diagnostic_basis": comparison_basis(project, bundle)}
+                if "diagnostic" in project
+                else {}
+            ),
             "baseline_sha256": sha(
                 (bundle / "ecuc/before/ecuc-review.json").read_bytes()
             ),
@@ -347,6 +390,11 @@ def project_report(
 def render_project(report: dict[str, Any]) -> str:
     from automotive_workbench.project_workflow import _render_html
 
+    if report["schema_version"] == "project-acceptance-0.9":
+        return _render_html(report).replace(
+            "通信实验验证所选 python-can 后端上的应用层行为，不证明目标 ECU 或量产配置。",
+            "本项目要求配置策略通过后执行独立只读诊断；显式验收依赖不证明 Dcm/CanTp 语义映射、配置生成代码或物理 ECU。",
+        )
     if report["schema_version"] == "project-acceptance-0.8":
         return _render_html(report).replace(
             "通信实验验证所选 python-can 后端上的应用层行为，不证明目标 ECU 或量产配置。",
@@ -392,6 +440,18 @@ def run(
         execute(bundle, project, after, stage, config)
         stage = stage_report(
             project, before, after, impact, replay(bundle, project, after, stage)
+        )
+    if "diagnostic" in project:
+        from automotive_workbench.ecuc_diagnostic import (
+            execute as diagnostic_execute,
+            replay as diagnostic_replay,
+        )
+
+        if config is None:
+            raise ValueError("Diagnostic project requires explicit backend conditions")
+        diagnostic_execute(bundle, project, stage, config)
+        stage = stage_report(
+            project, before, after, impact, diagnostic_replay(bundle, project, stage)
         )
     (bundle / "ecuc-stage.json").write_bytes(encoded(stage))
     report = project_report(project, stage, bundle)
@@ -448,6 +508,13 @@ def validate(path: Path, report: dict[str, Any]) -> None:
             }:
                 raise ValueError("Runtime inventory differs")
         input_names.update(FILES.values())
+    if "diagnostic" in project:
+        from automotive_workbench.ecuc_diagnostic import input_inventory
+
+        roots.add("diagnostic-link.json")
+        if (bundle / "external-ecu").exists():
+            roots.add("external-ecu")
+        input_names.update(input_inventory(bundle))
     if {p.name for p in bundle.iterdir()} != roots or {
         p.name for p in (bundle / "inputs").iterdir()
     } != input_names:
@@ -471,6 +538,12 @@ def validate(path: Path, report: dict[str, Any]) -> None:
         stage = stage_report(
             project, before, after, impact, replay(bundle, project, after, stage)
         )
+    if "diagnostic" in project:
+        from automotive_workbench.ecuc_diagnostic import replay as diagnostic_replay
+
+        stage = stage_report(
+            project, before, after, impact, diagnostic_replay(bundle, project, stage)
+        )
     if canonical(
         json.loads((bundle / "ecuc-stage.json").read_text(encoding="utf-8"))
     ) != canonical(stage):
@@ -488,8 +561,11 @@ def verify(path: Path) -> dict[str, Any]:
         REPORT_VERSION,
         "project-acceptance-0.7",
         "project-acceptance-0.8",
+        "project-acceptance-0.9",
     ):
-        raise ValueError("verify-ecuc-project requires project-acceptance-0.6/0.7/0.8")
+        raise ValueError(
+            "verify-ecuc-project requires project-acceptance-0.6/0.7/0.8/0.9"
+        )
     validate(path, report)
     return {
         "status": "passed",

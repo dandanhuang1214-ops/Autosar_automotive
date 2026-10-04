@@ -308,6 +308,11 @@ def _execute(
                 "--output",
                 str(output / "diagnostic"),
             ]
+            if "execution_context" in result:
+                command += [
+                    "--execution-context",
+                    str(output / "inputs/execution-context.json"),
+                ]
             client = subprocess.Popen(
                 command,
                 stdin=subprocess.DEVNULL,
@@ -354,7 +359,11 @@ def _execute(
                 result.update(status="failed", reason="cleanup_failed")
 
 
-def run_external_ecu(path: Path, output: Path) -> dict:
+def run_external_ecu(
+    path: Path, output: Path, *, execution_context: dict | None = None
+) -> dict:
+    if execution_context is not None:
+        validate_execution_context(execution_context)
     spec, build, profile, snapshots, missing = load_execution(path)
     if output.is_symlink() or (
         output.exists() and (not output.is_dir() or any(output.iterdir()))
@@ -382,6 +391,11 @@ def run_external_ecu(path: Path, output: Path) -> dict:
         "diagnostic": None,
         "inventory": [],
     }
+    if execution_context is not None:
+        result.update(
+            schema_version="external-ecu-run-0.2", execution_context=execution_context
+        )
+        write_json(output / "inputs/execution-context.json", execution_context)
     try:
         with _interrupts():
             if missing:
@@ -445,7 +459,12 @@ def verify_external_ecu(report_path: Path) -> dict:
     result = read_json(report_path)
     _closed(
         result,
-        "artifact_type schema_version status reason channel evidence_kind target_identity_verified source_commit launch_ecu profile_timeout_s ecu_pid client_pid lock cleanup diagnostic inventory",
+        "artifact_type schema_version status reason channel evidence_kind target_identity_verified source_commit launch_ecu profile_timeout_s ecu_pid client_pid lock cleanup diagnostic inventory"
+        + (
+            " execution_context"
+            if result.get("schema_version") == "external-ecu-run-0.2"
+            else ""
+        ),
     )
     if (
         result["artifact_type"] != "external-ecu-run"
@@ -460,7 +479,7 @@ def verify_external_ecu(report_path: Path) -> dict:
         or result["lock"] not in {"held", "not_acquired"}
     ):
         raise ValueError("Invalid external ECU status")
-    if result["schema_version"] != "external-ecu-run-0.1":
+    if result["schema_version"] not in ("external-ecu-run-0.1", "external-ecu-run-0.2"):
         raise ValueError("Unsupported external ECU report")
     if (
         not isinstance(result["reason"], str)
@@ -524,6 +543,13 @@ def verify_external_ecu(report_path: Path) -> dict:
         <= seen
     ):
         raise ValueError("External ECU inventory incomplete")
+    if result["schema_version"] == "external-ecu-run-0.2":
+        validate_execution_context(result["execution_context"])
+        if (
+            read_json(root / "inputs/execution-context.json")
+            != result["execution_context"]
+        ):
+            raise ValueError("External execution context differs from snapshot")
     spec, build, profile = (
         read_json(root / "inputs" / name)
         for name in ("execution.json", "build.json", "profile.json")
@@ -578,6 +604,22 @@ def verify_external_ecu(report_path: Path) -> dict:
         ):
             raise ValueError("Invalid diagnostic path")
         diagnostic = read_json(root / result["diagnostic"])
+        if result["schema_version"] == "external-ecu-run-0.2":
+            if (
+                diagnostic.get("schema_version") != "uds-did-read-0.2"
+                or diagnostic.get("execution_context") != result["execution_context"]
+            ):
+                raise ValueError("Diagnostic client execution context mismatch")
+            if diagnostic.get("expected_data_hex") != profile["expected_data_hex"]:
+                raise ValueError("Diagnostic client expected data drift")
+            if diagnostic.get("status") == "passed" and (
+                diagnostic.get("response_payload_hex")
+                != f"62{profile['did']:04X}" + profile["expected_data_hex"]
+                or diagnostic.get("actual_data_hex") != profile["expected_data_hex"]
+                or diagnostic.get("reason") != ""
+                or diagnostic.get("negative_response_code") is not None
+            ):
+                raise ValueError("Passed diagnostic payload mismatch")
         if (
             diagnostic["profile"]["sha256"] != sha256_file(root / "inputs/profile.json")
             or diagnostic["request_payload_hex"] != f"22{profile['did']:04X}"
@@ -623,3 +665,17 @@ def verify_external_ecu(report_path: Path) -> dict:
         "execution_status": result["status"],
         "scope": "saved-byte-integrity-and-bindings; no execution or ECU authentication",
     }
+
+
+def validate_execution_context(value: Any) -> None:
+    """Same-run binding, not an authentication or signing mechanism."""
+    _closed(
+        value,
+        "run_id project_sha256 baseline_sha256 candidate_sha256 policy_sha256 execution_basis",
+    )
+    if not isinstance(value["run_id"], str) or not re.fullmatch(
+        r"[a-f0-9]{32}", value["run_id"]
+    ):
+        raise ValueError("Invalid execution run ID")
+    for key in value.keys() - {"run_id"}:
+        _hash(value[key])

@@ -1,0 +1,60 @@
+{
+  "schema_version": "external-ecu-build-0.1",
+  "source_commit": "0000000000000000000000000000000000000000",
+  "preset": "synthetic-unavailable",
+  "configuration": "test-only",
+  "bindings": {
+    "channel": "p29-absent",
+    "request_id": 42,
+    "response_id": 240,
+    "did": 52993,
+    "expected_data_hex": "010200022202160F0100006D2F0000010600008FE0000001"
+  },
+  "commands": [
+    [
+      "synthetic-unavailable-fixture"
+    ]
+  ],
+  "tools": {
+    "cmake": "not-run",
+    "compiler": "not-run",
+    "ninja": "not-run"
+  },
+  "files": [
+    {
+      "role": "cache",
+      "path": "synthetic.txt",
+      "sha256": "a084423349c65de188430541e9a57e9fda5443bcdb21bedbb1f44a0dc7b09bae"
+    },
+    {
+      "role": "can_source",
+      "path": "synthetic.txt",
+      "sha256": "a084423349c65de188430541e9a57e9fda5443bcdb21bedbb1f44a0dc7b09bae"
+    },
+    {
+      "role": "docan_source",
+      "path": "synthetic.txt",
+      "sha256": "a084423349c65de188430541e9a57e9fda5443bcdb21bedbb1f44a0dc7b09bae"
+    },
+    {
+      "role": "uds_source",
+      "path": "synthetic.txt",
+      "sha256": "a084423349c65de188430541e9a57e9fda5443bcdb21bedbb1f44a0dc7b09bae"
+    },
+    {
+      "role": "configure_log",
+      "path": "synthetic.txt",
+      "sha256": "a084423349c65de188430541e9a57e9fda5443bcdb21bedbb1f44a0dc7b09bae"
+    },
+    {
+      "role": "build_log",
+      "path": "synthetic.txt",
+      "sha256": "a084423349c65de188430541e9a57e9fda5443bcdb21bedbb1f44a0dc7b09bae"
+    },
+    {
+      "role": "executable",
+      "path": "absent.elf",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

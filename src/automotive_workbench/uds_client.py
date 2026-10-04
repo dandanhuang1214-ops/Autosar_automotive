@@ -67,8 +67,18 @@ def load_did_profile(path: Path) -> tuple[dict[str, Any], str]:
     return profile, hashlib.sha256(raw).hexdigest()
 
 
-def read_uds_did(profile_path: Path, config: BusConfig, output: Path) -> dict[str, Any]:
+def read_uds_did(
+    profile_path: Path,
+    config: BusConfig,
+    output: Path,
+    *,
+    execution_context: dict | None = None,
+) -> dict[str, Any]:
     """Send only SID 0x22; never start a responder or change ECU sessions/state."""
+    if execution_context is not None:
+        from automotive_workbench.external_ecu import validate_execution_context
+
+        validate_execution_context(execution_context)
     profile, profile_hash = load_did_profile(profile_path)
     if config.interface not in {"virtual", "socketcan"} or config.fd:
         raise ValueError("DID client supports classic CAN virtual/socketcan only")
@@ -100,6 +110,10 @@ def read_uds_did(profile_path: Path, config: BusConfig, output: Path) -> dict[st
         "dropped_frame_count": 0,
         "capture": None,
     }
+    if execution_context is not None:
+        result.update(
+            schema_version="uds-did-read-0.2", execution_context=execution_context
+        )
     if probe["status"] == "available":
         _exchange(profile, config, output, result)
     result["source_artifacts"] = [result["profile"]]

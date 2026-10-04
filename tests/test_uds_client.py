@@ -175,3 +175,50 @@ class UdsClientTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "empty directory"):
                 read_uds_did(PROFILE, BusConfig("virtual", "unused"), output)
             self.assertEqual(sentinel.read_text(), "user data")
+
+    def test_same_run_context_is_written_by_client(self):
+        context = {
+            "run_id": "a" * 32,
+            **{
+                k: "b" * 64
+                for k in (
+                    "project_sha256",
+                    "baseline_sha256",
+                    "candidate_sha256",
+                    "policy_sha256",
+                    "execution_basis",
+                )
+            },
+        }
+        profile, _ = load_did_profile(PROFILE)
+        with tempfile.TemporaryDirectory() as directory:
+            config = BusConfig("virtual", "context-" + uuid.uuid4().hex)
+            with independent_ecu(
+                config, bytes.fromhex("62CF01" + profile["expected_data_hex"])
+            ):
+                result = read_uds_did(
+                    PROFILE,
+                    config,
+                    Path(directory) / "result",
+                    execution_context=context,
+                )
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["schema_version"], "uds-did-read-0.2")
+            self.assertEqual(result["execution_context"], context)
+            Draft202012Validator(
+                json.loads((ROOT / "schemas/uds-did-read.schema.json").read_text())
+            ).validate(result)
+
+    def test_invalid_context_rejected_before_probe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "result"
+            with patch("automotive_workbench.uds_client.probe_uds_backend") as probe:
+                with self.assertRaises(ValueError):
+                    read_uds_did(
+                        PROFILE,
+                        BusConfig("virtual", "unused"),
+                        output,
+                        execution_context={"run_id": "old"},
+                    )
+            probe.assert_not_called()
+            self.assertFalse(output.exists())

@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-03）
+## 当前总览（2026-10-04）
 
-当前主实现阶段：`P29 — 配置验收与运行证据关联（implementing）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。P29 [CAN 关联门](p29-runtime-link-guide.md)已 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success；本机 SocketCAN 双工程已通过。下一任务为同阶段独立 ECU 诊断绑定，见[验收表](p29-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
+当前主实现阶段：`P29 — 配置验收与运行证据关联（implementing）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。P29 [CAN 关联门](p29-runtime-link-guide.md)已 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success；本机 SocketCAN 双工程已通过。独立 ECU 诊断绑定已实现，当前完成最终本地、隔离安装和本实现远端验收，见[验收表](p29-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1459,3 +1459,16 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终本地 385 tests（383 passed、2 环境跳过）；源码与隔离安装各 9 份结果和 5 类篡改拒绝；vcan0 完整工程 Tx/Rx 2/2、单 Tx 1/1，审查/比较及搬移复验通过。CAN 门按显式声明映射范围 remote-accepted，P29 整阶段仍 implementing。
 - 下一项为独立 ECU 诊断关联：复用 P23 生命周期，将静态保护策略与同次只读诊断验收建立显式依赖；没有 Dcm/CanTp 或生成来源的配置到代码语义不得推断为通过。检查现有 P23 构建清单发现原执行文件、cache 及三个源码角色路径已不存在，两个构建日志仍在且哈希一致。现场恢复需重建固定提交并生成新的构建清单，不能复用历史 CF01 成功充作本轮执行。
 - 本条及首页/路线/验收表为后续纯文档 `[skip ci]` 状态提交，固定引用 `b2da147` / `37091771686`，不作为新实现 CI。P25 人工验收、商业工具生成和物理 ECU 仍未验收。
+
+
+### P29：独立 ECU 诊断依赖实现（2026-10-04）
+
+- 新项目/报告 0.9、ECUC 阶段 0.4；旧 0.1–0.8 保持。已有对象保护策略作为只读诊断验收的显式依赖；不推断 Dcm/CanTp 配置或生成代码关系，configuration-semantic 请求保持 unassessed。
+- 静态拒绝、声明身份无法匹配与后端不匹配时不启动 ECU。通过后复用 P23 独立 ECU/client、通道锁、固定构建哈希、超时和清理；原始结果保留。
+- 独立执行与诊断客户端分别产生 0.2 上下文报告，绑定项目/基线/候选/策略/执行输入及 run_id；执行工具版本与构建工具分别保存。复验不重跑总线，比较条件改变保持 not-comparable。
+- 固定 OpenBSW 源码在独立副本重新构建成功，原始开发目录未修改。现场是 POSIX/vcan0，合成 ECUC 没有生成该二进制，不属于物理 ECU 验收。
+- 两套公开合成项目，离线七场景、现场十场景；来源移除、审查、比较、二次搬移及篡改拒绝。首轮场景脚本使用错误审查子命令已修正；离线 blocked→failed 的总体比较按既有契约为 changed，现场 passed→failed 为 regressed，未为新案例改变旧比较语义。
+- 初轮全量 393 tests：391 passed、2 环境跳过。后续补强客户端上下文与成功响应复验，最终验证结果另行回填，未沿用初轮结果作为最终验收。
+- P29 保持 implementing。其后主阶段计划为 P30 基于项目证据的本地模型解释，先解决引用修补问题并保留判定权；硬件尚未取得，台架为后续条件门。P25 人工演示/真实反馈仍待取得。
+
+- 最终本地：395 tests（393 passed、2 环境跳过）；8 项配置诊断测试及 2 项客户端上下文测试。54 schemas、76 bound/25 syntax-only、54-source mypy、Ruff、topology、compileall、pip check 全通过。离线与隔离安装各 7 场景/7 审查/5 类拒绝；固定 OpenBSW 现场 10 场景/10 审查/7 类拒绝，含客户端历史替换和成功响应篡改。原输入移除与二次搬移已通过；最终归档后的项目/比较及报告 schema 核对仍在进行。证据 `output/p29-diagnostic-validation/`（`offline-release/`、`installed-release/`、`live-release/`、`archive-verification.json`）。诊断门 local-accepted，等待固定实现提交的七 job；不沿用 CAN 门的旧 CI。

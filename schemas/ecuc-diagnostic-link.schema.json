@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/ecuc-diagnostic-link.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "context",
+    "requested_config",
+    "preflight",
+    "runtime_path",
+    "runtime_sha256",
+    "boundary",
+    "producer"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ecuc-diagnostic-link-0.1"
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "project_sha256",
+        "baseline_sha256",
+        "candidate_sha256",
+        "policy_sha256",
+        "execution_basis"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "project_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "baseline_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "execution_basis": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "requested_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "interface",
+        "channel",
+        "receive_own_messages",
+        "fd"
+      ],
+      "properties": {
+        "interface": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "channel": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "receive_own_messages": {
+          "type": "boolean"
+        },
+        "fd": {
+          "type": "boolean"
+        }
+      }
+    },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "unassessed",
+            "blocked"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    },
+    "runtime_path": {
+      "enum": [
+        "",
+        "external-ecu/external-ecu-report.json"
+      ]
+    },
+    "runtime_sha256": {
+      "type": "string",
+      "pattern": "^(?:[a-f0-9]{64})?$"
+    },
+    "boundary": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workbench_version",
+        "python",
+        "dependencies"
+      ],
+      "properties": {
+        "workbench_version": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "python-can",
+            "cantools",
+            "can-isotp",
+            "udsoncan"
+          ],
+          "properties": {
+            "python-can": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "cantools": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "can-isotp": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "udsoncan": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

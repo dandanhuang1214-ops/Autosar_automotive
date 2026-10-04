@@ -119,9 +119,19 @@ def portable_static(report: dict) -> dict:
     return report
 
 
-def run_project_external(inputs: Path, bundle: Path) -> dict:
+def run_project_external(
+    inputs: Path, bundle: Path, *, execution_context: dict | None = None
+) -> dict:
     output = bundle / "external-ecu"
-    run_external_ecu(inputs / "runner-execution.json", output)
+    run_external_ecu(
+        inputs / "runner-execution.json",
+        output,
+        **(
+            {"execution_context": execution_context}
+            if execution_context is not None
+            else {}
+        ),
+    )
     # Manifest sources resolve against the project portable base, not the JSON's directory.
     path = output / "diagnostic/uds-did-report.json"
     if path.is_file():

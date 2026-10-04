@@ -35,7 +35,7 @@ def load_project(path: Path) -> tuple[dict[str, Any], dict[str, bytes]]:
     if not isinstance(project, dict):
         raise ValueError("Project must be an object")
     version = project.get("schema_version")
-    if version in ("workbench-project-0.6", "workbench-project-0.7", "workbench-project-0.8"):
+    if version in ("workbench-project-0.6", "workbench-project-0.7", "workbench-project-0.8", "workbench-project-0.9"):
         from automotive_workbench.project_ecuc import capture
         return project, capture(path, project, raw)
     if not isinstance(version, str):
@@ -209,7 +209,7 @@ def _render_html(result: dict[str, Any]) -> str:
 
 def run_project(project_path: Path, output: Path, config: BusConfig) -> dict[str, Any]:
     project, snapshots = load_project(project_path)
-    if project["schema_version"] in ("workbench-project-0.6", "workbench-project-0.7", "workbench-project-0.8"):
+    if project["schema_version"] in ("workbench-project-0.6", "workbench-project-0.7", "workbench-project-0.8", "workbench-project-0.9"):
         from automotive_workbench.project_ecuc import run
         return run(project, snapshots, output, config=config)
     if project["schema_version"] == "workbench-project-0.5":

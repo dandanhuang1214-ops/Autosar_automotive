@@ -22,6 +22,7 @@ from check_installed_distribution import (  # noqa: E402
 from run_ecuc_engineering_scenarios import run  # noqa: E402
 from run_ecuc_acceptance_scenarios import run as run_projects  # noqa: E402
 from run_ecuc_runtime_scenarios import run as run_linked  # noqa: E402
+from run_ecuc_diagnostic_scenarios import run as run_diagnostic  # noqa: E402
 
 
 def check(
@@ -30,8 +31,13 @@ def check(
     object_policies: bool = False,
     linked_runtime: bool = False,
     wheelhouse: Path | None = None,
+    diagnostic_links: bool = False,
 ) -> dict[str, Any]:
-    project_acceptance = project_acceptance or object_policies or linked_runtime
+    project_acceptance = (
+        project_acceptance or object_policies or linked_runtime or diagnostic_links
+    )
+    if diagnostic_links and linked_runtime:
+        raise ValueError("Choose one installed runtime mode")
     if output.is_symlink() or output.exists():
         raise ValueError("Installed ECUC output must be absent")
     output = output.resolve()
@@ -110,7 +116,9 @@ def check(
             raise ValueError("Installed ECUC consumer is not isolated")
         _run([str(python), "-m", "pip", "check"], cwd=isolated, env=env)
         result = (
-            run_linked(isolated / "flow", python)
+            run_diagnostic(isolated / "flow", python)
+            if diagnostic_links
+            else run_linked(isolated / "flow", python)
             if linked_runtime
             else run_projects(isolated / "flow", python, object_policies)
             if project_acceptance
@@ -131,7 +139,7 @@ def check(
                         output
                         / (
                             "evidence/relocated/projects/integration/bundle/project-report.json"
-                            if linked_runtime
+                            if linked_runtime or diagnostic_links
                             else "evidence/delivery/projects/integration/bundle/project-report.json"
                             if project_acceptance
                             else "evidence/portable/comparisons/signal/ecuc-impact.json"
@@ -174,6 +182,7 @@ if __name__ == "__main__":
     parser.add_argument("--object-policies", action="store_true")
     parser.add_argument("--linked-runtime", action="store_true")
     parser.add_argument("--wheelhouse", type=Path)
+    parser.add_argument("--diagnostic-links", action="store_true")
     args = parser.parse_args()
     print(
         json.dumps(
@@ -183,6 +192,7 @@ if __name__ == "__main__":
                 args.object_policies,
                 args.linked_runtime,
                 args.wheelhouse,
+                args.diagnostic_links,
             ),
             indent=2,
         )

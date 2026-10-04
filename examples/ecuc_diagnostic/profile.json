@@ -1,0 +1,9 @@
+{
+  "schema_version": "uds-did-profile-0.1",
+  "target": "OpenBSW referenceApp CF01 (dbd6e118a9aaa2db36e4461ce76655e8f285598d)",
+  "request_id": 42,
+  "response_id": 240,
+  "did": 52993,
+  "expected_data_hex": "010200022202160F0100006D2F0000010600008FE0000001",
+  "timeout_s": 2.0
+}

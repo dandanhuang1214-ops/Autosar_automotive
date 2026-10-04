@@ -26,7 +26,10 @@
       "const": "external-ecu-run"
     },
     "schema_version": {
-      "const": "external-ecu-run-0.1"
+      "enum": [
+        "external-ecu-run-0.1",
+        "external-ecu-run-0.2"
+      ]
     },
     "status": {
       "enum": [
@@ -178,6 +181,67 @@
           }
         }
       }
+    },
+    "execution_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "project_sha256",
+        "baseline_sha256",
+        "candidate_sha256",
+        "policy_sha256",
+        "execution_basis"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "project_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "baseline_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "candidate_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "execution_basis": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "external-ecu-run-0.2"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "execution_context"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "execution_context"
+          ]
+        }
+      }
+    }
+  ]
 }

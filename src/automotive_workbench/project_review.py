@@ -19,7 +19,7 @@ SUPPORTED_REPORT_VERSIONS = {
     "project-acceptance-0.5",
     "project-acceptance-0.6",
     "project-acceptance-0.7",
-    "project-acceptance-0.8",
+    "project-acceptance-0.8", "project-acceptance-0.9",
 }
 STAGE_ORDER = ("generation", "arxml", "canonical", "mapping", "communication", "external_ecu", "ecuc")
 
@@ -64,7 +64,7 @@ def load_project_report(path: Path) -> dict[str, Any]:
         raise ValueError("Project review requires a project-acceptance report")
     if report.get("schema_version") not in SUPPORTED_REPORT_VERSIONS:
         raise ValueError("Unsupported project-acceptance schema_version")
-    if report.get("status") not in ({"passed", "failed", "blocked"} | ({"unassessed"} if report["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7", "project-acceptance-0.8"} else set())):
+    if report.get("status") not in ({"passed", "failed", "blocked"} | ({"unassessed"} if report["schema_version"] in {"project-acceptance-0.6", "project-acceptance-0.7", "project-acceptance-0.8", "project-acceptance-0.9"} else set())):
         raise ValueError("Project report requires a valid status")
     if not isinstance(report.get("name"), str) or not report["name"]:
         raise ValueError("Project report requires a non-empty name")

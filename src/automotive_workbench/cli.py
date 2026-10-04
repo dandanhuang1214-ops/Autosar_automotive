@@ -255,6 +255,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     did_parser = commands.add_parser("read-uds-did", help="Read and verify one DID from an independently running ECU")
     did_parser.add_argument("profile", type=Path)
+    did_parser.add_argument("--execution-context", type=Path, help="Optional same-run context captured by the independent executor")
     did_parser.add_argument("--interface", choices=["virtual", "socketcan"], required=True)
     did_parser.add_argument("--channel", required=True)
     did_parser.add_argument("--output", type=Path, required=True)
@@ -516,7 +517,10 @@ def main() -> int:
         elif args.command == "verify-external-ecu":
             result = verify_external_ecu(args.report)
         elif args.command == "read-uds-did":
-            result = read_uds_did(args.profile, BusConfig(args.interface, args.channel), args.output)
+            from automotive_workbench.external_ecu import read_json as read_external_json
+
+            context = read_external_json(args.execution_context) if args.execution_context else None
+            result = read_uds_did(args.profile, BusConfig(args.interface, args.channel), args.output, **({"execution_context": context} if context is not None else {}))
         elif args.command == "probe-uds-backend":
             result = probe_uds_backend(BusConfig(args.interface, args.channel), args.output)
         elif args.command == "run-dtc-lifecycle":
