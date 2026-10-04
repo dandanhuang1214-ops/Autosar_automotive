@@ -13,6 +13,9 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run project explanation fact scenarios": "core-contracts",
+    "Verify installed project explanation": "core-contracts",
+    "Upload project explanation evidence": "core-contracts",
     "Run configuration diagnostic link scenarios": "runtime-evidence",
     "Verify installed configuration diagnostic links": "runtime-evidence",
     "Upload configuration diagnostic link evidence": "runtime-evidence",

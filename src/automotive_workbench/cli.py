@@ -149,6 +149,15 @@ def build_parser() -> argparse.ArgumentParser:
     project_parser.add_argument("--interface", choices=["virtual", "socketcan"], default="virtual")
     project_parser.add_argument("--channel")
 
+    explanation = commands.add_parser("prepare-project-explanation", help="Export replay-verified project facts without a model")
+    explanation.add_argument("report", type=Path)
+    explanation.add_argument("--question", required=True)
+    explanation.add_argument("--output", type=Path, required=True)
+    explanation_check = commands.add_parser("validate-project-explanation", help="Validate exact fact selection against current project evidence")
+    explanation_check.add_argument("report", type=Path)
+    explanation_check.add_argument("request", type=Path)
+    explanation_check.add_argument("answer", type=Path)
+
     project_review_parser = commands.add_parser(
         "run-project-review",
         help="Answer an engineering question from one project acceptance report",
@@ -496,6 +505,12 @@ def main() -> int:
             result = verify(args.report)
         elif args.command == "run-project":
             result = run_project(args.project, args.output, default_communication_config(args.interface, args.channel))
+        elif args.command == "prepare-project-explanation":
+            from automotive_workbench.project_explanation import prepare
+            result = prepare(args.report, args.question, args.output)
+        elif args.command == "validate-project-explanation":
+            from automotive_workbench.project_explanation import validate_answer
+            result = validate_answer(args.report, args.request, args.answer)
         elif args.command == "run-project-review":
             result = run_project_review(args.report, args.output, args.claim)
         elif args.command == "list-engineering-questions":

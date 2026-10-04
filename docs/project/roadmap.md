@@ -50,7 +50,7 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P30 planned（P29 已按受限范围验收，P25 人工验收待完成）
+## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
@@ -87,8 +87,10 @@ P25 安装交付门保持 remote-accepted；人工演示和真实外部反馈仍
 
 P28 版本化精确对象保护与字段不可变条件已 remote-accepted，旧契约保持；实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，双平台场景/安装/上传通过，见[P28 验收表](p28-acceptance.md)。
 
-[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)已按显式映射/诊断验收依赖范围 remote-accepted；P28 静态冻结保持。当前下一主阶段为 P30 planned。
+[P29 配置验收与运行证据关联](p29-configuration-runtime-plan.md)已按显式映射/诊断验收依赖范围 remote-accepted；P28 静态冻结保持。当前下一主阶段为 P30 implementing。
 
 P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)与[验收表](p29-acceptance.md)。本地/隔离安装及本机 SocketCAN 条件验收已通过；实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success，CAN 关联门 remote-accepted；独立 ECU 诊断依赖亦已通过：实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success；本机独立 OpenBSW POSIX/vcan0 十场景通过。P29 在明确边界内完成，CAN 本地端点与独立诊断证据分别保存。
 
 P29 诊断依赖已验收，下一主阶段为 [P30 基于项目证据的本地模型解释](p30-evidence-explanation-plan.md)：复用已有本地知识助手，以通过复验的报告为事实基础，先解决引用、状态和来源边界再接入模型。硬件台架按设备实际取得和独立现场证据推进，不改变当前主阶段。
+
+P30 已进入 implementing：首轮交付[只读事实门](p30-fact-gate-guide.md)，验证事实来源和值，尚未接入模型。下一项为现有知识助手/Ollama 适配、服务缺失回退与独立问题评测，仍按 P30 统一验收。

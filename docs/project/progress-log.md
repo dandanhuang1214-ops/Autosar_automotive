@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-04）
 
-当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（planned）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。下一任务为[P30](p30-evidence-explanation-plan.md)冻结只读解释输入、严格引用检查与模型不可用回退，再接现有本地知识助手。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
+当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 首轮正在验收[只读事实门](p30-fact-gate-guide.md)；下一任务为现有知识助手/Ollama 适配、服务不可用回退和独立问题评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1490,3 +1490,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - P29 按显式 CAN 映射及独立诊断验收依赖范围 remote-accepted。配置生成代码语义缺证据仍 unassessed；真实 ECU 身份、物理硬件、商业生成及可调度性不在已验收范围。
 - 下一主阶段 P30 planned，先固定只读解释与引用校验；现有本地知识助手可复用，但不能将无效引用自动补成受支持结论。P25 人工演示/外部反馈保持未完成，硬件台架按设备取得后另验收。
 - 本条及首页/路线为后续纯文档 `[skip ci]` 状态提交，固定引用实现 `654cd8f` / run `37166161292`；文档提交不作为新实现验收。
+
+
+### P30：只读事实门实现（2026-10-04）
+
+- 首轮实现项目 0.6–0.9 的只读请求与精确事实选取校验。复用项目完整复验和确定性审查，固定报告/来源哈希、JSON pointer、类型化值、问题与策略身份；不导出完整 ECUC 文件。
+- 每次回答校验重建请求；无效引用不修补，状态/数值/对象值必须逐字按 JSON 类型一致。拒绝自由文本附加断言、跨请求/历史运行替换、请求/依赖篡改与重复 JSON 字段。通过仅表示事实选取有效，保留原项目状态和回答 unassessed，不宣称问题已回答或自然语言事实正确。
+- 两工程 CLI 场景、中文空格路径、输入移除、搬移和隔离无依赖 wheel 场景已加入双平台 CI；本地最终与远端验收结果待回填。
+- P30 保持 implementing，模型未接入；下一项 Ollama/现有知识助手适配、服务不可用回退、项目/资料来源分离和开发/独立问题评测。P25 人工门仍待完成。
+
+- 首轮 local-accepted：全量 400 tests（398 passed、2 环境跳过）；新增类型/身份负例后 P30/topology 定向 9 tests 通过。56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check、whitespace 通过。源码与无依赖隔离安装各两工程、8 类 CLI 拒绝与归档复验通过。首次安装脚本错误解析 venv Python 符号链接，已保留原可执行路径并重跑成功。验收范围见[P30 验收表](p30-acceptance.md)，远端门待本次实现提交。

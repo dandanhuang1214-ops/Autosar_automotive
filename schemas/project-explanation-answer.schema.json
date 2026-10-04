@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/project-explanation-answer.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "status",
+    "claims"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "project-explanation-answer-0.1"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "status": {
+      "enum": [
+        "selected",
+        "unassessed"
+      ]
+    },
+    "claims": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fact_id",
+          "value"
+        ],
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "value": {}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "unassessed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "claims": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "claims": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}
