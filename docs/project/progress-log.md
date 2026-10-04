@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-04）
 
-当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 首轮正在验收[只读事实门](p30-fact-gate-guide.md)；下一任务为现有知识助手/Ollama 适配、服务不可用回退和独立问题评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
+当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；下一任务为现有知识助手/Ollama 适配、服务不可用回退和独立问题评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1500,3 +1500,18 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - P30 保持 implementing，模型未接入；下一项 Ollama/现有知识助手适配、服务不可用回退、项目/资料来源分离和开发/独立问题评测。P25 人工门仍待完成。
 
 - 首轮 local-accepted：全量 400 tests（398 passed、2 环境跳过）；新增类型/身份负例后 P30/topology 定向 9 tests 通过。56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check、whitespace 通过。源码与无依赖隔离安装各两工程、8 类 CLI 拒绝与归档复验通过。首次安装脚本错误解析 venv Python 符号链接，已保留原可执行路径并重跑成功。验收范围见[P30 验收表](p30-acceptance.md)，远端门待本次实现提交。
+
+
+### P30：只读事实门远端验收（2026-10-04）
+
+- 实现 `a82ee62c758c82741aa083636744b5c6766892a3` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job 全部 success；Windows/Ubuntu 事实场景、隔离安装、证据上传均 success。
+- `runtime-currency`：job `111380561415`，success。
+- `core-contracts (windows-latest)`：job `111380561531`，success。
+- `core-contracts (ubuntu-22.04)`：job `111380561539`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `111381028146`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `111381028182`，success。
+- `runtime-evidence (windows-latest)`：job `111381028187`，success。
+- `controlled-rejections (windows-latest)`：job `111381028195`，success。
+- 原始记录 `output/p30-fact-validation/remote-ci.json`；artifact `project-explanation-Windows` / `project-explanation-Linux`。本轮新增六项 P30 单元测试纳入双平台与 Python 3.14 回归；源码与隔离安装的两工程/8 类 CLI 拒绝/搬移复验通过。
+- 首轮按只读事实选取范围 remote-accepted。P30 整阶段 implementing；下一项 Ollama/现有知识助手适配、身份与原始输出记录、服务缺失回退及独立问题评测。P25 人工反馈仍待取得。
+- 本条及首页/路线/验收表属于后续纯文档 `[skip ci]` 状态提交，引用 `a82ee62` / `37183484781`，不作为新实现 CI。
