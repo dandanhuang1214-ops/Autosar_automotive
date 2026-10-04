@@ -1,6 +1,6 @@
 # P29 配置与运行证据关联验收
 
-更新：2026-10-04。P29 implementing；CAN 关联门 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success。独立 ECU 诊断关联仍是同阶段下一门，不将 CAN 端点误称为外部 ECU。
+更新：2026-10-04。P29 按显式配置映射及独立诊断验收依赖范围 remote-accepted；CAN 关联门 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success。独立诊断门由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收；本机独立 OpenBSW 十场景通过。
 
 | 阶段门 | 本轮状态与证据 |
 |---|---|
@@ -13,9 +13,9 @@
 | 本地回归 | 385 tests：383 passed、2 环境跳过；11 项新增运行关联测试；53 schema、71 bound/25 syntax-only、52-source mypy、Ruff、topology、compileall、pip check 通过 |
 | Linux SocketCAN | vcan0 两工程通过；完整工程 Tx/Rx 2/2、单 Tx 1/1，通道锁已持有；最终代码离线复验通过，比较引用分别 50/50 与 22/22 |
 | Windows/Ubuntu | `b2da147` / run `37091771686` 七 job success；两平台新场景、隔离安装、上传均 success |
-| 独立 ECU 诊断关联 | implementing；项目 0.9、独立执行/客户端上下文 0.2 已实现，最终回归/安装/现场/远端验收进行中 |
+| 独立 ECU 诊断关联 | remote-accepted；`654cd8f` / run `37166161292` 七 job success，现场十场景及客户端上下文复验通过 |
 
-证据目录 `output/p29-validation/`，运行指南：[P29 同次 CAN 关联](p29-runtime-link-guide.md)。本轮不标记 P29 整阶段完成；P25 人工演示/反馈、厂商生成与物理 ECU 验收保持独立。
+证据目录 `output/p29-validation/`，运行指南：[P29 同次 CAN 关联](p29-runtime-link-guide.md)。P29 按已声明范围完成；P25 人工演示/反馈、厂商生成与物理 ECU 验收保持独立。
 
 最终本地证据：`scenarios-release/summary.json`、`installed-release/summary.json`、`socketcan/summary.json`、`tests-release.log`，均位于 `output/p29-validation/`。源码流程搬出临时目录并删除原树后，项目与比较再次复验通过（50/50 引用）。
 
@@ -35,8 +35,22 @@
 
 ## 独立诊断依赖实现
 
-[操作指南](p29-diagnostic-link-guide.md)；证据目录 `output/p29-diagnostic-validation/`。两工程复用 P23 只读执行器；静态拒绝和身份/语义缺口不执行，未知语义不因历史 CF01 成功而通过。当前等待最终实现的本地、安装、现场及远端结论，不将初轮结果代替最终验收。
+[操作指南](p29-diagnostic-link-guide.md)；证据目录 `output/p29-diagnostic-validation/`。两工程复用 P23 只读执行器；静态拒绝和身份/语义缺口不执行，未知语义不因历史 CF01 成功而通过。最终本地、隔离安装、现场及本实现远端验收均通过。
 
-最终本地：395 tests（393 passed、2 环境跳过）；8 项配置诊断测试及 2 项客户端上下文测试。54 schemas、76 bound/25 syntax-only、54-source mypy、Ruff、topology、compileall、pip check 全通过。离线与隔离安装各 7 场景/7 审查/5 类拒绝；固定 OpenBSW 现场 10 场景/10 审查/7 类拒绝，含客户端历史替换和成功响应篡改。原输入移除与二次搬移已通过；最终归档后的项目/比较及报告 schema 核对仍在进行。
+最终本地：395 tests（393 passed、2 环境跳过）；8 项配置诊断测试及 2 项客户端上下文测试。54 schemas、76 bound/25 syntax-only、54-source mypy、Ruff、topology、compileall、pip check 全通过。离线与隔离安装各 7 场景/7 审查/5 类拒绝；固定 OpenBSW 现场 10 场景/10 审查/7 类拒绝，含客户端历史替换和成功响应篡改。原输入移除、二次搬移及最终归档 17 份项目/6 份比较复验、83 份相关 schema 实例验证通过。
 
-诊断门 local-accepted；七 job 远端验收待本实现提交。最终证据 `offline-release/summary.json`、`installed-release/summary.json`、`live-release/summary.json`、`archive-verification.json`、`tests-release.log`。
+诊断门 remote-accepted；固定实现与七 job 结果见下。最终证据 `offline-release/summary.json`、`installed-release/summary.json`、`live-release/summary.json`、`archive-verification.json`、`tests-release.log`。
+
+## 诊断门固定实现的远端结果
+
+实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success。
+
+- `core-contracts (windows-latest)`：job `111329362700`，success。
+- `core-contracts (ubuntu-22.04)`：job `111329362821`，success。
+- `runtime-currency`：job `111329362844`，success。
+- `runtime-evidence (windows-latest)`：job `111329897458`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `111329897466`，success。
+- `controlled-rejections (windows-latest)`：job `111329897476`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `111329897495`，success。
+
+两平台新场景/安装/上传步骤全部 success；本节为后续纯文档状态回填，不作为新实现验收。下一主阶段：[P30 本地模型证据解释](p30-evidence-explanation-plan.md)。

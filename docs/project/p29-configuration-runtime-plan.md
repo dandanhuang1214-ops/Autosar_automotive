@@ -1,4 +1,4 @@
-# P29 配置验收与运行证据关联（implementing）
+# P29 配置验收与运行证据关联（remote-accepted，显式映射/验收依赖范围）
 
 P28 将具体对象变化与接受策略相连。下一项用户能力是：对已通过静态配置接受的候选，明确还需要哪些既有通信/诊断验证，哪些已有同次可核对证据，哪些因环境或映射不足仍未验证。复用 P20/P23 运行内核与 P28 精确对象策略，避免建立新的执行系统。
 
@@ -22,3 +22,5 @@ P25 人工演示/真实反馈及 P22 商业往返仍单列等待，不把代理�
 现场前置检查（2026-10-03）：历史 P23 构建清单仍在，但清单引用的执行文件、cache、can_source/docan_source/uds_source 均已不存在；build/configure 日志存在且哈希匹配。下一轮恢复须按固定 source_commit 重建并生成新清单；旧归档仅作为历史复验材料。这个环境缺口不替代或取消项目契约、静态门控与离线拒绝路径的实现。
 
 2026-10-04：独立诊断显式依赖已按项目 0.9 实现，固定 OpenBSW 独立副本已重新构建，旧路径缺失已通过新清单恢复。诊断客户端与执行器分别绑定本次上下文。正在完成最终回归/安装/远端验收，见[诊断指南](p29-diagnostic-link-guide.md)。其后计划为[P30 本地模型证据解释](p30-evidence-explanation-plan.md)。
+
+最终交接（2026-10-04）：实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success；最终本地、安装与独立 OpenBSW 现场验收通过。P29 按声明范围冻结，下一主阶段 P30 planned；configuration-semantic 缺生成来源仍 unassessed，不把此边界记作生成链已验收。

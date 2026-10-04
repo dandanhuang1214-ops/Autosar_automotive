@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-04）
 
-当前主实现阶段：`P29 — 配置验收与运行证据关联（implementing）`。P27 声明式静态 ECUC 配置接受已 remote-accepted：实现 `55e208fffe6d51c233ff30d3604bafd992dfb080` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部 success；Windows/Ubuntu 新场景、隔离安装及归档上传均 success，见[P27 验收表](p27-acceptance.md)。P26 四项受限静态审查门保持验收（最终实现 `6433e1c` / run `36864006903`）。[P28 精确对象与不可变条件](p28-object-policy-guide.md)已 remote-accepted：实现 `2269714e6895f6e1d3c2b7276e034b61262ea33b` / [run `37025748404`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37025748404) 七 job 全部 success，Windows/Ubuntu 对象策略场景、安装和上传全部 success，见[验收表](p28-acceptance.md)。P29 [CAN 关联门](p29-runtime-link-guide.md)已 remote-accepted：实现 `b2da1472f82a6aceebe43efdfb477ceb4e1896fa` / [run `37091771686`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37091771686) 七 job 全部 success；本机 SocketCAN 双工程已通过。独立 ECU 诊断绑定已实现，当前完成最终本地、隔离安装和本实现远端验收，见[验收表](p29-acceptance.md)。P25 安装实现 `911abc0` / run `36586481411` 保持通过，人工演示及真实外部反馈仍待完成；P24 冻结验收与历史回归保持，P22 商业工具往返仍需实际环境。平台证据不等同个人独立掌握。
+当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（planned）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。下一任务为[P30](p30-evidence-explanation-plan.md)冻结只读解释输入、严格引用检查与模型不可用回退，再接现有本地知识助手。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1471,4 +1471,22 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 初轮全量 393 tests：391 passed、2 环境跳过。后续补强客户端上下文与成功响应复验，最终验证结果另行回填，未沿用初轮结果作为最终验收。
 - P29 保持 implementing。其后主阶段计划为 P30 基于项目证据的本地模型解释，先解决引用修补问题并保留判定权；硬件尚未取得，台架为后续条件门。P25 人工演示/真实反馈仍待取得。
 
-- 最终本地：395 tests（393 passed、2 环境跳过）；8 项配置诊断测试及 2 项客户端上下文测试。54 schemas、76 bound/25 syntax-only、54-source mypy、Ruff、topology、compileall、pip check 全通过。离线与隔离安装各 7 场景/7 审查/5 类拒绝；固定 OpenBSW 现场 10 场景/10 审查/7 类拒绝，含客户端历史替换和成功响应篡改。原输入移除与二次搬移已通过；最终归档后的项目/比较及报告 schema 核对仍在进行。证据 `output/p29-diagnostic-validation/`（`offline-release/`、`installed-release/`、`live-release/`、`archive-verification.json`）。诊断门 local-accepted，等待固定实现提交的七 job；不沿用 CAN 门的旧 CI。
+- 最终本地：395 tests（393 passed、2 环境跳过）；8 项配置诊断测试及 2 项客户端上下文测试。54 schemas、76 bound/25 syntax-only、54-source mypy、Ruff、topology、compileall、pip check 全通过。离线与隔离安装各 7 场景/7 审查/5 类拒绝；固定 OpenBSW 现场 10 场景/10 审查/7 类拒绝，含客户端历史替换和成功响应篡改。原输入移除、二次搬移及最终归档 17 份项目/6 份比较复验、83 份相关 schema 实例验证通过。证据 `output/p29-diagnostic-validation/`（`offline-release/`、`installed-release/`、`live-release/`、`archive-verification.json`）。诊断门 local-accepted，等待固定实现提交的七 job；不沿用 CAN 门的旧 CI。
+
+
+### P29：独立诊断远端验收与 P30 交接（2026-10-04）
+
+- 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success；已核对完整 head SHA 与全部作业结论。
+- `core-contracts (windows-latest)`：job `111329362700`，success。
+- `core-contracts (ubuntu-22.04)`：job `111329362821`，success。
+- `runtime-currency`：job `111329362844`，success。
+- `runtime-evidence (windows-latest)`：job `111329897458`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `111329897466`，success。
+- `controlled-rejections (windows-latest)`：job `111329897476`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `111329897495`，success。
+- Windows/Ubuntu 的 `Run configuration diagnostic link scenarios`、`Verify installed configuration diagnostic links`、`Upload configuration diagnostic link evidence` 全部 success；原始记录 `output/p29-diagnostic-validation/remote-ci.json`，artifact 为 `ecuc-diagnostic-links-Windows` / `ecuc-diagnostic-links-Linux`。
+- 最终本地 395 tests：393 passed、2 环境跳过；54 schemas、76 bound/25 syntax-only、54-source mypy、Ruff、topology、compileall、pip check 通过。离线与隔离安装各 7 场景/7 审查/5 类篡改拒绝；安装为离线无额外依赖路径，不冒充安装后的现场诊断。
+- 固定源码在独立干净副本重新构建，现场 10 场景/10 审查/7 类篡改拒绝；六次实际诊断的父/子上下文、不同进程 PID、通道锁与清理已核对，三次正常执行包含 SF/FF/FC/CF。最终原树移除后的归档 17 项项目、6 项比较、83 份相关 schema 验证通过；证据 `live-observations.json` 与 `archive-verification.json`。
+- P29 按显式 CAN 映射及独立诊断验收依赖范围 remote-accepted。配置生成代码语义缺证据仍 unassessed；真实 ECU 身份、物理硬件、商业生成及可调度性不在已验收范围。
+- 下一主阶段 P30 planned，先固定只读解释与引用校验；现有本地知识助手可复用，但不能将无效引用自动补成受支持结论。P25 人工演示/外部反馈保持未完成，硬件台架按设备取得后另验收。
+- 本条及首页/路线为后续纯文档 `[skip ci]` 状态提交，固定引用实现 `654cd8f` / run `37166161292`；文档提交不作为新实现验收。
