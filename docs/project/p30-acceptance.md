@@ -9,8 +9,8 @@
 | 两工程 CLI / 搬移 | remote-accepted | 127 / 70 facts；各 4 类 CLI 拒绝；中文空格路径、删除原输入后复验 |
 | 隔离安装 | remote-accepted | 无依赖 wheel、仓库外运行、排除 checkout、两工程流程与归档复验 |
 | 双平台远端 | remote-accepted | `a82ee62` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job success，双平台新增三步骤 success |
-| Ollama 与现有知识助手 | planned | 模型身份、提示版本、输入与原始输出、服务缺失回退 |
-| 项目事实与资料知识分离 | 部分实现 | 当前仅允许 project facts；手册检索和解释尚未接入 |
+| Ollama 与现有知识助手 | local-accepted，待本轮 CI | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
+| 项目事实与资料知识分离 | local-accepted，待本轮 CI | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 模型回答独立评测 | planned | 开发/独立问题、配置拒绝、影响、CAN 超时、诊断负响应、缺证据、历史替换；延迟与人工可用性 |
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
@@ -30,3 +30,13 @@
 - `controlled-rejections (windows-latest)`：job `111381028195`，success。
 
 原始记录 `output/p30-fact-validation/remote-ci.json`，双平台 artifact 为 `project-explanation-Windows` / `project-explanation-Linux`。本次回填是后续纯文档 `[skip ci]` 提交，固定引用上述实现 CI，不代表模型阶段验收。
+
+
+## 模型适配本轮验收（2026-10-05）
+
+- 协议/工程门 local-accepted：最终 409 tests（407 passed、2 环境跳过）；57 schemas、76 bound/25 syntax-only、61-source mypy、Ruff、topology、pip check、whitespace 通过。源码和无依赖隔离 wheel 各 12 个合成 HTTP 场景，含 schema、服务停止后的复验与归档复验；新增 8 项模型专项测试。
+- 现场恢复原 Docker Desktop 及 Ollama/Qdrant/API，不下载镜像/模型，不改动原资料。原知识库 23 文档 / 15 可检索，模型三份均存在。真实检索取得 3 份原文摘录，保留 legacy_trusted 来源等级。
+- 真实模型为 qwen3.5:2b，服务报告 digest `324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df`，Ollama 0.31.1。共 6 次开发调用，1 次结构化单事实引用通过、5 次拒绝。提示 0.1 字段缺失，0.2 截断，0.3 双摘要误抄，0.4 单事实成功但带资料摘录与缺证据问题引用不合格；旧提示和原始失败可离线重放。
+- 这些是开发观察，不是独立模型质量评测；不能把拒绝正确等同模型拒答正确，也不能用一条成功证明复杂解释可用。自然语言语义、问题相关性和建议可用性均未自动认证。
+- 原服务缺失时的真实 blocked 回退另存 `live-unavailable`。本轮最终归档 `output/p30-model-validation/`，具体磁盘与资产结果见[复用盘点](p30-reuse-inventory.md)。
+- P30 整阶段 implementing；下一项独立问题评测、输出约束适配和资料适用性/人工可用性。实现提交、七 job 与双平台步骤待本次 CI 回填。

@@ -1,6 +1,6 @@
 # Automotive Workbench 长期升级路线 v3
 
-更新：2026-10-04。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
+更新：2026-10-05。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
 ## 长期产品目标
 
@@ -93,4 +93,4 @@ P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)�
 
 P29 诊断依赖已验收，下一主阶段为 [P30 基于项目证据的本地模型解释](p30-evidence-explanation-plan.md)：复用已有本地知识助手，以通过复验的报告为事实基础，先解决引用、状态和来源边界再接入模型。硬件台架按设备实际取得和独立现场证据推进，不改变当前主阶段。
 
-P30 已进入 implementing：首轮[只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success），验证事实来源和值，尚未接入模型。下一项为现有知识助手/Ollama 适配、服务缺失回退与独立问题评测，仍按 P30 统一验收。
+P30 已进入 implementing：首轮[只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success），验证事实来源和值，尚未接入模型。本轮继续交付[Ollama / 原知识助手适配](p30-model-adapter-guide.md)、回退和资产/磁盘盘点；下一项为六类工程问题的独立模型质量评测、资料适用性及人工可用性，仍按 P30 统一验收。

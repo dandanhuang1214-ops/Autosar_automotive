@@ -1,0 +1,347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/project-model-explanation.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "reason",
+    "request_id",
+    "project_status",
+    "prompt_version",
+    "input_sha256",
+    "model",
+    "service_version",
+    "elapsed_ms",
+    "answer",
+    "fallback_facts",
+    "gaps",
+    "ollama_url",
+    "knowledge_url",
+    "raw_output_sha256",
+    "metrics",
+    "configuration"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "project-model-explanation-0.1"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "refused",
+        "blocked",
+        "unassessed"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "project_status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked",
+        "unassessed"
+      ]
+    },
+    "prompt_version": {
+      "enum": ["project-explanation-prompt-0.1", "project-explanation-prompt-0.2", "project-explanation-prompt-0.3", "project-explanation-prompt-0.4"]
+    },
+    "input_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "model": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "digest",
+            "details"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:)?[0-9a-f]{64}$"
+            },
+            "details": {}
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "service_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "elapsed_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "answer": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "project_facts",
+            "manual_quotes",
+            "draft_explanation",
+            "suggestions",
+            "semantic_status",
+            "answer_status"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "project_facts": {
+              "type": "array",
+              "items": {
+                "$ref": "project-explanation-request.schema.json#/properties/facts/items"
+              }
+            },
+            "manual_quotes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "source_id",
+                  "source_kind",
+                  "document_id",
+                  "chunk_id",
+                  "document_sha256",
+                  "release",
+                  "title",
+                  "page",
+                  "content_sha256",
+                  "excerpt",
+                  "authority",
+                  "review_status",
+                  "quote"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "source_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "source_kind": {
+                    "const": "manual"
+                  },
+                  "document_id": {
+                    "type": "integer"
+                  },
+                  "chunk_id": {
+                    "type": "integer"
+                  },
+                  "document_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "release": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "page": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "content_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "excerpt": {
+                    "type": "string"
+                  },
+                  "authority": {
+                    "enum": [
+                      "official",
+                      "user_reviewed",
+                    "legacy_trusted"
+                    ]
+                  },
+                  "review_status": {
+                    "const": "approved"
+                  },
+                  "quote": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "draft_explanation": {
+              "type": "string"
+            },
+            "suggestions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "text",
+                  "fact_ids",
+                  "execution_status"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "fact_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "execution_status": {
+                    "const": "not_executed"
+                  }
+                }
+              }
+            },
+            "semantic_status": {
+              "const": "unassessed"
+            },
+            "answer_status": {
+              "enum": [
+                "selected",
+                "unassessed"
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fallback_facts": {
+      "type": "array",
+      "items": {
+        "$ref": "project-explanation-request.schema.json#/properties/facts/items"
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "detail"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ollama_url": {
+      "type": "string"
+    },
+    "knowledge_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "raw_output_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "configuration": {
+      "type": "object",
+      "required": [
+        "model",
+        "ollama_url",
+        "knowledge_url",
+        "knowledge_query",
+        "timeout"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "ollama_url": {
+          "type": "string"
+        },
+        "knowledge_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "knowledge_query": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timeout": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 120
+        }
+      }
+    }
+  }
+}

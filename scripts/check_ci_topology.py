@@ -13,6 +13,7 @@ EXPECTED_JOBS = {
 }
 
 STEP_OWNERS = {
+    "Run model explanation adapter scenarios": "core-contracts",
     "Run project explanation fact scenarios": "core-contracts",
     "Verify installed project explanation": "core-contracts",
     "Upload project explanation evidence": "core-contracts",

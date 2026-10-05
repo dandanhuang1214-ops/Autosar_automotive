@@ -196,4 +196,4 @@ adapters/
 
 新增 [P27 声明式 ECUC 配置验收](docs/project/p27-ecuc-acceptance-guide.md)：一个 0.6 项目声明基线/候选与静态接受条件，直接完成工程审查、影响追踪和便携证据；两种工程、故障与隔离安装流程已远端验收：`55e208f` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部通过，见[验收表](docs/project/p27-acceptance.md)。
 
-新增 [P29 独立诊断依赖](docs/project/p29-diagnostic-link-guide.md)：项目 0.9 由静态保护策略控制固定构建的独立只读诊断，绑定本次执行与便携审查；本地、隔离安装、独立 OpenBSW 现场与七 job 验收通过，见 [P29 验收表](docs/project/p29-acceptance.md)。下一项计划为 [P30 本地模型证据解释](docs/project/p30-evidence-explanation-plan.md)。
+新增 [P29 独立诊断依赖](docs/project/p29-diagnostic-link-guide.md)：项目 0.9 由静态保护策略控制固定构建的独立只读诊断，绑定本次执行与便携审查；本地、隔离安装、独立 OpenBSW 现场与七 job 验收通过，见 [P29 验收表](docs/project/p29-acceptance.md)。P30 已进入[模型与知识助手适配](docs/project/p30-model-adapter-guide.md)，包含[既有 LLM/Docker 资产及空间盘点](docs/project/p30-reuse-inventory.md)；独立模型质量与人工可用性仍待验收。

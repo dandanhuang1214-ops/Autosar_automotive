@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-04）
+## 当前总览（2026-10-05）
 
-当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；下一任务为现有知识助手/Ollama 适配、服务不可用回退和独立问题评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
+当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；本轮推进[模型适配及资产复用](p30-model-adapter-guide.md)；下一任务为独立模型质量、资料适用性和人工可用性评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1515,3 +1515,19 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 原始记录 `output/p30-fact-validation/remote-ci.json`；artifact `project-explanation-Windows` / `project-explanation-Linux`。本轮新增六项 P30 单元测试纳入双平台与 Python 3.14 回归；源码与隔离安装的两工程/8 类 CLI 拒绝/搬移复验通过。
 - 首轮按只读事实选取范围 remote-accepted。P30 整阶段 implementing；下一项 Ollama/现有知识助手适配、身份与原始输出记录、服务缺失回退及独立问题评测。P25 人工反馈仍待取得。
 - 本条及首页/路线/验收表属于后续纯文档 `[skip ci]` 状态提交，引用 `a82ee62` / `37183484781`，不作为新实现 CI。
+
+
+### P30：本地模型适配、缺口识别与资产复用（2026-10-04）
+
+- 新增 explain-project / verify-model-explanation，复用已复验事实包；原 Ollama / 知识助手原文接口只读接入，绕开聊天引用补号。项目事实、手册摘录、语义未验证草稿和未执行建议分别保存。
+- 固定输入、原始 HTTP/模型响应、提示版本、模型 digest 前后核对、服务版本、耗时与返回 token 指标。服务缺失、HTTP 超时、非法引用、字段/状态/数值改写、未审核资料、模型漂移和截断均保留回退或拒绝；离线重放不访问服务。
+- 缺口分别记录项目未满足的门、上下文未选取、资料未请求/查询失败/无命中及模型/语义验收缺口，不从无命中推断整个知识库不存在资料。
+- 盘点既有源码及 Docker，恢复原 Docker Desktop 与 Ollama/Qdrant/API 三容器，无下载模型、重建知识库或删除资产。23 份文档中 15 份可检索、4 份草稿待审核、1 份解析失败、3 份停用；保留 legacy_trusted 等原来源等级。Web/worker 保持停止。
+- 源码和隔离安装协议夹具、单元/全量回归及真实模型开发调用执行中；最终结果、实现 SHA 和远端 CI 待回填。真实开发调用已暴露字段缺失、截断和双请求摘要歧义，原始失败保留，版本化提示改进不修补模型输出。
+- 磁盘初查 C 剩约 59 GiB、D 剩约 47 GiB；已有 Docker 镜像约 9.409 GB、模型卷 5.27 GB、Qdrant 822.8 MB。无需为本次接入另下载模型或扩容；未挂载缓存/卷不自动当作垃圾删除。详细复用清单见[p30-reuse-inventory.md](p30-reuse-inventory.md)。
+- P30 保持 implementing；下一项独立模型质量、资料适用性与人工可用性评测。P25 人工门及物理 ECU 仍未由本轮替代。
+
+
+- 2026-10-05 最终本地 local-accepted：409 tests（407 passed、2 环境跳过），新增 8 项模型专项；57 schemas、76 bound/25 syntax-only、61-source mypy、Ruff、topology、pip check、whitespace 通过。最终源码/隔离安装各 12 个合成 HTTP 场景与 schema/离线复验/归档复验通过。
+- 实际 Ollama 0.31.1 / qwen3.5:2b 6 次开发调用：1 个单事实结构化引用通过、5 次因字段、截断或引用问题拒绝；版本 0.4 单事实 18.886 秒，带手册 21.862 秒（摘录拒绝），缺证据 44.975 秒（引用拒绝）。失败记录保留，不修补返回文本，不视作模型独立评测或模型正确拒答。真实服务缺失的 blocked 回退另存，首轮提示各版本可重放。
+- 本轮适配工程门 local-accepted；等待本次实现提交七 job。完整报告须同时保留 Docker/磁盘、现场成功和失败及剩余质量门，不宣称 P30 整阶段完成。
