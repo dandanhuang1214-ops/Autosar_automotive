@@ -72,6 +72,8 @@ class ModelExplanationTests(unittest.TestCase):
         self.assertTrue(any(g["code"] == "PROJECT_EVIDENCE_GAP" for g in result["gaps"]))
         with patch.object(Endpoint, "request", side_effect=AssertionError("network forbidden")):
             self.assertEqual(verify_explanation(self.report, self.root / "explanation")["status"], "passed")
+        for artifact in (self.root / "explanation").iterdir():
+            self.assertNotIn(b"\r\n", artifact.read_bytes(), artifact.name)
         moved = self.root / "中文 move"
         self.report.parent.rename(moved)
         self.report = moved / self.report.name

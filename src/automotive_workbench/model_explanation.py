@@ -146,7 +146,7 @@ def validate_draft(value: Any, context: dict) -> dict:
 
 
 def _write(path: Path, data: Any) -> None:
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def render(result: dict) -> str:
@@ -261,7 +261,7 @@ def explain(report: Path, question: str, output: Path, model: str,
     result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
     _write(output / "transport.json", {"ollama": ollama.records, "knowledge": knowledge.records if knowledge else []})
     _write(output / "explanation.json", result)
-    (output / "explanation.md").write_text(render(result), encoding="utf-8")
+    (output / "explanation.md").write_text(render(result), encoding="utf-8", newline="\n")
     return result
 
 
