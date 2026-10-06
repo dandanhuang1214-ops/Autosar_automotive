@@ -8,7 +8,7 @@
 
 现有 `qwen3.5:2b` 仅在本轮单事实样例上通过结构化引用校验；带资料背景和缺证据问题仍出现不合格输出。**工程适配器可用，不等于模型已能可靠回答复杂工程问题。P30 整阶段仍 implementing。**
 
-本轮本地验收已通过；实现提交及远端 CI 状态待后续状态回填。P25 人工反馈、商业工具和物理 ECU 门不由本轮替代。
+实现 `21a495e2047662084a6a30f78196ed6fd2f3f148` / [run `37264801076`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37264801076) 七 job 全部 success，双平台安装和证据上传通过（2026-10-06 回填）。P25 人工反馈、商业工具和物理 ECU 门不由本轮替代。
 
 ## 哪些东西可以直接用
 
@@ -90,3 +90,5 @@ Docker 标记的约 761.2 MB 未使用卷空间包含 Docling 缓存约 597.5 MB
 操作见[模型适配指南](p30-model-adapter-guide.md)，资产细节见[复用盘点](p30-reuse-inventory.md)。原 Compose 未向宿主机发布 Ollama 11434；本次实际验证通过原 Docker backend 网络，不能把示例 localhost 地址当作现有可达入口。
 
 下一项仍在 P30：先冻结独立问题和 gold，针对结构化输出及资料引用继续评估，再决定是否需要调整模型或引入新的模型下载。保留当前确定性审查/事实摘要作为可用主路径；复杂自然语言解释仍为候选辅助输出。
+
+跨平台实证（2026-10-06）：下载上述 run 的 `project-explanation-Windows`，源码 12 例及安装后 12 例共 24 份模型解释在 Linux 完整离线复验通过；原始结果 `output/p30-model-validation/windows-linux-replay.json`。

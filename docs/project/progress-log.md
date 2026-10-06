@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-05）
+## 当前总览（2026-10-06）
 
-当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；本轮推进[模型适配及资产复用](p30-model-adapter-guide.md)；下一任务为独立模型质量、资料适用性和人工可用性评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
+当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；[模型适配及资产复用](p30-model-adapter-guide.md)已 remote-accepted（`21a495e` / run `37264801076` 七 job success）；当前任务为冻结六类评测、分离上下文覆盖与模型引用质量，随后资料适用性和人工可用性评测。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
