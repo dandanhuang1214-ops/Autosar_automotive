@@ -11,7 +11,8 @@
 | 双平台远端 | remote-accepted | `a82ee62` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job success，双平台新增三步骤 success |
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
-| 模型回答独立评测 | implementing | 开发/独立问题、配置拒绝、影响、CAN 超时、诊断负响应、缺证据、历史替换；延迟与人工可用性 |
+| 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
+| 模型回答质量 | 未通过，继续 implementing | 六类新题已执行；5 题 × 2 模式共 10 次推理全部拒绝，历史替换在推理前拒绝；语义/人工门未验收 |
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 
@@ -56,3 +57,23 @@
 原始记录：`output/p30-model-validation/remote-ci.json`。后续状态文档提交不是新的实现验收；真实模型质量仍未通过，六类评测在 P30 内继续。
 
 跨平台实证（2026-10-06）：下载上述 run 的 `project-explanation-Windows`，源码 12 例及安装后 12 例共 24 份模型解释在 Linux 完整离线复验通过；原始结果 `output/p30-model-validation/windows-linux-replay.json`。
+
+## 六类冻结评测实际结果（2026-10-06）
+
+实现 `8735bc3b672bd4d95902fb5abcb431d88248efc1` / [run `37419810449`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37419810449) 七 job 全部 success。本地 413 tests（411 passed、2 环境跳过），新增四项评分与冻结篡改测试；57 schemas、76 bound/25 syntax-only、Ruff、新脚本 mypy、topology、whitespace 通过。
+
+- `runtime-currency`：job `112126426660`，success。
+- `core-contracts (windows-latest)`：job `112126426708`，success。
+- `core-contracts (ubuntu-22.04)`：job `112126426772`，success。
+- `runtime-evidence (windows-latest)`：job `112127980565`，success。
+- `controlled-rejections (windows-latest)`：job `112127980645`，success。
+- `controlled-rejections (ubuntu-22.04)`：job `112127980648`，success。
+- `runtime-evidence (ubuntu-22.04)`：job `112127980742`，success。
+
+远端原始记录 `output/p30-evaluation/remote-ci.json`。真实现场结果 `output/p30-evaluation/trial-v1-deps/summary.json`，五题两模式共十次推理全部 refused，全部归档离线复验 passed；历史替换在模型调用前拒绝。冻结摘要 `71d4396eb2913a6b0c1ec832d2eacba68e65a01376e4777b672793e8121ac6a4`。模型保持 qwen3.5:2b / 提示 0.4，未用本组结果回调提示。
+
+配置拒绝、影响范围、CAN 超时各两条 gold 均未进入上下文；诊断两条全部进入但模型引用仍错误。五次检索每次返回三条来源，不能代替资料相关性验收。没有有效模型拒答，不能把十次校验器拒绝算成模型正确率。问题由代理编写并在推理前冻结，不是独立人工 gold。详见[评测指南](p30-model-evaluation-guide.md)。
+
+下一项仍为 P30：版本化修正问题相关事实选择，优先纳入失败原因、精确影响对象与必要上下文；保留提示 0.1–0.4 的历史重放。随后针对结构化值、原文摘录和 unassessed 空引用约束改进输出，在新冻结问题上验收。当前六题已见，不再冒充后续未见测试；人工语义/资料适用性仍待验收。
+
+后续纯文档状态提交引用以上实现 CI，不把状态回填当作新实现或模型质量验收。

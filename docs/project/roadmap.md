@@ -93,4 +93,4 @@ P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)�
 
 P29 诊断依赖已验收，下一主阶段为 [P30 基于项目证据的本地模型解释](p30-evidence-explanation-plan.md)：复用已有本地知识助手，以通过复验的报告为事实基础，先解决引用、状态和来源边界再接入模型。硬件台架按设备实际取得和独立现场证据推进，不改变当前主阶段。
 
-P30 已进入 implementing：首轮[只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success），验证事实来源和值，尚未接入模型。[Ollama / 原知识助手适配](p30-model-adapter-guide.md)、回退和资产/磁盘盘点已 remote-accepted（`21a495e` / run `37264801076` 七 job success）；当前继续冻结六类工程问题并运行项目事实/检索增强配对评测，分别衡量上下文覆盖、引用、拒答和资料适用性，人工可用性仍待验收。
+P30 已进入 implementing：首轮[只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success），验证事实来源和值，尚未接入模型。[Ollama / 原知识助手适配](p30-model-adapter-guide.md)、回退和资产/磁盘盘点已 remote-accepted（`21a495e` / run `37264801076` 七 job success）；六类冻结评测工具亦已 remote-accepted（`8735bc3` / run `37419810449` 七 job success），10 次真实配对推理均被拒绝，历史替换在推理前拒绝。下一项仍为 P30：版本化修正问题相关事实选择，优先纳入失败原因、精确影响对象与必要上下文；保留提示 0.1–0.4 的历史重放。随后针对结构化值、原文摘录和 unassessed 空引用约束改进输出，在新冻结问题上验收。当前六题已见，不再冒充后续未见测试；人工语义/资料适用性仍待验收。

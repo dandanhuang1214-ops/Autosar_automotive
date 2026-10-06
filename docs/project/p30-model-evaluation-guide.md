@@ -44,3 +44,7 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 当前原 Docker backend 内部地址为 `http://ollama:11434` / `http://api:8000`，不向宿主机默认开放。现场复用原 API 镜像的 Python 3.12，同时只读挂载工作台现有 `.venv/lib/python3.12/site-packages`；首次未挂载依赖的启动因缺 cantools 失败且没有模型调用。依赖导入和 bitstruct 编解码实测后再运行，不安装新依赖或下载模型。不同机器必须重新验证解释器/本地扩展兼容性，不能假定任意虚拟环境均可复用。
 
 本轮冻结摘要：`71d4396eb2913a6b0c1ec832d2eacba68e65a01376e4777b672793e8121ac6a4`。完整证据保存于 `output/p30-evaluation/`，资料原文留在本地忽略目录。实测结果和后续 CI 结论见 P30 验收表及完整报告。
+
+## 本轮执行结论
+
+五题分别执行无检索/检索两种模式，共十次真实推理，均 refused；历史替换在推理前拒绝。所有十份调用归档离线复验通过。前三类问题的 gold 上下文覆盖为 0/2，诊断为 2/2；缺证据题没有有效模型拒答。此结果定位了上下文漏选与输出契约两个问题，不支持复杂工程解释已可用的结论。实现 `8735bc3b672bd4d95902fb5abcb431d88248efc1` / [run `37419810449`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37419810449) 七 job 全部 success 验收的是评测实现，具体质量结果见完整报告。
