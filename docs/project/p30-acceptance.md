@@ -11,7 +11,7 @@
 | 双平台远端 | remote-accepted | `a82ee62` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job success，双平台新增三步骤 success |
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
-| 模型回答独立评测 | planned | 开发/独立问题、配置拒绝、影响、CAN 超时、诊断负响应、缺证据、历史替换；延迟与人工可用性 |
+| 模型回答独立评测 | implementing | 开发/独立问题、配置拒绝、影响、CAN 超时、诊断负响应、缺证据、历史替换；延迟与人工可用性 |
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 

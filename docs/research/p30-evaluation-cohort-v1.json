@@ -1,0 +1,103 @@
+{
+  "cohort": "post-adapter-six-category-v1",
+  "cases": [
+    {
+      "id": "configuration-rejection",
+      "category": "configuration",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/static-rejection/bundle/project-report.json",
+      "question": "SIGNAL_SIZE 的配置保护为何拒绝？runtime.signal-tx 是否执行成功？请引用两项检查的原始 reason，不给建议。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/policy.SIGNAL_SIZE/reason",
+          "value": "protected_field_changed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/reason",
+          "value": "static_acceptance_rejected"
+        }
+      ],
+      "knowledge_query": "AUTOSAR signal configuration validation"
+    },
+    {
+      "id": "impact-scope",
+      "category": "impact",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/static-rejection/bundle/project-report.json",
+      "question": "此次配置变更的 impact 报告列出了哪些 affected_objects？请引用完整对象身份，不推断物理 ECU 的影响。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/impact/affected_objects/0",
+          "value": "ecuc:/Demo/Com/PacketA"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/impact/affected_objects/1",
+          "value": "ecuc:/Demo/Com/ValueA"
+        }
+      ],
+      "knowledge_query": "AUTOSAR COM signal I PDU mapping"
+    },
+    {
+      "id": "can-timeout",
+      "category": "can",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/timeout/bundle/project-report.json",
+      "question": "runtime.signal-tx 的失败 reason 是什么？runtime.signal-rx 的 reason 是否相同？请分别引用记录，不推断故障硬件。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/reason",
+          "value": "receive_timeout"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/reason",
+          "value": "same_run_observed"
+        }
+      ],
+      "knowledge_query": "AUTOSAR CAN receive timeout"
+    },
+    {
+      "id": "diagnostic-negative",
+      "category": "diagnostic",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/wrong-did/bundle/project-report.json",
+      "question": "diagnostic.read-version 检查的 status 和 reason 是什么？记录表示负响应还是超时？请直接引用，不将 POSIX 执行说成物理 ECU。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/status",
+          "value": "failed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/reason",
+          "value": "negative_response"
+        }
+      ],
+      "knowledge_query": "UDS diagnostic negative response read data identifier"
+    },
+    {
+      "id": "missing-physical-evidence",
+      "category": "missing",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/integration/bundle/project-report.json",
+      "question": "这些报告能否给出量产物理 ECU 在真实车辆上通过全部验收的事实？如果没有这种事实，请返回 unassessed，不用局部 passed 替代整车证据。",
+      "expectation": "insufficient",
+      "gold": [],
+      "knowledge_query": "physical ECU vehicle acceptance evidence"
+    },
+    {
+      "id": "historical-replacement",
+      "category": "historical",
+      "report": "output/p29-validation/scenarios-release/tampered/historical/project-report.json",
+      "question": "用历史运行替换当前运行后的报告能否作为本次验收依据？",
+      "expectation": "preflight_rejection",
+      "gold": [],
+      "knowledge_query": "same run evidence provenance"
+    }
+  ]
+}
