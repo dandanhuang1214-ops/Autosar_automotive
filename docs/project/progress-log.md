@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-06）
+## 当前总览（2026-10-07）
 
-当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；[模型适配及资产复用](p30-model-adapter-guide.md)已 remote-accepted（`21a495e` / run `37264801076` 七 job success）；六类冻结评测工具已 remote-accepted（`8735bc3` / run `37419810449` 七 job success），真实 10 次配对推理均拒绝；下一任务为版本化修正事实选择与结构化输出，之后新题及人工适用性验收。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
+当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由 实现 `654cd8fb907f79d69f3ad2636b8f222e5d1bb0b1` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收，两平台场景/隔离安装/上传均 success，本机固定 OpenBSW POSIX/vcan0 正常与故障、清理及搬移复验通过，见[P29 验收表](p29-acceptance.md)。P29 按显式配置映射与诊断验收依赖范围完成；Dcm/CanTp 生成语义、商业工具与物理 ECU 未验收。P30 [只读事实门](p30-fact-gate-guide.md)已 remote-accepted（`a82ee62` / run `37183484781` 七 job success）；[模型适配及资产复用](p30-model-adapter-guide.md)已 remote-accepted（`21a495e` / run `37264801076` 七 job success）；六类冻结评测工具已 remote-accepted（`8735bc3` / run `37419810449` 七 job success），真实 10 次配对推理均拒绝；提示 0.5 问题相关事实选择、配对生成约束与模型默认推理已实现；418 项本地回归（416 passed、2 环境跳过）和隔离安装通过，远端验收与真实新题/模型对照待完成。下一项仍为 P30：完成本轮冻结集与现有模型对照，按证据决定模型可用任务范围；随后建立人工语义/资料适用性标注，再判断更强模型基线或微调。P25 安装交付保持通过，人工演示及真实反馈仍待取得；平台实现不等同个人已掌握。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1537,3 +1537,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 新增[评测指南](p30-model-evaluation-guide.md)、冻结问题及评分脚本，固定代码/证据/模型身份，在真实模型调用前核对 gold。将确定性复验、上下文覆盖、模型引用、检索逐字支持、模型拒答与校验器拦截分开记录；历史替换在推理前拒绝。四项评分/篡改边界测试通过，全量 413 tests（411 passed、2 环境跳过）；实现 `8735bc3b672bd4d95902fb5abcb431d88248efc1` / [run `37419810449`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37419810449) 七 job 全部 success。原 P24 gold 未改变。已有模型、镜像及只读 Python 依赖被复用，无新增下载；真实配对评测已完成：10 次推理均 refused，10 份归档复验通过，历史替换推理前拒绝。前三类 gold 未进上下文，诊断 gold 已进入但模型引用仍错。评测工具通过不等于模型质量通过；P30 整阶段仍 implementing。
 
 下一项仍为 P30：版本化修正问题相关事实选择，优先纳入失败原因、精确影响对象与必要上下文；保留提示 0.1–0.4 的历史重放。随后针对结构化值、原文摘录和 unassessed 空引用约束改进输出，在新冻结问题上验收。当前六题已见，不再冒充后续未见测试；人工语义/资料适用性仍待验收。
+
+
+### P30：问题相关事实、推理服务诊断与模型适用性（2026-10-07）
+
+- 提示 0.5 优先点名检查/所问字段/影响对象及必要上下文，保持 24 条/12000 字符限制；事实 ID 与类型化原值成对约束，手册短摘录与 unassessed 空列表约束，独立严格校验不变。0.1–0.4 的排序、提示和 payload 保持重放兼容。
+- 实测 Ollama 0.31.1 / qwen3.5:2b 的 think=false 不遵守最小 schema；开启推理和省略开关遵守。新版本省略强制开关，兼容非 thinking 模型；预算 4096，超时/截断仍拒绝。开发问题在 1600/4096 都有截断，不将调用改进视为模型质量通过。
+- 冻结 v2 共七题，五个新问题、两个显式已见控制题；11/11 目标事实进入上下文。代理 gold 不是独立人工 gold，真实配对与另一已安装模型对照进行中。原六题不再宣称未见。
+- 本地最终回归 418 tests（416 passed、2 环境跳过），17 项模型/评测定向测试通过；隔离 wheel、协议场景和离线重放验证，远端 CI 待本实现提交。初轮 Docker 输出权限和沙箱回环 socket 阻断均保留实际失败；最终验证使用可写本地目录和授权回环网络。
+- 模型清单、推理模式探针、XML 合成输入与失败已保存。XML 是文本，平台仍用解析器/对象图/规则处理工程关系；本机 qwen3.5 声明支持 vision，但工作台未接入图像验收。暂不微调，先分清服务/上下文/基础模型/资料缺口，详见[模型适用性评估](p30-model-suitability.md)。
+- P30 整阶段保持 implementing；下一项仍为 P30：完成本轮冻结集与现有模型对照，按证据决定模型可用任务范围；随后建立人工语义/资料适用性标注，再判断更强模型基线或微调。 P25 人工演示/反馈及物理 ECU 未由本轮替代。

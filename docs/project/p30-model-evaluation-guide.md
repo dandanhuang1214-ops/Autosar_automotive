@@ -48,3 +48,10 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 ## 本轮执行结论
 
 五题分别执行无检索/检索两种模式，共十次真实推理，均 refused；历史替换在推理前拒绝。所有十份调用归档离线复验通过。前三类问题的 gold 上下文覆盖为 0/2，诊断为 2/2；缺证据题没有有效模型拒答。此结果定位了上下文漏选与输出契约两个问题，不支持复杂工程解释已可用的结论。实现 `8735bc3b672bd4d95902fb5abcb431d88248efc1` / [run `37419810449`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37419810449) 七 job 全部 success 验收的是评测实现，具体质量结果见完整报告。
+
+
+## 提示 0.5 后的新冻结集
+
+[p30-evaluation-cohort-v2.json](../research/p30-evaluation-cohort-v2.json)包含五个新问题与两个明确标注的已见控制题：前后类型化值、诊断受影响对象、CAN ID 不匹配、诊断超时、生成来源缺失，加上负响应/历史替换控制。首次 gold 把 XML 数字文本写为 JSON 数字，冻结入口严格拒绝；核对原值为字符串后改正，模型尚未调用。此 gold 修正不用于修改解析器或放宽类型校验。
+
+七题共 11 项目标事实，全部进入 0.5 上下文。模型和提示固定后分别冻结两个已安装模型，分开保存 manifest 摘要，不下载新权重。先运行 qwen3.5 的项目/检索配对，再运行 qwen3-vl 的同题对照，避免同时加载干扰延迟。原样保留所有失败；自然语言和资料相关性仍需人工评价。

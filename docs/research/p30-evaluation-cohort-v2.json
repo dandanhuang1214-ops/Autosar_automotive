@@ -1,0 +1,135 @@
+{
+  "cohort": "focused-context-v2-with-explicit-controls",
+  "cases": [
+    {
+      "id": "configuration-values",
+      "category": "configuration",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/static-rejection/bundle/project-report.json",
+      "question": "请给出 policy.SIGNAL_SIZE 的变更前和变更后 values，以及该检查的 reason。只引用这三项，不给建议。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/policy.SIGNAL_SIZE/observations/before/values/0",
+          "value": "8"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/policy.SIGNAL_SIZE/observations/after/values/0",
+          "value": "12"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/policy.SIGNAL_SIZE/reason",
+          "value": "protected_field_changed"
+        }
+      ],
+      "knowledge_query": "AUTOSAR signal bit size configuration",
+      "origin": "new-question-and-targets"
+    },
+    {
+      "id": "diagnostic-affected-objects",
+      "category": "impact",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/static-rejection/bundle/project-report.json",
+      "question": "diagnostic.read-version 的 affected_objects 列出了哪两个完整对象身份？只列对象，不推断实际硬件影响。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/affected_objects/0",
+          "value": "ecuc:/Demo/Com/ValueA"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/affected_objects/1",
+          "value": "ecuc:/Demo/Rte/Instance/Mapping"
+        }
+      ],
+      "knowledge_query": "AUTOSAR configuration diagnostic dependencies",
+      "origin": "new-question-and-targets"
+    },
+    {
+      "id": "can-frame-mismatch",
+      "category": "can",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/wrong-id/bundle/project-report.json",
+      "question": "分别给出 runtime.signal-tx 和 runtime.signal-rx 的 reason；是否可把 ID 不匹配解释为接收超时？只引用报告，不给建议。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/reason",
+          "value": "frame_identity_mismatch"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/reason",
+          "value": "same_run_observed"
+        }
+      ],
+      "knowledge_query": "CAN frame identifier receive filtering",
+      "origin": "new-question-and-targets"
+    },
+    {
+      "id": "diagnostic-timeout",
+      "category": "diagnostic",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/no-response/bundle/project-report.json",
+      "question": "diagnostic.read-version 的 status 和 reason 分别是什么？请区分记录的超时与负响应，不推断唯一根因。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/status",
+          "value": "failed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/reason",
+          "value": "timeout"
+        }
+      ],
+      "knowledge_query": "UDS response timeout negative response",
+      "origin": "new-question-and-targets"
+    },
+    {
+      "id": "negative-response-control",
+      "category": "diagnostic",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/wrong-did/bundle/project-report.json",
+      "question": "diagnostic.read-version 检查的 status 和 reason 是什么？记录表示负响应还是超时？请直接引用，不将 POSIX 执行说成物理 ECU。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/status",
+          "value": "failed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/reason",
+          "value": "negative_response"
+        }
+      ],
+      "knowledge_query": "UDS diagnostic negative response read data identifier",
+      "origin": "seen-v1-control"
+    },
+    {
+      "id": "missing-generated-provenance",
+      "category": "missing",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/semantic-unassessed/bundle/project-report.json",
+      "question": "能否证明本次 ECUC 配置已经生成所执行的 OpenBSW 二进制，并验证了 Dcm/CanTp 生成语义？没有生成来源证据时返回 unassessed，不能用局部检查结果替代。",
+      "expectation": "insufficient",
+      "gold": [],
+      "knowledge_query": "AUTOSAR ECUC generated code provenance",
+      "origin": "new-question-and-targets"
+    },
+    {
+      "id": "historical-control",
+      "category": "historical",
+      "report": "output/p29-validation/scenarios-release/tampered/historical/project-report.json",
+      "question": "用历史运行替换当前运行后的报告能否作为本次验收依据？",
+      "expectation": "preflight_rejection",
+      "gold": [],
+      "knowledge_query": "same run evidence provenance",
+      "origin": "seen-v1-control"
+    }
+  ]
+}

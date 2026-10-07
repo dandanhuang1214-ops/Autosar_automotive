@@ -62,3 +62,9 @@ docker run --rm --pull never --network simulink-assistant_backend `
 可选资料参数为 `--knowledge-url http://api:8000 --knowledge-query "AUTOSAR runnable RTE event mapping"`。输入换成自己的项目报告时，先保留其完整依赖目录；不要将原始私有工程输出提交到公共仓库。
 
 真实模型开发观察和空间结论见[本轮完整报告](p30-upgrade-report-2026-10-05.md)。
+
+## 提示 0.5：问题相关事实与模型默认推理
+
+新请求优先点名的检查、请求字段及必要上下文；不再用无关通过项填满窗口。结构化生成限制事实 ID/原值配对、原文摘录和 unassessed 空列表；最终仍由独立校验器接受或拒绝。0.1–0.4 保存的请求继续使用原排序、提示与生成设置离线重放。
+
+0.5 保留模型的默认推理模式，生成预算为 4096 token；本机 `think=false` 曾绕过 Ollama 的格式约束，开启推理又可能消耗预算导致截断。现场建议显式 `--timeout 120`，每次请求仍有上限且无隐式重试。格式和引用通过不代表语义正确。模型选择、XML 与多模态边界、微调启动条件见[模型适用性评估](p30-model-suitability.md)。

@@ -12,7 +12,10 @@ from referencing import Registry, Resource
 
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
-from automotive_workbench.model_explanation import explain, validate_draft, verify_explanation
+from automotive_workbench.model_explanation import (
+    PROMPTS, constrained_answer_schema, explain, quote_options, select_facts,
+    validate_draft, verify_explanation,
+)
 from automotive_workbench.project_workflow import run_project
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -132,6 +135,76 @@ class ModelExplanationTests(unittest.TestCase):
         for raw in ('{"id":1,"id":2}', '{"x":NaN}'):
             with self.assertRaises(ValueError):
                 parse_json(raw)
+
+    def test_historical_prompt_versions_replay_with_original_payloads(self):
+        for version in PROMPTS:
+            output = self.root / version
+            explain(self.report, "为什么阻断？", output, "fixture:1",
+                    _endpoint_factory=StubEndpoint, _prompt_version=version)
+            with self.subTest(version=version):
+                self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
+                payload = json.loads((output / "model-input.json").read_text())
+                context = json.loads(payload["messages"][1]["content"])
+                if version in list(PROMPTS)[:4]:
+                    self.assertIn("properties", payload["format"])
+                    self.assertIn("source_sha256", context["facts"][0])
+                    self.assertIs(payload["think"], False)
+                    self.assertEqual(payload["options"]["num_predict"], 1600)
+                else:
+                    self.assertNotIn("think", payload)
+                    self.assertEqual(payload["options"]["num_predict"], 4096)
+                    self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
+
+
+class FactRetrievalTests(unittest.TestCase):
+    @staticmethod
+    def fact(pointer, value, artifact="stage-ecuc"):
+        return {"fact_id": artifact + pointer, "artifact_id": artifact, "pointer": pointer, "value": value}
+
+    def test_named_checks_survive_status_noise_and_keep_observation_distinct(self):
+        facts = [self.fact(f"/checks/a{i}/status", "passed") for i in range(40)]
+        wanted = [self.fact("/checks/policy.WIDTH/reason", "protected_field_changed"),
+                  self.fact("/checks/runtime.packet-tx/reason", "static_acceptance_rejected")]
+        facts += wanted + [self.fact("/checks/policy.WIDTH/observations/before/reason", "observed")]
+        request = {"question": "WIDTH 为何拒绝？runtime.packet-tx 的 reason 是什么？", "facts": facts}
+        selected = select_facts(request, 2)
+        self.assertEqual({f["fact_id"] for f in selected}, {f["fact_id"] for f in wanted})
+        self.assertEqual(selected, select_facts({**request, "facts": list(reversed(facts))}, 2))
+        self.assertFalse(any(f in wanted for f in select_facts(request, 2, prompt_version="project-explanation-prompt-0.4")))
+
+    def test_impact_identities_and_before_after_typed_values(self):
+        facts = [self.fact(f"/checks/a{i}/reason", "observed") for i in range(40)]
+        impact = [self.fact(f"/checks/impact/affected_objects/{i}", f"ecuc:/Other/{i}") for i in range(2)]
+        facts += impact
+        self.assertEqual(select_facts({"question": "impact 的影响对象身份有哪些？", "facts": facts}, 2), impact)
+        values = [self.fact(f"/checks/policy.WIDTH/observations/{side}/values/0", value)
+                  for side, value in (("before", 16), ("after", 24))]
+        selected = select_facts({"question": "WIDTH 变更前和变更后的数值？", "facts": facts + values}, 2)
+        self.assertEqual({f["fact_id"] for f in selected}, {f["fact_id"] for f in values})
+
+    def test_context_budget_and_no_fabricated_facts(self):
+        facts = [self.fact("/checks/impact/affected_objects/0", "x" * 13000), self.fact("/status", "failed", "project-report")]
+        self.assertEqual(select_facts({"question": "影响", "facts": facts}), facts[1:])
+        self.assertEqual(select_facts({"question": "物理 ECU 已验证吗？", "facts": []}), [])
+
+    def test_schema_binds_pairs_quotes_and_unassessed_empty_lists(self):
+        facts = [self.fact("/a", 7), self.fact("/b", {"items": [False, 2]})]
+        manual = {"source_id": "manual", "excerpt": "Timeout alone is inconclusive.\nInspect recorded conditions."}
+        schema = constrained_answer_schema("request", facts, [manual])
+        Draft202012Validator.check_schema(schema)
+        validator = Draft202012Validator(schema)
+        answer = {"request_id": "request", "status": "selected", "project_claims": [
+            {"fact_id": facts[1]["fact_id"], "value": facts[1]["value"]}],
+            "manual_claims": [{"source_id": "manual", "quote": quote_options(manual)[0]}],
+            "draft_explanation": "draft", "suggestions": []}
+        validator.validate(answer)
+        for changed in ({**answer, "status": "unassessed"},
+                        {**answer, "project_claims": [{"fact_id": facts[0]["fact_id"], "value": facts[1]["value"]}]},
+                        {**answer, "manual_claims": [{"source_id": "manual", "quote": "ECU passed"}]}):
+            self.assertFalse(validator.is_valid(changed))
+        validator.validate({**answer, "status": "unassessed", "project_claims": [], "manual_claims": []})
+        for quote in quote_options(manual):
+            self.assertIn(quote, manual["excerpt"])
 
 
 class IndependentDraftContractTests(unittest.TestCase):
