@@ -16,7 +16,7 @@
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
-点名检查时上下文筛选原先漏掉嵌套 binding 值和明确点名的阶段状态。实现改为选择问题明确请求的嵌套字段/阶段状态，并将提示版本加入 schema；旧提示重放保持原预算和 thinking 行为。完整实现、测试、隔离安装、提交和 CI 待本轮回填。
+点名检查时上下文筛选原先漏掉嵌套 binding 值和明确点名的阶段状态。实现改为选择问题明确请求的嵌套字段/阶段状态，并将提示版本加入 schema；旧提示重放保持原预算和 thinking 行为。实现 `11361788108a8793d6b3808fe85ab506fa8e0b82` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job 全部 success：runtime-currency `113195398856`；core-contracts Windows `113195398938` / Ubuntu `113195399041`；controlled-rejections Windows `113197537909` / Ubuntu `113197537982`；runtime-evidence Windows `113197538027` / Ubuntu `113197538036`。
 
 新题 v3 复用 P29 已见归档，属于开发回归，不能作为未见工程集或独立 gold。最终提示 0.9 双模型、两题配对中，六项 gold 全部进入上下文；qwen3.5 0/2 结构化通过，qwen3-vl 1/2 通过并引用 3/3 gold，另三次调用因 4096-token length 截断被拒。4/4 实际调用归档离线复验 passed。自然语言语义与资料适用性仍 unassessed，P30 整体保持 implementing。
 
