@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-08）
 
-当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 将只询问整体与具名阶段状态的问题上下文从 24 条缩至 2 条；本地 422 tests（420 passed、2 环境跳过）、隔离安装后 12 个协议场景、静态检查及归档复验通过。v4 两模型配对中 qwen3-vl 结构化通过 2/2、各引用 2/2 gold；qwen3.5 通过 0/2（一次超时、一次 length 截断）；四个模型归档离线复验通过。v4 用于调试 0.10，属于开发回归，不是未见集；两条成功回答尚未人工审阅，语义及资料适用性仍 unassessed。0.10 实现提交及其远端 CI 待完成。下一步冻结未参与提示调试、使用不同证据的题集，并完成人工审阅。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 将只询问整体与具名阶段状态的问题上下文从 24 条缩至 2 条；本地 422 tests（420 passed、2 环境跳过）、隔离安装后 12 个协议场景、静态检查及归档复验通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success。v4 两模型配对中 qwen3-vl 结构化通过 2/2、各引用 2/2 gold；qwen3.5 通过 0/2（一次超时、一次 length 截断）；四个模型归档离线复验通过。v4 用于调试 0.10，属于开发回归，不是未见集；两条成功回答尚未人工审阅，语义及资料适用性仍 unassessed。下一步冻结未参与提示调试、使用不同证据的题集，并完成人工审阅。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1608,7 +1608,7 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 对只询问项目整体状态与具名阶段状态的问题，0.9 会把 24 条事实送入上下文；0.10 仅选 project `/status` 与该 stage 的 `/status`。旧提示版本重放策略保持，schema 与版本回归同步更新。
 - 开发 v4 使用两个不同的 P29 报告（integration、transmitter），每题两条 gold 状态。因题目用于开发 0.10，明确标记为已见开发回归。最终 qwen3-vl 两题均 stop、严格结构化通过且各引用 2/2 gold，耗时 61.1s/32.6s；qwen3.5 两题均失败（一次超时、一次 length 截断）。四个最终模型归档离线复验通过。状态回答正文尚未人工核验，资料适用性未测试。
-- 本地全量 422 tests（420 passed、2 环境跳过）；17 项模型专项、隔离 wheel 两项目、12 个 HTTP 协议场景与归档复验、Ruff、8-source mypy、57 schemas/76 bound/25 syntax-only、topology、pip check、compileall 均通过。实现提交与本轮远端 CI 待回填。
+- 本地全量 422 tests（420 passed、2 环境跳过）；17 项模型专项、隔离 wheel 两项目、12 个 HTTP 协议场景与归档复验、Ruff、8-source mypy、57 schemas/76 bound/25 syntax-only、topology、pip check、compileall 均通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success：`runtime-currency` 113293415542；`core-contracts` Windows 113293415264、Ubuntu 113293415630；`controlled-rejections` Ubuntu 113296212241、Windows 113296212339；`runtime-evidence` Windows 113296212256、Ubuntu 113296212372。该 run 是实现验收；本条文档回填不替代实现 CI。
 - P30 保持 implementing。下一项冻结不同证据且不参与提示调试的问题集，做模型配对；同时独立审阅这两条状态回答，并记录语义准确性与人工可用性。不得将状态题的通过扩展为一般工程解释或资料适用性结论。
 
 

@@ -12,7 +12,7 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 未通过，继续 implementing | v4 / prompt 0.10 配对中 qwen3-vl 2/2 结构化通过，qwen3.5 0/2；回答语义与独立人工审阅仍 pending |
+| 模型回答质量 | 未通过，继续 implementing | v4 / prompt 0.10 配对中 qwen3-vl 2/2 结构化通过，qwen3.5 0/2；实现 CI 已通过，回答语义与独立人工审阅仍 pending |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
@@ -24,7 +24,7 @@
 
 只问 overall/project 与具名阶段 status 时，0.9 会选入 24 条事实；0.10 将其约束为这两条目标事实。v4 使用 `integration` 和 `transmitter` 两个不同 P29 报告，是开发回归题；题目/证据不能当作独立 held-out 质量集。最终上下文 gold 覆盖 4/4，qwen3-vl 2/2 结构化通过且每题引用 2/2，qwen3.5 0/2（一次服务超时、一次 length 截断）。qwen3-vl 完整原始响应归档离线复验通过。该结果仅支持继续评估短状态汇总；自然语言、工程语义和独立审阅尚未验收。
 
-提示 0.10 本地实现检查：422 tests（420 passed、2 环境跳过）；17 项 P30 模型专项通过；隔离 wheel 两项目、12 项模型 HTTP 合成场景与归档复验通过；Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、topology、pip check、compileall 通过。提交和本轮远端 CI 待记录。
+提示 0.10 本地实现检查：422 tests（420 passed、2 环境跳过）；17 项 P30 模型专项通过；隔离 wheel 两项目、12 项模型 HTTP 合成场景与归档复验通过；Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、topology、pip check、compileall 通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success：runtime-currency `113293415542`；core-contracts Windows `113293415264`、Ubuntu `113293415630`；controlled-rejections Ubuntu `113296212241`、Windows `113296212339`；runtime-evidence Windows `113296212256`、Ubuntu `113296212372`。后续纯文档状态提交不作为新的实现验收。
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 
