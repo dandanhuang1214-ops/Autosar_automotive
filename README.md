@@ -10,6 +10,8 @@ P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph
 
 新增 [ECUC 项目只读体检](docs/project/p26-ecuc-inspection-guide.md)：DPA/collection 选择、引用定位与快照复验；实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 通过，首轮体检已远端验收；[通信跨层引用链](docs/project/p26-ecuc-communication-guide.md)也已远端验收：`b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部通过；新增[完整工程审查与两版配置影响](docs/project/p26-engineering-review-guide.md)，实现 `6433e1c` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部通过，受限静态整阶段已验收，见[验收表](docs/project/p26-acceptance.md)。
 
+P30 续进：提示 0.6 修正本机 grammar 的草稿长度限制，历史请求保持重放；本次远端与模型质量待验收。当前状态和下一项见[进度账本](docs/project/progress-log.md)，独立人工验收见[记录表](docs/project/p30-human-review-guide.md)。
+
 日常项目验收从 `run-project` 开始：
 
 ```bash
@@ -196,4 +198,4 @@ adapters/
 
 新增 [P27 声明式 ECUC 配置验收](docs/project/p27-ecuc-acceptance-guide.md)：一个 0.6 项目声明基线/候选与静态接受条件，直接完成工程审查、影响追踪和便携证据；两种工程、故障与隔离安装流程已远端验收：`55e208f` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部通过，见[验收表](docs/project/p27-acceptance.md)。
 
-新增 [P29 独立诊断依赖](docs/project/p29-diagnostic-link-guide.md)：项目 0.9 由静态保护策略控制固定构建的独立只读诊断，绑定本次执行与便携审查；本地、隔离安装、独立 OpenBSW 现场与七 job 验收通过，见 [P29 验收表](docs/project/p29-acceptance.md)。P30 [模型与知识助手适配](docs/project/p30-model-adapter-guide.md)及[六类冻结评测工具](docs/project/p30-model-evaluation-guide.md)均已远端验收；历史 10 次冻结推理均未通过引用门。提示 0.5 已实现问题相关事实与生成约束，并修正本机推理模式问题；418 项回归和隔离安装通过，远端 CI 与新冻结模型评测待完成。模型质量和人工可用性仍未验收，下一项为完成同题模型对照及人工适用性评估。参见[小模型、XML、多模态与微调判断](docs/project/p30-model-suitability.md)。详见[完整接入、资产、磁盘与评测报告](docs/project/p30-upgrade-report-2026-10-05.md)。
+新增 [P29 独立诊断依赖](docs/project/p29-diagnostic-link-guide.md)：项目 0.9 由静态保护策略控制固定构建的独立只读诊断，绑定本次执行与便携审查；本地、隔离安装、独立 OpenBSW 现场与七 job 验收通过，见 [P29 验收表](docs/project/p29-acceptance.md)。P30 提示 0.5 由 `c60d8af` / [run `37646726266`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37646726266) 七 job 验收。qwen3.5 新冻结推理 11 次截断、1 次超时、0 次通过；qwen3-vl 对照未完成。模型语义和人工可用性仍未验收。参见[小模型、XML、多模态与微调判断](docs/project/p30-model-suitability.md)。

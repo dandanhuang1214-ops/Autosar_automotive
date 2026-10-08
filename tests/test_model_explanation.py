@@ -154,6 +154,16 @@ class ModelExplanationTests(unittest.TestCase):
                     self.assertNotIn("think", payload)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
+                    expected_limit = 4000 if version.endswith("0.5") else 160
+                    for branch in payload["format"]["anyOf"]:
+                        self.assertEqual(branch["properties"]["draft_explanation"]["maxLength"], expected_limit)
+                    # Validate the generation boundary separately from the unchanged
+                    # downstream semantic-unassessed contract.
+                    draft_schema = payload["format"]["anyOf"][0]["properties"]["draft_explanation"]
+                    validator = Draft202012Validator(draft_schema)
+                    self.assertTrue(validator.is_valid("中" * expected_limit))
+                    self.assertFalse(validator.is_valid("中" * (expected_limit + 1)))
+
 
 
 class FactRetrievalTests(unittest.TestCase):

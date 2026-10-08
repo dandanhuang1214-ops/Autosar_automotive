@@ -55,3 +55,11 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 [p30-evaluation-cohort-v2.json](../research/p30-evaluation-cohort-v2.json)包含五个新问题与两个明确标注的已见控制题：前后类型化值、诊断受影响对象、CAN ID 不匹配、诊断超时、生成来源缺失，加上负响应/历史替换控制。首次 gold 把 XML 数字文本写为 JSON 数字，冻结入口严格拒绝；核对原值为字符串后改正，模型尚未调用。此 gold 修正不用于修改解析器或放宽类型校验。
 
 七题共 11 项目标事实，全部进入 0.5 上下文。模型和提示固定后分别冻结两个已安装模型，分开保存 manifest 摘要，不下载新权重。先运行 qwen3.5 的项目/检索配对，再运行 qwen3-vl 的同题对照，避免同时加载干扰延迟。原样保留所有失败；自然语言和资料相关性仍需人工评价。
+
+## 冻结 v2 结果（2026-10-08）
+
+`qwen3.5:2b`：12 次配对生成（6 有效问题 × 项目/检索），11 次输出截断拒绝、1 次服务超时，0 次通过；12/12 归档离线复验通过，gold 覆盖 11/11。历史替换控制在推理前拒绝。
+
+`qwen3-vl:2b` 同一冻结清单有 11 份通过离线复验的归档：7 次请求超时、4 次 HTTP 400；第 12 份及 partial/summary 含空字节，原文件保留。没有有效完整 summary 或模型答复，不能与 qwen3.5 比通过率。模型适用性和资源限制见[适用性评估](p30-model-suitability.md)。P30 质量门未通过，阶段保持 implementing。
+
+人工验收的执行顺序和逐题记录见[人工语义与资料适用性验收](p30-human-review-guide.md)；当前均待独立审阅，不由代理填报通过。
