@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-08）
 
-当前主阶段 P30 implementing。提示 0.6 grammar、0.7 8K 预算和 0.8 qwen3-vl thinking-family 适配已分别由远端七 job 验收（`ff08e4d` / run `37713395967`、`04e5003` / run `37726246623`、`cb6294b` / run `37733947430`）。提示 0.9 修复点名检查的嵌套字段和阶段状态选择，实现提交 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job 全部 success。本地 421 tests（419 passed、2 环境跳过）、隔离安装后 12 个协议场景与归档重放通过。两模型两题配对中，qwen3-vl 结构化通过 1/2 并引用 3/3 目标值，其他三次生成因 4096-token 截断拒绝；四份归档离线复验通过。所有自然语言、工程语义与资料适用性仍 unassessed，P30 质量门未通过。下一项是冻结项目证据不同的题目做配对，并由独立审阅者评估已通过回答。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 将只询问整体与具名阶段状态的问题上下文从 24 条缩至 2 条；本地 422 tests（420 passed、2 环境跳过）、隔离安装后 12 个协议场景、静态检查及归档复验通过。v4 两模型配对中 qwen3-vl 结构化通过 2/2、各引用 2/2 gold；qwen3.5 通过 0/2（一次超时、一次 length 截断）；四个模型归档离线复验通过。v4 用于调试 0.10，属于开发回归，不是未见集；两条成功回答尚未人工审阅，语义及资料适用性仍 unassessed。0.10 实现提交及其远端 CI 待完成。下一步冻结未参与提示调试、使用不同证据的题集，并完成人工审阅。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1602,6 +1602,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 新冻结 v2 全部题目明确为已见回归，共六个项目模式问题、一个历史 preflight 控制。qwen3-vl 六题中三题 structured pass、三题因 4096-token length 截断拒绝；gold recall 通过项为 1.0。7/7 行（含历史控制）归档复验 passed。初次从宿主 Ollama 地址运行一题因 DNS blocked，该失败另存，没有计为模型拒绝；正式运行在原 backend 容器网络完成。
 - 一条 `diagnostic-affected-objects` 正式调用 25.7 秒、1129 prompt / 348 output tokens；schema 及两个 gold 引用通过。其中文解释没有经人工语义核对，仍为 unassessed。旧测试不是新未见评测，也不能替代人工 review。
 - 下一项：冻结一批未参与提示调试的具体工程问题，做 qwen3.5 与 qwen3-vl 完整配对并记录结束原因/token/耗时；完成独立人工语义和资料适用性记录。P30 仍 implementing。
+
+
+### P30：提示 0.10 阶段状态事实范围（2026-10-08）
+
+- 对只询问项目整体状态与具名阶段状态的问题，0.9 会把 24 条事实送入上下文；0.10 仅选 project `/status` 与该 stage 的 `/status`。旧提示版本重放策略保持，schema 与版本回归同步更新。
+- 开发 v4 使用两个不同的 P29 报告（integration、transmitter），每题两条 gold 状态。因题目用于开发 0.10，明确标记为已见开发回归。最终 qwen3-vl 两题均 stop、严格结构化通过且各引用 2/2 gold，耗时 61.1s/32.6s；qwen3.5 两题均失败（一次超时、一次 length 截断）。四个最终模型归档离线复验通过。状态回答正文尚未人工核验，资料适用性未测试。
+- 本地全量 422 tests（420 passed、2 环境跳过）；17 项模型专项、隔离 wheel 两项目、12 个 HTTP 协议场景与归档复验、Ruff、8-source mypy、57 schemas/76 bound/25 syntax-only、topology、pip check、compileall 均通过。实现提交与本轮远端 CI 待回填。
+- P30 保持 implementing。下一项冻结不同证据且不参与提示调试的问题集，做模型配对；同时独立审阅这两条状态回答，并记录语义准确性与人工可用性。不得将状态题的通过扩展为一般工程解释或资料适用性结论。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）

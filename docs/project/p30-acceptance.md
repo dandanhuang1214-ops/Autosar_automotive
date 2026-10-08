@@ -12,13 +12,19 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 未通过，继续 implementing | 早期六类冻结题与本轮 v3 开发配对均未达到质量门；最终 v3 仅 1/4 结构化任务通过，独立语义/资料适用性门未验收 |
+| 模型回答质量 | 未通过，继续 implementing | v4 / prompt 0.10 配对中 qwen3-vl 2/2 结构化通过，qwen3.5 0/2；回答语义与独立人工审阅仍 pending |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
 点名检查时上下文筛选原先漏掉嵌套 binding 值和明确点名的阶段状态。实现改为选择问题明确请求的嵌套字段/阶段状态，并将提示版本加入 schema；旧提示重放保持原预算和 thinking 行为。实现 `11361788108a8793d6b3808fe85ab506fa8e0b82` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job 全部 success：runtime-currency `113195398856`；core-contracts Windows `113195398938` / Ubuntu `113195399041`；controlled-rejections Windows `113197537909` / Ubuntu `113197537982`；runtime-evidence Windows `113197538027` / Ubuntu `113197538036`。
 
 新题 v3 复用 P29 已见归档，属于开发回归，不能作为未见工程集或独立 gold。最终提示 0.9 双模型、两题配对中，六项 gold 全部进入上下文；qwen3.5 0/2 结构化通过，qwen3-vl 1/2 通过并引用 3/3 gold，另三次调用因 4096-token length 截断被拒。4/4 实际调用归档离线复验 passed。自然语言语义与资料适用性仍 unassessed，P30 整体保持 implementing。
+
+## 提示 0.10 阶段状态上下文范围（2026-10-08）
+
+只问 overall/project 与具名阶段 status 时，0.9 会选入 24 条事实；0.10 将其约束为这两条目标事实。v4 使用 `integration` 和 `transmitter` 两个不同 P29 报告，是开发回归题；题目/证据不能当作独立 held-out 质量集。最终上下文 gold 覆盖 4/4，qwen3-vl 2/2 结构化通过且每题引用 2/2，qwen3.5 0/2（一次服务超时、一次 length 截断）。qwen3-vl 完整原始响应归档离线复验通过。该结果仅支持继续评估短状态汇总；自然语言、工程语义和独立审阅尚未验收。
+
+提示 0.10 本地实现检查：422 tests（420 passed、2 环境跳过）；17 项 P30 模型专项通过；隔离 wheel 两项目、12 项模型 HTTP 合成场景与归档复验通过；Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、topology、pip check、compileall 通过。提交和本轮远端 CI 待记录。
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 

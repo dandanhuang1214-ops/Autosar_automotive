@@ -32,3 +32,15 @@
 当前既有 v2 问题已见，不能再作为新未见集。qwen3-vl 原试验的 11 份归档可离线复验，均为服务 blocked；最后一份及 partial/summary 含空字节，保留原文件，不由前 11 份推断第 12 次结果。服务日志已定位 4000 字符 grammar 重复次数限制；提示 0.6 缩短生成上限，但两条开发调用仍超时。先定位延迟，再在新目录运行完整对照并固定新试验身份。
 
 人工结果留在本地 `output/`；公共进度只记录实际结论、样本数与限制，不发布资料原文或私有工程输入。缺少独立审阅时 P30 语义与资料适用性门继续 pending。
+
+
+## 当前可审阅的结构化通过样本（2026-10-08）
+
+提示 0.10 / qwen3-vl:2b 在 v4 的两道状态问题均结构化通过，回答正文尚未人工审阅。请先独立打开各自冻结报告，记录你认为应回答的 project status 与 ECUC stage status，再查看模型结果；不要把评测 gold 当作独立人工结论。
+
+| case | 证据报告 | 模型归档 | 清单摘要 |
+|---|---|---|---|
+| `integration-overall-stage-status` | `output/p29-diagnostic-validation/live-release/relocated/projects/integration/bundle/project-report.json` | `output/p30-continuation-audit/trial-v10-qwenvl/integration-overall-stage-status-project/` | `cf9c5540d5dd404e6b06fcc1f7635bf998368a73c01b9d5ca7d348f0dde8b88e` |
+| `transmitter-overall-stage-status` | `output/p29-diagnostic-validation/live-release/relocated/projects/transmitter/bundle/project-report.json` | `output/p30-continuation-audit/trial-v10-qwenvl/transmitter-overall-stage-status-project/` | `cf9c5540d5dd404e6b06fcc1f7635bf998368a73c01b9d5ca7d348f0dde8b88e` |
+
+每个归档目录包含冻结问题、所选事实、模型原始响应、结构化解释与离线复验。逐题填写“看回答前的独立预期”、回答覆盖、状态/类型保真、人工可用性与修改耗时；当前结论保持 `not-assessed`，此表不预填人工结果。此试验未查询手册，因此它不提供资料相关性或适用性证据。

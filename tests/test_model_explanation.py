@@ -153,7 +153,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -250,6 +250,17 @@ class FactRetrievalTests(unittest.TestCase):
         self.assertIn(other[1], selected)
         self.assertIn(other[2], selected)
         self.assertNotIn(other[0], selected)
+
+    def test_v10_scopes_status_only_questions_to_report_and_named_stage(self):
+        facts = [self.fact("/status", "passed", "project-report"),
+                 self.fact("/stages/ecuc/status", "passed", "project-report")]
+        facts += [self.fact(f"/checks/check-{i}/status", "failed") for i in range(30)]
+        question = "Give overall project status and ECUC stage status only."
+        selected = select_facts({"question": question, "facts": facts}, prompt_version="project-explanation-prompt-0.10")
+        self.assertEqual({fact["fact_id"] for fact in selected}, {fact["fact_id"] for fact in facts[:2]})
+
+        historical = select_facts({"question": question, "facts": facts}, prompt_version="project-explanation-prompt-0.9")
+        self.assertGreater(len(historical), len(selected))
 
     def test_context_budget_and_no_fabricated_facts(self):
         facts = [self.fact("/checks/impact/affected_objects/0", "x" * 13000), self.fact("/status", "failed", "project-report")]

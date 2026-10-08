@@ -1,0 +1,45 @@
+{
+  "cohort": "fresh-prompt-v4-distinct-p29-bundles",
+  "cases": [
+    {
+      "id": "integration-overall-stage-status",
+      "category": "acceptance-status",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/integration/bundle/project-report.json",
+      "question": "给出这份报告的 overall project status 和 ECUC stage status。只复述这两个状态字段，不解释原因。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "project-report",
+          "pointer": "/status",
+          "value": "passed"
+        },
+        {
+          "artifact_id": "project-report",
+          "pointer": "/stages/ecuc/status",
+          "value": "passed"
+        }
+      ],
+      "origin": "fresh-prompt-v4"
+    },
+    {
+      "id": "transmitter-overall-stage-status",
+      "category": "acceptance-status",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/transmitter/bundle/project-report.json",
+      "question": "给出这份报告的 overall project status 和 ECUC stage status。只复述这两个状态字段，不解释原因。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "project-report",
+          "pointer": "/status",
+          "value": "passed"
+        },
+        {
+          "artifact_id": "project-report",
+          "pointer": "/stages/ecuc/status",
+          "value": "passed"
+        }
+      ],
+      "origin": "fresh-prompt-v4"
+    }
+  ]
+}

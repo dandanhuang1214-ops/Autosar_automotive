@@ -93,3 +93,12 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 提示 0.9 修复这类嵌套/阶段字段选择，并把该版本加入模型输出 schema。以最终实现重冻后，两模型的目标事实覆盖均为 6/6。配对结果：qwen3.5 两题均因 `done_reason=length`、4096 输出 token 截断而拒绝；qwen3-vl 的诊断 backend 题同样截断拒绝，绑定数值题在 43.4 秒内 stop，1090 prompt / 372 output tokens，并引用 3/3 gold。四份最终归档全部离线复验通过。结构化成功只有一题，模型自然语言和工程语义仍未审；题目复用已见证据，不能代表 held-out 质量。
 
 因此 P30 仍 implementing。下一步冻结项目证据不同、且未参与本轮提示调试的问题集，先核对目标上下文覆盖后再做完整配对；同时由独立审阅者对唯一通过样本逐项审阅自然语言、证据边界和适用性。若没有独立审阅，语义门保持 pending。
+
+
+### 提示 0.10 阶段状态范围开发对照（2026-10-08）
+
+[v4 cohort](../research/p30-evaluation-cohort-v4.json)分别引用 P29 `integration` 与 `transmitter` 报告，问题要求 project 与 ECUC stage 的整体状态。该组用于开发 0.10 的阶段专属上下文筛选，证据不是独立 held-out 集；两模型清单摘要分别是 qwen3.5 `61d11e49286edf7ab6de7624c00c8706f79839f5a4e559aa65e9f4b671fb7356` 和 qwen3-vl `cf9c5540d5dd404e6b06fcc1f7635bf998368a73c01b9d5ca7d348f0dde8b88e`。实际冻结清单、服务输出和汇总仅在本机 `output/p30-continuation-audit/`。
+
+0.9 每题提供 24 条事实，qwen3.5 一次超时、一次截断，qwen3-vl 两次截断。0.10 改为每题只向模型提供 project status 与具名 stage status 两条事实。qwen3.5 仍 0/2（一次超时、一次截断）；qwen3-vl 在 61.1 秒与 32.6 秒完成，两次均 stop、引用 2/2 gold。两个 qwen3-vl 归档均离线复验 passed。结果说明精确缩小上下文帮助 qwen3-vl 完成简单状态任务，但同一修改没有让 qwen3.5 达到任务门。
+
+这两份答案的自然语言与可用性仍需独立审阅；不将结构化引用通过当作模型语义质量通过。后续题目应使用尚未调试过的工程证据，并先完成盲化语义 gold，再运行模型配对。
