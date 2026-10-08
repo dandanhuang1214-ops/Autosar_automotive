@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-08）
 
-当前主阶段 P30 implementing。提示 0.6 grammar 修正已由 `ff08e4d` / [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 七 job 验收。提示 0.7 的 8K 上下文与 token 上限门由 `04e5003` / [run `37726246623`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37726246623) 七 job 验收；本地419 tests（417通过、2项环境跳过），安装后12场景通过。已见问题的正式调用仍因输出长度拒绝，可离线复验。完整模型质量、独立人工语义/资料适用性评审未通过，不能宣称模型解释可用。下一项评估 8K 下不同模型的响应完成率与 token/延迟边界，随后冻结新问题并完成独立人工审核。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6 grammar 修正和 0.7 8K token 上限分别由 `ff08e4d` / [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 与 `04e5003` / [run `37726246623`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37726246623) 各七 job 验收。提示 0.8 按运行时核实的 qwen3-vl 家族关闭思考模式，已见样本结构化引用通过，prose 仍 unassessed；本地420 tests（418通过、2项环境跳过）和隔离安装12场景通过。0.8 的实现与远端验收待完成。完整模型质量、独立人工语义/资料适用性评审仍未通过。下一项为实现 0.8 并在新冻结问题上比较现有模型，再完成独立人工审核。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1585,3 +1585,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本机正式 adapter 以 8K prompt 返回 4096-token length 截断并拒绝；该受控失败的归档离线复验通过。已见问题的直接修改 payload 探针有一次 30.717s 的 292-token 完成结果，不能代替正式 adapter 重放或新冻结问题对照。
 - 本次记录属于 `[skip ci]` 文档状态回填，引用实现提交及其实际 run；新改运行代码时仍须该提交自己的 CI。
 - 下一项为 P30：先确定 8K 下响应结束、耗时和 token 计数在模型/问题间的稳定范围，再冻结新评测集；完成独立人工语义及资料适用性审阅。现有代理编写的 gold 不是独立人工验收。P30 仍 implementing。
+
+
+### P30：提示 0.8 的 qwen3-vl 思考模式适配（2026-10-08）
+
+- qwen3-vl 本机 identity families=[qwen3vl] 经运行时核对后，在提示 0.8 使用 think=false；qwen3.5 和提示 0.1–0.7 不变，失败/成功均保存实际 model-input、身份与服务输出。不是所有 thinking 模型共用一个强制开关。
+- 同一已见 qwen3-vl 问题的提示 0.7 默认调用用尽 4096 token、message.content 为空；提示 0.8 适配器调用约 25.7 秒结束，1129 prompt / 348 output tokens，结束原因为 stop。输出通过模型 schema、严格 fact_id/typed-value 校验，两个 gold 事实均被引用，正式归档离线复验通过。自然语言解释未经人工审核，prose 仍 unassessed；单个已见开发样本不是质量评估。
+- 新增模型家族策略和归档复验回归。当前本地全量 420 tests（418 passed、2 环境跳过），15 项 P30 模型定向通过；隔离安装 12 协议场景/归档复验通过；Ruff、54-source mypy、57 schemas/76 bound/25 syntax-only、topology、pip check、compileall 均通过。
+- 提示 0.8 的实现提交及自己的远端七作业验收待本轮提交后回填。下一步用冻结过的新问题，对 qwen3.5 与 qwen3-vl 在各自受支持调用模式下进行完整配对；再由独立人工记录语义正确性和资料适用性。P30 继续 implementing。

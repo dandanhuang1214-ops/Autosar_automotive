@@ -65,3 +65,11 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 人工验收的执行顺序和逐题记录见[人工语义与资料适用性验收](p30-human-review-guide.md)；当前均待独立审阅，不由代理填报通过。
 
 提示 0.7 绑定 8K / 4096-token 预算，已见问题正式 adapter 仍出现 `done_reason=length`，被拒绝且可离线复验。直接修改 payload 的一个请求虽完成，但不能视作该 adapter 门通过。下一轮保持每项记录响应终止原因、prompt/eval token 和时间；不将已见问题用于未见质量分。
+
+
+### P30：提示 0.8 的 qwen3-vl 思考模式适配（2026-10-08）
+
+- qwen3-vl 本机 identity families=[qwen3vl] 经运行时核对后，在提示 0.8 使用 think=false；qwen3.5 和提示 0.1–0.7 不变，失败/成功均保存实际 model-input、身份与服务输出。不是所有 thinking 模型共用一个强制开关。
+- 同一已见 qwen3-vl 问题的提示 0.7 默认调用用尽 4096 token、message.content 为空；提示 0.8 适配器调用约 25.7 秒结束，1129 prompt / 348 output tokens，结束原因为 stop。输出通过模型 schema、严格 fact_id/typed-value 校验，两个 gold 事实均被引用，正式归档离线复验通过。自然语言解释未经人工审核，prose 仍 unassessed；单个已见开发样本不是质量评估。
+- 新增模型家族策略和归档复验回归。当前本地全量 420 tests（418 passed、2 环境跳过），15 项 P30 模型定向通过；隔离安装 12 协议场景/归档复验通过；Ruff、54-source mypy、57 schemas/76 bound/25 syntax-only、topology、pip check、compileall 均通过。
+- 提示 0.8 的实现提交及自己的远端七作业验收待本轮提交后回填。下一步用冻结过的新问题，对 qwen3.5 与 qwen3-vl 在各自受支持调用模式下进行完整配对；再由独立人工记录语义正确性和资料适用性。P30 继续 implementing。
