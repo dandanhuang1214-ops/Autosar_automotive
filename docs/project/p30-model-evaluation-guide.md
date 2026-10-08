@@ -63,3 +63,5 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 `qwen3-vl:2b` 同一冻结清单有 11 份通过离线复验的归档：7 次请求超时、4 次 HTTP 400；第 12 份及 partial/summary 含空字节，原文件保留。没有有效完整 summary 或模型答复，不能与 qwen3.5 比通过率。模型适用性和资源限制见[适用性评估](p30-model-suitability.md)。P30 质量门未通过，阶段保持 implementing。
 
 人工验收的执行顺序和逐题记录见[人工语义与资料适用性验收](p30-human-review-guide.md)；当前均待独立审阅，不由代理填报通过。
+
+提示 0.7 绑定 8K / 4096-token 预算，已见问题正式 adapter 仍出现 `done_reason=length`，被拒绝且可离线复验。直接修改 payload 的一个请求虽完成，但不能视作该 adapter 门通过。下一轮保持每项记录响应终止原因、prompt/eval token 和时间；不将已见问题用于未见质量分。
