@@ -40,7 +40,7 @@ class StubEndpoint(Endpoint):
                       "manual_claims": [], "draft_explanation": "unverified draft", "suggestions": []}
             if self.mode == "wrong_value":
                 answer["project_claims"][0]["value"] = "passed"
-            value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)}, "done": True, "done_reason": "stop"}
+            value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)}, "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
         else:
             raise AssertionError(path)
         self.records.append({"path": path, "method": "POST" if payload is not None else "GET", "payload": payload,
@@ -153,8 +153,9 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertNotIn("think", payload)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith("0.7") else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
-                    expected_limit = 4000 if version.endswith("0.5") else 160
+                    expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
                         self.assertEqual(branch["properties"]["draft_explanation"]["maxLength"], expected_limit)
                     # Validate the generation boundary separately from the unchanged
@@ -163,6 +164,22 @@ class ModelExplanationTests(unittest.TestCase):
                     validator = Draft202012Validator(draft_schema)
                     self.assertTrue(validator.is_valid("中" * expected_limit))
                     self.assertFalse(validator.is_valid("中" * (expected_limit + 1)))
+
+    def test_v07_rejects_responses_that_overrun_recorded_context(self):
+        class OversizedEndpoint(StubEndpoint):
+            def request(self, path, payload=None):
+                response = super().request(path, payload)
+                if path == "/api/chat":
+                    response["prompt_eval_count"] = 5000
+                    response["eval_count"] = 4096
+                return response
+        with tempfile.TemporaryDirectory() as temporary:
+            report = self.report
+            result = explain(report, "为什么阻断？", Path(temporary) / "oversized", "fixture:1",
+                             _endpoint_factory=OversizedEndpoint)
+            self.assertEqual(result["status"], "refused")
+            self.assertEqual(result["reason"], "invalid_or_exceeded_context_budget")
+            self.assertIsNone(result["answer"])
 
 
 

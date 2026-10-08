@@ -18,9 +18,9 @@
 
 ## 当前总览（2026-10-08）
 
-提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装、真实开发验证和本次实现远端 CI 待回填，不能沿用 0.5 的 CI 作为本次验收。
+提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装通过（12 类协议场景及归档复验）；两条提示 0.6 的已见问题开发调用均超时、2/2 归档复验通过，无有效模型答复。本次实现 `ff08e4d58bacea55d2e6ea36b1e2e9d042ef55e3` 的 [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 七个作业全部 success，才计为实现验收。
 
-下一项仍为 P30：验收 0.6 的服务兼容性，恢复 120 秒内完整模型对照，随后按[人工验收表](p30-human-review-guide.md)完成独立语义/资料适用性审阅；质量门通过前不宣称模型解释可用。
+下一项仍为 P30：版本化 8K 上下文预算，记录服务生成 token 用量并 fail closed；检查长输入上下文溢出，再用新冻结集完成模型对照和独立人工语义/资料适用性审阅。
 
 当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由实现 `654cd8f` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收。P30 事实门、模型适配和评测工具分别由 `a82ee62` / run `37183484781`、`21a495e` / run `37264801076`、`8735bc3` / run `37419810449` 验收。提示 0.5 实现 `c60d8af` / [run `37646726266`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37646726266) 七 job 全部 success；418 项本地测试中 416 passed、2 环境跳过。qwen3.5 冻结 v2 12 次为 11 次截断拒绝、1 次超时、0 次结构化通过；12 份归档复验通过。qwen3-vl 对照有 11 份可复验归档（7 次超时、4 次 HTTP 400），末份及汇总损坏，无有效模型答复。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
@@ -1558,6 +1558,25 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 原 qwen3-vl 试验续查：11 份归档通过离线复验，7 次超时、4 次 HTTP 400；末份 explanation 及 partial/summary 含空字节，保留原件，不补造完整结果。
 - 恢复既有 Docker Desktop/Ollama/API/Qdrant；重放一条原始失败请求得到 HTTP 400，日志明确 `number of repetitions exceeds sane defaults`，对应 `char{0,4000}`。短探针仅返回截断的思考，HTTP 200 不算模型成功。
-- 提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装、真实开发验证和本次实现远端 CI 待回填，不能沿用 0.5 的 CI 作为本次验收。
+- 提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装通过（12 类协议场景及归档复验）；两条提示 0.6 的已见问题开发调用均超时、2/2 归档复验通过，无有效模型答复。本次实现 `ff08e4d58bacea55d2e6ea36b1e2e9d042ef55e3` 的 [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 七个作业全部 success，才计为实现验收。
 - 本地证据 `output/p30-continuation-audit/`；原始错误正文及日志均留本地。新增人工审阅记录表，未自动填报人工结论。
-- 下一项仍为 P30：验收 0.6 的服务兼容性，恢复 120 秒内完整模型对照，随后按[人工验收表](p30-human-review-guide.md)完成独立语义/资料适用性审阅；质量门通过前不宣称模型解释可用。
+- 下一项仍为 P30：版本化 8K 上下文预算，记录服务生成 token 用量并 fail closed；检查长输入上下文溢出，再用新冻结集完成模型对照和独立人工语义/资料适用性审阅。
+
+- 0.6 两条开发调用均服务超时，2/2 离线复验通过；是已见问题诊断，不是完整配对或新未见质量验收。下一步优先隔离提示处理、思考生成、排队与资源占用造成的延迟，再恢复完整模型对照。
+
+
+### P30：提示 0.6 上下文预算诊断与远端验收（2026-10-08）
+
+- 实现提交 `ff08e4d58bacea55d2e6ea36b1e2e9d042ef55e3` / [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 七个 job 全部 success：`runtime-currency` 113104267049、`core-contracts` Ubuntu 113104267211 / Windows 113104267319、`controlled-rejections` Ubuntu 113106404765 / Windows 113106404875、`runtime-evidence` Ubuntu 113106404772 / Windows 113106404867。
+- 新修复前后均保留 0.1–0.5 重放；隔离安装 12 个协议场景通过；418 项回归 416 通过、2 环境跳过。
+- 本机 16K 上下文两条调用分别 130.610s 与 131.339s 超时，2/2 归档复验通过。服务日志：输入 prompt 约 1128/2706 tokens，16K KV 缓存约 1792 MiB，仅 20/29 层卸载 GPU，触及客户端 120s 超时。已见问题的 8K 开发探针约 30.717s 完成（3460 prompt / 292 output tokens），两项目标引用通过 schema 与严格引用验证；不是完整 adapter 归档、未见评测或语义正确性认证。
+- 下一项实现提示 0.7：绑定 8192 context、4096 输出预算；读取 Ollama token 计数，缺失或超预算拒绝，并保留 0.5/0.6 历史负载。长上下文拒绝和双平台实现 CI 待验收。
+
+
+### P30：提示 0.7 上下文预算与 token 用量门（2026-10-08）
+
+- 新冻结提示 0.7 绑定 `num_ctx=8192` / `num_predict=4096`；0.5/0.6 的提示、16K payload 与历史复验保持。结构化生成输出上限为 160 字符；完成响应缺少整型 token 计数或 `prompt_eval_count + eval_count` 超上下文时拒绝。
+- 已见诊断问题在 standalone 修改 payload 探针中 8K 返回成功（30.717 秒、3460 prompt / 292 completion tokens，目标事实 2/2），但它没有完整 adapter 重放边界。正式 0.7 adapter 同问题调用 56.251 秒，输出到 4096 token 上限而被拒绝；归档 `verify-model-explanation` passed，保持实际模型 status=refused。两个过程证明 8K 请求能较快完成，也暴露生成长度受上下文/模型行为影响，不能宣称稳定质量。
+- 新增 token 上下文超限负例和版本化 payload 回归。本地全量 419 tests（417 passed、2 环境跳过）；14 项模型定向、Ruff、54-source 类型检查、57 schemas/76 bound/25 syntax-only examples、拓扑、pip check、compileall、安装后 12 协议场景与归档复验均通过。
+- 当前实现 commit 和自身 CI 待提交/远端验收；模型 v2 问题已见，语义/资料人工审核未完成。见[模型适用性评估](p30-model-suitability.md)和[人工验收表](p30-human-review-guide.md)。
+- 下一项仍为 P30：保留模型生成结束状态、输出 token 数及耗时诊断；确定 8K 下不同模型和问题类型能否在 120 秒内结构化完成，再建立新冻结集并完成独立人工语义/资料适用性审阅。质量门前不将解释结果用于工程判定。

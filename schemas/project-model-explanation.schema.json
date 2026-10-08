@@ -51,7 +51,7 @@
       ]
     },
     "prompt_version": {
-      "enum": ["project-explanation-prompt-0.1", "project-explanation-prompt-0.2", "project-explanation-prompt-0.3", "project-explanation-prompt-0.4", "project-explanation-prompt-0.5", "project-explanation-prompt-0.6"]
+      "enum": ["project-explanation-prompt-0.1", "project-explanation-prompt-0.2", "project-explanation-prompt-0.3", "project-explanation-prompt-0.4", "project-explanation-prompt-0.5", "project-explanation-prompt-0.6", "project-explanation-prompt-0.7"]
     },
     "input_sha256": {
       "type": "string",

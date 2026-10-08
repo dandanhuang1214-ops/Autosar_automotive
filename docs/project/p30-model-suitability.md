@@ -60,8 +60,23 @@ XML/ARXML 是文本。文件读取、命名空间、类型、跨文件 VALUE-REF
 
 ## 提示 0.6 服务兼容性修正（2026-10-08）
 
-提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装、真实开发验证和本次实现远端 CI 待回填，不能沿用 0.5 的 CI 作为本次验收。
+提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装通过（12 类协议场景及归档复验）；两条提示 0.6 的已见问题开发调用均超时、2/2 归档复验通过，无有效模型答复。本次实现 `ff08e4d58bacea55d2e6ea36b1e2e9d042ef55e3` 的 [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 仍在运行；不能沿用 0.5 的 CI 作为本次验收。
 
 本机服务日志证明 grammar 的 `char{0,4000}` 超出重复次数限制；这是服务兼容性阻塞，不能据此归因于模型的汽车领域能力。生成限制变小，独立引用/类型校验和语义 unassessed 边界不变。
 
 下一项仍为 P30：验收 0.6 的服务兼容性，恢复 120 秒内完整模型对照，随后按[人工验收表](p30-human-review-guide.md)完成独立语义/资料适用性审阅；质量门通过前不宣称模型解释可用。
+
+0.6 的两条开发调用为 `diagnostic-affected-objects` 和 `missing-generated-provenance`，均为已见问题；总耗时约 130.610 / 131.339 秒（包含复验等开销，HTTP 请求上限仍为 120 秒）。两次服务超时不是模型正确拒答，不构成新冻结质量评测。较短 schema 未消除整体延迟，下一步先隔离提示处理/思考生成/排队与资源占用，再确定可行的交互预算；不直接扩大超时或宣称模型可用。
+
+8K 诊断使用与 16K 试验相同的已见问题，修改 payload 后由既有 Ollama 返回约 30.717 秒；prompt_eval_count 为 3460、eval_count 为 292，两项目标事实均通过 schema 与事实引用校验。序列化 response 的摘要在 `output/p30-continuation-audit/context-8k-validation.json`。它是预算诊断，不是历史可重放 adapter 成功，不用于模型质量计分。
+
+
+### P30：提示 0.7 上下文预算与 token 用量门（2026-10-08）
+
+- 新冻结提示 0.7 绑定 `num_ctx=8192` / `num_predict=4096`；0.5/0.6 的提示、16K payload 与历史复验保持。结构化生成输出上限为 160 字符；完成响应缺少整型 token 计数或 `prompt_eval_count + eval_count` 超上下文时拒绝。
+- 已见诊断问题在 standalone 修改 payload 探针中 8K 返回成功（30.717 秒、3460 prompt / 292 completion tokens，目标事实 2/2），但它没有完整 adapter 重放边界。正式 0.7 adapter 同问题调用 56.251 秒，输出到 4096 token 上限而被拒绝；归档 `verify-model-explanation` passed，保持实际模型 status=refused。两个过程证明 8K 请求能较快完成，也暴露生成长度受上下文/模型行为影响，不能宣称稳定质量。
+- 新增 token 上下文超限负例和版本化 payload 回归。本地全量 419 tests（417 passed、2 环境跳过）；14 项模型定向、Ruff、54-source 类型检查、57 schemas/76 bound/25 syntax-only examples、拓扑、pip check、compileall、安装后 12 协议场景与归档复验均通过。
+- 当前实现 commit 和自身 CI 待提交/远端验收；模型 v2 问题已见，语义/资料人工审核未完成。见[模型适用性评估](p30-model-suitability.md)和[人工验收表](p30-human-review-guide.md)。
+- 下一项仍为 P30：保留模型生成结束状态、输出 token 数及耗时诊断；确定 8K 下不同模型和问题类型能否在 120 秒内结构化完成，再建立新冻结集并完成独立人工语义/资料适用性审阅。质量门前不将解释结果用于工程判定。
+
+8K 预算作为 0.7 版已接入正式适配器。对同一已见题，手工 request 试探返回 292 token，正式适配器再调用则生成达到 4096 上限、`done_reason=length`，56.251 秒拒绝。两次随机 ID 内容与校验链保持不同，属于同题诊断复验，不构成稳定重现的质量样本。受控拒绝归档可离线复验；继续保存原服务 raw response，后续应计量每题的 prompt/eval token 与终止原因。
