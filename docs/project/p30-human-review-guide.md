@@ -1,6 +1,6 @@
 # P30 人工语义与资料适用性验收
 
-2026-10-08。当前阶段 implementing；此文是待执行的验收表，不是人工验收结果。模型结构化输出尚未通过目标任务，服务错误、截断或损坏归档不参与语义正确率分母，必须另行报告。
+2026-10-08。当前阶段 implementing；此文是待执行的验收表，不是人工验收结果。部分简单状态回答已通过结构化引用门，但自然语言和实际可用性尚未通过独立审阅。服务错误、截断或损坏归档不参与语义正确率分母，必须另行报告。
 
 ## 执行顺序
 
@@ -27,7 +27,7 @@
 | 人工可用性 | 可直接用于审查 / 需修改 / 不可用；注明修改内容和耗时 |
 | 审阅意见与分歧处理 | 待填写，不由代理自动填 pass |
 
-## 当前恢复入口
+## 早期服务阻塞恢复记录
 
 当前既有 v2 问题已见，不能再作为新未见集。qwen3-vl 原试验的 11 份归档可离线复验，均为服务 blocked；最后一份及 partial/summary 含空字节，保留原文件，不由前 11 份推断第 12 次结果。服务日志已定位 4000 字符 grammar 重复次数限制；提示 0.6 缩短生成上限，但两条开发调用仍超时。先定位延迟，再在新目录运行完整对照并固定新试验身份。
 
@@ -44,3 +44,15 @@
 | `transmitter-overall-stage-status` | `output/p29-diagnostic-validation/live-release/relocated/projects/transmitter/bundle/project-report.json` | `output/p30-continuation-audit/trial-v10-qwenvl/transmitter-overall-stage-status-project/` | `cf9c5540d5dd404e6b06fcc1f7635bf998368a73c01b9d5ca7d348f0dde8b88e` |
 
 每个归档目录包含冻结问题、所选事实、模型原始响应、结构化解释与离线复验。逐题填写“看回答前的独立预期”、回答覆盖、状态/类型保真、人工可用性与修改耗时；当前结论保持 `not-assessed`，此表不预填人工结果。此试验未查询手册，因此它不提供资料相关性或适用性证据。
+
+
+## 不同证据 v5 审阅候选（2026-10-08）
+
+提示 0.10 / qwen3-vl 的 v5 样本使用新的 P29 报告。请先独立打开报告并写下两个状态字段，再阅读模型回答。`repeat` 结构化任务通过；`identity-mismatch` 虽 schema 与事实值合法，但只引用了两个目标事实之一，摘要把任务标记为未通过。模型答复没有人工审阅结论。
+
+| case | evidence report | qwen3-vl archive | manifest SHA-256 |
+|---|---|---|---|
+| `repeat-overall-stage-status` | `output/p29-diagnostic-validation/live-release/relocated/projects/repeat/bundle/project-report.json` | `output/p30-continuation-audit/trial-v5-qwenvl/trial/repeat-overall-stage-status-project/` | `31b26c62df09e9ec5ff3ad34b0110daf18b2e007c836a3b537157bfb1d439772` |
+| `identity-mismatch-overall-stage-status` | `output/p29-diagnostic-validation/live-release/relocated/projects/identity-mismatch/bundle/project-report.json` | `output/p30-continuation-audit/trial-v5-qwenvl/trial/identity-mismatch-overall-stage-status-project/` | `31b26c62df09e9ec5ff3ad34b0110daf18b2e007c836a3b537157bfb1d439772` |
+
+冻结 gold 是依据项目字段预先写入的代理标注，不代替审阅者独立判断。手册未被查询；此组只能评估报告状态摘要，不能提供资料适用性结论。

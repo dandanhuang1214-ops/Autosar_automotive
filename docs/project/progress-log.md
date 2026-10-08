@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-08）
 
-当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 将只询问整体与具名阶段状态的问题上下文从 24 条缩至 2 条；本地 422 tests（420 passed、2 环境跳过）、隔离安装后 12 个协议场景、静态检查及归档复验通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success。v4 两模型配对中 qwen3-vl 结构化通过 2/2、各引用 2/2 gold；qwen3.5 通过 0/2（一次超时、一次 length 截断）；四个模型归档离线复验通过。v4 用于调试 0.10，属于开发回归，不是未见集；两条成功回答尚未人工审阅，语义及资料适用性仍 unassessed。下一步冻结未参与提示调试、使用不同证据的题集，并完成人工审阅。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 将只询问整体与具名阶段状态的问题上下文从 24 条缩至 2 条；本地 422 tests（420 passed、2 环境跳过）、隔离安装后 12 个协议场景、静态检查及归档复验通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success。v4 开发回归中 qwen3-vl 2/2 通过、qwen3.5 0/2。新冻结的不同证据 v5 中，qwen3-vl 对 `repeat` 2/2 引用通过，对 `identity-mismatch` 仅引用 1/2；qwen3.5 一次超时、一次结构化拒绝。四份完成归档离线复验通过。v5 gold 是按冻结项目字段写入的代理标注，非独立人工 gold；所有自然语言和人工可用性仍未审。下一步由独立审阅者审阅 qwen3-vl 两条回答，再扩大模型用途判定。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1610,6 +1610,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 开发 v4 使用两个不同的 P29 报告（integration、transmitter），每题两条 gold 状态。因题目用于开发 0.10，明确标记为已见开发回归。最终 qwen3-vl 两题均 stop、严格结构化通过且各引用 2/2 gold，耗时 61.1s/32.6s；qwen3.5 两题均失败（一次超时、一次 length 截断）。四个最终模型归档离线复验通过。状态回答正文尚未人工核验，资料适用性未测试。
 - 本地全量 422 tests（420 passed、2 环境跳过）；17 项模型专项、隔离 wheel 两项目、12 个 HTTP 协议场景与归档复验、Ruff、8-source mypy、57 schemas/76 bound/25 syntax-only、topology、pip check、compileall 均通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success：`runtime-currency` 113293415542；`core-contracts` Windows 113293415264、Ubuntu 113293415630；`controlled-rejections` Ubuntu 113296212241、Windows 113296212339；`runtime-evidence` Windows 113296212256、Ubuntu 113296212372。该 run 是实现验收；本条文档回填不替代实现 CI。
 - P30 保持 implementing。下一项冻结不同证据且不参与提示调试的问题集，做模型配对；同时独立审阅这两条状态回答，并记录语义准确性与人工可用性。不得将状态题的通过扩展为一般工程解释或资料适用性结论。
+
+
+### P30：提示 0.10 不同证据状态题配对（2026-10-08）
+
+- 在提示 0.10 实现及 CI 验收后冻结 v5；使用此前未进入 P30 cohorts 的 `repeat` 与 `identity-mismatch` P29 报告。每题 gold 固定 overall 与 ECUC stage status 两个字段，两个模型各自冻结后才执行。该 gold 是依据报告字段预先编写的代理标注，不是独立人工 gold。
+- 清单摘要：qwen3.5 `763e4656252877a6a39afe7cbeee75afa46c4c07e86ffecc56870606a3b164ee`；qwen3-vl `31b26c62df09e9ec5ff3ad34b0110daf18b2e007c836a3b537157bfb1d439772`。qwen3.5：repeat 请求超时（135.8s，service unavailable），identity-mismatch 在 70.6s 被严格输出门拒绝；两题 context gold 均 2/2、引用 0/2。qwen3-vl：repeat 在 68.0s 正确引用 2/2 并通过结构化任务；identity-mismatch 在 19.5s 结构合法但只引用 1/2，任务未通过。四份完成的模型归档离线复验均 passed；两条回答语义仍 unassessed。
+- 开发中的第一次 qwen3.5 调用仅留下预检文件，未计入 cohort；原件保留，正式 retry 使用新输出目录。模型结果没有据此调整提示或选择策略。
+- P30 质量门仍 implementing。下一项由独立审阅者在查看答案前先写下两个报告的状态判断，再审阅 qwen3-vl 的两个自然语言回答、引用覆盖和可用性；没有独立 review 前，不把简单状态摘录扩展为一般解释能力。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）

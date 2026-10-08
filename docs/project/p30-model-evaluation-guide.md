@@ -102,3 +102,12 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 0.9 每题提供 24 条事实，qwen3.5 一次超时、一次截断，qwen3-vl 两次截断。0.10 改为每题只向模型提供 project status 与具名 stage status 两条事实。qwen3.5 仍 0/2（一次超时、一次截断）；qwen3-vl 在 61.1 秒与 32.6 秒完成，两次均 stop、引用 2/2 gold。两个 qwen3-vl 归档均离线复验 passed。结果说明精确缩小上下文帮助 qwen3-vl 完成简单状态任务，但同一修改没有让 qwen3.5 达到任务门。
 
 这两份答案的自然语言与可用性仍需独立审阅；不将结构化引用通过当作模型语义质量通过。后续题目应使用尚未调试过的工程证据，并先完成盲化语义 gold，再运行模型配对。
+
+
+### v5 不同证据状态题（2026-10-08）
+
+[v5 cohort](../research/p30-evaluation-cohort-v5.json) 在提示 0.10 实现和远端 CI 完成后冻结，使用此前 P30 cohorts 未出现的 `repeat`、`identity-mismatch` 报告。每题的两个 gold 是按报告字段预先写入的代理标注，不是独立人工 gold。qwen3.5 清单摘要 `763e4656252877a6a39afe7cbeee75afa46c4c07e86ffecc56870606a3b164ee`，qwen3-vl 清单摘要 `31b26c62df09e9ec5ff3ad34b0110daf18b2e007c836a3b537157bfb1d439772`；归档留在本机 `output/p30-continuation-audit/trial-v5-*`。
+
+qwen3.5 两题均未通过：一条 135.8 秒超时，另一条 70.6 秒输出被严格校验拒绝；两题各有 2/2 gold 进入上下文，但引用均为 0/2。qwen3-vl 对 repeat 用时 68.0 秒，引用 2/2 并通过结构化任务；对 identity-mismatch 用时 19.5 秒，输出符合 schema，但只引用 1/2 gold，任务未通过。所有四份完整调用归档均通过离线重放。通过只说明结构化与引用门满足；语言语义和可用性仍须独立 review。
+
+一次 qwen3.5 初始调用仅产生事实预检文件，没有模型响应；该不完整目录保留但未计入配对。正式调用在独立重试目录完成。
