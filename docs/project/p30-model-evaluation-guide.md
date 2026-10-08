@@ -82,3 +82,14 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 - 新冻结 v2 全部题目明确为已见回归，共六个项目模式问题、一个历史 preflight 控制。qwen3-vl 六题中三题 structured pass、三题因 4096-token length 截断拒绝；gold recall 通过项为 1.0。7/7 行（含历史控制）归档复验 passed。初次从宿主 Ollama 地址运行一题因 DNS blocked，该失败另存，没有计为模型拒绝；正式运行在原 backend 容器网络完成。
 - 一条 `diagnostic-affected-objects` 正式调用 25.7 秒、1129 prompt / 348 output tokens；schema 及两个 gold 引用通过。其中文解释没有经人工语义核对，仍为 unassessed。旧测试不是新未见评测，也不能替代人工 review。
 - 下一项：冻结一批未参与提示调试的具体工程问题，做 qwen3.5 与 qwen3-vl 完整配对并记录结束原因/token/耗时；完成独立人工语义和资料适用性记录。P30 仍 implementing。
+
+
+### 提示 0.9 事实选择开发对照（2026-10-08）
+
+新问题集 [v3](../research/p30-evaluation-cohort-v3.json) 要求诊断阶段状态、检查状态/reason 与嵌套 binding 数值。问题文本在调用前冻结；它们复用既有 P29 报告，因此属于新的提示开发题，不是未见工程证据或独立人工 gold。模型 digest 分别固定为 qwen3.5 `324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df` 与 qwen3-vl `0635d9d857d497aeadba3d7d27485746c50554446f9f6ec01ef39788221adbe8`。提示 0.8 与 0.9 的冻结清单和原始证据留在本地 `output/p30-continuation-audit/`。
+
+提示 0.8 初跑四条调用均未完成目标任务：三条被 4096-token length 截断；一条 qwen3-vl 响应在 schema 层通过，但没有引用任何 gold，不能计为正确。它揭示点名检查时会漏掉嵌套 `binding/request_id`、`response_id`、`did` 和明确询问的 `stages/ecuc/status`。
+
+提示 0.9 修复这类嵌套/阶段字段选择，并把该版本加入模型输出 schema。以最终实现重冻后，两模型的目标事实覆盖均为 6/6。配对结果：qwen3.5 两题均因 `done_reason=length`、4096 输出 token 截断而拒绝；qwen3-vl 的诊断 backend 题同样截断拒绝，绑定数值题在 43.4 秒内 stop，1090 prompt / 372 output tokens，并引用 3/3 gold。四份最终归档全部离线复验通过。结构化成功只有一题，模型自然语言和工程语义仍未审；题目复用已见证据，不能代表 held-out 质量。
+
+因此 P30 仍 implementing。下一步冻结项目证据不同、且未参与本轮提示调试的问题集，先核对目标上下文覆盖后再做完整配对；同时由独立审阅者对唯一通过样本逐项审阅自然语言、证据边界和适用性。若没有独立审阅，语义门保持 pending。

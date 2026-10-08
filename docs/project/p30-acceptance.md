@@ -12,7 +12,13 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 未通过，继续 implementing | 六类新题已执行；5 题 × 2 模式共 10 次推理全部拒绝，历史替换在推理前拒绝；语义/人工门未验收 |
+| 模型回答质量 | 未通过，继续 implementing | 早期六类冻结题与本轮 v3 开发配对均未达到质量门；最终 v3 仅 1/4 结构化任务通过，独立语义/资料适用性门未验收 |
+
+## 提示 0.9 局部事实选择修正（2026-10-08）
+
+点名检查时上下文筛选原先漏掉嵌套 binding 值和明确点名的阶段状态。实现改为选择问题明确请求的嵌套字段/阶段状态，并将提示版本加入 schema；旧提示重放保持原预算和 thinking 行为。完整实现、测试、隔离安装、提交和 CI 待本轮回填。
+
+新题 v3 复用 P29 已见归档，属于开发回归，不能作为未见工程集或独立 gold。最终提示 0.9 双模型、两题配对中，六项 gold 全部进入上下文；qwen3.5 0/2 结构化通过，qwen3-vl 1/2 通过并引用 3/3 gold，另三次调用因 4096-token length 截断被拒。4/4 实际调用归档离线复验 passed。自然语言语义与资料适用性仍 unassessed，P30 整体保持 implementing。
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 

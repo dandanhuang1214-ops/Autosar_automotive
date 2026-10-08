@@ -153,7 +153,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -232,6 +232,24 @@ class FactRetrievalTests(unittest.TestCase):
                   for side, value in (("before", 16), ("after", 24))]
         selected = select_facts({"question": "WIDTH 变更前和变更后的数值？", "facts": facts + values}, 2)
         self.assertEqual({f["fact_id"] for f in selected}, {f["fact_id"] for f in values})
+
+    def test_v09_includes_requested_nested_binding_fields_and_named_stage_status(self):
+        binding = [self.fact(f"/checks/diagnostic.read-version/binding/{field}", value)
+                   for field, value in (("request_id", 42), ("response_id", 240), ("did", 52993))]
+        other = [self.fact("/checks/other/status", "failed"),
+                 self.fact("/checks/diagnostic.read-version/status", "blocked"),
+                 self.fact("/checks/diagnostic.read-version/reason", "diagnostic_backend_mismatch")]
+        question = "diagnostic.read-version 的 request_id、response_id 和 DID 是什么？"
+        selected = select_facts({"question": question, "facts": binding + other})
+        self.assertEqual({fact["pointer"] for fact in selected}, {fact["pointer"] for fact in binding})
+
+        stage = self.fact("/stages/ecuc/status", "blocked", "project-report")
+        stage_question = "ECUC 阶段状态是什么，diagnostic.read-version 的状态和 reason 是什么？"
+        selected = select_facts({"question": stage_question, "facts": [stage, *other]})
+        self.assertIn(stage, selected)
+        self.assertIn(other[1], selected)
+        self.assertIn(other[2], selected)
+        self.assertNotIn(other[0], selected)
 
     def test_context_budget_and_no_fabricated_facts(self):
         facts = [self.fact("/checks/impact/affected_objects/0", "x" * 13000), self.fact("/status", "failed", "project-report")]

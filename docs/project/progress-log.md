@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-08）
 
-当前主阶段 P30 implementing。提示 0.6 grammar 修正和 0.7 8K token 上限分别由 `ff08e4d` / [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 与 `04e5003` / [run `37726246623`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37726246623) 各七 job 验收。提示 0.8 按运行时核实的 qwen3-vl 家族关闭思考模式，已见样本结构化引用通过，prose 仍 unassessed；本地420 tests（418通过、2项环境跳过）和隔离安装12场景通过。0.8 的实现与远端验收待完成。完整模型质量、独立人工语义/资料适用性评审仍未通过。下一项为实现 0.8 并在新冻结问题上比较现有模型，再完成独立人工审核。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6 grammar、0.7 8K 预算和 0.8 qwen3-vl thinking-family 适配已分别由远端七 job 验收（`ff08e4d` / run `37713395967`、`04e5003` / run `37726246623`、`cb6294b` / run `37733947430`）。本轮提示 0.9 修复点名检查的嵌套字段和阶段状态选择；最终本地 421 tests（419 passed、2 环境跳过）、隔离安装后 12 个协议场景与归档重放通过。两模型两题配对中，qwen3-vl 结构化通过 1/2 并引用 3/3 目标值，其他三次生成因 4096-token 截断拒绝；四份归档离线复验通过。0.9 远端 CI 待本轮提交触发。所有自然语言、工程语义与资料适用性仍 unassessed，P30 质量门未通过。下一项是冻结项目证据不同的题目做配对，并由独立审阅者评估已通过回答。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1602,3 +1602,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 新冻结 v2 全部题目明确为已见回归，共六个项目模式问题、一个历史 preflight 控制。qwen3-vl 六题中三题 structured pass、三题因 4096-token length 截断拒绝；gold recall 通过项为 1.0。7/7 行（含历史控制）归档复验 passed。初次从宿主 Ollama 地址运行一题因 DNS blocked，该失败另存，没有计为模型拒绝；正式运行在原 backend 容器网络完成。
 - 一条 `diagnostic-affected-objects` 正式调用 25.7 秒、1129 prompt / 348 output tokens；schema 及两个 gold 引用通过。其中文解释没有经人工语义核对，仍为 unassessed。旧测试不是新未见评测，也不能替代人工 review。
 - 下一项：冻结一批未参与提示调试的具体工程问题，做 qwen3.5 与 qwen3-vl 完整配对并记录结束原因/token/耗时；完成独立人工语义和资料适用性记录。P30 仍 implementing。
+
+
+### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）
+
+- 复查提示 0.8 新题调用发现：点名检查时只保留检查直接字段，漏掉问题明确询问的 `binding/request_id`、`response_id`、`did` 和 `/stages/ecuc/status`。提示 0.9 将精确请求的嵌套字段与阶段状态加入选择器，同时保留 0.1–0.8 的历史版本逻辑，并更新模型解释 schema 版本枚举。
+- 冻结 [v3 cohort](../research/p30-evaluation-cohort-v3.json)：两道新问题、复用既有 P29 项目报告。明确视为提示开发回归，而非独立人工 gold 或未见工程证据。最终 qwen3.5 清单摘要 `a98cb1bc33e2523d85d6fb309709ddf1b324e7efa335c7d7f23c186d683ffa9f`；qwen3-vl 清单摘要 `19b8384b95af8304ad05dfce143c8ddea95d973ef985a21e7b55ac45a4b56a1c`。模型身份/digest 固定，原始试验留本地 `output/p30-continuation-audit/`。
+- 最终提示 0.9 两模型各两题的 gold 覆盖为 6/6。qwen3.5 两题均以 `done_reason=length`、4096 输出 token 截断拒绝，耗时约 76.2/74.9 秒；qwen3-vl backend 状态题同因截断拒绝（57.0 秒），绑定数值题在 43.4 秒 stop，1090 prompt / 372 output tokens，结构化引用 3/3 正确。4/4 实际调用离线归档验证 passed。自然语言语义、因果、资料适用性仍未人工评估。
+- 提示 0.8 的先前四调用未覆盖所有目标字段；其中一条 schema 通过但 gold 引用 0/3，不能算任务通过。新结果只和最终 0.9 同批计分。
+- 全量 421 tests（419 passed、2 环境跳过）；16 项模型专项通过。隔离 wheel 安装后两工程事实门、12 项模型 HTTP 合成协议、安装归档重放通过。Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、CI topology、pip check、compileall 通过。
+- 实现及运行代码已本地通过；本条进度、overview、路线与验收状态同步回填，远端 CI 尚待本次实现提交完成并记录。
+- 下一项：在项目证据不同的冻结问题上重复配对，且由独立审阅者逐项审核唯一通过回答的自然语言、证据边界及资料适用性；未审前 P30 模型质量仍未通过。

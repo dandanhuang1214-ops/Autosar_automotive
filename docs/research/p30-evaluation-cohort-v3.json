@@ -1,0 +1,55 @@
+{
+  "cohort": "fresh-prompt-v3-existing-p29-evidence",
+  "cases": [
+    {
+      "id": "blocked-diagnostic-backend",
+      "category": "diagnostic-readiness",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/backend-blocked/bundle/project-report.json",
+      "question": "这份验收报告中，ECUC 阶段整体状态是什么？diagnostic.read-version 检查记录的状态和 reason 分别是什么？只复述报告字段，不推断 ECU 故障。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/status",
+          "value": "blocked"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/reason",
+          "value": "diagnostic_backend_mismatch"
+        },
+        {
+          "artifact_id": "project-report",
+          "pointer": "/stages/ecuc/status",
+          "value": "blocked"
+        }
+      ],
+      "origin": "fresh-prompt-v3"
+    },
+    {
+      "id": "diagnostic-binding-identifiers",
+      "category": "diagnostic-configuration",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/wrong-response-id/bundle/project-report.json",
+      "question": "报告中 diagnostic.read-version 绑定的 request_id、response_id 和 DID 的原始值各是什么？保持数值类型，只给这三个字段，不把配置值解释为总线实测结果。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/binding/request_id",
+          "value": 42
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/binding/response_id",
+          "value": 240
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/diagnostic.read-version/binding/did",
+          "value": 52993
+        }
+      ],
+      "origin": "fresh-prompt-v3"
+    }
+  ]
+}
