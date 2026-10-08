@@ -18,11 +18,7 @@
 
 ## 当前总览（2026-10-08）
 
-提示 0.6 已实现：针对本机 grammar 重复次数限制，将生成草稿上限从 4000 收紧至 160 字符；0.1–0.5 重放保持。418 项回归（416 passed、2 环境跳过）、13 项模型测试、schema/类型/拓扑检查通过；11 份既有 0.5 真实归档修改后复验通过。隔离安装通过（12 类协议场景及归档复验）；两条提示 0.6 的已见问题开发调用均超时、2/2 归档复验通过，无有效模型答复。本次实现 `ff08e4d58bacea55d2e6ea36b1e2e9d042ef55e3` 的 [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 七个作业全部 success，才计为实现验收。
-
-下一项仍为 P30：版本化 8K 上下文预算，记录服务生成 token 用量并 fail closed；检查长输入上下文溢出，再用新冻结集完成模型对照和独立人工语义/资料适用性审阅。
-
-当前下一主实现阶段：`P30 — 基于项目证据的本地模型解释（implementing）`。P26–P28 的受限 ECUC 静态检查、声明验收和精确对象保护已 remote-accepted。P29 CAN 关联门由 `b2da147` / run `37091771686` 验收；独立诊断依赖由实现 `654cd8f` / [run `37166161292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37166161292) 七 job 全部 success 验收。P30 事实门、模型适配和评测工具分别由 `a82ee62` / run `37183484781`、`21a495e` / run `37264801076`、`8735bc3` / run `37419810449` 验收。提示 0.5 实现 `c60d8af` / [run `37646726266`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37646726266) 七 job 全部 success；418 项本地测试中 416 passed、2 环境跳过。qwen3.5 冻结 v2 12 次为 11 次截断拒绝、1 次超时、0 次结构化通过；12 份归档复验通过。qwen3-vl 对照有 11 份可复验归档（7 次超时、4 次 HTTP 400），末份及汇总损坏，无有效模型答复。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6 grammar 修正已由 `ff08e4d` / [run `37713395967`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37713395967) 七 job 验收。提示 0.7 的 8K 上下文与 token 上限门由 `04e5003` / [run `37726246623`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37726246623) 七 job 验收；本地419 tests（417通过、2项环境跳过），安装后12场景通过。已见问题的正式调用仍因输出长度拒绝，可离线复验。完整模型质量、独立人工语义/资料适用性评审未通过，不能宣称模型解释可用。下一项评估 8K 下不同模型的响应完成率与 token/延迟边界，随后冻结新问题并完成独立人工审核。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
