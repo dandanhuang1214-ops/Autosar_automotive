@@ -32,6 +32,12 @@ v5 在实现/CI 完成后冻结，复用未在 P30 先前 cohorts 出现的 `rep
 
 2026-10-09 人工复核：用户对 qwen3-vl 两条状态文本逐题核对后确认内容均正确。此结论覆盖项目状态回答内容，不等价于引用门通过；identity-mismatch 的结构化 claims 仍缺项目 `/status` 事实 ID。一般工程解释、资料适用性和整体可用性未由这两题证明。
 
+## 提示 0.11 引用完整性修正（2026-10-09）
+
+0.11 将整体 + 具名阶段状态范围明确为两个必需的结构化 claim，JSON schema 限制至少两条，独立校验进一步要求完整匹配两条目标 fact ID。旧版重放保持。全量 423 tests（421 passed、2 环境跳过），18 项模型专项；Ruff、单文件 mypy、57 schemas/76 bound/25 syntax-only、topology、compileall、隔离 wheel 两项目与 12 个合成 HTTP 场景、2 份模型归档重放通过。wheel SHA-256：`4d754e66317837bb2587da56c944622c141cbaf19f4ca1fc18811344cc46d841`。
+
+v5 已见证据仅作开发回归：qwen3-vl identity-mismatch 现在引用 2/2、21.5 秒通过；repeat length 截断拒绝。qwen3.5 两题均 length 截断拒绝。四份本轮生成的归档均离线复验 passed。实现提交和远端 CI 待记录；v5 不作为新版本独立验收，模型语义与适用性范围仍有限。
+
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 
 后续状态回填固定实现 SHA 和真实 run/jobs，不把文档状态提交当实现验证。P25 人工验收、物理 ECU、商业生成边界保持。

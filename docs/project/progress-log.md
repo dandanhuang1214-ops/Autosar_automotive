@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-09）
 
-当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 把状态类问题的上下文从 24 条缩至 2 条；本地 422 tests、隔离安装及静态检查通过，实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success。v5 不同证据配对中，qwen3-vl 一题完整引用、另一题少引一项；qwen3.5 一次超时、一次结构化拒绝，四份完成归档离线复验通过。2026-10-09 用户独立核对 qwen3-vl 两条自然语言状态答案，确认两题内容均正确；但 `identity-mismatch` 结构化 claims 仍缺一个状态引用，因此自动任务门未通过。一般工程解释和资料适用性仍未评估。下一项是修复状态类回答“正文正确但结构化引用不完整”的一致性，同时保留严格拒绝；在新的证据集上复验，并继续跟踪 qwen3.5 超时/拒绝。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.10 均已通过远端七 job；提示 0.10 实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job success。用户于 2026-10-09 确认 v5/qwen3-vl 两条状态正文都正确；其中 `identity-mismatch` 的结构化 claims 仍缺一个引用。提示 0.11 已增加窄范围完整引用约束和缺项拒绝；本地 423 tests（421 passed、2 环境跳过）、隔离安装及静态检查通过，实现远端 CI 待验证。开发回归中 qwen3-vl `identity-mismatch` 现引用 2/2 并通过，`repeat` 因 length 截断拒绝；qwen3.5 两题均因 length 拒绝。四份归档离线复验通过。v5 已用于开发和人工审阅，不是 held-out；一般工程解释和资料适用性仍未验收。下一步完成 .11 实现 CI，再在未用于调试的新证据上冻结验证，并评估 length 截断的模型稳定性。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1620,6 +1620,15 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - P30 质量门仍 implementing。下一项由独立审阅者在查看答案前先写下两个报告的状态判断，再审阅 qwen3-vl 的两个自然语言回答、引用覆盖和可用性；没有独立 review 前，不把简单状态摘录扩展为一般解释能力。
 
 - 2026-10-09：用户独立核对了上述 qwen3-vl 两条 v5 状态回答，并确认两题文本内容均正确。该人工复核仅覆盖所问 overall/ECUC status 的内容准确性；资料适用性和更广的解释可用性未评估。`identity-mismatch` 的 prose 虽正确，结构化 `project_claims` 仍缺 `/status` 引用，自动结构化任务仍失败。下一项修复同一事实在正文和 claims 之间的完整性，并用新证据验证；qwen3.5 的超时和无效输出仍需另行跟踪。
+
+
+### P30：提示 0.11 状态引用完整性（2026-10-09）
+
+- 根因已从原始归档确认：qwen3-vl 的 `identity-mismatch` 正文写出两个正确状态，但 `project_claims` 只引用 `/stages/ecuc/status`。旧 schema 只要求 claims 至少一条，校验器验证每条引用存在且值未改，没有检查状态题中两项被问事实是否都被引用。
+- 提示 0.11 在“整体项目状态 + 具名阶段状态”窄场景中要求两个 claim；动态 JSON schema 将最少条数设为 2，运行时校验要求 claim ID 集合精确覆盖两个目标事实。缺项或误报 unassessed 会拒绝；提示 0.1–0.10 的重放逻辑不变。
+- 全量 423 tests（421 passed、2 环境跳过）；18 项模型专项通过。Ruff、单文件 mypy、57 schemas/76 bound/25 syntax-only、CI topology、compileall、diff check 通过；隔离 wheel 安装后两工程、12 合成模型协议场景、2 旧模型归档重放通过，wheel SHA-256 `4d754e66317837bb2587da56c944622c141cbaf19f4ca1fc18811344cc46d841`。
+- 使用已见 v5 做提示开发回归（不是独立评测）：qwen3-vl 的 `identity-mismatch` 用时 21.5s、引用 2/2 并通过；`repeat` 用时 71.4s、输出到 4096 token 上限而拒绝。qwen3.5 两题分别约 104.3s/72.1s，均因 length 截断拒绝。四份生成归档离线复验通过。缺引用问题在一个场景改善，但模型输出稳定性仍不足。
+- 实现提交及远端 CI 尚待记录。下一步验收 .11 双平台 CI，在不参与调试的新证据上冻结状态题；继续定位输出截断，不放松引用校验。P30 一般解释、资料适用性和整体模型用途仍未验收。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）

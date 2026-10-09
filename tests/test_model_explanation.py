@@ -13,7 +13,8 @@ from referencing import Registry, Resource
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
 from automotive_workbench.model_explanation import (
-    PROMPTS, constrained_answer_schema, explain, quote_options, select_facts,
+    PROMPTS, constrained_answer_schema, explain, quote_options,
+    required_stage_status_fact_ids, select_facts,
     validate_draft, verify_explanation,
 )
 from automotive_workbench.project_workflow import run_project
@@ -153,7 +154,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -261,6 +262,31 @@ class FactRetrievalTests(unittest.TestCase):
 
         historical = select_facts({"question": question, "facts": facts}, prompt_version="project-explanation-prompt-0.9")
         self.assertGreater(len(historical), len(selected))
+
+    def test_v11_requires_complete_claims_for_overall_and_stage_status(self):
+        question = "Give overall project status and ECUC stage status only."
+        facts = [self.fact("/status", "unassessed", "project-report"),
+                 self.fact("/stages/ecuc/status", "unassessed", "project-report")]
+        required = required_stage_status_fact_ids(question, facts)
+        self.assertEqual(required, {fact["fact_id"] for fact in facts})
+        self.assertIsNone(required_stage_status_fact_ids(question, facts,
+                                                         prompt_version="project-explanation-prompt-0.10"))
+
+        context = {"request_id": "request", "facts": facts, "manuals": []}
+        answer = {"request_id": "request", "status": "selected",
+                  "project_claims": [{"fact_id": facts[1]["fact_id"], "value": "unassessed"}],
+                  "manual_claims": [],
+                  "draft_explanation": "Both statuses are unassessed.", "suggestions": []}
+        with self.assertRaisesRegex(ValueError, "required_project_claims_incomplete"):
+            validate_draft(answer, context, required_project_fact_ids=required)
+
+        answer["project_claims"] = [{"fact_id": fact["fact_id"], "value": fact["value"]} for fact in facts]
+        validated = validate_draft(answer, context, required_project_fact_ids=required)
+        self.assertEqual(len(validated["project_facts"]), 2)
+
+        schema = constrained_answer_schema("request", facts, [], minimum_project_claims=2, require_selected=True)
+        self.assertEqual(len(schema["anyOf"]), 1)
+        self.assertEqual(schema["anyOf"][0]["properties"]["project_claims"]["minItems"], 2)
 
     def test_context_budget_and_no_fabricated_facts(self):
         facts = [self.fact("/checks/impact/affected_objects/0", "x" * 13000), self.fact("/status", "failed", "project-report")]
