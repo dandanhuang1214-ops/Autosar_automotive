@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-08）
+## 当前总览（2026-10-09）
 
-当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 将只询问整体与具名阶段状态的问题上下文从 24 条缩至 2 条；本地 422 tests（420 passed、2 环境跳过）、隔离安装后 12 个协议场景、静态检查及归档复验通过。实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success。v4 开发回归中 qwen3-vl 2/2 通过、qwen3.5 0/2。新冻结的不同证据 v5 中，qwen3-vl 对 `repeat` 2/2 引用通过，对 `identity-mismatch` 仅引用 1/2；qwen3.5 一次超时、一次结构化拒绝。四份完成归档离线复验通过。v5 gold 是按冻结项目字段写入的代理标注，非独立人工 gold；所有自然语言和人工可用性仍未审。下一步由独立审阅者审阅 qwen3-vl 两条回答，再扩大模型用途判定。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.9 已分别通过远端七 job；提示 0.9 实现 `1136178` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job success。提示 0.10 把状态类问题的上下文从 24 条缩至 2 条；本地 422 tests、隔离安装及静态检查通过，实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job 全部 success。v5 不同证据配对中，qwen3-vl 一题完整引用、另一题少引一项；qwen3.5 一次超时、一次结构化拒绝，四份完成归档离线复验通过。2026-10-09 用户独立核对 qwen3-vl 两条自然语言状态答案，确认两题内容均正确；但 `identity-mismatch` 结构化 claims 仍缺一个状态引用，因此自动任务门未通过。一般工程解释和资料适用性仍未评估。下一项是修复状态类回答“正文正确但结构化引用不完整”的一致性，同时保留严格拒绝；在新的证据集上复验，并继续跟踪 qwen3.5 超时/拒绝。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1618,6 +1618,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 清单摘要：qwen3.5 `763e4656252877a6a39afe7cbeee75afa46c4c07e86ffecc56870606a3b164ee`；qwen3-vl `31b26c62df09e9ec5ff3ad34b0110daf18b2e007c836a3b537157bfb1d439772`。qwen3.5：repeat 请求超时（135.8s，service unavailable），identity-mismatch 在 70.6s 被严格输出门拒绝；两题 context gold 均 2/2、引用 0/2。qwen3-vl：repeat 在 68.0s 正确引用 2/2 并通过结构化任务；identity-mismatch 在 19.5s 结构合法但只引用 1/2，任务未通过。四份完成的模型归档离线复验均 passed；两条回答语义仍 unassessed。
 - 开发中的第一次 qwen3.5 调用仅留下预检文件，未计入 cohort；原件保留，正式 retry 使用新输出目录。模型结果没有据此调整提示或选择策略。
 - P30 质量门仍 implementing。下一项由独立审阅者在查看答案前先写下两个报告的状态判断，再审阅 qwen3-vl 的两个自然语言回答、引用覆盖和可用性；没有独立 review 前，不把简单状态摘录扩展为一般解释能力。
+
+- 2026-10-09：用户独立核对了上述 qwen3-vl 两条 v5 状态回答，并确认两题文本内容均正确。该人工复核仅覆盖所问 overall/ECUC status 的内容准确性；资料适用性和更广的解释可用性未评估。`identity-mismatch` 的 prose 虽正确，结构化 `project_claims` 仍缺 `/status` 引用，自动结构化任务仍失败。下一项修复同一事实在正文和 claims 之间的完整性，并用新证据验证；qwen3.5 的超时和无效输出仍需另行跟踪。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）

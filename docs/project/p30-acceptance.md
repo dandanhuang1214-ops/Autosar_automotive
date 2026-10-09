@@ -12,7 +12,7 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 未通过，继续 implementing | v5 不同证据配对中 qwen3-vl 1/2 完成严格任务、qwen3.5 0/2；回答语义与独立人工审阅仍 pending |
+| 模型回答质量 | 未通过，继续 implementing | 用户人工核对 qwen3-vl 两条状态文本均正确；其中一条结构化引用不完整，qwen3.5 0/2，其他语义与资料适用性仍未验收 |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
@@ -29,6 +29,8 @@
 ## 提示 0.10 不同证据配对（2026-10-08）
 
 v5 在实现/CI 完成后冻结，复用未在 P30 先前 cohorts 出现的 `repeat`、`identity-mismatch` 报告。代理 gold 按报告中两个状态字段预先编写；不等于独立人工 gold。qwen3.5 两题均未结构化通过：repeat 135.8s 超时，identity-mismatch 70.6s 被拒；上下文均覆盖 2/2，但 gold 引用 0/2。qwen3-vl 的 repeat 题 68.0s 通过并引用 2/2；identity-mismatch 19.5s 结构化输出通过但只引用 1/2，故任务未通过。四份最终调用归档离线复验 passed；语义与人工可用性仍 pending。
+
+2026-10-09 人工复核：用户对 qwen3-vl 两条状态文本逐题核对后确认内容均正确。此结论覆盖项目状态回答内容，不等价于引用门通过；identity-mismatch 的结构化 claims 仍缺项目 `/status` 事实 ID。一般工程解释、资料适用性和整体可用性未由这两题证明。
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 

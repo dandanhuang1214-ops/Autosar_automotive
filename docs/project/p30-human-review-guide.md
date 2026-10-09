@@ -56,3 +56,7 @@
 | `identity-mismatch-overall-stage-status` | `output/p29-diagnostic-validation/live-release/relocated/projects/identity-mismatch/bundle/project-report.json` | `output/p30-continuation-audit/trial-v5-qwenvl/trial/identity-mismatch-overall-stage-status-project/` | `31b26c62df09e9ec5ff3ad34b0110daf18b2e007c836a3b537157bfb1d439772` |
 
 冻结 gold 是依据项目字段预先写入的代理标注，不代替审阅者独立判断。手册未被查询；此组只能评估报告状态摘要，不能提供资料适用性结论。
+
+### 人工复核记录（2026-10-09）
+
+用户逐题对照来源报告后确认两条 qwen3-vl 自然语言状态答案内容均正确。`repeat` 文本列出整体及 ECUC 状态；`identity-mismatch` 文本也列出两个状态，但其结构化 claims 仅引用 ECUC stage status，漏掉 project status，因此自动完整引用门未通过。此记录只确认状态内容，不评估手册适用性或更广工程解释能力。

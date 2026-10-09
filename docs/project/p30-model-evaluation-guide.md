@@ -111,3 +111,5 @@ PYTHONPATH=src .venv/bin/python scripts/assess_model_explanation.py --root . run
 qwen3.5 两题均未通过：一条 135.8 秒超时，另一条 70.6 秒输出被严格校验拒绝；两题各有 2/2 gold 进入上下文，但引用均为 0/2。qwen3-vl 对 repeat 用时 68.0 秒，引用 2/2 并通过结构化任务；对 identity-mismatch 用时 19.5 秒，输出符合 schema，但只引用 1/2 gold，任务未通过。所有四份完整调用归档均通过离线重放。通过只说明结构化与引用门满足；语言语义和可用性仍须独立 review。
 
 一次 qwen3.5 初始调用仅产生事实预检文件，没有模型响应；该不完整目录保留但未计入配对。正式调用在独立重试目录完成。
+
+2026-10-09，用户独立审阅 qwen3-vl 两条回答并确认其中报告状态内容均正确。特别是 identity-mismatch：模型正文准确写出两个 `unassessed` 状态，但结构化 `project_claims` 只含 stage status，所以人工内容核对通过、机器要求的引用完整性仍失败。该样本已看过，后续不能再视为盲测。
