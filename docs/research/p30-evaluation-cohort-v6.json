@@ -1,0 +1,29 @@
+{
+  "cohort": "prompt-v11-post-tuning-status-validation",
+  "cases": [
+    {
+      "id": "backend-blocked-overall-stage-status",
+      "category": "acceptance-status",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/backend-blocked/bundle/project-report.json",
+      "question": "这份报告记录的 overall project status 和 ECUC stage status 分别是什么？仅复述这两个状态字段。",
+      "expectation": "facts",
+      "gold": [
+        {"artifact_id": "project-report", "pointer": "/status", "value": "blocked"},
+        {"artifact_id": "project-report", "pointer": "/stages/ecuc/status", "value": "blocked"}
+      ],
+      "origin": "prompt-v11-post-tuning"
+    },
+    {
+      "id": "wrong-response-id-overall-stage-status",
+      "category": "acceptance-status",
+      "report": "output/p29-diagnostic-validation/live-release/relocated/projects/wrong-response-id/bundle/project-report.json",
+      "question": "这份报告记录的 overall project status 和 ECUC stage status 分别是什么？仅复述这两个状态字段。",
+      "expectation": "facts",
+      "gold": [
+        {"artifact_id": "project-report", "pointer": "/status", "value": "failed"},
+        {"artifact_id": "project-report", "pointer": "/stages/ecuc/status", "value": "failed"}
+      ],
+      "origin": "prompt-v11-post-tuning"
+    }
+  ]
+}
