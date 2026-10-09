@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-09）
 
-当前主阶段 P30 implementing。提示 0.6–0.10 均已通过远端七 job；提示 0.10 实现 `0d9c3ba4bf4faae5fb7bda5af43241cd7287a3c2` / [run `37771946406`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37771946406) 七 job success。用户于 2026-10-09 确认 v5/qwen3-vl 两条状态正文都正确；其中 `identity-mismatch` 的结构化 claims 仍缺一个引用。提示 0.11 已增加窄范围完整引用约束和缺项拒绝；本地 423 tests（421 passed、2 环境跳过）、隔离安装及静态检查通过，实现远端 CI 待验证。开发回归中 qwen3-vl `identity-mismatch` 现引用 2/2 并通过，`repeat` 因 length 截断拒绝；qwen3.5 两题均因 length 拒绝。四份归档离线复验通过。v5 已用于开发和人工审阅，不是 held-out；一般工程解释和资料适用性仍未验收。下一步完成 .11 实现 CI，再在未用于调试的新证据上冻结验证，并评估 length 截断的模型稳定性。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.11 均已通过远端七 job；提示 0.11 实现 `355955cf883e17b3adf2d77294041b220f8d9b00` / [run `37906579233`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37906579233) 七 job 全部 success。0.11 对整体/阶段状态问题要求两条对应引用，保留旧版本重放。全量 423 tests（421 passed、2 环境跳过）、隔离 wheel 和静态检查通过。开发回归中 qwen3-vl `identity-mismatch` 引用 2/2 并通过，`repeat` 因 length 截断拒绝；qwen3.5 两题均因 length 拒绝。v5 已用于开发和人工审阅，不是 held-out；一般工程解释和资料适用性仍未验收。下一步以未用于调试的新证据冻结验证 .11，并处理输出截断的稳定性。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1628,7 +1628,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 提示 0.11 在“整体项目状态 + 具名阶段状态”窄场景中要求两个 claim；动态 JSON schema 将最少条数设为 2，运行时校验要求 claim ID 集合精确覆盖两个目标事实。缺项或误报 unassessed 会拒绝；提示 0.1–0.10 的重放逻辑不变。
 - 全量 423 tests（421 passed、2 环境跳过）；18 项模型专项通过。Ruff、单文件 mypy、57 schemas/76 bound/25 syntax-only、CI topology、compileall、diff check 通过；隔离 wheel 安装后两工程、12 合成模型协议场景、2 旧模型归档重放通过，wheel SHA-256 `4d754e66317837bb2587da56c944622c141cbaf19f4ca1fc18811344cc46d841`。
 - 使用已见 v5 做提示开发回归（不是独立评测）：qwen3-vl 的 `identity-mismatch` 用时 21.5s、引用 2/2 并通过；`repeat` 用时 71.4s、输出到 4096 token 上限而拒绝。qwen3.5 两题分别约 104.3s/72.1s，均因 length 截断拒绝。四份生成归档离线复验通过。缺引用问题在一个场景改善，但模型输出稳定性仍不足。
-- 实现提交及远端 CI 尚待记录。下一步验收 .11 双平台 CI，在不参与调试的新证据上冻结状态题；继续定位输出截断，不放松引用校验。P30 一般解释、资料适用性和整体模型用途仍未验收。
+- 实现 `355955cf883e17b3adf2d77294041b220f8d9b00` / [run `37906579233`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37906579233) 七 job 全部 success：`runtime-currency` 113741384759；`core-contracts` Windows 113741384479、Ubuntu 113741384881；`controlled-rejections` Ubuntu 113743605146、Windows 113743605169；`runtime-evidence` Windows 113743605179、Ubuntu 113743605217。该实现门 remote-accepted；纯文档回填不替代实现 CI。
+- 下一步在未参与提示调试的新证据上冻结状态题验证 .11，并继续定位输出截断，不放松引用校验。P30 一般解释、资料适用性和整体模型用途仍未验收。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）

@@ -36,7 +36,7 @@ v5 在实现/CI 完成后冻结，复用未在 P30 先前 cohorts 出现的 `rep
 
 0.11 将整体 + 具名阶段状态范围明确为两个必需的结构化 claim，JSON schema 限制至少两条，独立校验进一步要求完整匹配两条目标 fact ID。旧版重放保持。全量 423 tests（421 passed、2 环境跳过），18 项模型专项；Ruff、单文件 mypy、57 schemas/76 bound/25 syntax-only、topology、compileall、隔离 wheel 两项目与 12 个合成 HTTP 场景、2 份模型归档重放通过。wheel SHA-256：`4d754e66317837bb2587da56c944622c141cbaf19f4ca1fc18811344cc46d841`。
 
-v5 已见证据仅作开发回归：qwen3-vl identity-mismatch 现在引用 2/2、21.5 秒通过；repeat length 截断拒绝。qwen3.5 两题均 length 截断拒绝。四份本轮生成的归档均离线复验 passed。实现提交和远端 CI 待记录；v5 不作为新版本独立验收，模型语义与适用性范围仍有限。
+v5 已见证据仅作开发回归：qwen3-vl identity-mismatch 现在引用 2/2、21.5 秒通过；repeat length 截断拒绝。qwen3.5 两题均 length 截断拒绝。四份本轮生成的归档均离线复验 passed。实现 `355955cf883e17b3adf2d77294041b220f8d9b00` / [run `37906579233`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37906579233) 七 job 全部 success：runtime-currency `113741384759`；core-contracts Windows `113741384479`、Ubuntu `113741384881`；controlled-rejections Ubuntu `113743605146`、Windows `113743605169`；runtime-evidence Windows `113743605179`、Ubuntu `113743605217`。提示 0.11 实现门 remote-accepted；v5 不作为新版本独立验收，模型语义与适用性范围仍有限。
 
 本地证据：`output/p30-fact-validation/`。全量回归 400 项（398 passed、2 环境跳过），随后增加数值类型/对象身份负例，P30 与 topology 定向 9 项通过；56 schemas、76 bound/25 syntax-only、57-source mypy、Ruff、topology、pip check 与 whitespace 通过。源码与最终隔离安装场景通过。首次安装脚本误解析 venv Python 符号链接，修正为保留 venv 可执行路径后重跑通过。
 
