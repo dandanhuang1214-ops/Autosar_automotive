@@ -1638,6 +1638,7 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 冻结摘要：qwen3.5 `e18610adccdfb31598869e52920a35ff6b924d16555aa8f1e741b3b5a6114227`；qwen3-vl `f3b492c570346fd73636920987c0699b77a1b8bf70387811dc7b33c879ca746f`。使用本机现有模型和 Docker backend，没有改提示/运行代码。
 - qwen3-vl 两题均结构化通过、目标事实 2/2 进入上下文且引用 2/2；耗时 66.7s、33.0s。qwen3.5 两题均在适配器处拒绝无效/不完整输出，耗时 102.4s、78.3s，引用 0/2。四份实际调用归档的离线复验均 passed。拒绝不计为模型正确回答；qwen3-vl 通过也只证明结构和引用门通过，答案文字及可用性尚未独立审阅。
 - 原始归档和汇总留在本机 `output/p30-continuation-audit/trial-v6-qwenvl/`、`trial-v6-qwen35/`；清单也留在同目录。未提交原始模型输出。
+- 文档/冻结题集提交 `e311512` 已推送；其 CI [run `37912242301`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37912242301) 七项全部 success：runtime-currency `113759898063`；core-contracts Ubuntu `113759898327`、Windows `113759898606`；controlled-rejections Ubuntu `113761756218`、Windows `113761756282`；runtime-evidence Ubuntu `113761756289`、Windows `113761756308`。这是文档提交 CI，不替代提示 0.11 实现提交 `355955c` 的实现验收。
 - 下一项：人工检查 qwen3-vl 两条通过回答是否只准确复述报告状态、是否清楚且有用，并单独记录判断；之后再决定 P30 的模型用途边界。资料适用性、一般工程解释和整体质量门仍未通过；qwen3.5 的结构化失败继续记录。P30 保持 implementing。
 
 

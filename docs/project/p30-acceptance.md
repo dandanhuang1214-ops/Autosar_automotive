@@ -109,6 +109,8 @@ v5 已见证据仅作开发回归：qwen3-vl identity-mismatch 现在引用 2/2�
 qwen3-vl 两题均通过结构化任务，gold 引用 2/2，耗时 66.7 秒和 33.0 秒；qwen3.5 两题均因不完整或无效模型输出被严格校验拒绝，耗时 102.4 秒和 78.3 秒，引用 0/2。四份调用归档的离线复验均通过。这里的“通过”只代表 schema、引用及归档复验通过，不代表自然语言已经人工核实。qwen3-vl 的两条答案待人工检查；手册适用性、一般工程解释和整体模型适用性仍未验收。原始输出仅保留在本机 `output/p30-continuation-audit/trial-v6-*`。本轮只新增冻结评测文档，没有改运行代码；0.11 实现验收仍对应 `355955cf883e17b3adf2d77294041b220f8d9b00` / run `37906579233`。
 
 
+文档/冻结题集提交 `e311512` 已推送；该提交的 [CI run `37912242301`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37912242301) 七项全部 success：runtime-currency `113759898063`；core-contracts Ubuntu `113759898327`、Windows `113759898606`；controlled-rejections Ubuntu `113761756218`、Windows `113761756282`；runtime-evidence Ubuntu `113761756289`、Windows `113761756308`。该 run 验证文档提交工作树满足 CI，不作为新的模型质量验收。
+
 ## 提示 0.5 问题相关事实与模型评估（2026-10-08）
 
 实现 `c60d8af5c0cc72c632a679e06fc264747267fb95` / [run `37646726266`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37646726266)：七个 job 全部 success；包括 `runtime-currency` `112879318052`、`core-contracts (windows-latest)` `112879318098`、`core-contracts (ubuntu-22.04)` `112879318414`、`runtime-evidence (windows-latest)` `112883075265`、`controlled-rejections (ubuntu-22.04)` `112883075330`、`runtime-evidence (ubuntu-22.04)` `112883075331`、`controlled-rejections (windows-latest)` `112883075370`。
