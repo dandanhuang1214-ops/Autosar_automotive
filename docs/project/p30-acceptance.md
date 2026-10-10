@@ -116,7 +116,9 @@ qwen3-vl 两题均通过结构化任务，gold 引用 2/2，耗时 66.7 秒和 3
 
 相同 v6 两题以新实现重冻后均通过：正常 stop、thinking 为空，prompt/output token 1017/324 与 1012/289，适配耗时 32.3/19.8 秒，目标事实引用均为 2/2，离线复验通过。清单摘要 `5eb332c0834a27103b2391010d76c36e40ef8305c2d0275fc7a7ffc6b6081801`。这是修复对照，不是新 held-out 质量结论。
 
-本地 424 tests（422 passed、2 环境跳过）、19 项模型专项、12 类合成协议、schema/topology/Ruff/scoped mypy/compileall 和隔离 wheel 均通过；wheel SHA-256 `e001b22ada382b436b351070773f77719a30e38ebe64e1182339297a17284a26`。状态 local-accepted，远端 CI 待实现提交。
+本地 424 tests（422 passed、2 环境跳过）、19 项模型专项、12 类合成协议、schema/topology/Ruff/scoped mypy/compileall 和隔离 wheel 均通过；wheel SHA-256 `e001b22ada382b436b351070773f77719a30e38ebe64e1182339297a17284a26`。
+
+实现 `656098b8b8dca8373ba3974ced45a317f25d05ec` / [run `38012423168`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38012423168) 七 job 全部 success：runtime-currency `114095165644`；core-contracts Windows `114095165813`、Ubuntu `114095165919`；controlled-rejections Ubuntu `114096657670`、Windows `114096657681`；runtime-evidence Ubuntu `114096657716`、Windows `114096657724`。提示 0.12 实现状态 remote-accepted；后续纯文档状态提交不作为新的实现验收。下一项使用未参与本轮修复的问题分别计量 qwen3.5 与 qwen3-vl；一般解释、资料适用性和跨项目用途仍保持未验收。
 
 
 文档/冻结题集提交 `e311512` 已推送；该提交的 [CI run `37912242301`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37912242301) 七项全部 success：runtime-currency `113759898063`；core-contracts Ubuntu `113759898327`、Windows `113759898606`；controlled-rejections Ubuntu `113761756218`、Windows `113761756282`；runtime-evidence Ubuntu `113761756289`、Windows `113761756308`。该 run 验证文档提交工作树满足 CI，不作为新的模型质量验收。

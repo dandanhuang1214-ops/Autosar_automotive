@@ -93,7 +93,7 @@ P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)�
 
 P29 诊断依赖已验收，下一主阶段为 [P30 基于项目证据的本地模型解释](p30-evidence-explanation-plan.md)：复用已有本地知识助手，以通过复验的报告为事实基础，先解决引用、状态和来源边界再接入模型。硬件台架按设备实际取得和独立现场证据推进，不改变当前主阶段。
 
-P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.11 均已通过各自远端 CI；提示 0.11 实现 `355955cf883e17b3adf2d77294041b220f8d9b00` / [run `37906579233`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37906579233) 七 job success。v6 中 qwen3-vl 两条简单状态回答结构化 2/2 通过，用户已确认文字准确且可用；这不扩展到一般工程解释。qwen3.5 两题失败已定位为默认 thinking 用满 4096 token 后正文为空。提示 0.12 按已验证 family=`qwen35` 关闭 thinking，相同两题现场复验均正常 stop、2/2 引用并通过，当前 local-accepted、远端待验收。下一项完成 0.12 实现 CI，再用未参与本轮修复的问题验证两模型；一般工程解释、资料适用性和跨项目用途仍未验收。
+P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.12 均已通过各自远端 CI；提示 0.12 实现 `656098b8b8dca8373ba3974ced45a317f25d05ec` / [run `38012423168`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38012423168) 七 job success。v6 中 qwen3-vl 两条简单状态回答结构化 2/2 通过，用户已确认文字准确且可用；这不扩展到一般工程解释。qwen3.5 两题失败已定位为默认 thinking 用满 4096 token 后正文为空；0.12 按已验证 family=`qwen35` 关闭 thinking，相同两题均正常 stop、2/2 引用并通过。下一项用未参与本轮修复的问题分别验证两模型，并保留独立人工语义/适用性门；一般工程解释、资料适用性和跨项目用途仍未验收。
 
 
 ## P30 事实选择与模型适用性进展（2026-10-08）

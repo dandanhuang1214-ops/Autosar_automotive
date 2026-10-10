@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-10）
 
-当前主阶段 P30 implementing。提示 0.6–0.11 均已通过远端七 job；提示 0.12 已 local-accepted、远端待验收。0.11 的 v6 两条 qwen3-vl 简单状态回答已由用户确认文字准确且可用，只覆盖该窄任务。qwen3.5 无正文的根因已由原始响应确认：默认 thinking 两题均用满 4096 token、正文为空；0.12 仅在服务身份 family=`qwen35` 时关闭 thinking，保留 0.1–0.11 重放。相同两题现场复验均正常 stop、引用 2/2 并通过，适配总耗时 32.3/19.8 秒。全量 424 tests（422 passed、2 环境跳过）、隔离 wheel、合成协议和静态检查通过。一般工程解释、资料适用性和跨项目模型用途仍未验收；下一步先完成 0.12 实现远端 CI，再冻结未参与本轮修复的更广问题。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.12 均已通过各自远端七 job；0.12 实现 `656098b8b8dca8373ba3974ced45a317f25d05ec` / run `38012423168` 已 remote-accepted。0.11 的 v6 两条 qwen3-vl 简单状态回答已由用户确认文字准确且可用，只覆盖该窄任务。qwen3.5 无正文的根因已由原始响应确认：默认 thinking 两题均用满 4096 token、正文为空；0.12 仅在服务身份 family=`qwen35` 时关闭 thinking，保留 0.1–0.11 重放。相同两题现场复验均正常 stop、引用 2/2 并通过，适配总耗时 32.3/19.8 秒。全量 424 tests（422 passed、2 环境跳过）、隔离 wheel、合成协议、静态检查及远端双平台证据链通过。一般工程解释、资料适用性和跨项目模型用途仍未验收；下一步冻结未参与本轮修复的更广问题，分别计量 qwen3.5 与 qwen3-vl。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1648,7 +1648,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 0.12 复用 0.11 的提示、两项状态引用和 8K 上下文，只在 `/api/tags` 实际返回 family=`qwen35` 时设置 `think=false`。0.8–0.11 对 qwen3-vl 的既有策略保留，0.11 及更早 qwen3.5 payload 不改，未知或非 thinking family 不强制该选项。
 - 使用相同 v6 两题和固定 digest 重冻清单（`5eb332c0834a27103b2391010d76c36e40ef8305c2d0275fc7a7ffc6b6081801`）后，qwen3.5 两题均 `done_reason=stop`、thinking 长度 0，prompt/output token 为 1017/324、1012/289；适配总耗时 32.3/19.8 秒，目标事实均 2/2 进入上下文并引用，结构化任务和离线归档复验均通过。该组是输出修复对照，不是新的模型质量集。
 - 本地验证：424 tests（422 passed、2 环境跳过）；模型专项 19/19；12 类合成 HTTP 场景、57 schemas/76 schema-bound/25 syntax-only、CI topology、Ruff、8-source mypy、compileall、diff check 通过。隔离 wheel 两工程、12 类模型场景与归档复验通过，wheel SHA-256 `e001b22ada382b436b351070773f77719a30e38ebe64e1182339297a17284a26`。
-- 状态：local-accepted，远端 CI 待本次实现提交。qwen3.5 已能在该窄状态任务输出，不据此声明一般工程解释或资料适用性通过；下一步在实现远端验收后冻结未参与修复的问题并分别计量两模型。
+- 实现 `656098b8b8dca8373ba3974ced45a317f25d05ec` / [run `38012423168`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38012423168) 七 job 全部 success：`runtime-currency` `114095165644`；`core-contracts` Windows `114095165813`、Ubuntu `114095165919`；`controlled-rejections` Ubuntu `114096657670`、Windows `114096657681`；`runtime-evidence` Ubuntu `114096657716`、Windows `114096657724`。状态 remote-accepted；本条后续纯文档回填不替代实现 CI。
+- qwen3.5 已能在该窄状态任务输出，不据此声明一般工程解释或资料适用性通过；下一步冻结未参与本轮修复的问题并分别计量 qwen3.5 与 qwen3-vl，继续保留独立人工语义/适用性门。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）
