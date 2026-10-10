@@ -1659,7 +1659,7 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 最终 qwen3.5 冻结清单 SHA-256 为 `ef165dc67f2a8dc441e64f974f24bf9f6240e0644ad30c56bb94f1ac93f4e497`。`second-run`、`wrong-address`、`wrong-mapping` 三题在 project/retrieval 两种模式共 6/6 通过；每题四项目标事实均进入上下文并由系统绑定，检索模式不调用无关手册。六份真实调用归档离线复验通过，适配耗时 18.1–33.0 秒。
 - 开发者逐项审读六份草稿：每题均写出 `runtime.signal-tx` / `runtime.signal-rx` 的 status 与 reason，未把 `unassessed` 误作事实缺失，未引入硬件结论；同题两种模式文字一致。该审读不是用户或独立审阅者验收，结果契约仍保持 `semantic_status=unassessed`。
 - 本地 426 tests 全部通过、2 项环境跳过；12 个合成 HTTP 场景、Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、CI topology、compileall 和 diff check 通过。隔离 wheel 的两工程、模型场景和归档重放通过，wheel SHA-256 `2b75cd50fcb844dbb1c11bd3b5dc22e487e1bbd375d83d5bd69e3da89856c05f`。
-- 当前状态 local-accepted，不能写成 remote-accepted；实现提交和该提交的实际 CI 尚待记录。下一项在未参与 0.13–0.16 调整的新报告上冻结复杂解释/资料适用性题，以 qwen3.5 为主文本模型完成独立人工审核。qwen3-vl 转入后续图片/OCR 多模态路径，不用作当前文本任务的必做对照。
+- 实现 `7cca980e09423c1ac689c29e0ce914ff7fde2a6c` / [run `38038842587`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38038842587) 七 job 全部 success：runtime-currency `114174869075`；core-contracts Windows `114174869188`、Ubuntu `114174869219`；runtime-evidence Ubuntu `114176095737`、Windows `114176095758`；controlled-rejections Windows `114176095745`、Ubuntu `114176095876`。提示 0.16 实现状态 remote-accepted；本条后续状态回填是纯文档提交，不替代实现 run。下一项在未参与 0.13–0.16 调整的新报告上冻结复杂解释/资料适用性题，以 qwen3.5 为主文本模型完成独立人工审核。qwen3-vl 转入后续图片/OCR 多模态路径，不用作当前文本任务的必做对照。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）
