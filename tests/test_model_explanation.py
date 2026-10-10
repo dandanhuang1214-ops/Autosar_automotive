@@ -285,7 +285,7 @@ class ModelExplanationTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "passed")
         self.assertEqual(len(result["answer"]["project_facts"]), 2)
-        self.assertEqual(set(json.loads((output / "model-input.json").read_text())["format"]["anyOf"][0]["required"]),
+        self.assertEqual(set(json.loads((output / "model-input.json").read_text(encoding="utf-8"))["format"]["anyOf"][0]["required"]),
                          {"request_id", "draft_explanation"})
         self.assertIn("exactly two keys", endpoint.system_prompt)
         self.assertIn("object identity, definition path and before/after value", endpoint.system_prompt)
