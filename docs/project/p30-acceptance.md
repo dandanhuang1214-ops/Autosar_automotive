@@ -184,3 +184,14 @@ qwen3.5 最终清单摘要 `ef165dc67f2a8dc441e64f974f24bf9f6240e0644ad30c56bb94
 - 新冻结 v2 全部题目明确为已见回归，共六个项目模式问题、一个历史 preflight 控制。qwen3-vl 六题中三题 structured pass、三题因 4096-token length 截断拒绝；gold recall 通过项为 1.0。7/7 行（含历史控制）归档复验 passed。初次从宿主 Ollama 地址运行一题因 DNS blocked，该失败另存，没有计为模型拒绝；正式运行在原 backend 容器网络完成。
 - 一条 `diagnostic-affected-objects` 正式调用 25.7 秒、1129 prompt / 348 output tokens；schema 及两个 gold 引用通过。其中文解释没有经人工语义核对，仍为 unassessed。旧测试不是新未见评测，也不能替代人工 review。
 - 下一项：冻结一批未参与提示调试的具体工程问题，做 qwen3.5 与 qwen3-vl 完整配对并记录结束原因/token/耗时；完成独立人工语义和资料适用性记录。P30 仍 implementing。
+
+
+## 提示 0.22：复杂事实与资料适用性边界（2026-10-10）
+
+提示 0.17–0.22 区分“只复述点名字段”和“解释/比较点名检查”。复杂问题所需的 status、reason、对象身份、字段定义和 before/after 值由确定性代码完整绑定；当前版本只消费模型的两字段草稿，并要求身份、定义和前后值逐字保留，缺失或改写即拒绝。标准/手册要求题不使用项目策略证明通用要求，实际模型输入移除 `project_status` 和项目事实；有无检索摘录都只能生成待审核的资料缺口说明，最终状态固定为 `unassessed`。提示 0.1–0.21 的归档重放语义保留。
+
+[v8 cohort](../research/p30-evaluation-cohort-v8.json) 在冻结后用于 0.17–0.21 提示开发，最终 0.21 的三题、两模式共 6/6 达到机器边界，故明确不作为 held-out。随后在 0.22 实现不再变化后冻结 [v9 cohort](../research/p30-evaluation-cohort-v9.json)，清单摘要 `0fa1fec40c8a189db8683a89da0889d6fb037f545181b5315923a1efc960f701`。qwen3.5:2b 的六次 project/retrieval 调用中：资料适用性题 2/2 返回有效 `unassessed` 且没有项目或手册 claim；任务引用题 2/2 因模型漏掉定义路径开头 `/` 被拒；unsupported-field 题 2/2 因模型生成中文弯引号导致 JSON 解析失败。6/6 归档离线复验通过。最终为 2/6 结构任务成功、4/6 fail closed；拒绝不是正确回答，也不满足一般复杂解释质量门。
+
+本地实现验收：431 tests（429 passed、2 环境跳过）；Ruff、62-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、CI topology 和 diff check 通过；源码项目事实场景、12 个合成模型协议场景以及隔离 wheel 的两工程、12 个模型场景和归档重放通过。wheel SHA-256 `08fc3e6497da9f651a0dd5e741e1f6bc2b72fa56e39c6e69cb197426194c9042`。实现当前为 local-accepted，提交和远端 CI 待记录，不能标作 remote-accepted。
+
+P30 保持 implementing。下一项是由独立审阅者核对 v9 两份资料缺口说明的准确性与可用性；一般复杂解释路径不在 v9 上继续调参，应在更强文本基线与确定性模板/语法约束之间作出实现选择，再用新的未见 cohort 复验。

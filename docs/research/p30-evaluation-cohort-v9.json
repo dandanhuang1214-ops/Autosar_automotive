@@ -1,0 +1,47 @@
+{
+  "cohort": "prompt-v22-unseen-task-reference-and-applicability",
+  "cases": [
+    {
+      "id": "task-reference-change-explanation",
+      "category": "configuration-change-explanation",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/task-change/bundle/project-report.json",
+      "question": "policy.TASK_REF 检查为何失败？请结合 status、reason、对象身份、字段定义以及 before/after values 解释记录中的任务引用变化；不要推断调度已在物理 ECU 执行。",
+      "expectation": "facts",
+      "gold": [
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.TASK_REF/status", "value": "failed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.TASK_REF/reason", "value": "protected_field_changed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.TASK_REF/policy/object_id", "value": "ecuc:/Demo/Rte/Instance/Mapping"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.TASK_REF/policy/definition", "value": "/Synthetic/RteEventToTaskMapping/RteMappedToTaskRef"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.TASK_REF/observations/before/values/0", "value": "/Demo/Os/TaskA"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.TASK_REF/observations/after/values/0", "value": "/Demo/Os/TaskB"}
+      ],
+      "knowledge_query": "AUTOSAR RTE event to OS task mapping reference requirements",
+      "origin": "new-report-and-question-pre-inference"
+    },
+    {
+      "id": "task-reference-standard-mandate",
+      "category": "manual-applicability-refusal",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/task-change/bundle/project-report.json",
+      "question": "检索资料能否证明 AUTOSAR 标准要求 /Synthetic/RteEventToTaskMapping/RteMappedToTaskRef 必须指向 /Demo/Os/TaskA，并且 /Demo/Os/TaskB 一定非法？如果资料没有直接支持，保持 unassessed；不能用项目的 protected_field_changed 代替标准条文。",
+      "expectation": "facts",
+      "gold": [],
+      "knowledge_query": "AUTOSAR RteEventToTaskMapping mapped task reference mandatory target",
+      "origin": "new-report-and-question-pre-inference"
+    },
+    {
+      "id": "unsupported-signal-field-boundary",
+      "category": "unsupported-field-explanation",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/unsupported-field/bundle/project-report.json",
+      "question": "为什么 policy.SIGNAL_SIZE 不能判定为 passed 或 failed？请结合 status、reason、对象身份和字段定义解释记录边界；不要把 unsupported_field 扩展成物理 ECU 或 AUTOSAR 标准结论。",
+      "expectation": "facts",
+      "gold": [
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/status", "value": "unassessed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/reason", "value": "unsupported_field"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/policy/object_id", "value": "ecuc:/Demo/Com/ValueA"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/policy/definition", "value": "/Synthetic/ComSignal/VendorUnknown"}
+      ],
+      "knowledge_query": "AUTOSAR vendor specific ECUC parameter unsupported field validation",
+      "origin": "new-report-and-question-pre-inference"
+    }
+  ]
+}

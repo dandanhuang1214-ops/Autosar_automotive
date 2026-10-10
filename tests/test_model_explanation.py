@@ -14,8 +14,10 @@ from automotive_workbench.can_io import BusConfig
 from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
 from automotive_workbench.model_explanation import (
     PROMPTS, constrained_answer_schema, exact_draft_schema, explain, extract_exact_draft, quote_options,
+    is_exact_named_check_field_request, is_manual_applicability_request,
+    required_complex_named_check_fact_ids,
     required_named_check_field_fact_ids, required_stage_status_fact_ids, select_facts,
-    validate_draft, validate_exact_draft, verify_explanation,
+    validate_bound_draft_literals, validate_draft, validate_exact_draft, verify_explanation,
 )
 from automotive_workbench.project_workflow import run_project
 
@@ -154,7 +156,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -223,14 +225,15 @@ class ModelExplanationTests(unittest.TestCase):
             self.assertEqual(result["status"], "passed")
             self.assertNotIn("think", json.loads((historical / "model-input.json").read_text()))
 
-    def test_v16_scopes_named_check_fields_and_ignores_model_extras(self):
+    def test_v20_scopes_exact_named_check_fields_and_ignores_model_extras(self):
         class ExactEndpoint(StubEndpoint):
             def request(self, path, payload=None):
                 if path != "/api/chat":
                     return super().request(path, payload)
                 context = json.loads(payload["messages"][1]["content"])
                 self.model_context = context
-                answer = {"request_id": context["request_id"], "draft_explanation": "按记录复述两个字段。",
+                literals = "；".join(str(fact["value"]) for fact in context["facts"])
+                answer = {"request_id": context["request_id"], "draft_explanation": literals,
                           "status": "unassessed", "project_claims": [],
                           "manual_claims": [], "suggestions": []}
                 value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
@@ -252,6 +255,72 @@ class ModelExplanationTests(unittest.TestCase):
         self.assertNotIn("project_status", endpoint.model_context)
         self.assertEqual(endpoint.model_context["manuals"], [])
         self.assertIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
+        self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
+
+    def test_v20_uses_compact_draft_contract_for_bound_complex_facts(self):
+        class ComplexEndpoint(StubEndpoint):
+            def request(self, path, payload=None):
+                if path != "/api/chat":
+                    return super().request(path, payload)
+                context = json.loads(payload["messages"][1]["content"])
+                self.model_context = context
+                self.system_prompt = payload["messages"][0]["content"]
+                literals = "；".join(str(fact["value"]) for fact in context["facts"])
+                answer = {"request_id": context["request_id"], "draft_explanation": literals}
+                value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
+                         "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
+                self.records.append({"path": path, "method": "POST", "payload": payload,
+                                     "http_status": 200, "raw": json.dumps(value), "error": None})
+                return value
+
+        endpoint = ComplexEndpoint("http://ollama:11434", 120)
+        output = self.root / "complex-fields"
+        result = explain(
+            self.report,
+            "diagnostic.read-version 为何失败？请结合 status 和 reason 解释。",
+            output,
+            "fixture:1",
+            ollama_url="http://ollama:11434",
+            _endpoint_factory=lambda _url, _timeout: endpoint,
+        )
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(len(result["answer"]["project_facts"]), 2)
+        self.assertEqual(set(json.loads((output / "model-input.json").read_text())["format"]["anyOf"][0]["required"]),
+                         {"request_id", "draft_explanation"})
+        self.assertIn("exactly two keys", endpoint.system_prompt)
+        self.assertIn("object identity, definition path and before/after value", endpoint.system_prompt)
+        self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
+
+    def test_v21_manual_applicability_stays_unassessed_without_independent_review(self):
+        class ManualGapEndpoint(StubEndpoint):
+            def request(self, path, payload=None):
+                if path != "/api/chat":
+                    return super().request(path, payload)
+                context = json.loads(payload["messages"][1]["content"])
+                self.model_context = context
+                answer = {"request_id": context["request_id"],
+                          "draft_explanation": "资料适用性尚未独立审核，当前不能证明该标准要求。"}
+                value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
+                         "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
+                self.records.append({"path": path, "method": "POST", "payload": payload,
+                                     "http_status": 200, "raw": json.dumps(value), "error": None})
+                return value
+
+        endpoint = ManualGapEndpoint("http://ollama:11434", 120)
+        output = self.root / "manual-gap"
+        result = explain(
+            self.report,
+            "资料能否证明 AUTOSAR 标准要求该字段必须为 8？",
+            output,
+            "fixture:1",
+            ollama_url="http://ollama:11434",
+            _endpoint_factory=lambda _url, _timeout: endpoint,
+        )
+        self.assertEqual(result["status"], "unassessed")
+        self.assertEqual(result["reason"], "manual_applicability_requires_human_review")
+        self.assertEqual(result["answer"]["answer_status"], "unassessed")
+        self.assertEqual(endpoint.model_context["facts"], [])
+        self.assertNotIn("project_status", endpoint.model_context)
         self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
     def test_v07_rejects_responses_that_overrun_recorded_context(self):
@@ -399,6 +468,70 @@ class FactRetrievalTests(unittest.TestCase):
                   "manual_claims": [], "suggestions": []}
         self.assertEqual(extract_exact_draft(legacy, "request"), (draft["draft_explanation"], True))
         self.assertEqual(extract_exact_draft(draft, "request"), (draft["draft_explanation"], False))
+
+    def test_v18_binds_rich_named_check_context_and_preserves_v17_routing(self):
+        question = ("policy.SIGNAL_SIZE 检查为何失败？请结合检查 status、reason、对象身份、"
+                    "字段定义以及 before/after values 解释记录中的变化。")
+        facts = [self.fact("/status", "failed", "project-report")]
+        facts += [self.fact(pointer, value) for pointer, value in (
+            ("/checks/policy.SIGNAL_SIZE/status", "failed"),
+            ("/checks/policy.SIGNAL_SIZE/reason", "protected_field_changed"),
+            ("/checks/policy.SIGNAL_SIZE/policy/object_id", "ecuc:/Demo/Com/ValueA"),
+            ("/checks/policy.SIGNAL_SIZE/policy/definition", "/Synthetic/ComSignal/ComBitSize"),
+            ("/checks/policy.SIGNAL_SIZE/observations/before/values/0", "8"),
+            ("/checks/policy.SIGNAL_SIZE/observations/after/values/0", "12"),
+            ("/checks/policy.SIGNAL_SIZE/observations/before/path", "before.json"),
+        )]
+        selected = select_facts({"question": question, "facts": facts})
+        selected_pointers = {fact["pointer"] for fact in selected}
+        self.assertTrue({fact["pointer"] for fact in facts[1:7]} <= selected_pointers)
+        self.assertFalse(is_exact_named_check_field_request(question))
+        self.assertEqual(required_complex_named_check_fact_ids(question, selected),
+                         {fact["fact_id"] for fact in facts[1:7]})
+        self.assertIsNone(required_complex_named_check_fact_ids(
+            question, selected, prompt_version="project-explanation-prompt-0.17"))
+        self.assertEqual(required_complex_named_check_fact_ids(
+            question, selected, prompt_version="project-explanation-prompt-0.18"),
+            {fact["fact_id"] for fact in facts[1:7]})
+        self.assertTrue(is_exact_named_check_field_request(
+            "policy.SIGNAL_SIZE 的 status 和 reason 是什么？只引用这两个字段。"))
+        self.assertFalse(is_exact_named_check_field_request(
+            question, prompt_version="project-explanation-prompt-0.17"))
+        self.assertTrue(is_exact_named_check_field_request(
+            question, prompt_version="project-explanation-prompt-0.16"))
+
+    def test_v18_scopes_missing_identity_and_values_to_the_requested_checks(self):
+        question = ("为什么不能概括为全部失败？对比 policy.SIGNAL_PRESENT 与 policy.SIGNAL_SIZE "
+                    "的 status/reason，指出缺失对象身份，并给出 SIGNAL_SIZE 的 before/after values。")
+        facts = [self.fact(pointer, value) for pointer, value in (
+            ("/checks/policy.SIGNAL_PRESENT/status", "failed"),
+            ("/checks/policy.SIGNAL_PRESENT/reason", "missing_object"),
+            ("/checks/policy.SIGNAL_PRESENT/policy/object_id", "ecuc:/Demo/Com/Absent"),
+            ("/checks/policy.SIGNAL_SIZE/status", "passed"),
+            ("/checks/policy.SIGNAL_SIZE/reason", "protected_field_unchanged"),
+            ("/checks/policy.SIGNAL_SIZE/policy/object_id", "ecuc:/Demo/Com/ValueA"),
+            ("/checks/policy.SIGNAL_SIZE/observations/before/values/0", "8"),
+            ("/checks/policy.SIGNAL_SIZE/observations/after/values/0", "8"),
+            ("/checks/policy.SIGNAL_PRESENT/observations/before/values/0", "missing"),
+            ("/checks/policy.SIGNAL_PRESENT/observations/after/values/0", "missing"),
+        )]
+        required = required_complex_named_check_fact_ids(question, facts)
+        self.assertEqual(required, {facts[index]["fact_id"] for index in (0, 1, 2, 3, 4, 6, 7)})
+
+    def test_v20_manual_applicability_scope_and_bound_literal_guard(self):
+        question = "资料能否证明 AUTOSAR 标准要求这个值必须为 8？"
+        self.assertTrue(is_manual_applicability_request(question))
+        self.assertFalse(is_manual_applicability_request(
+            question, prompt_version="project-explanation-prompt-0.19"))
+        facts = [self.fact("/checks/policy.SIZE/status", "failed"),
+                 self.fact("/checks/policy.SIZE/reason", "protected_field_changed"),
+                 self.fact("/checks/policy.SIZE/policy/object_id", "ecuc:/Demo/Com/ValueA")]
+        self.assertEqual(
+            validate_bound_draft_literals("对象为 ecuc:/Demo/Com/ValueA。", facts),
+            "对象为 ecuc:/Demo/Com/ValueA。",
+        )
+        with self.assertRaisesRegex(ValueError, "required_fact_values_missing_from_draft"):
+            validate_bound_draft_literals("检查失败，但没有复述记录原因。", facts)
 
     def test_context_budget_and_no_fabricated_facts(self):
         facts = [self.fact("/checks/impact/affected_objects/0", "x" * 13000), self.fact("/status", "failed", "project-report")]

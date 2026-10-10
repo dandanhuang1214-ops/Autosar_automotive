@@ -133,3 +133,11 @@ qwen3.5 两题均未通过：一条 135.8 秒超时，另一条 70.6 秒输出�
 [v7 cohort](../research/p30-evaluation-cohort-v7.json) 含三个报告、每题四个 `runtime.signal-tx/rx` status/reason gold。它最初在查看结果前冻结，但随后直接驱动 0.13–0.16 修正，因此最终只能作为开发回归。0.16 清单摘要 `ef165dc67f2a8dc441e64f974f24bf9f6240e0644ad30c56bb94f1ac93f4e497`；qwen3.5 在 project/retrieval 共 6/6 通过，四项事实均由确定性选择器完整绑定，真实归档均通过离线复验。`cited_required_facts=4` 表示最终结果绑定覆盖，不表示模型自行选择了四项引用。
 
 检索模式对这类“复述报告中精确字段”的问题记录 `KNOWLEDGE_NOT_APPLICABLE`，不查询手册。六份草稿经开发者逐项审读均完整复述目标值；该题集已见且没有独立审阅者，语义契约仍保持 unassessed。下一组必须使用未参与本轮实现的复杂解释/资料适用性问题，并在看模型答案前写下人工预期。
+
+### 提示 0.17–0.22 与 v8/v9（2026-10-10）
+
+[v8 cohort](../research/p30-evaluation-cohort-v8.json) 在首次推理前冻结，但随后用于 0.17–0.21 的复杂事实选择、草稿契约和资料适用性边界开发，因此只算开发回归。0.21 最终六次调用均满足目标机器边界；这不能作为未见质量分数。
+
+0.22 只进一步缩小资料题实际模型输入：删除 `project_status`，项目 facts 为空；检索模式仍保存来源，但在独立适用性审核前不得形成 manual claim。实现固定后冻结 [v9 cohort](../research/p30-evaluation-cohort-v9.json)，清单摘要 `0fa1fec40c8a189db8683a89da0889d6fb037f545181b5315923a1efc960f701`，并在查看结果后停止调整该版本。
+
+v9 的三题在 project/retrieval 两模式共六次：任务引用解释 0/2（定义路径少了开头 `/`，触发字面锚点拒绝）；资料适用性 2/2（有效 `unassessed`、零 project/manual claims）；unsupported-field 解释 0/2（中文弯引号导致 JSON 解析失败）。所有归档离线复验通过。评分必须同时报告 2/6 成功与 4/6 fail closed，不能把拒绝算作正确回答。资料缺口自然语言尚未由独立审阅者确认；复杂解释质量门未通过，v9 不得再用于 0.22 调参。

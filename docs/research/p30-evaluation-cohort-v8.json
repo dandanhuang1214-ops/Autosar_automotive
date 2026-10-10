@@ -1,0 +1,50 @@
+{
+  "cohort": "prompt-v17-v20-complex-explanation-development",
+  "cases": [
+    {
+      "id": "signal-size-change-explanation",
+      "category": "configuration-change-explanation",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/signal-change/bundle/project-report.json",
+      "question": "policy.SIGNAL_SIZE 检查为何失败？请结合检查 status、reason、对象身份、字段定义以及 before/after values 解释记录中的变化；不要推断物理 ECU 故障，也不要把一般手册当作本项目实测。",
+      "expectation": "facts",
+      "gold": [
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/status", "value": "failed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/reason", "value": "protected_field_changed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/policy/object_id", "value": "ecuc:/Demo/Com/ValueA"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/policy/definition", "value": "/Synthetic/ComSignal/ComBitSize"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/observations/before/values/0", "value": "8"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/observations/after/values/0", "value": "12"}
+      ],
+      "knowledge_query": "AUTOSAR ComSignal bit size configuration change validation",
+      "origin": "frozen-before-inference-then-used-for-prompt-development"
+    },
+    {
+      "id": "signal-size-standard-mandate",
+      "category": "manual-applicability-refusal",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/signal-change/bundle/project-report.json",
+      "question": "检索资料能否证明 AUTOSAR 标准要求 /Synthetic/ComSignal/ComBitSize 必须为 8，并且值 12 一定非法？如果资料没有直接支持，请返回 unassessed；不能用项目记录的 protected_field_changed 代替标准条文。",
+      "expectation": "facts",
+      "gold": [],
+      "knowledge_query": "AUTOSAR ComSignal ComBitSize allowed value standard requirement",
+      "origin": "frozen-before-inference-then-used-for-prompt-development"
+    },
+    {
+      "id": "missing-signal-versus-unchanged-size",
+      "category": "configuration-failure-scope",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/missing-object/bundle/project-report.json",
+      "question": "为什么不能把这份报告概括为‘所有信号配置都失败’？请对比 policy.SIGNAL_PRESENT 与 policy.SIGNAL_SIZE 的 status/reason，指出缺失对象身份，并给出 SIGNAL_SIZE 的 before/after values；只说明报告直接支持的范围。",
+      "expectation": "facts",
+      "gold": [
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_PRESENT/status", "value": "failed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_PRESENT/reason", "value": "missing_object"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_PRESENT/policy/object_id", "value": "ecuc:/Demo/Com/Absent"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/status", "value": "passed"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/reason", "value": "protected_field_unchanged"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/observations/before/values/0", "value": "8"},
+        {"artifact_id": "stage-ecuc", "pointer": "/checks/policy.SIGNAL_SIZE/observations/after/values/0", "value": "8"}
+      ],
+      "knowledge_query": "AUTOSAR missing ComSignal object unchanged bit size configuration",
+      "origin": "frozen-before-inference-then-used-for-prompt-development"
+    }
+  ]
+}

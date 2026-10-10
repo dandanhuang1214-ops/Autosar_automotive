@@ -1662,6 +1662,14 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 实现 `7cca980e09423c1ac689c29e0ce914ff7fde2a6c` / [run `38038842587`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38038842587) 七 job 全部 success：runtime-currency `114174869075`；core-contracts Windows `114174869188`、Ubuntu `114174869219`；runtime-evidence Ubuntu `114176095737`、Windows `114176095758`；controlled-rejections Windows `114176095745`、Ubuntu `114176095876`。提示 0.16 实现状态 remote-accepted；本条后续状态回填是纯文档提交，不替代实现 run。下一项在未参与 0.13–0.16 调整的新报告上冻结复杂解释/资料适用性题，以 qwen3.5 为主文本模型完成独立人工审核。qwen3-vl 转入后续图片/OCR 多模态路径，不用作当前文本任务的必做对照。
 
 
+### P30：提示 0.22 复杂事实与资料适用性边界（2026-10-10）
+
+- 提示 0.17–0.22 将直接字段转录、复杂点名解释和标准/手册适用性拆开。复杂事实由确定性选择器绑定；模型草稿必须逐字保留对象身份、定义和前后值，否则拒绝。资料适用性题的实际模型输入移除项目状态/事实，最终固定 `unassessed`，不允许项目策略冒充标准条文。提示 0.1–0.21 历史归档语义保留。
+- [v8](../research/p30-evaluation-cohort-v8.json) 冻结后用于提示开发，不计 held-out；0.21 开发回归 6/6 达到机器边界。[v9](../research/p30-evaluation-cohort-v9.json) 在 0.22 固定后冻结，清单摘要 `0fa1fec40c8a189db8683a89da0889d6fb037f545181b5315923a1efc960f701`。qwen3.5 六次调用中资料适用性 2/2 有效 `unassessed`、零 project/manual claims；任务引用 2/2 因定义路径少 `/` 拒绝；unsupported-field 2/2 因无效 JSON 拒绝。6/6 归档离线复验通过。结果是 2/6 成功、4/6 fail closed，不能声明一般复杂解释可用。
+- 本地全量 431 tests（429 passed、2 环境跳过）；Ruff、62-source mypy、57 schemas / 76 schema-bound / 25 syntax-only、CI topology、diff check、源码项目场景、12 个模型协议场景及隔离 wheel 验证通过。wheel SHA-256 `08fc3e6497da9f651a0dd5e741e1f6bc2b72fa56e39c6e69cb197426194c9042`。实现当前 local-accepted，提交和远端 CI 待记录。
+- 下一项仍为 P30：独立审阅 v9 资料缺口文字；复杂解释不再用 v9 调参，在更强文本基线和确定性模板/语法约束间选择后，用新 cohort 复验。P30 保持 implementing。
+
+
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）
 
 - 复查提示 0.8 新题调用发现：点名检查时只保留检查直接字段，漏掉问题明确询问的 `binding/request_id`、`response_id`、`did` 和 `/stages/ecuc/status`。提示 0.9 将精确请求的嵌套字段与阶段状态加入选择器，同时保留 0.1–0.8 的历史版本逻辑，并更新模型解释 schema 版本枚举。
