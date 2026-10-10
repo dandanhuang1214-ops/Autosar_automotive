@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-09）
+## 当前总览（2026-10-10）
 
-当前主阶段 P30 implementing。提示 0.6–0.11 均已通过远端七 job；提示 0.11 实现 `355955cf883e17b3adf2d77294041b220f8d9b00` / [run `37906579233`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37906579233) 七 job 全部 success。0.11 对整体/阶段状态问题要求两条对应引用，保留旧版本重放。全量 423 tests（421 passed、2 环境跳过）、隔离 wheel 和静态检查通过。开发回归中 qwen3-vl `identity-mismatch` 引用 2/2 并通过，`repeat` 因 length 截断拒绝；qwen3.5 两题均因 length 拒绝。v5 已用于开发和人工审阅，不是 held-out；一般工程解释和资料适用性仍未验收。下一步以未用于调试的新证据冻结验证 .11，并处理输出截断的稳定性。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.6–0.11 均已通过远端七 job；提示 0.12 已 local-accepted、远端待验收。0.11 的 v6 两条 qwen3-vl 简单状态回答已由用户确认文字准确且可用，只覆盖该窄任务。qwen3.5 无正文的根因已由原始响应确认：默认 thinking 两题均用满 4096 token、正文为空；0.12 仅在服务身份 family=`qwen35` 时关闭 thinking，保留 0.1–0.11 重放。相同两题现场复验均正常 stop、引用 2/2 并通过，适配总耗时 32.3/19.8 秒。全量 424 tests（422 passed、2 环境跳过）、隔离 wheel、合成协议和静态检查通过。一般工程解释、资料适用性和跨项目模型用途仍未验收；下一步先完成 0.12 实现远端 CI，再冻结未参与本轮修复的更广问题。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1639,7 +1639,16 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - qwen3-vl 两题均结构化通过、目标事实 2/2 进入上下文且引用 2/2；耗时 66.7s、33.0s。qwen3.5 两题均在适配器处拒绝无效/不完整输出，耗时 102.4s、78.3s，引用 0/2。四份实际调用归档的离线复验均 passed。拒绝不计为模型正确回答；qwen3-vl 通过也只证明结构和引用门通过，答案文字及可用性尚未独立审阅。
 - 原始归档和汇总留在本机 `output/p30-continuation-audit/trial-v6-qwenvl/`、`trial-v6-qwen35/`；清单也留在同目录。未提交原始模型输出。
 - 文档/冻结题集提交 `e311512` 已推送；其 CI [run `37912242301`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37912242301) 七项全部 success：runtime-currency `113759898063`；core-contracts Ubuntu `113759898327`、Windows `113759898606`；controlled-rejections Ubuntu `113761756218`、Windows `113761756282`；runtime-evidence Ubuntu `113761756289`、Windows `113761756308`。这是文档提交 CI，不替代提示 0.11 实现提交 `355955c` 的实现验收。
-- 下一项：人工检查 qwen3-vl 两条通过回答是否只准确复述报告状态、是否清楚且有用，并单独记录判断；之后再决定 P30 的模型用途边界。资料适用性、一般工程解释和整体质量门仍未通过；qwen3.5 的结构化失败继续记录。P30 保持 implementing。
+- 2026-10-10 用户确认 qwen3-vl 两条通过回答的文字准确且可用。该人工验收只覆盖 v6 两道简单状态复述，不包含手册适用性、复杂因果或一般工程判断。
+
+
+### P30：提示 0.12 qwen3.5 输出恢复（2026-10-10）
+
+- 原始 0.11 v6 响应显示 qwen3.5 两题均 `done_reason=length`、`eval_count=4096`，`message.content` 长度为 0，独立 `thinking` 字段分别约 16.6K/16.8K 字符；事实选择和模型身份均正确。因此失败是当前服务/模型组合在默认 thinking 下耗尽生成预算，不是缺少输入事实。
+- 0.12 复用 0.11 的提示、两项状态引用和 8K 上下文，只在 `/api/tags` 实际返回 family=`qwen35` 时设置 `think=false`。0.8–0.11 对 qwen3-vl 的既有策略保留，0.11 及更早 qwen3.5 payload 不改，未知或非 thinking family 不强制该选项。
+- 使用相同 v6 两题和固定 digest 重冻清单（`5eb332c0834a27103b2391010d76c36e40ef8305c2d0275fc7a7ffc6b6081801`）后，qwen3.5 两题均 `done_reason=stop`、thinking 长度 0，prompt/output token 为 1017/324、1012/289；适配总耗时 32.3/19.8 秒，目标事实均 2/2 进入上下文并引用，结构化任务和离线归档复验均通过。该组是输出修复对照，不是新的模型质量集。
+- 本地验证：424 tests（422 passed、2 环境跳过）；模型专项 19/19；12 类合成 HTTP 场景、57 schemas/76 schema-bound/25 syntax-only、CI topology、Ruff、8-source mypy、compileall、diff check 通过。隔离 wheel 两工程、12 类模型场景与归档复验通过，wheel SHA-256 `e001b22ada382b436b351070773f77719a30e38ebe64e1182339297a17284a26`。
+- 状态：local-accepted，远端 CI 待本次实现提交。qwen3.5 已能在该窄状态任务输出，不据此声明一般工程解释或资料适用性通过；下一步在实现远端验收后冻结未参与修复的问题并分别计量两模型。
 
 
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）

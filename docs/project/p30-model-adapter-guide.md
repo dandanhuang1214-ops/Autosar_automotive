@@ -68,3 +68,9 @@ docker run --rm --pull never --network simulink-assistant_backend `
 新请求优先点名的检查、请求字段及必要上下文；不再用无关通过项填满窗口。结构化生成限制事实 ID/原值配对、原文摘录和 unassessed 空列表；最终仍由独立校验器接受或拒绝。0.1–0.4 保存的请求继续使用原排序、提示与生成设置离线重放。
 
 0.5 保留模型的默认推理模式，生成预算为 4096 token；本机 `think=false` 曾绕过 Ollama 的格式约束，开启推理又可能消耗预算导致截断。现场建议显式 `--timeout 120`，每次请求仍有上限且无隐式重试。格式和引用通过不代表语义正确。模型选择、XML 与多模态边界、微调启动条件见[模型适用性评估](p30-model-suitability.md)。
+
+## 提示 0.12：按已验证模型 family 关闭 thinking
+
+本机 qwen3.5 的 0.11 完整适配器归档显示两次请求都把 4096 token 用于 thinking，正文为空。0.12 在调用前读取并固定模型身份；只有 `details.families` 明确包含 `qwen35` 时才发送 `think=false`。qwen3-vl 沿用 0.8 起的独立 family 策略；未知 family 不强制开关。实际发送的选项仍保存在 `model-input.json`，模型调用前后 identity 必须一致。
+
+0.1–0.11 的历史 payload 和重放保持不变。关闭 thinking 只修复“没有正文”的服务兼容性，不绕过结构化 schema、两项状态引用、类型化值、token 预算、模型 digest 或人工语义审核门。

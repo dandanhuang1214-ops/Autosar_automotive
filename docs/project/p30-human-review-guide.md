@@ -60,3 +60,7 @@
 ### 人工复核记录（2026-10-09）
 
 用户逐题对照来源报告后确认两条 qwen3-vl 自然语言状态答案内容均正确。`repeat` 文本列出整体及 ECUC 状态；`identity-mismatch` 文本也列出两个状态，但其结构化 claims 仅引用 ECUC stage status，漏掉 project status，因此自动完整引用门未通过。此记录只确认状态内容，不评估手册适用性或更广工程解释能力。
+
+### v6 人工复核记录（2026-10-10）
+
+用户确认 `backend-blocked-overall-stage-status` 与 `wrong-response-id-overall-stage-status` 两条 qwen3-vl 回答文字准确且可用；两题此前已各自通过 2/2 严格引用门。该结论只覆盖 overall project 与 ECUC stage 状态复述。两题没有查询手册，不提供资料适用性证据，也不认证复杂因果、排查建议或一般工程解释能力。

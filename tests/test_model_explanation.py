@@ -154,7 +154,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -189,6 +189,39 @@ class ModelExplanationTests(unittest.TestCase):
             self.assertEqual(verify_explanation(self.report, Path(temporary) / "vision")["status"], "passed")
             saved = json.loads((Path(temporary) / "vision/model-input.json").read_text())
             self.assertIs(saved["think"], False)
+
+    def test_v12_disables_thinking_for_verified_qwen35_family_only_in_new_version(self):
+        class Qwen35Endpoint(StubEndpoint):
+            def request(self, path, payload=None):
+                if path == "/api/tags":
+                    value = {"models": [{"name": "fixture:1", "digest": "a" * 64,
+                                           "details": {"families": ["qwen35"]}}]}
+                    self.records.append({"path": path, "method": "GET", "payload": None,
+                                         "http_status": 200, "raw": json.dumps(value), "error": None})
+                    return value
+                if path == "/api/chat":
+                    self.asserted_think = payload.get("think")
+                return super().request(path, payload)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            endpoint = Qwen35Endpoint("http://ollama:11434", 120)
+            current = Path(temporary) / "current"
+            result = explain(self.report, "列出阻断原因", current, "fixture:1",
+                             ollama_url="http://ollama:11434",
+                             _endpoint_factory=lambda _url, _timeout: endpoint)
+            self.assertEqual(endpoint.asserted_think, False)
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(verify_explanation(self.report, current)["status"], "passed")
+            self.assertIs(json.loads((current / "model-input.json").read_text())["think"], False)
+
+            historical_endpoint = Qwen35Endpoint("http://ollama:11434", 120)
+            historical = Path(temporary) / "historical"
+            result = explain(self.report, "列出阻断原因", historical, "fixture:1",
+                             ollama_url="http://ollama:11434", _prompt_version="project-explanation-prompt-0.11",
+                             _endpoint_factory=lambda _url, _timeout: historical_endpoint)
+            self.assertIsNone(historical_endpoint.asserted_think)
+            self.assertEqual(result["status"], "passed")
+            self.assertNotIn("think", json.loads((historical / "model-input.json").read_text()))
 
     def test_v07_rejects_responses_that_overrun_recorded_context(self):
         class OversizedEndpoint(StubEndpoint):
@@ -269,6 +302,8 @@ class FactRetrievalTests(unittest.TestCase):
                  self.fact("/stages/ecuc/status", "unassessed", "project-report")]
         required = required_stage_status_fact_ids(question, facts)
         self.assertEqual(required, {fact["fact_id"] for fact in facts})
+        self.assertEqual(required_stage_status_fact_ids(question, facts,
+                                                        prompt_version="project-explanation-prompt-0.11"), required)
         self.assertIsNone(required_stage_status_fact_ids(question, facts,
                                                          prompt_version="project-explanation-prompt-0.10"))
 

@@ -12,7 +12,7 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 未通过，继续 implementing | 用户人工核对 qwen3-vl 两条状态文本均正确；其中一条结构化引用不完整，qwen3.5 0/2，其他语义与资料适用性仍未验收 |
+| 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；0.12 恢复 qwen3.5 同两题 2/2 结构输出。仅支持窄状态摘录，一般解释与资料适用性仍未验收 |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
@@ -107,6 +107,16 @@ v5 已见证据仅作开发回归：qwen3-vl identity-mismatch 现在引用 2/2�
 使用 `backend-blocked` 与 `wrong-response-id` 两份 P29 报告，测试 overall 与 ECUC stage 状态复述。两报告未用于 0.11 提示调整，但曾进入更早版本的问题组；结果只能说明 0.11 在这两个新样本上的表现，不能称为全新证据集或独立人工 gold。qwen3.5 冻结清单摘要为 `e18610adccdfb31598869e52920a35ff6b924d16555aa8f1e741b3b5a6114227`，qwen3-vl 为 `f3b492c570346fd73636920987c0699b77a1b8bf70387811dc7b33c879ca746f`。
 
 qwen3-vl 两题均通过结构化任务，gold 引用 2/2，耗时 66.7 秒和 33.0 秒；qwen3.5 两题均因不完整或无效模型输出被严格校验拒绝，耗时 102.4 秒和 78.3 秒，引用 0/2。四份调用归档的离线复验均通过。这里的“通过”只代表 schema、引用及归档复验通过，不代表自然语言已经人工核实。qwen3-vl 的两条答案待人工检查；手册适用性、一般工程解释和整体模型适用性仍未验收。原始输出仅保留在本机 `output/p30-continuation-audit/trial-v6-*`。本轮只新增冻结评测文档，没有改运行代码；0.11 实现验收仍对应 `355955cf883e17b3adf2d77294041b220f8d9b00` / run `37906579233`。
+
+2026-10-10 用户确认上述 qwen3-vl 两条回答文字准确且可用。人工结论只覆盖这两道状态复述；没有查询手册，也不证明复杂解释、因果诊断或跨项目泛化。
+
+## 提示 0.12 qwen3.5 输出恢复（2026-10-10）
+
+0.11 的两份 qwen3.5 原始响应均用满 4096 token、正文为空，thinking 字段分别约 16.6K/16.8K 字符。0.12 保留提示和严格引用规则，仅在服务身份明确为 family=`qwen35` 时设置 `think=false`；旧提示重放与 qwen3-vl 既有策略保持。
+
+相同 v6 两题以新实现重冻后均通过：正常 stop、thinking 为空，prompt/output token 1017/324 与 1012/289，适配耗时 32.3/19.8 秒，目标事实引用均为 2/2，离线复验通过。清单摘要 `5eb332c0834a27103b2391010d76c36e40ef8305c2d0275fc7a7ffc6b6081801`。这是修复对照，不是新 held-out 质量结论。
+
+本地 424 tests（422 passed、2 环境跳过）、19 项模型专项、12 类合成协议、schema/topology/Ruff/scoped mypy/compileall 和隔离 wheel 均通过；wheel SHA-256 `e001b22ada382b436b351070773f77719a30e38ebe64e1182339297a17284a26`。状态 local-accepted，远端 CI 待实现提交。
 
 
 文档/冻结题集提交 `e311512` 已推送；该提交的 [CI run `37912242301`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37912242301) 七项全部 success：runtime-currency `113759898063`；core-contracts Ubuntu `113759898327`、Windows `113759898606`；controlled-rejections Ubuntu `113761756218`、Windows `113761756282`；runtime-evidence Ubuntu `113761756289`、Windows `113761756308`。该 run 验证文档提交工作树满足 CI，不作为新的模型质量验收。
