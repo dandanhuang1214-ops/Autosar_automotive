@@ -1670,6 +1670,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 下一项仍为 P30：独立审阅 v9 资料缺口文字；复杂解释不再用 v9 调参，在更强文本基线和确定性模板/语法约束间选择后，用新 cohort 复验。P30 保持 implementing。
 
 
+### P30：提示 0.22 远端工程验收与 LLM 内容复核（2026-10-11）
+
+- 初始实现 `7a85d893e45dbe163a48ddadb0006d2158ef94ba` 的 [run `38064306955`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38064306955) 在 Windows core test 失败：新增测试以系统 cp1252 读取含中文的 JSON。修正为显式 UTF-8 后，最终实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` 的 [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job 全部 success：runtime-currency `114256294759`；core-contracts Ubuntu `114256294986`、Windows `114256295020`；controlled-rejections Ubuntu `114257990728`、Windows `114257990804`；runtime-evidence Windows `114257990750`、Ubuntu `114257990775`。提示 0.22 工程实现 remote-accepted。
+- 逐字复核 v9 六份实际 LLM 原文：任务引用两份除定义路径漏 `/` 外事实与边界基本准确，但已正确拒绝；unsupported-field 两份事实范围基本准确，但使用中文弯引号形成无效 JSON，已正确拒绝。资料题两份没有标准强制结论、claim 或建议，但分别为 175/259 字，超过请求 schema 的 160；project 模式“检索资料未提供”还可能误示已执行检索。检索模式对实际输入的 AUTOSAR Blockset User Guide R2024a 三片段主题概括基本准确。结论为 2/6 适配器接受、4/6 fail closed、0/6 内容验收；本次是开发者复核，不冒充独立人工审核。
+- 本条为 `[skip ci]` 状态回填，引用最终实现提交及其实际 run，不替代该实现 CI。下一项仍为 P30：升级提示版本，严格拒绝超长草稿并区分未检索/已检索措辞；然后在更强文本基线和确定性模板/语法约束间选择，用新 cohort 验证。一般复杂解释与独立人工适用性仍未验收。
+
+
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）
 
 - 复查提示 0.8 新题调用发现：点名检查时只保留检查直接字段，漏掉问题明确询问的 `binding/request_id`、`response_id`、`did` 和 `/stages/ecuc/status`。提示 0.9 将精确请求的嵌套字段与阶段状态加入选择器，同时保留 0.1–0.8 的历史版本逻辑，并更新模型解释 schema 版本枚举。

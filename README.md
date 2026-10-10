@@ -10,7 +10,7 @@ P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph
 
 新增 [ECUC 项目只读体检](docs/project/p26-ecuc-inspection-guide.md)：DPA/collection 选择、引用定位与快照复验；实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 通过，首轮体检已远端验收；[通信跨层引用链](docs/project/p26-ecuc-communication-guide.md)也已远端验收：`b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部通过；新增[完整工程审查与两版配置影响](docs/project/p26-engineering-review-guide.md)，实现 `6433e1c` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部通过，受限静态整阶段已验收，见[验收表](docs/project/p26-acceptance.md)。
 
-P30 续进：提示 0.22 将复杂点名检查的项目事实确定性绑定，并把“资料能否证明标准要求”隔离为人工适用性门。新冻结 v9 的资料题在 project/retrieval 两种模式均安全保持 `unassessed`；两类复杂解释共四次均被严格门禁拒绝，所以 qwen3.5 2B 的一般工程解释质量仍未通过。当前实现已本地验收、远端 CI 待记录；P30 保持 implementing。当前状态和下一项见[进度账本](docs/project/progress-log.md)，独立人工验收见[记录表](docs/project/p30-human-review-guide.md)。
+P30 续进：提示 0.22 将复杂点名检查的项目事实确定性绑定，并把“资料能否证明标准要求”隔离为人工适用性门。新冻结 v9 的资料题在 project/retrieval 两种模式均安全保持 `unassessed`，但开发者内容复核发现两份草稿超出 160 字契约，project 模式措辞还可能误示已检索；两类复杂解释共四次均被严格门禁拒绝。因此 v9 为 2/6 适配器接受、0/6 内容验收，一般工程解释质量仍未通过。最终实现 `78e8808` 已由 [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job 验收；P30 保持 implementing。当前状态和下一项见[进度账本](docs/project/progress-log.md)，独立人工验收见[记录表](docs/project/p30-human-review-guide.md)。
 
 日常项目验收从 `run-project` 开始：
 
@@ -198,4 +198,4 @@ adapters/
 
 新增 [P27 声明式 ECUC 配置验收](docs/project/p27-ecuc-acceptance-guide.md)：一个 0.6 项目声明基线/候选与静态接受条件，直接完成工程审查、影响追踪和便携证据；两种工程、故障与隔离安装流程已远端验收：`55e208f` / [run `36901660485`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36901660485) 七 job 全部通过，见[验收表](docs/project/p27-acceptance.md)。
 
-新增 [P29 独立诊断依赖](docs/project/p29-diagnostic-link-guide.md)：项目 0.9 由静态保护策略控制固定构建的独立只读诊断，绑定本次执行与便携审查；本地、隔离安装、独立 OpenBSW 现场与七 job 验收通过，见 [P29 验收表](docs/project/p29-acceptance.md)。P30 提示 0.22 已把精确字段、复杂项目事实和资料适用性拆成不同受控路径；v9 证明资料缺口能安全保持 `unassessed`，也证明当前 qwen3.5 2B 不能稳定完成一般复杂解释。模型自然语言和资料适用性仍需独立人工验收。参见[小模型、XML、多模态与微调判断](docs/project/p30-model-suitability.md)。
+新增 [P29 独立诊断依赖](docs/project/p29-diagnostic-link-guide.md)：项目 0.9 由静态保护策略控制固定构建的独立只读诊断，绑定本次执行与便携审查；本地、隔离安装、独立 OpenBSW 现场与七 job 验收通过，见 [P29 验收表](docs/project/p29-acceptance.md)。P30 提示 0.22 已把精确字段、复杂项目事实和资料适用性拆成不同受控路径；v9 的状态隔离与 fail-closed 生效，但逐字复核为 0/6 内容验收，当前 qwen3.5 2B 不能稳定完成一般复杂解释。模型自然语言和资料适用性仍需独立人工验收。参见[小模型、XML、多模态与微调判断](docs/project/p30-model-suitability.md)。
