@@ -13,9 +13,9 @@ from referencing import Registry, Resource
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
 from automotive_workbench.model_explanation import (
-    PROMPTS, constrained_answer_schema, explain, quote_options,
-    required_stage_status_fact_ids, select_facts,
-    validate_draft, verify_explanation,
+    PROMPTS, constrained_answer_schema, exact_draft_schema, explain, extract_exact_draft, quote_options,
+    required_named_check_field_fact_ids, required_stage_status_fact_ids, select_facts,
+    validate_draft, validate_exact_draft, verify_explanation,
 )
 from automotive_workbench.project_workflow import run_project
 
@@ -154,7 +154,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -222,6 +222,37 @@ class ModelExplanationTests(unittest.TestCase):
             self.assertIsNone(historical_endpoint.asserted_think)
             self.assertEqual(result["status"], "passed")
             self.assertNotIn("think", json.loads((historical / "model-input.json").read_text()))
+
+    def test_v16_scopes_named_check_fields_and_ignores_model_extras(self):
+        class ExactEndpoint(StubEndpoint):
+            def request(self, path, payload=None):
+                if path != "/api/chat":
+                    return super().request(path, payload)
+                context = json.loads(payload["messages"][1]["content"])
+                self.model_context = context
+                answer = {"request_id": context["request_id"], "draft_explanation": "按记录复述两个字段。",
+                          "status": "unassessed", "project_claims": [],
+                          "manual_claims": [], "suggestions": []}
+                value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
+                         "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
+                self.records.append({"path": path, "method": "POST", "payload": payload,
+                                     "http_status": 200, "raw": json.dumps(value), "error": None})
+                return value
+
+        endpoint = ExactEndpoint("http://ollama:11434", 120)
+        output = self.root / "exact-fields"
+        result = explain(self.report, "diagnostic.read-version 的 status 和 reason 是什么？只引用这两个字段。",
+                         output, "fixture:1", ollama_url="http://ollama:11434",
+                         _endpoint_factory=lambda _url, _timeout: endpoint)
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["reason"], "deterministic_requested_facts_model_prose_unverified")
+        self.assertEqual(len(result["answer"]["project_facts"]), 2)
+        self.assertEqual({fact["pointer"].rsplit("/", 1)[-1] for fact in endpoint.model_context["facts"]},
+                         {"status", "reason"})
+        self.assertNotIn("project_status", endpoint.model_context)
+        self.assertEqual(endpoint.model_context["manuals"], [])
+        self.assertIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
+        self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
     def test_v07_rejects_responses_that_overrun_recorded_context(self):
         class OversizedEndpoint(StubEndpoint):
@@ -322,6 +353,52 @@ class FactRetrievalTests(unittest.TestCase):
         schema = constrained_answer_schema("request", facts, [], minimum_project_claims=2, require_selected=True)
         self.assertEqual(len(schema["anyOf"]), 1)
         self.assertEqual(schema["anyOf"][0]["properties"]["project_claims"]["minItems"], 2)
+
+    def test_v13_requires_all_named_check_fields_and_excludes_unrequested_sources(self):
+        question = ("runtime.signal-tx 和 runtime.signal-rx 的 status 与 reason 分别是什么？"
+                    "只引用这四项字段。")
+        facts = [self.fact("/status", "unassessed", "project-report")]
+        facts += [self.fact(f"/checks/{check}/{field}", value)
+                  for check, status, reason in (("runtime.signal-tx", "unassessed", "frame_id_mismatch"),
+                                                ("runtime.signal-rx", "unassessed", "another_binding_rejected"))
+                  for field, value in (("status", status), ("reason", reason))]
+        required = required_named_check_field_fact_ids(question, facts)
+        self.assertEqual(required, {fact["fact_id"] for fact in facts[1:]})
+        self.assertIsNone(required_named_check_field_fact_ids(
+            question, facts, prompt_version="project-explanation-prompt-0.12"))
+
+        manuals = [{"source_id": "manual", "excerpt": "Unrelated retrieved text."}]
+        schema = constrained_answer_schema("request", facts, manuals, minimum_project_claims=4,
+                                           require_selected=True, exact_project_fact_ids=required)
+        Draft202012Validator.check_schema(schema)
+        properties = schema["anyOf"][0]["properties"]
+        self.assertEqual(properties["project_claims"]["minItems"], 4)
+        self.assertEqual(properties["project_claims"]["maxItems"], 4)
+        self.assertEqual(properties["manual_claims"]["enum"], [[]])
+        self.assertEqual(properties["suggestions"]["enum"], [[]])
+        allowed_ids = {item["fact_id"] for item in properties["project_claims"]["items"]["enum"]}
+        self.assertEqual(allowed_ids, required)
+
+        answer = {"request_id": "request", "status": "selected",
+                  "project_claims": [{"fact_id": fact["fact_id"], "value": fact["value"]}
+                                     for fact in facts[1:]],
+                  "manual_claims": [], "draft_explanation": "四项字段均按记录复述。", "suggestions": []}
+        Draft202012Validator(schema).validate(answer)
+        context = {"request_id": "request", "facts": facts, "manuals": manuals}
+        self.assertEqual(len(validate_draft(answer, context,
+                                            required_project_fact_ids=required)["project_facts"]), 4)
+
+        draft_schema = exact_draft_schema("request")
+        Draft202012Validator.check_schema(draft_schema)
+        draft = {"request_id": "request", "draft_explanation": "仅解释记录字段。"}
+        Draft202012Validator(draft_schema).validate(draft)
+        self.assertEqual(validate_exact_draft(draft, "request"), draft["draft_explanation"])
+        with self.assertRaisesRegex(ValueError, "wrong_exact_draft_contract_or_request"):
+            validate_exact_draft({**draft, "status": "selected"}, "request")
+        legacy = {**draft, "status": "unassessed", "project_claims": [],
+                  "manual_claims": [], "suggestions": []}
+        self.assertEqual(extract_exact_draft(legacy, "request"), (draft["draft_explanation"], True))
+        self.assertEqual(extract_exact_draft(draft, "request"), (draft["draft_explanation"], False))
 
     def test_context_budget_and_no_fabricated_facts(self):
         facts = [self.fact("/checks/impact/affected_objects/0", "x" * 13000), self.fact("/status", "failed", "project-report")]

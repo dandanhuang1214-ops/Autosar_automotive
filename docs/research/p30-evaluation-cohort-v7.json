@@ -1,0 +1,98 @@
+{
+  "cohort": "prompt-v12-unseen-runtime-evidence-pairing",
+  "cases": [
+    {
+      "id": "second-run-runtime-status-reasons",
+      "category": "runtime-positive",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/second-run/bundle/project-report.json",
+      "question": "第二次执行报告中，runtime.signal-tx 和 runtime.signal-rx 的 status 与 reason 分别是什么？两个 reason 是否相同？只引用这四项字段，不推断硬件故障。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/status",
+          "value": "passed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/reason",
+          "value": "same_run_observed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/status",
+          "value": "passed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/reason",
+          "value": "same_run_observed"
+        }
+      ],
+      "knowledge_query": "CAN transmit receive same run observation evidence",
+      "origin": "new-report-and-question-pre-inference"
+    },
+    {
+      "id": "wrong-address-runtime-status-reasons",
+      "category": "runtime-address",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/wrong-address/bundle/project-report.json",
+      "question": "报告中 runtime.signal-tx 和 runtime.signal-rx 的 status 与 reason 分别是什么？两个 reason 是否相同？只引用这四项字段，不推断硬件故障。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/status",
+          "value": "unassessed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/reason",
+          "value": "ecuc_frame_id_mismatch"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/status",
+          "value": "unassessed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/reason",
+          "value": "another_binding_rejected"
+        }
+      ],
+      "knowledge_query": "AUTOSAR CAN frame identifier binding mismatch",
+      "origin": "new-report-and-question-pre-inference"
+    },
+    {
+      "id": "wrong-mapping-runtime-status-reasons",
+      "category": "runtime-mapping",
+      "report": "output/p29-validation/installed-final/evidence/relocated/projects/wrong-mapping/bundle/project-report.json",
+      "question": "报告中 runtime.signal-tx 和 runtime.signal-rx 的 status 与 reason 分别是什么？两个 reason 是否相同？只引用这四项字段，不推断硬件故障。",
+      "expectation": "facts",
+      "gold": [
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/status",
+          "value": "unassessed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-tx/reason",
+          "value": "declared_runtime_identity_mismatch"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/status",
+          "value": "unassessed"
+        },
+        {
+          "artifact_id": "stage-ecuc",
+          "pointer": "/checks/runtime.signal-rx/reason",
+          "value": "another_binding_rejected"
+        }
+      ],
+      "knowledge_query": "AUTOSAR runtime object identity mapping mismatch",
+      "origin": "new-report-and-question-pre-inference"
+    }
+  ]
+}

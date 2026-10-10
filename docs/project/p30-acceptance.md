@@ -12,7 +12,7 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；0.12 恢复 qwen3.5 同两题 2/2 结构输出。仅支持窄状态摘录，一般解释与资料适用性仍未验收 |
+| 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；0.12 恢复 qwen3.5 输出。0.16 的 v7 开发集 6/6 精确字段任务通过，但引用由系统绑定、草稿只经开发者审读。一般解释、独立语义与资料适用性仍未验收 |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
@@ -119,6 +119,14 @@ qwen3-vl 两题均通过结构化任务，gold 引用 2/2，耗时 66.7 秒和 3
 本地 424 tests（422 passed、2 环境跳过）、19 项模型专项、12 类合成协议、schema/topology/Ruff/scoped mypy/compileall 和隔离 wheel 均通过；wheel SHA-256 `e001b22ada382b436b351070773f77719a30e38ebe64e1182339297a17284a26`。
 
 实现 `656098b8b8dca8373ba3974ced45a317f25d05ec` / [run `38012423168`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38012423168) 七 job 全部 success：runtime-currency `114095165644`；core-contracts Windows `114095165813`、Ubuntu `114095165919`；controlled-rejections Ubuntu `114096657670`、Windows `114096657681`；runtime-evidence Ubuntu `114096657716`、Windows `114096657724`。提示 0.12 实现状态 remote-accepted；后续纯文档状态提交不作为新的实现验收。下一项使用未参与本轮修复的问题分别计量 qwen3.5 与 qwen3-vl；一般解释、资料适用性和跨项目用途仍保持未验收。
+
+## 提示 0.16 精确字段绑定（2026-10-10）
+
+[v7 cohort](../research/p30-evaluation-cohort-v7.json) 的三个报告在冻结后被用于 0.13–0.16 调整，因此属于开发集。0.16 对点名检查的直接字段采用确定性完整绑定；模型生成的旧契约字段即使存在也被记录为偏差并忽略，只消费匹配 request ID 的非空说明草稿。精确字段问题不查询手册，避免把一般资料命中误当作项目字段依据。
+
+qwen3.5 最终清单摘要 `ef165dc67f2a8dc441e64f974f24bf9f6240e0644ad30c56bb94f1ac93f4e497`；三题 × project/retrieval 共 6/6 结构任务通过，各 4/4 目标事实由系统绑定，6/6 归档离线复验通过。开发者审读确认六份草稿都覆盖 tx/rx status/reason，但不是独立人工验收，输出继续标记 prose/semantic unassessed。
+
+本地 426 tests（424 passed、2 环境跳过）；12 个合成 HTTP 场景、Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only、CI topology、compileall、diff check 与隔离 wheel 验证通过。wheel SHA-256 `2b75cd50fcb844dbb1c11bd3b5dc22e487e1bbd375d83d5bd69e3da89856c05f`。当前 local-accepted、远端 CI pending；待实现提交的实际 run 完成后再回填 remote 状态。
 
 
 文档/冻结题集提交 `e311512` 已推送；该提交的 [CI run `37912242301`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37912242301) 七项全部 success：runtime-currency `113759898063`；core-contracts Ubuntu `113759898327`、Windows `113759898606`；controlled-rejections Ubuntu `113761756218`、Windows `113761756282`；runtime-evidence Ubuntu `113761756289`、Windows `113761756308`。该 run 验证文档提交工作树满足 CI，不作为新的模型质量验收。

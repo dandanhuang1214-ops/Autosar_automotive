@@ -74,3 +74,9 @@ docker run --rm --pull never --network simulink-assistant_backend `
 本机 qwen3.5 的 0.11 完整适配器归档显示两次请求都把 4096 token 用于 thinking，正文为空。0.12 在调用前读取并固定模型身份；只有 `details.families` 明确包含 `qwen35` 时才发送 `think=false`。qwen3-vl 沿用 0.8 起的独立 family 策略；未知 family 不强制开关。实际发送的选项仍保存在 `model-input.json`，模型调用前后 identity 必须一致。
 
 0.1–0.11 的历史 payload 和重放保持不变。关闭 thinking 只修复“没有正文”的服务兼容性，不绕过结构化 schema、两项状态引用、类型化值、token 预算、模型 digest 或人工语义审核门。
+
+## 提示 0.16：确定性精确字段与模型草稿分工
+
+当问题明确点名一个或多个 check，并直接询问 `status` / `reason` 时，0.16 只把完整的所问字段送入模型；最终 `project_facts` 由适配器按问题范围确定性绑定，模型不能增删或改写。模型只提供 `draft_explanation`。本机 qwen3.5 仍可能返回旧六字段对象，适配器只在 request ID 匹配且草稿非空时读取草稿，并记录 `MODEL_FORMAT_EXTRAS_IGNORED`；额外状态、claims、手册和建议都不进入证据。
+
+这类精确字段复述即使带 `--knowledge-url` 也不查询手册，而是记录 `KNOWLEDGE_NOT_APPLICABLE`。结果原因 `deterministic_requested_facts_model_prose_unverified` 明确区分系统绑定事实与未审核模型文字。0.1–0.15 的历史请求仍按各自契约重放。

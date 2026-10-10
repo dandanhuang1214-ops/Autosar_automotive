@@ -127,3 +127,9 @@ qwen3.5 两题均未通过：一条 135.8 秒超时，另一条 70.6 秒输出�
 ### 提示 0.12 qwen3.5 输出恢复（2026-10-10）
 
 对 v6 qwen3.5 原始响应的诊断显示：两题 `done_reason=length`、`eval_count=4096`、正文为空，thinking 分别约 16.6K/16.8K 字符。0.12 只对 identity family=`qwen35` 关闭 thinking，保留所有旧提示 payload 的重放语义。以相同 cohort 重冻后的清单摘要为 `5eb332c0834a27103b2391010d76c36e40ef8305c2d0275fc7a7ffc6b6081801`；两题均 stop、2/2 引用通过，适配耗时 32.3s/19.8s，离线复验通过。该结果验收输出路径修复，不计为新的语义质量样本。
+
+### 提示 0.16 精确字段开发集 v7（2026-10-10）
+
+[v7 cohort](../research/p30-evaluation-cohort-v7.json) 含三个报告、每题四个 `runtime.signal-tx/rx` status/reason gold。它最初在查看结果前冻结，但随后直接驱动 0.13–0.16 修正，因此最终只能作为开发回归。0.16 清单摘要 `ef165dc67f2a8dc441e64f974f24bf9f6240e0644ad30c56bb94f1ac93f4e497`；qwen3.5 在 project/retrieval 共 6/6 通过，四项事实均由确定性选择器完整绑定，真实归档均通过离线复验。`cited_required_facts=4` 表示最终结果绑定覆盖，不表示模型自行选择了四项引用。
+
+检索模式对这类“复述报告中精确字段”的问题记录 `KNOWLEDGE_NOT_APPLICABLE`，不查询手册。六份草稿经开发者逐项审读均完整复述目标值；该题集已见且没有独立审阅者，语义契约仍保持 unassessed。下一组必须使用未参与本轮实现的复杂解释/资料适用性问题，并在看模型答案前写下人工预期。

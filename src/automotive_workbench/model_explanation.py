@@ -12,16 +12,25 @@ from typing import Any
 from automotive_workbench.explanation_services import Endpoint, ServiceError, model_identity, parse_json, retrieve
 from automotive_workbench.project_explanation import build_request, canonical, digest, read
 
-PROMPT_VERSION = "project-explanation-prompt-0.12"
-FOCUSED_PROMPTS = {"project-explanation-prompt-0.5", "project-explanation-prompt-0.6", "project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", PROMPT_VERSION}
-BUDGET_PROMPTS = {"project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", PROMPT_VERSION}
-STAGE_STATUS_SCOPE_PROMPTS = {"project-explanation-prompt-0.10", "project-explanation-prompt-0.11", PROMPT_VERSION}
-COMPLETE_STAGE_STATUS_PROMPTS = {"project-explanation-prompt-0.11", PROMPT_VERSION}
+PROMPT_VERSION = "project-explanation-prompt-0.16"
+FOCUSED_PROMPTS = {"project-explanation-prompt-0.5", "project-explanation-prompt-0.6", "project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", PROMPT_VERSION}
+BUDGET_PROMPTS = {"project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", PROMPT_VERSION}
+STAGE_STATUS_SCOPE_PROMPTS = {"project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", PROMPT_VERSION}
+COMPLETE_STAGE_STATUS_PROMPTS = {"project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", PROMPT_VERSION}
+COMPLETE_NAMED_CHECK_FIELD_PROMPTS = {"project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", PROMPT_VERSION}
+EXACT_PROJECT_CLAIM_PROMPTS = {"project-explanation-prompt-0.13", "project-explanation-prompt-0.14"}
+EXACT_NAMED_CONTEXT_PROMPTS = {"project-explanation-prompt-0.14", "project-explanation-prompt-0.15", PROMPT_VERSION}
+EXACT_DRAFT_PROMPTS = {"project-explanation-prompt-0.15", PROMPT_VERSION}
+TOLERANT_DRAFT_PROMPTS = {PROMPT_VERSION}
 NO_THINK_FAMILIES = {
     "project-explanation-prompt-0.8": {"qwen3vl"},
     "project-explanation-prompt-0.9": {"qwen3vl"},
     "project-explanation-prompt-0.10": {"qwen3vl"},
     "project-explanation-prompt-0.11": {"qwen3vl"},
+    "project-explanation-prompt-0.12": {"qwen3vl", "qwen35"},
+    "project-explanation-prompt-0.13": {"qwen3vl", "qwen35"},
+    "project-explanation-prompt-0.14": {"qwen3vl", "qwen35"},
+    "project-explanation-prompt-0.15": {"qwen3vl", "qwen35"},
     PROMPT_VERSION: {"qwen3vl", "qwen35"},
 }
 SYSTEM = """/no_think
@@ -95,7 +104,29 @@ include exactly one project_claim for each supplied status fact. The claims must
 cover both requested status fields; a correct draft sentence does not replace a claim.
 If both status facts are supplied, use selected and cite both, including when a value is unassessed.
 """
-PROMPTS[PROMPT_VERSION] = PROMPTS["project-explanation-prompt-0.11"]
+PROMPTS["project-explanation-prompt-0.12"] = PROMPTS["project-explanation-prompt-0.11"]
+PROMPTS["project-explanation-prompt-0.13"] = PROMPTS["project-explanation-prompt-0.12"] + """
+For explicitly named checks and direct fields, include exactly one project_claim for
+every supplied requested field. A recorded value of unassessed is still an available
+fact: use selected and cite it; do not turn the whole answer into unassessed.
+This version supersedes the earlier three-claim cap and permits up to eight required
+project claims. Do not cite overall project status, manuals or suggestions unless the
+question explicitly requests them.
+"""
+PROMPTS["project-explanation-prompt-0.14"] = PROMPTS["project-explanation-prompt-0.13"] + """
+For an exact named-check field request, the supplied facts are already the complete
+requested set. Use status selected, copy every supplied fact exactly once, and keep
+manual_claims and suggestions empty. Fact values do not determine answer status.
+"""
+PROMPTS["project-explanation-prompt-0.15"] = PROMPTS["project-explanation-prompt-0.14"] + """
+For an exact named-check field request, project citations are bound deterministically
+outside the model. Return exactly request_id and draft_explanation. Explain only the
+supplied recorded fields in Chinese; do not add advice, manuals or hardware conclusions.
+"""
+PROMPTS[PROMPT_VERSION] = PROMPTS["project-explanation-prompt-0.15"] + """
+Only request_id and draft_explanation are consumed. Any other generated fields are
+ignored and never become evidence or change the deterministic recorded facts.
+"""
 
 
 def _object(properties: dict) -> dict:
@@ -242,6 +273,34 @@ def required_stage_status_fact_ids(question: str, facts: list[dict], *, prompt_v
     return None
 
 
+def required_named_check_field_fact_ids(question: str, facts: list[dict], *,
+                                        prompt_version: str = PROMPT_VERSION) -> set[str] | None:
+    """Require every explicitly requested direct field for every named check."""
+    if prompt_version not in COMPLETE_NAMED_CHECK_FIELD_PROMPTS:
+        return None
+    lowered = question.lower()
+    tokens = set(re.findall(r"[a-z0-9_]+(?:[.-][a-z0-9_]+)*", lowered))
+    fields = {field for field in ("status", "reason") if field in tokens}
+    if any(cue in lowered for cue in ("状态", "成功", "失败", "阻断")):
+        fields.add("status")
+    if any(cue in lowered for cue in ("原因", "为何", "为什么", "超时", "拒绝")):
+        fields.add("reason")
+    direct: dict[tuple[str, str], dict] = {}
+    for fact in facts:
+        parts = [part.replace("~1", "/").replace("~0", "~").lower()
+                 for part in fact["pointer"].split("/")[1:]]
+        if len(parts) == 3 and parts[0] == "checks" and parts[2] in fields:
+            direct[(parts[1], parts[2])] = fact
+    named_checks = {check for check, _field in direct
+                    if check in tokens or check.split(".", 1)[-1] in tokens}
+    if not named_checks or not fields or len(named_checks) * len(fields) > 8:
+        return None
+    requested = [direct.get((check, field)) for check in named_checks for field in fields]
+    if any(fact is None for fact in requested):
+        return None
+    return {fact["fact_id"] for fact in requested if fact is not None}
+
+
 def quote_options(manual: dict) -> list[str]:
     """Short verbatim spans, never paraphrases or evidence applicability claims."""
     return list(dict.fromkeys(part.strip()[:160] for part in
@@ -249,23 +308,55 @@ def quote_options(manual: dict) -> list[str]:
 
 
 def constrained_answer_schema(request_id: str, facts: list[dict], manuals: list[dict], *,
-                              minimum_project_claims: int = 1, require_selected: bool = False) -> dict:
+                              minimum_project_claims: int = 1, require_selected: bool = False,
+                              exact_project_fact_ids: set[str] | None = None) -> dict:
     base = answer_schema(request_id, facts, manuals)["properties"]
-    pairs = [{"fact_id": f["fact_id"], "value": f["value"]} for f in facts]
+    pairs = [{"fact_id": f["fact_id"], "value": f["value"]} for f in facts
+             if exact_project_fact_ids is None or f["fact_id"] in exact_project_fact_ids]
     quotes = [{"source_id": m["source_id"], "quote": q} for m in manuals for q in quote_options(m)]
     empty = {"type": "array", "enum": [[]]}
-    project = {"type": "array", "minItems": minimum_project_claims,
-               "maxItems": 3, "items": {"enum": pairs}} if pairs else empty
-    manual = {"type": "array", "maxItems": 1, "items": {"enum": quotes}} if quotes else empty
+    exact_count = len(exact_project_fact_ids or ())
+    project = {"type": "array", "minItems": exact_count or minimum_project_claims,
+               "maxItems": exact_count or 3, "uniqueItems": True,
+               "items": {"enum": pairs}} if pairs else empty
+    manual = ({"type": "array", "maxItems": 1, "items": {"enum": quotes}}
+              if quotes and exact_project_fact_ids is None else empty)
     branches = [] if require_selected else [_object({**base, "status": {"type": "string", "enum": ["unassessed"]},
                                                      "project_claims": empty, "manual_claims": empty, "suggestions": empty})]
     if pairs:
-        branches.append(_object({**base, "status": {"type": "string", "enum": ["selected"]},
-                                 "project_claims": project, "manual_claims": manual}))
-    if quotes:
+        selected = {**base, "status": {"type": "string", "enum": ["selected"]},
+                    "project_claims": project, "manual_claims": manual}
+        if exact_project_fact_ids is not None:
+            selected["suggestions"] = empty
+        branches.append(_object(selected))
+    if quotes and exact_project_fact_ids is None:
         branches.append(_object({**base, "status": {"type": "string", "enum": ["selected"]},
                                  "project_claims": project, "manual_claims": {**manual, "minItems": 1}}))
     return {"anyOf": branches}
+
+
+def exact_draft_schema(request_id: str) -> dict:
+    """Constrain model prose when requested fact citations are deterministic."""
+    return {"anyOf": [_object({"request_id": {"type": "string", "enum": [request_id]},
+                               "draft_explanation": {"type": "string", "maxLength": 160}})]}
+
+
+def validate_exact_draft(value: Any, request_id: str) -> str:
+    if (not isinstance(value, dict) or set(value) != {"request_id", "draft_explanation"}
+            or value["request_id"] != request_id or not isinstance(value["draft_explanation"], str)
+            or len(value["draft_explanation"]) > 160):
+        raise ValueError("wrong_exact_draft_contract_or_request")
+    return value["draft_explanation"]
+
+
+def extract_exact_draft(value: Any, request_id: str) -> tuple[str, bool]:
+    """Read only bound prose; report extra model fields without trusting them."""
+    if (not isinstance(value, dict) or value.get("request_id") != request_id
+            or not isinstance(value.get("draft_explanation"), str)
+            or not 0 < len(value["draft_explanation"]) <= 4000):
+        raise ValueError("wrong_exact_draft_contract_or_request")
+    deviated = set(value) != {"request_id", "draft_explanation"} or len(value["draft_explanation"]) > 160
+    return value["draft_explanation"], deviated
 
 
 def validate_draft(value: Any, context: dict, *, required_project_fact_ids: set[str] | None = None) -> dict:
@@ -366,23 +457,38 @@ def explain(report: Path, question: str, output: Path, model: str,
     output.mkdir(parents=True)
     _write(output / "fact-request.json", request)
     facts = select_facts(request, prompt_version=_prompt_version)
-    required_status_fact_ids = required_stage_status_fact_ids(request["question"], facts,
-                                                               prompt_version=_prompt_version)
+    required_fact_ids = required_stage_status_fact_ids(request["question"], facts,
+                                                        prompt_version=_prompt_version)
+    named_field_fact_ids = required_named_check_field_fact_ids(
+        request["question"], facts, prompt_version=_prompt_version)
+    required_fact_ids = required_fact_ids or named_field_fact_ids
+    exact_named_scope = (_prompt_version in EXACT_NAMED_CONTEXT_PROMPTS
+                         and named_field_fact_ids is not None)
+    exact_draft_scope = exact_named_scope and _prompt_version in EXACT_DRAFT_PROMPTS
+    if exact_named_scope:
+        assert named_field_fact_ids is not None
+        facts = [fact for fact in facts if fact["fact_id"] in named_field_fact_ids]
     started = time.perf_counter()
     manuals = []
     gaps = [{"code": "SEMANTIC_REVIEW_REQUIRED", "detail": "模型草稿的自然语言支持度、问题相关性和建议可用性尚需人工验收。"}]
+    if exact_draft_scope:
+        gaps.append({"code": "DETERMINISTIC_FACT_SELECTION",
+                     "detail": "点名字段引用由确定性选择器绑定；模型只生成语义未审核的解释草稿。"})
     for fact in request["facts"]:
         if fact["pointer"].endswith("/status") and fact["value"] in ("failed", "blocked", "unassessed", "skipped"):
             gaps.append({"code": "PROJECT_EVIDENCE_GAP", "detail": f"{fact['artifact_id']}#{fact['pointer']}={fact['value']}；检查对应 reason 和运行前置条件。"})
     if len(facts) < len(request["facts"]):
         gaps.append({"code": "FACT_CONTEXT_LIMIT", "detail": f"本次只选取 {len(facts)}/{len(request['facts'])} 个事实；未选取不等于原项目没有证据。"})
-    if knowledge:
+    if knowledge and not exact_named_scope:
         try:
             manuals = retrieve(knowledge, knowledge_query or "")
             if not manuals:
                 gaps.append({"code": "NO_MANUAL_MATCH", "detail": "本次查询没有已审核资料命中；不能据此断言整个知识库缺失该资料。"})
         except (ServiceError, ValueError, TypeError, KeyError) as exc:
             gaps.append({"code": "KNOWLEDGE_UNAVAILABLE", "detail": str(exc)})
+    elif knowledge:
+        gaps.append({"code": "KNOWLEDGE_NOT_APPLICABLE",
+                     "detail": "精确项目字段复述不查询手册；资料不能替代已记录字段。"})
     else:
         gaps.append({"code": "KNOWLEDGE_NOT_REQUESTED", "detail": "本次没有查询资料库，手册依据未评估。"})
     context_body = {"fact_request_id": request["request_id"], "question": request["question"],
@@ -396,10 +502,16 @@ def explain(report: Path, question: str, output: Path, model: str,
         user_context = {**user_context,
                         "facts": [{k: f[k] for k in ("fact_id", "artifact_id", "pointer", "value")} for f in facts],
                         "manuals": [{**m, "quote_options": quote_options(m)} for m in manuals]}
-    if _prompt_version in FOCUSED_PROMPTS:
+    if exact_named_scope:
+        user_context = {k: v for k, v in user_context.items() if k != "project_status"}
+    if exact_draft_scope:
+        format_schema = exact_draft_schema(context["request_id"])
+    elif _prompt_version in FOCUSED_PROMPTS:
         format_schema = constrained_answer_schema(context["request_id"], facts, manuals,
-                                                   minimum_project_claims=max(1, len(required_status_fact_ids or ())),
-                                                   require_selected=required_status_fact_ids is not None)
+                                                   minimum_project_claims=max(1, len(required_fact_ids or ())),
+                                                   require_selected=required_fact_ids is not None,
+                                                   exact_project_fact_ids=(required_fact_ids
+                                                                           if _prompt_version in EXACT_PROJECT_CLAIM_PROMPTS else None))
     else:
         format_schema = answer_schema(context["request_id"], facts, manuals)
     if _prompt_version in BUDGET_PROMPTS:
@@ -460,9 +572,24 @@ def explain(report: Path, question: str, output: Path, model: str,
                     or prompt_tokens + output_tokens > context_tokens):
                 raise ValueError("invalid_or_exceeded_context_budget")
         value = parse_json(response["message"]["content"])
-        result["answer"] = validate_draft(value, context, required_project_fact_ids=required_status_fact_ids)
-        result["status"] = "passed" if value["status"] == "selected" else "unassessed"
-        result["reason"] = "structured_citations_validated_prose_unverified" if value["status"] == "selected" else "model_reports_insufficient_evidence"
+        if exact_draft_scope:
+            if _prompt_version in TOLERANT_DRAFT_PROMPTS:
+                draft, deviated = extract_exact_draft(value, context["request_id"])
+                if deviated:
+                    gaps.append({"code": "MODEL_FORMAT_EXTRAS_IGNORED",
+                                 "detail": "模型附带的非草稿字段未进入证据或状态判定。"})
+            else:
+                draft = validate_exact_draft(value, context["request_id"])
+            result["answer"] = {"project_facts": facts, "manual_quotes": [],
+                                "draft_explanation": draft, "suggestions": [],
+                                "semantic_status": "unassessed", "answer_status": "selected"}
+            result["status"] = "passed"
+            result["reason"] = "deterministic_requested_facts_model_prose_unverified"
+        else:
+            result["answer"] = validate_draft(value, context, required_project_fact_ids=required_fact_ids)
+            result["status"] = "passed" if value["status"] == "selected" else "unassessed"
+            result["reason"] = ("structured_citations_validated_prose_unverified"
+                                if value["status"] == "selected" else "model_reports_insufficient_evidence")
         result["metrics"] = {k: response[k] for k in ("total_duration", "load_duration", "prompt_eval_count", "eval_count", "eval_duration") if k in response}
     except (ServiceError, ValueError, TypeError, KeyError) as exc:
         result["status"] = "refused" if generated else "blocked"

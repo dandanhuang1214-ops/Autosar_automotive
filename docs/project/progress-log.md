@@ -1652,6 +1652,16 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - qwen3.5 已能在该窄状态任务输出，不据此声明一般工程解释或资料适用性通过；下一步冻结未参与本轮修复的问题并分别计量 qwen3.5 与 qwen3-vl，继续保留独立人工语义/适用性门。
 
 
+### P30：提示 0.16 精确字段绑定与 qwen3.5 说明（2026-10-10）
+
+- 冻结 [v7 cohort](../research/p30-evaluation-cohort-v7.json) 后，0.12 在三个此前未进入 P30 cohort 的 P29 报告上暴露两个问题：四项字段超过旧三引用上限；事实值 `unassessed` 会被模型误当成整条回答缺证据。由于这些题随后用于 0.13–0.16 调整，v7 现明确是开发集，不再称为 held-out。
+- 0.13 增加点名检查的 `status` / `reason` 完整性；0.14 只向模型发送四个所问字段，并把精确字段题的资料检索标为不适用；0.15 将事实引用改为确定性绑定、模型只生成说明草稿；0.16 在仍校验 request ID 和非空草稿的前提下忽略模型多生成的旧契约字段，这些字段不进入证据或状态判定。0.1–0.15 的历史 payload 和离线重放语义保持。
+- 最终 qwen3.5 冻结清单 SHA-256 为 `ef165dc67f2a8dc441e64f974f24bf9f6240e0644ad30c56bb94f1ac93f4e497`。`second-run`、`wrong-address`、`wrong-mapping` 三题在 project/retrieval 两种模式共 6/6 通过；每题四项目标事实均进入上下文并由系统绑定，检索模式不调用无关手册。六份真实调用归档离线复验通过，适配耗时 18.1–33.0 秒。
+- 开发者逐项审读六份草稿：每题均写出 `runtime.signal-tx` / `runtime.signal-rx` 的 status 与 reason，未把 `unassessed` 误作事实缺失，未引入硬件结论；同题两种模式文字一致。该审读不是用户或独立审阅者验收，结果契约仍保持 `semantic_status=unassessed`。
+- 本地 426 tests 全部通过、2 项环境跳过；12 个合成 HTTP 场景、Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、CI topology、compileall 和 diff check 通过。隔离 wheel 的两工程、模型场景和归档重放通过，wheel SHA-256 `2b75cd50fcb844dbb1c11bd3b5dc22e487e1bbd375d83d5bd69e3da89856c05f`。
+- 当前状态 local-accepted，不能写成 remote-accepted；实现提交和该提交的实际 CI 尚待记录。下一项在未参与 0.13–0.16 调整的新报告上冻结复杂解释/资料适用性题，以 qwen3.5 为主文本模型完成独立人工审核。qwen3-vl 转入后续图片/OCR 多模态路径，不用作当前文本任务的必做对照。
+
+
 ### P30：提示 0.9 嵌套字段选择与新题配对开发验证（2026-10-08）
 
 - 复查提示 0.8 新题调用发现：点名检查时只保留检查直接字段，漏掉问题明确询问的 `binding/request_id`、`response_id`、`did` 和 `/stages/ecuc/status`。提示 0.9 将精确请求的嵌套字段与阶段状态加入选择器，同时保留 0.1–0.8 的历史版本逻辑，并更新模型解释 schema 版本枚举。
