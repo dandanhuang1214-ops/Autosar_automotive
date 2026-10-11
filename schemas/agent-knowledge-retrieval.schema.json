@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-knowledge-retrieval.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "query", "sources"],
+  "properties": {
+    "schema_version": {"const": "agent-knowledge-retrieval-0.1"},
+    "policy_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "query": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "sources": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id", "source_kind", "document_id", "chunk_id",
+          "document_sha256", "release", "title", "page", "content_sha256",
+          "excerpt", "authority", "review_status", "trust_policy"
+        ],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "source_kind": {"const": "manual"},
+          "document_id": {"type": "integer", "minimum": 1},
+          "chunk_id": {"type": "integer", "minimum": 1},
+          "document_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "release": {"type": ["string", "null"]},
+          "title": {"type": "string"},
+          "page": {"type": ["integer", "null"]},
+          "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "excerpt": {"type": "string", "minLength": 1, "maxLength": 1200},
+          "authority": {"enum": ["official", "user_reviewed"]},
+          "review_status": {"const": "approved"},
+          "trust_policy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["schema_version", "policy_id", "profile", "review"],
+            "properties": {
+              "schema_version": {"const": "knowledge-source-policy-0.1"},
+              "policy_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "profile": {"const": "agent-read"},
+              "review": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["decision", "reviewer", "reviewed_at"],
+                "properties": {
+                  "decision": {"const": "approved"},
+                  "reviewer": {"type": "string", "minLength": 1},
+                  "reviewed_at": {"type": "string", "format": "date-time"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

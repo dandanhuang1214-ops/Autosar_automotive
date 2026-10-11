@@ -161,6 +161,14 @@ def build_parser() -> argparse.ArgumentParser:
     model_verify = commands.add_parser("verify-model-explanation", help="Replay a saved model explanation without network access")
     model_verify.add_argument("report", type=Path)
     model_verify.add_argument("directory", type=Path)
+    agent_knowledge = commands.add_parser(
+        "retrieve-agent-knowledge",
+        help="Read knowledge through an explicit digest-bound Agent allowlist",
+    )
+    agent_knowledge.add_argument("policy", type=Path)
+    agent_knowledge.add_argument("--query", required=True)
+    agent_knowledge.add_argument("--knowledge-url", required=True)
+    agent_knowledge.add_argument("--timeout", type=float, default=30)
 
     explanation = commands.add_parser("prepare-project-explanation", help="Export replay-verified project facts without a model")
     explanation.add_argument("report", type=Path)
@@ -525,6 +533,14 @@ def main() -> int:
         elif args.command == "verify-model-explanation":
             from automotive_workbench.model_explanation import verify_explanation
             result = verify_explanation(args.report, args.directory)
+        elif args.command == "retrieve-agent-knowledge":
+            from automotive_workbench.explanation_services import Endpoint, retrieve_for_agent
+            from automotive_workbench.knowledge_policy import load_agent_knowledge_policy
+            result = retrieve_for_agent(
+                Endpoint(args.knowledge_url, args.timeout),
+                args.query,
+                load_agent_knowledge_policy(args.policy),
+            )
         elif args.command == "prepare-project-explanation":
             from automotive_workbench.project_explanation import prepare
             result = prepare(args.report, args.question, args.output)

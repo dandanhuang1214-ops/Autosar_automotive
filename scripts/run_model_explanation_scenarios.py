@@ -49,6 +49,7 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     registry = Registry().with_resources((s["$id"], Resource.from_contents(s)) for s in schemas)
     validator = Draft202012Validator(schemas[0], registry=registry)
     cases = []
+    agent_retrieval = None
     with fixture_service() as (server, origin):
         for mode, status in CASES.items():
             server.mode, server.tags_count = mode, 0
@@ -66,10 +67,30 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                 raise ValueError("Unapproved manual was accepted")
             cli("offline-replay", ["verify-model-explanation", report, destination], 0)
             cases.append({"case": mode, "status": status, "reason": result["reason"]})
+        server.mode = "normal"
+        agent_retrieval = cli(
+            "agent-knowledge-policy",
+            ["retrieve-agent-knowledge", ROOT / "examples/knowledge/agent-read-policy.json",
+             "--query", "diagnostic timeout evidence", "--knowledge-url", origin,
+             "--timeout", "5"],
+            0,
+        )
+        retrieval_schema = json.loads(
+            (ROOT / "schemas/agent-knowledge-retrieval.schema.json").read_text(encoding="utf-8")
+        )
+        Draft202012Validator(retrieval_schema).validate(agent_retrieval)
+        (output / "agent-knowledge-retrieval.json").write_text(
+            json.dumps(agent_retrieval, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
     # Reverification works with services already stopped and without source checkout imports.
     cli("services-stopped", ["verify-model-explanation", report, output / "normal"], 0)
     summary = {"status": "passed", "evidence_kind": "synthetic-http-contract-fixture", "real_model_inference": False,
-               "cases": cases, "model_semantic_quality": "unassessed"}
+               "cases": cases, "model_semantic_quality": "unassessed",
+               "agent_knowledge_policy": {
+                   "status": "passed", "policy_id": agent_retrieval["policy_id"],
+                   "sources": len(agent_retrieval["sources"]), "legacy_trusted_allowed": False,
+               }}
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
 

@@ -84,3 +84,7 @@ v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料�
 ### P30：提示 0.23 与 Agent-ready 基础（2026-10-11）
 
 [Agent-ready 基础设计](p30-agent-foundation.md)明确 Agent 只替换编排，现有确定性链路保留为 typed tools。本轮增加统一 `ModelClient`/Ollama 适配器，0.23 对 draft-only 使用 512 token 并严格拒绝超长、额外字段和错误模式措辞；失败输出也保留 usage。0.1–0.22 历史 payload/replay 保持。本地 434 tests（432 passed、2 环境跳过）、合成 HTTP、schema/静态门和隔离 wheel 通过；修复提交 `5c1f3e427d3f00b54b787a753fc78d94edf50c5d` / [run `38105657902`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38105657902) 七 job success，本轮 remote-accepted。未运行真实模型，内容质量门未变化。下一项先收紧知识来源策略，再实现最小只读 `ToolRegistry + AgentRunner`。
+
+### P30：Agent 知识来源信任策略 0.1（2026-10-11）
+
+[知识来源信任策略](p30-knowledge-trust-policy.md)将未来 Agent 的资料准入与历史解释兼容路径分离。`knowledge-source-policy-0.1` 必须显式绑定文档 ID、SHA-256、`official` / `user_reviewed` authority 及人工审核记录，策略 ID 绑定全部正文；`legacy_trusted` 在 schema 和运行时均不能进入 `agent-read`。新增 `retrieve-agent-knowledge` CLI 和 `agent-knowledge-retrieval-0.1` 输出，每个 source 保存策略 ID 与审核记录；未知、漂移或未列入来源 fail closed。源码/隔离 wheel 的合成 HTTP 场景、436 tests（434 passed、2 环境跳过）、59 schemas / 77 bound / 25 syntax-only、9-source mypy、Ruff 和 CI topology 通过，wheel SHA-256 `09d6b51477edf104ea74c3bd49d84d6c77669995a62565ae47e273d547089e66`。本轮 local-accepted，远端 CI 待实现提交；示例清单仅绑定 fixture，不代表真实资料已完成人工适用性审核。下一项为最小只读 `ToolRegistry + AgentRunner`。

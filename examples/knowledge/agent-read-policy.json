@@ -1,0 +1,17 @@
+{
+  "schema_version": "knowledge-source-policy-0.1",
+  "policy_id": "e55161f9cf85a1d62e07711174c948fea56357dc121203800d1e956cc6682e7e",
+  "profile": "agent-read",
+  "documents": [
+    {
+      "document_id": 1,
+      "document_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "authority": "official",
+      "review": {
+        "decision": "approved",
+        "reviewer": "example-human-review",
+        "reviewed_at": "2026-10-11T00:00:00Z"
+      }
+    }
+  ]
+}

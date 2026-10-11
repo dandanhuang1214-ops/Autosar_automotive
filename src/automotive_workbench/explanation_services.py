@@ -10,6 +10,10 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
+from automotive_workbench.knowledge_policy import (
+    authorize_agent_document,
+    validate_agent_knowledge_policy,
+)
 from automotive_workbench.project_explanation import canonical, digest
 
 MAX_RESPONSE = 2_000_000
@@ -136,3 +140,92 @@ def retrieve(endpoint: ServiceEndpoint, query: str) -> list[dict]:
                   "excerpt": content[:1200], "authority": doc["authority"], "review_status": "approved"}
         sources.append({"source_id": digest(source), **source})
     return sources
+
+
+def retrieve_for_agent(
+    endpoint: ServiceEndpoint, query: str, policy: dict[str, Any]
+) -> dict[str, Any]:
+    """Retrieve only sources in a digest-bound, human-reviewed Agent allowlist."""
+    if not isinstance(query, str) or not 0 < len(query) <= 2000:
+        raise ValueError("Agent knowledge query must contain 1..2000 characters")
+    checked_policy = validate_agent_knowledge_policy(policy)
+    found = endpoint.request(
+        "/api/search", {"query": query, "limit": 3, "use_rewrite": False, "use_rerank": False}
+    )
+    documents = endpoint.request("/api/documents")
+    if (
+        not isinstance(found, dict)
+        or found.get("query") != query
+        or not isinstance(found.get("results"), list)
+        or not isinstance(documents, list)
+    ):
+        raise ServiceError("invalid_knowledge_response")
+    registry: dict[int, dict[str, Any]] = {}
+    for doc in documents:
+        if not isinstance(doc, dict) or type(doc.get("id")) is not int or doc["id"] in registry:
+            raise ServiceError("invalid_document_registry")
+        registry[doc["id"]] = doc
+
+    sources = []
+    seen = set()
+    for item in found["results"][:3]:
+        if (
+            not isinstance(item, dict)
+            or type(item.get("chunk_id")) is not int
+            or type(item.get("document_id")) is not int
+            or item["chunk_id"] < 1
+            or item["document_id"] < 1
+        ):
+            raise ServiceError("invalid_search_identity")
+        if item["chunk_id"] in seen:
+            raise ServiceError("duplicate_search_identity")
+        seen.add(item["chunk_id"])
+        doc = registry.get(item["document_id"])
+        if doc is None:
+            raise ServiceError("agent_knowledge_denied:Knowledge document is not in the Agent allowlist")
+        try:
+            entry = authorize_agent_document(doc, checked_policy)
+        except ValueError as exc:
+            raise ServiceError("agent_knowledge_denied:" + str(exc)) from exc
+        detail = endpoint.request(f"/api/evidence/{item['chunk_id']}")
+        if not isinstance(detail, dict) or any(
+            canonical(detail.get(key)) != canonical(item.get(key))
+            for key in ("chunk_id", "document_id", "content", "page", "title")
+        ):
+            raise ServiceError("knowledge_source_drift")
+        content = detail.get("content")
+        if not isinstance(content, str) or not content.strip() or len(content) > 100_000:
+            raise ServiceError("invalid_knowledge_content")
+        if not isinstance(detail.get("title"), str) or (
+            detail.get("page") is not None and type(detail.get("page")) is not int
+        ):
+            raise ServiceError("invalid_knowledge_metadata")
+        release = doc.get("release")
+        if release is not None and not isinstance(release, str):
+            raise ServiceError("invalid_knowledge_metadata")
+        source = {
+            "source_kind": "manual",
+            "document_id": doc["id"],
+            "chunk_id": item["chunk_id"],
+            "document_sha256": doc["sha256"],
+            "release": release,
+            "title": detail["title"],
+            "page": detail["page"],
+            "content_sha256": digest(content),
+            "excerpt": content[:1200],
+            "authority": doc["authority"],
+            "review_status": "approved",
+            "trust_policy": {
+                "schema_version": checked_policy["schema_version"],
+                "policy_id": checked_policy["policy_id"],
+                "profile": checked_policy["profile"],
+                "review": entry["review"],
+            },
+        }
+        sources.append({"source_id": digest(source), **source})
+    return {
+        "schema_version": "agent-knowledge-retrieval-0.1",
+        "policy_id": checked_policy["policy_id"],
+        "query": query,
+        "sources": sources,
+    }

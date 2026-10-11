@@ -46,7 +46,7 @@ CLI / UI
 
 在任何开放式 Agent 工具发现前，必须完成以下前置门：
 
-- 知识来源策略版本化。当前兼容的 `legacy_trusted` 只能作为历史迁移状态，不能自动获得未来 Agent 的高可信工具权限；需要显式来源清单、审核记录和内容摘要绑定。
+- 知识来源策略版本化。当前兼容的 `legacy_trusted` 只能作为历史迁移状态，不能自动获得未来 Agent 的高可信工具权限；[0.1 策略](p30-knowledge-trust-policy.md)要求显式来源清单、审核记录和内容摘要绑定。
 - 工具分级：`read`、`execute`、`write`、`hardware`。首版 Agent 只注册 read；后三级分别要求策略检查、用户批准和实际环境证据。
 - 每次模型请求、工具请求/响应、模型身份、预算变化和审批决定可回放；敏感原文不写入公共评测集。
 - prompt injection 视为工具输入数据。外部文档无权改变 system policy、扩大工具权限或批准自身来源。
@@ -81,4 +81,4 @@ CLI / UI
 
 ## 下一实现项
 
-本轮远端门完成后，下一项是 B 的最小只读 `ToolRegistry + AgentRunner`，不是继续堆提示词。实现前先收紧知识来源策略，随后以项目事实查询和报告复验两个工具验证完整循环、预算、trace 与 fail-closed。
+0.1 知识来源策略先隔离 `legacy_trusted` 并提供 digest-bound `agent-read` allowlist。该门验收后，下一项是 B 的最小只读 `ToolRegistry + AgentRunner`，不是继续堆提示词；以项目事实查询、报告复验和受策略约束的资料检索验证完整循环、预算、trace 与 fail-closed。

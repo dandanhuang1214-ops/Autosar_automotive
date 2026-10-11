@@ -11,7 +11,13 @@ from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from automotive_workbench.can_io import BusConfig
-from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
+from automotive_workbench.explanation_services import (
+    Endpoint, ServiceError, parse_json, retrieve, retrieve_for_agent,
+)
+from automotive_workbench.knowledge_policy import (
+    authorize_agent_document, policy_body, validate_agent_knowledge_policy,
+)
+from automotive_workbench.project_explanation import digest
 from automotive_workbench.model_explanation import (
     PROMPTS, constrained_answer_schema, exact_draft_schema, explain, extract_exact_draft,
     generation_token_budget, quote_options,
@@ -660,3 +666,65 @@ class IndependentDraftContractTests(unittest.TestCase):
             with patch.object(endpoint, "request", side_effect=[{"query": "q", "results": [item]}, [bad_doc], detail]):
                 with self.assertRaises(ServiceError):
                     retrieve(endpoint, "q")
+
+    def test_agent_knowledge_requires_digest_bound_allowlist_and_review(self):
+        endpoint = Endpoint("http://localhost", 1)
+        item = {"chunk_id": 10, "document_id": 1, "content": "Recorded text", "page": 1, "title": "Manual"}
+        doc = {"id": 1, "enabled": True, "status": "ready", "review_status": "approved",
+               "authority": "official", "sha256": "a" * 64}
+        body = {
+            "schema_version": "knowledge-source-policy-0.1",
+            "profile": "agent-read",
+            "documents": [{
+                "document_id": 1,
+                "document_sha256": "a" * 64,
+                "authority": "official",
+                "review": {"decision": "approved", "reviewer": "fixture-reviewer",
+                           "reviewed_at": "2026-10-11T00:00:00Z"},
+            }],
+        }
+        policy = {**body, "policy_id": digest(body)}
+        self.assertEqual(policy_body(policy), body)
+        self.assertEqual(authorize_agent_document(doc, policy)["document_id"], 1)
+        with patch.object(endpoint, "request", side_effect=[
+            {"query": "q", "results": [item]}, [doc], item,
+        ]):
+            result = retrieve_for_agent(endpoint, "q", policy)
+        self.assertEqual(result["policy_id"], policy["policy_id"])
+        self.assertEqual(result["sources"][0]["trust_policy"]["profile"], "agent-read")
+        self.assertEqual(result["sources"][0]["trust_policy"]["review"]["reviewer"], "fixture-reviewer")
+
+    def test_agent_knowledge_rejects_legacy_and_policy_drift(self):
+        body = {
+            "schema_version": "knowledge-source-policy-0.1",
+            "profile": "agent-read",
+            "documents": [{
+                "document_id": 1, "document_sha256": "a" * 64,
+                "authority": "official",
+                "review": {"decision": "approved", "reviewer": "fixture-reviewer",
+                           "reviewed_at": "2026-10-11T00:00:00+00:00"},
+            }],
+        }
+        policy = {**body, "policy_id": digest(body)}
+        legacy = {"id": 1, "enabled": True, "status": "ready", "review_status": "approved",
+                  "authority": "legacy_trusted", "sha256": "a" * 64}
+        with self.assertRaisesRegex(ValueError, "migration-only"):
+            authorize_agent_document(legacy, policy)
+        endpoint = Endpoint("http://localhost", 1)
+        item = {"chunk_id": 10, "document_id": 1, "content": "Recorded text",
+                "page": 1, "title": "Manual"}
+        with patch.object(endpoint, "request", side_effect=[
+            {"query": "q", "results": [item]}, [legacy],
+        ]), self.assertRaisesRegex(ServiceError, "migration-only"):
+            retrieve_for_agent(endpoint, "q", policy)
+        with self.assertRaisesRegex(ValueError, "1..2000"):
+            retrieve_for_agent(endpoint, "", policy)
+        changed = copy.deepcopy(policy)
+        changed["documents"][0]["document_sha256"] = "b" * 64
+        with self.assertRaisesRegex(ValueError, "does not bind"):
+            validate_agent_knowledge_policy(changed)
+        forbidden = copy.deepcopy(body)
+        forbidden["documents"][0]["authority"] = "legacy_trusted"
+        forbidden_policy = {**forbidden, "policy_id": digest(forbidden)}
+        with self.assertRaisesRegex(ValueError, "forbids"):
+            validate_agent_knowledge_policy(forbidden_policy)
