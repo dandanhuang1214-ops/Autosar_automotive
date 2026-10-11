@@ -256,7 +256,7 @@ class ModelExplanationTests(unittest.TestCase):
         self.assertNotIn("project_status", endpoint.model_context)
         self.assertEqual(endpoint.model_context["manuals"], [])
         self.assertNotIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
-        self.assertEqual(json.loads((output / "model-input.json").read_text())["options"]["num_predict"], 512)
+        self.assertEqual(json.loads((output / "model-input.json").read_text(encoding="utf-8"))["options"]["num_predict"], 512)
         self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
     def test_v20_uses_compact_draft_contract_for_bound_complex_facts(self):
@@ -323,7 +323,7 @@ class ModelExplanationTests(unittest.TestCase):
         self.assertEqual(result["answer"]["answer_status"], "unassessed")
         self.assertEqual(endpoint.model_context["facts"], [])
         self.assertNotIn("project_status", endpoint.model_context)
-        self.assertEqual(json.loads((output / "model-input.json").read_text())["options"]["num_predict"], 512)
+        self.assertEqual(json.loads((output / "model-input.json").read_text(encoding="utf-8"))["options"]["num_predict"], 512)
         self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
     def test_v07_rejects_responses_that_overrun_recorded_context(self):
@@ -398,7 +398,7 @@ class ModelExplanationTests(unittest.TestCase):
                          _prompt_version="project-explanation-prompt-0.22")
         self.assertEqual(result["status"], "passed")
         self.assertIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
-        self.assertEqual(json.loads((output / "model-input.json").read_text())["options"]["num_predict"], 4096)
+        self.assertEqual(json.loads((output / "model-input.json").read_text(encoding="utf-8"))["options"]["num_predict"], 4096)
         self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
 
