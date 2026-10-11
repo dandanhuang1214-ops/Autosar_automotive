@@ -93,7 +93,7 @@ P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)�
 
 P29 诊断依赖已验收，下一主阶段为 [P30 基于项目证据的本地模型解释](p30-evidence-explanation-plan.md)：复用已有本地知识助手，以通过复验的报告为事实基础，先解决引用、状态和来源边界再接入模型。硬件台架按设备实际取得和独立现场证据推进，不改变当前主阶段。
 
-P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均已通过各自远端 CI；0.22 实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job success，但 v9 内容验收为 0/6。0.23 Agent-ready 基础现为 local-accepted：统一模型客户端边界、512-token 短草稿预算、严格长度/模式措辞门和失败 usage 记录已经 434 项回归及隔离安装验证，历史 0.1–0.22 payload 保持；提交/远端 CI 待记录。一般复杂解释和独立人工资料适用性仍未验收，P30 保持 implementing。详见 [Agent-ready 基础设计](p30-agent-foundation.md)。远端门通过后，下一项先版本化知识来源信任策略，再实现只读 `ToolRegistry + AgentRunner`；固定工作流成为 typed tools，不把工程判定交给模型。qwen3-vl 继续留给后续图片/OCR 多模态入口。
+P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均已通过各自远端 CI；0.22 实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job success，但 v9 内容验收为 0/6。0.23 Agent-ready 基础也已 remote-accepted：统一模型客户端边界、512-token 短草稿预算、严格长度/模式措辞门和失败 usage 记录已经 434 项回归及隔离安装验证，历史 0.1–0.22 payload 保持；修复提交 `5c1f3e427d3f00b54b787a753fc78d94edf50c5d` / [run `38105657902`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38105657902) 七 job success。一般复杂解释和独立人工资料适用性仍未验收，P30 保持 implementing。详见 [Agent-ready 基础设计](p30-agent-foundation.md)。下一项先版本化知识来源信任策略，再实现只读 `ToolRegistry + AgentRunner`；固定工作流成为 typed tools，不把工程判定交给模型。qwen3-vl 继续留给后续图片/OCR 多模态入口。
 
 
 ## P30 事实选择与模型适用性进展（2026-10-08）

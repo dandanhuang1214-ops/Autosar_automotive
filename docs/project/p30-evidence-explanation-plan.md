@@ -83,4 +83,4 @@ v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料�
 
 ### P30：提示 0.23 与 Agent-ready 基础（2026-10-11）
 
-[Agent-ready 基础设计](p30-agent-foundation.md)明确 Agent 只替换编排，现有确定性链路保留为 typed tools。本轮增加统一 `ModelClient`/Ollama 适配器，0.23 对 draft-only 使用 512 token 并严格拒绝超长、额外字段和错误模式措辞；失败输出也保留 usage。0.1–0.22 历史 payload/replay 保持。本地 434 tests（432 passed、2 环境跳过）、合成 HTTP、schema/静态门和隔离 wheel 通过，状态 local-accepted，提交与远端 CI 待记录；未运行真实模型，内容质量门未变化。远端通过后先收紧知识来源策略，再实现最小只读 `ToolRegistry + AgentRunner`。
+[Agent-ready 基础设计](p30-agent-foundation.md)明确 Agent 只替换编排，现有确定性链路保留为 typed tools。本轮增加统一 `ModelClient`/Ollama 适配器，0.23 对 draft-only 使用 512 token 并严格拒绝超长、额外字段和错误模式措辞；失败输出也保留 usage。0.1–0.22 历史 payload/replay 保持。本地 434 tests（432 passed、2 环境跳过）、合成 HTTP、schema/静态门和隔离 wheel 通过；修复提交 `5c1f3e427d3f00b54b787a753fc78d94edf50c5d` / [run `38105657902`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38105657902) 七 job success，本轮 remote-accepted。未运行真实模型，内容质量门未变化。下一项先收紧知识来源策略，再实现最小只读 `ToolRegistry + AgentRunner`。

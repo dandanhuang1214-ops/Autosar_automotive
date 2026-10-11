@@ -10,7 +10,7 @@ P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph
 
 新增 [ECUC 项目只读体检](docs/project/p26-ecuc-inspection-guide.md)：DPA/collection 选择、引用定位与快照复验；实现 `c6320d5` / [run `36813404620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36813404620) 七 job 通过，首轮体检已远端验收；[通信跨层引用链](docs/project/p26-ecuc-communication-guide.md)也已远端验收：`b671864` / [run `36817127099`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36817127099) 七 job 全部通过；新增[完整工程审查与两版配置影响](docs/project/p26-engineering-review-guide.md)，实现 `6433e1c` / [run `36864006903`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36864006903) 七 job 全部通过，受限静态整阶段已验收，见[验收表](docs/project/p26-acceptance.md)。
 
-P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 已远端验收，但 v9 内容仍为 0/6。0.23 的 [Agent-ready 基础](docs/project/p30-agent-foundation.md)现为 local-accepted：统一模型客户端边界、512-token 短草稿预算、严格长度/模式措辞门和失败 usage 记录已通过 434 项回归与隔离安装，远端 CI 待记录。一般复杂解释、独立资料适用性和完整 Agent 均未验收；P30 保持 implementing。当前状态和下一项见[进度账本](docs/project/progress-log.md)。
+P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 已远端验收，但 v9 内容仍为 0/6。0.23 的 [Agent-ready 基础](docs/project/p30-agent-foundation.md)也已 remote-accepted：统一模型客户端边界、512-token 短草稿预算、严格长度/模式措辞门和失败 usage 记录通过 434 项回归、隔离安装及修复提交 `5c1f3e4` / [run `38105657902`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38105657902) 七 job。一般复杂解释、独立资料适用性和完整 Agent 均未验收；P30 保持 implementing。当前状态和下一项见[进度账本](docs/project/progress-log.md)。
 
 日常项目验收从 `run-project` 开始：
 
