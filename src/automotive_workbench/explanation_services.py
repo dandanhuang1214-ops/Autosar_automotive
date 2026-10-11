@@ -5,7 +5,7 @@ import json
 import math
 import re
 import socket
-from typing import Any
+from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
@@ -30,6 +30,15 @@ def parse_json(raw: str) -> Any:
 
 class ServiceError(ValueError):
     pass
+
+
+class ServiceEndpoint(Protocol):
+    """Structural boundary shared by live and captured JSON transports."""
+
+    url: str
+    records: list[dict[str, Any]]
+
+    def request(self, path: str, payload: dict | None = None) -> Any: ...
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -77,7 +86,7 @@ class Endpoint:
         raise ServiceError(record["error"])
 
 
-def model_identity(endpoint: Endpoint, name: str) -> dict:
+def model_identity(endpoint: ServiceEndpoint, name: str) -> dict:
     tags = endpoint.request("/api/tags")
     if not isinstance(tags, dict) or not isinstance(tags.get("models"), list):
         raise ServiceError("invalid_model_inventory")
@@ -90,7 +99,7 @@ def model_identity(endpoint: Endpoint, name: str) -> dict:
     return {"name": name, "digest": model["digest"], "details": model.get("details", {})}
 
 
-def retrieve(endpoint: Endpoint, query: str) -> list[dict]:
+def retrieve(endpoint: ServiceEndpoint, query: str) -> list[dict]:
     """Consume raw search/evidence APIs; never consume repaired chat citations."""
     found = endpoint.request("/api/search", {"query": query, "limit": 3, "use_rewrite": False, "use_rerank": False})
     documents = endpoint.request("/api/documents")

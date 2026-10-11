@@ -93,7 +93,7 @@ P29 CAN 关联首轮已实现，详见[操作指南](p29-runtime-link-guide.md)�
 
 P29 诊断依赖已验收，下一主阶段为 [P30 基于项目证据的本地模型解释](p30-evidence-explanation-plan.md)：复用已有本地知识助手，以通过复验的报告为事实基础，先解决引用、状态和来源边界再接入模型。硬件台架按设备实际取得和独立现场证据推进，不改变当前主阶段。
 
-P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.16 均已通过各自远端 CI。提示 0.17–0.22 又把精确字段转录、复杂点名检查和资料适用性分离：复杂项目事实由确定性选择器绑定，身份、定义及前后值缺失时 fail closed；标准/手册要求题不再把项目策略送入模型或当成通用标准证据，结果固定保持 `unassessed`。v8 已用于提示开发，不计 held-out；新冻结 v9 中资料适用性两模式 2/2 被适配器接受，但开发者逐字复核发现两份均超过 160 字契约，且 project 模式措辞可能误示已执行检索；任务引用与 unsupported-field 两类复杂解释 4/4 被严格门禁拒绝。因此 v9 内容验收为 0/6。最终实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job success；一般复杂解释与独立人工资料适用性仍未验收，P30 保持 implementing。下一项以新提示版本严格拒绝长度/模式措辞偏差，再选择更强文本基线或确定性模板/受约束生成路线，用新的未见 cohort 复验；qwen3-vl 继续留给后续图片/OCR 多模态入口。
+P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均已通过各自远端 CI；0.22 实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job success，但 v9 内容验收为 0/6。0.23 Agent-ready 基础现为 local-accepted：统一模型客户端边界、512-token 短草稿预算、严格长度/模式措辞门和失败 usage 记录已经 434 项回归及隔离安装验证，历史 0.1–0.22 payload 保持；提交/远端 CI 待记录。一般复杂解释和独立人工资料适用性仍未验收，P30 保持 implementing。详见 [Agent-ready 基础设计](p30-agent-foundation.md)。远端门通过后，下一项先版本化知识来源信任策略，再实现只读 `ToolRegistry + AgentRunner`；固定工作流成为 typed tools，不把工程判定交给模型。qwen3-vl 继续留给后续图片/OCR 多模态入口。
 
 
 ## P30 事实选择与模型适用性进展（2026-10-08）

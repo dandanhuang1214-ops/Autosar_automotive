@@ -39,7 +39,7 @@ def bundle_digest(report: Path) -> str:
 
 def implementation_digest(root: Path) -> str:
     paths = ["src/automotive_workbench/" + name for name in
-             ("model_explanation.py", "explanation_services.py", "project_explanation.py")]
+             ("model_client.py", "model_explanation.py", "explanation_services.py", "project_explanation.py")]
     paths.append("scripts/assess_model_explanation.py")
     return digest({name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in paths})
 

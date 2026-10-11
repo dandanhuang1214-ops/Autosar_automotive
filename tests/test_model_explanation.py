@@ -13,7 +13,8 @@ from referencing import Registry, Resource
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
 from automotive_workbench.model_explanation import (
-    PROMPTS, constrained_answer_schema, exact_draft_schema, explain, extract_exact_draft, quote_options,
+    PROMPTS, constrained_answer_schema, exact_draft_schema, explain, extract_exact_draft,
+    generation_token_budget, quote_options,
     is_exact_named_check_field_request, is_manual_applicability_request,
     required_complex_named_check_fact_ids,
     required_named_check_field_fact_ids, required_stage_status_fact_ids, select_facts,
@@ -92,6 +93,8 @@ class ModelExplanationTests(unittest.TestCase):
             self.assertEqual(result["project_status"], "blocked")
             self.assertTrue(result["fallback_facts"])
             self.assertIsNone(result["answer"])
+            if mode == "wrong_value":
+                self.assertEqual(result["metrics"], {"prompt_eval_count": 1000, "eval_count": 100})
             self.assertTrue((self.root / mode / "transport.json").is_file())
             self.assertEqual(verify_explanation(self.report, self.root / mode)["status"], "passed")
 
@@ -156,7 +159,7 @@ class ModelExplanationTests(unittest.TestCase):
                 else:
                     self.assertEqual(payload.get("think"), None)
                     self.assertEqual(payload["options"]["num_predict"], 4096)
-                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22")) else 16384)
+                    self.assertEqual(payload["options"]["num_ctx"], 8192 if version.endswith(("0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23")) else 16384)
                     self.assertEqual(set(context["facts"][0]), {"fact_id", "artifact_id", "pointer", "value"})
                     expected_limit = 4000 if version.endswith(("0.5", "0.6")) else 160
                     for branch in payload["format"]["anyOf"]:
@@ -233,9 +236,7 @@ class ModelExplanationTests(unittest.TestCase):
                 context = json.loads(payload["messages"][1]["content"])
                 self.model_context = context
                 literals = "；".join(str(fact["value"]) for fact in context["facts"])
-                answer = {"request_id": context["request_id"], "draft_explanation": literals,
-                          "status": "unassessed", "project_claims": [],
-                          "manual_claims": [], "suggestions": []}
+                answer = {"request_id": context["request_id"], "draft_explanation": literals}
                 value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
                          "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
                 self.records.append({"path": path, "method": "POST", "payload": payload,
@@ -254,7 +255,8 @@ class ModelExplanationTests(unittest.TestCase):
                          {"status", "reason"})
         self.assertNotIn("project_status", endpoint.model_context)
         self.assertEqual(endpoint.model_context["manuals"], [])
-        self.assertIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
+        self.assertNotIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
+        self.assertEqual(json.loads((output / "model-input.json").read_text())["options"]["num_predict"], 512)
         self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
     def test_v20_uses_compact_draft_contract_for_bound_complex_facts(self):
@@ -299,7 +301,7 @@ class ModelExplanationTests(unittest.TestCase):
                 context = json.loads(payload["messages"][1]["content"])
                 self.model_context = context
                 answer = {"request_id": context["request_id"],
-                          "draft_explanation": "资料适用性尚未独立审核，当前不能证明该标准要求。"}
+                          "draft_explanation": "本次未查询资料库；资料适用性尚未审核。当前不能证明该标准要求。"}
                 value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
                          "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
                 self.records.append({"path": path, "method": "POST", "payload": payload,
@@ -321,6 +323,7 @@ class ModelExplanationTests(unittest.TestCase):
         self.assertEqual(result["answer"]["answer_status"], "unassessed")
         self.assertEqual(endpoint.model_context["facts"], [])
         self.assertNotIn("project_status", endpoint.model_context)
+        self.assertEqual(json.loads((output / "model-input.json").read_text())["options"]["num_predict"], 512)
         self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
     def test_v07_rejects_responses_that_overrun_recorded_context(self):
@@ -338,6 +341,65 @@ class ModelExplanationTests(unittest.TestCase):
             self.assertEqual(result["status"], "refused")
             self.assertEqual(result["reason"], "invalid_or_exceeded_context_budget")
             self.assertIsNone(result["answer"])
+            self.assertEqual(result["metrics"], {"prompt_eval_count": 5000, "eval_count": 4096})
+
+    def test_v23_short_draft_budget_does_not_change_v22_payload(self):
+        self.assertEqual(generation_token_budget("project-explanation-prompt-0.23", draft_only=True), 512)
+        self.assertEqual(generation_token_budget("project-explanation-prompt-0.23", draft_only=False), 4096)
+        self.assertEqual(generation_token_budget("project-explanation-prompt-0.22", draft_only=True), 4096)
+
+    def test_v23_rejects_oversize_and_wrong_manual_mode_wording(self):
+        class InvalidManualEndpoint(StubEndpoint):
+            draft = ""
+
+            def request(self, path, payload=None):
+                if path != "/api/chat":
+                    return super().request(path, payload)
+                context = json.loads(payload["messages"][1]["content"])
+                answer = {"request_id": context["request_id"], "draft_explanation": self.draft}
+                value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
+                         "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
+                self.records.append({"path": path, "method": "POST", "payload": payload,
+                                     "http_status": 200, "raw": json.dumps(value), "error": None})
+                return value
+
+        question = "资料能否证明 AUTOSAR 标准要求该字段必须为 8？"
+        cases = (("中" * 161, "wrong_exact_draft_contract_or_request"),
+                 ("检索结果表明资料适用性尚未审核。", "manual_mode_wording_mismatch"))
+        for index, (draft, reason) in enumerate(cases):
+            endpoint = InvalidManualEndpoint("http://ollama:11434", 120)
+            endpoint.draft = draft
+            output = self.root / f"strict-manual-{index}"
+            result = explain(self.report, question, output, "fixture:1", ollama_url="http://ollama:11434",
+                             _endpoint_factory=lambda _url, _timeout, client=endpoint: client)
+            with self.subTest(reason=reason):
+                self.assertEqual(result["status"], "refused")
+                self.assertEqual(result["reason"], reason)
+                self.assertEqual(result["metrics"], {"prompt_eval_count": 1000, "eval_count": 100})
+                self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
+
+    def test_v22_keeps_tolerant_exact_draft_payload_and_contract(self):
+        class HistoricalEndpoint(StubEndpoint):
+            def request(self, path, payload=None):
+                if path != "/api/chat":
+                    return super().request(path, payload)
+                context = json.loads(payload["messages"][1]["content"])
+                answer = {"request_id": context["request_id"], "draft_explanation": "中" * 161,
+                          "status": "unassessed"}
+                value = {"model": "fixture:1", "message": {"role": "assistant", "content": json.dumps(answer)},
+                         "done": True, "done_reason": "stop", "prompt_eval_count": 1000, "eval_count": 100}
+                self.records.append({"path": path, "method": "POST", "payload": payload,
+                                     "http_status": 200, "raw": json.dumps(value), "error": None})
+                return value
+
+        output = self.root / "historical-v22"
+        result = explain(self.report, "diagnostic.read-version 的 status 和 reason 是什么？只引用这两个字段。",
+                         output, "fixture:1", _endpoint_factory=HistoricalEndpoint,
+                         _prompt_version="project-explanation-prompt-0.22")
+        self.assertEqual(result["status"], "passed")
+        self.assertIn("MODEL_FORMAT_EXTRAS_IGNORED", {gap["code"] for gap in result["gaps"]})
+        self.assertEqual(json.loads((output / "model-input.json").read_text())["options"]["num_predict"], 4096)
+        self.assertEqual(verify_explanation(self.report, output)["status"], "passed")
 
 
 

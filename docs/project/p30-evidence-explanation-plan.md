@@ -80,3 +80,7 @@ v7 三题在冻结后用于 0.13–0.16 开发，最终不能作为 held-out。0
 复杂点名检查现在由确定性代码绑定所问 status/reason、对象身份、字段定义与前后值，模型只写未审核草稿；关键身份/定义/值未逐字保留时 fail closed。询问标准或手册是否强制某个项目值时，项目策略不再进入实际模型输入或充当通用标准证据，结果保持 `unassessed` 等待独立适用性审核。历史提示继续可离线重放。
 
 v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料适用性两次被适配器接受为 `unassessed`，四次复杂解释因定义路径改写或无效 JSON 被拒。逐字复核发现两份已接受草稿都超过 160 字，且 project 模式措辞可能误示已执行检索，所以内容验收为 0/6。该结果只支持 fail-closed 和状态隔离，不支持“一般复杂解释可用”。最终实现 `78e8808` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 七 job success；下一项以新提示版本严格执行长度与模式措辞边界，再选更强文本基线或确定性模板/语法约束，并用新 cohort 验证。
+
+### P30：提示 0.23 与 Agent-ready 基础（2026-10-11）
+
+[Agent-ready 基础设计](p30-agent-foundation.md)明确 Agent 只替换编排，现有确定性链路保留为 typed tools。本轮增加统一 `ModelClient`/Ollama 适配器，0.23 对 draft-only 使用 512 token 并严格拒绝超长、额外字段和错误模式措辞；失败输出也保留 usage。0.1–0.22 历史 payload/replay 保持。本地 434 tests（432 passed、2 环境跳过）、合成 HTTP、schema/静态门和隔离 wheel 通过，状态 local-accepted，提交与远端 CI 待记录；未运行真实模型，内容质量门未变化。远端通过后先收紧知识来源策略，再实现最小只读 `ToolRegistry + AgentRunner`。

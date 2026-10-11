@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-10）
+## 当前总览（2026-10-11）
 
-当前主阶段 P30 implementing。提示 0.6–0.12 均已通过各自远端七 job；0.12 实现 `656098b8b8dca8373ba3974ced45a317f25d05ec` / run `38012423168` 已 remote-accepted。0.11 的 v6 两条 qwen3-vl 简单状态回答已由用户确认文字准确且可用，只覆盖该窄任务。qwen3.5 无正文的根因已由原始响应确认：默认 thinking 两题均用满 4096 token、正文为空；0.12 仅在服务身份 family=`qwen35` 时关闭 thinking，保留 0.1–0.11 重放。相同两题现场复验均正常 stop、引用 2/2 并通过，适配总耗时 32.3/19.8 秒。全量 424 tests（422 passed、2 环境跳过）、隔离 wheel、合成协议、静态检查及远端双平台证据链通过。一般工程解释、资料适用性和跨项目模型用途仍未验收；下一步冻结未参与本轮修复的更广问题，分别计量 qwen3.5 与 qwen3-vl。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.22 工程实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / run `38066909019` 已 remote-accepted，但 v9 内容验收仍为 0/6。提示 0.23 的 Agent-ready 基础现为 local-accepted：新增统一模型客户端边界，短草稿输出预算由 4096 收紧至 512，超长/额外字段/错误检索模式措辞严格拒绝，失败响应也保留 usage；0.1–0.22 历史 payload 和离线回放保持。全量 434 tests（432 passed、2 环境跳过）、合成 HTTP、隔离 wheel 与静态门通过，提交及远端 CI 待记录。一般复杂解释、独立资料适用性和完整 Agent 均未验收；远端门通过后，下一项是收紧知识来源策略并实现最小只读 `ToolRegistry + AgentRunner`。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1686,3 +1686,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 全量 421 tests（419 passed、2 环境跳过）；16 项模型专项通过。隔离 wheel 安装后两工程事实门、12 项模型 HTTP 合成协议、安装归档重放通过。Ruff、8-source mypy、57 schemas / 76 schema-bound / 25 syntax-only examples、CI topology、pip check、compileall 通过。
 - 实现提交 `11361788108a8793d6b3808fe85ab506fa8e0b82` / [run `37742242675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37742242675) 七 job 全部 success：runtime-currency `113195398856`；core-contracts Windows `113195398938` / Ubuntu `113195399041`；controlled-rejections Windows `113197537909` / Ubuntu `113197537982`；runtime-evidence Windows `113197538027` / Ubuntu `113197538036`。本条及同步状态文档是后续纯文档更新，不作为新实现验收。
 - 下一项：在项目证据不同的冻结问题上重复配对，且由独立审阅者逐项审核唯一通过回答的自然语言、证据边界及资料适用性；未审前 P30 模型质量仍未通过。
+
+
+### P30：提示 0.23 与 Agent-ready 模型边界（2026-10-11）
+
+- 新增 [Agent-ready 基础设计](p30-agent-foundation.md)。目标是让 Agent 替代固定编排，现有导入、审查、比较、运行和复验继续作为确定性工具；模型不获得工程判定、配置写入或硬件权限。工作台仍通过 HTTP 使用现有 Ollama/知识服务，Docker 是服务运行环境而非 Agent。
+- 新增 provider-neutral `ModelClient` 协议和 `OllamaModelClient`。当前只声明已实现的结构化输出、模型 digest 固定和 usage；tool calling/streaming 明确未实现。评测实现摘要加入该边界，避免改变适配器却复用旧冻结清单。
+- 提示 0.23 对 160 字 draft-only 路径使用 512 output token；一般复杂回答暂保留 4096。超长、额外字段及 project/retrieval 模式句不匹配均拒绝。usage 在响应解析前提取，因此值漂移、上下文超限等失败结果仍保留 token/耗时。0.1–0.22 payload 和宽容读取语义由回归固定。
+- 本地验证：434 tests（432 passed、2 环境跳过）；57 schemas / 76 schema-bound / 25 syntax-only examples、CI topology、Ruff、8-source mypy、compileall 和 diff check 通过；源码 12 类合成 HTTP 场景、服务停止后的离线复验及隔离 wheel 两工程/12 类模型场景通过。wheel SHA-256 `baa86864e2148595f469ab1cdb38c5f47e4a5a30045f8a7d95616f5d18af4ca4`。状态 local-accepted；实现提交和远端七 job 待记录，未运行真实模型，不能推断内容质量改善。
+- P30 保持 implementing。远端门通过后的下一项：先把 `legacy_trusted` 从未来 Agent 默认高可信来源中隔离并版本化来源策略，再实现仅含项目事实查询和报告复验的 typed `ToolRegistry + AgentRunner`，加入步骤/token/时间预算与 trace；独立人工语义/资料适用性门继续保留。

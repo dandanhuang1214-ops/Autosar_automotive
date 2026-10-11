@@ -9,28 +9,30 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from automotive_workbench.explanation_services import Endpoint, ServiceError, model_identity, parse_json, retrieve
+from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json, retrieve
+from automotive_workbench.model_client import OllamaModelClient
 from automotive_workbench.project_explanation import build_request, canonical, digest, read
 
-PROMPT_VERSION = "project-explanation-prompt-0.22"
+PROMPT_VERSION = "project-explanation-prompt-0.23"
 V17 = "project-explanation-prompt-0.17"
 V18 = "project-explanation-prompt-0.18"
 V19 = "project-explanation-prompt-0.19"
 V20 = "project-explanation-prompt-0.20"
 V21 = "project-explanation-prompt-0.21"
-FOCUSED_PROMPTS = {"project-explanation-prompt-0.5", "project-explanation-prompt-0.6", "project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-BUDGET_PROMPTS = {"project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-STAGE_STATUS_SCOPE_PROMPTS = {"project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-COMPLETE_STAGE_STATUS_PROMPTS = {"project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-COMPLETE_NAMED_CHECK_FIELD_PROMPTS = {"project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
+V22 = "project-explanation-prompt-0.22"
+FOCUSED_PROMPTS = {"project-explanation-prompt-0.5", "project-explanation-prompt-0.6", "project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+BUDGET_PROMPTS = {"project-explanation-prompt-0.7", "project-explanation-prompt-0.8", "project-explanation-prompt-0.9", "project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+STAGE_STATUS_SCOPE_PROMPTS = {"project-explanation-prompt-0.10", "project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+COMPLETE_STAGE_STATUS_PROMPTS = {"project-explanation-prompt-0.11", "project-explanation-prompt-0.12", "project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+COMPLETE_NAMED_CHECK_FIELD_PROMPTS = {"project-explanation-prompt-0.13", "project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
 EXACT_PROJECT_CLAIM_PROMPTS = {"project-explanation-prompt-0.13", "project-explanation-prompt-0.14"}
-EXACT_NAMED_CONTEXT_PROMPTS = {"project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-EXACT_DRAFT_PROMPTS = {"project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-TOLERANT_DRAFT_PROMPTS = {"project-explanation-prompt-0.16", V17, V18, V19, V20, V21, PROMPT_VERSION}
-COMPLEX_NAMED_CONTEXT_PROMPTS = {V17, V18, V19, V20, V21, PROMPT_VERSION}
-SCOPED_EXACT_REQUEST_PROMPTS = {V17, V18, V19, V20, V21, PROMPT_VERSION}
-MANUAL_APPLICABILITY_PROMPTS = {V20, V21, PROMPT_VERSION}
-MANUAL_DRAFT_PROMPTS = {V21, PROMPT_VERSION}
+EXACT_NAMED_CONTEXT_PROMPTS = {"project-explanation-prompt-0.14", "project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+EXACT_DRAFT_PROMPTS = {"project-explanation-prompt-0.15", "project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+TOLERANT_DRAFT_PROMPTS = {"project-explanation-prompt-0.16", V17, V18, V19, V20, V21, V22}
+COMPLEX_NAMED_CONTEXT_PROMPTS = {V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+SCOPED_EXACT_REQUEST_PROMPTS = {V17, V18, V19, V20, V21, V22, PROMPT_VERSION}
+MANUAL_APPLICABILITY_PROMPTS = {V20, V21, V22, PROMPT_VERSION}
+MANUAL_DRAFT_PROMPTS = {V21, V22, PROMPT_VERSION}
 NO_THINK_FAMILIES = {
     "project-explanation-prompt-0.8": {"qwen3vl"},
     "project-explanation-prompt-0.9": {"qwen3vl"},
@@ -46,6 +48,7 @@ NO_THINK_FAMILIES = {
     V19: {"qwen3vl", "qwen35"},
     V20: {"qwen3vl", "qwen35"},
     V21: {"qwen3vl", "qwen35"},
+    V22: {"qwen3vl", "qwen35"},
     PROMPT_VERSION: {"qwen3vl", "qwen35"},
 }
 SYSTEM = """/no_think
@@ -180,17 +183,19 @@ an unrelated quote is not support. Do not add facts from memory. Keep draft_expl
 in Chinese and at most 160 characters. Do not provide advice unless explicitly requested.
 """
 PROMPTS[V21] = PROMPTS[V20]
-PROMPTS[PROMPT_VERSION] = PROMPTS[V21]
+PROMPTS[V22] = PROMPTS[V21]
+PROMPTS[PROMPT_VERSION] = PROMPTS[V22]
 BOUND_DRAFT_PROMPT = PROMPTS[V19] + """
 Include every supplied object identity, definition path and before/after value literally
 in draft_explanation; never convert them to numbers or invent encodings. Explain status
 and reason in Chinese around those unchanged anchors.
 """
-MANUAL_GAP_DRAFT_PROMPT = """You write a short Chinese evidence-gap note. Retrieved excerpts
-have not received independent applicability approval for this question and cannot support
-a standard mandate yet. Return exactly one JSON object with exactly two keys: request_id
-and draft_explanation. Copy request_id verbatim. State that applicability remains unassessed;
-do not quote a manual, make a standard claim, add advice or output any other key.
+MANUAL_GAP_DRAFT_PROMPT = """You write a short Chinese evidence-gap note. Supplied excerpts,
+if any, have not received independent applicability approval for this question and cannot
+support a standard mandate yet. Return exactly one JSON object with exactly two keys:
+request_id and draft_explanation. Copy request_id verbatim. Keep draft_explanation at most
+160 characters. Use the required mode sentence verbatim; do not quote a manual, make a
+standard claim, add advice or output any other key.
 """
 
 
@@ -385,7 +390,7 @@ def is_exact_named_check_field_request(question: str, *, prompt_version: str = P
 def required_complex_named_check_fact_ids(question: str, facts: list[dict], *,
                                           prompt_version: str = PROMPT_VERSION) -> set[str] | None:
     """Bind the explicit report fields needed for a named-check explanation."""
-    if prompt_version not in {V18, V19, V20, V21, PROMPT_VERSION} or is_exact_named_check_field_request(
+    if prompt_version not in {V18, V19, V20, V21, V22, PROMPT_VERSION} or is_exact_named_check_field_request(
             question, prompt_version=prompt_version):
         return None
     lowered = question.lower()
@@ -513,12 +518,27 @@ def exact_draft_schema(request_id: str) -> dict:
                                "draft_explanation": {"type": "string", "maxLength": 160}})]}
 
 
+def generation_token_budget(prompt_version: str, *, draft_only: bool) -> int:
+    """Keep frozen payloads stable while bounding new short-draft generation."""
+    if prompt_version == PROMPT_VERSION and draft_only:
+        return 512
+    return 4096 if prompt_version in FOCUSED_PROMPTS else 1600
+
+
 def validate_exact_draft(value: Any, request_id: str) -> str:
     if (not isinstance(value, dict) or set(value) != {"request_id", "draft_explanation"}
             or value["request_id"] != request_id or not isinstance(value["draft_explanation"], str)
             or len(value["draft_explanation"]) > 160):
         raise ValueError("wrong_exact_draft_contract_or_request")
     return value["draft_explanation"]
+
+
+def validate_manual_gap_draft(draft: str, *, knowledge_requested: bool) -> str:
+    required = ("资料适用性尚未审核。" if knowledge_requested
+                else "本次未查询资料库；资料适用性尚未审核。")
+    if not draft.startswith(required):
+        raise ValueError("manual_mode_wording_mismatch")
+    return draft
 
 
 def extract_exact_draft(value: Any, request_id: str) -> tuple[str, bool]:
@@ -623,7 +643,7 @@ def explain(report: Path, question: str, output: Path, model: str,
     if _prompt_version not in PROMPTS:
         raise ValueError("Unsupported prompt version")
     factory = _endpoint_factory or Endpoint
-    ollama = factory(ollama_url, timeout)
+    ollama = OllamaModelClient(factory(ollama_url, timeout))
     knowledge = factory(knowledge_url, timeout) if knowledge_url else None
     request = build_request(report, question)
     output.mkdir(parents=True)
@@ -712,9 +732,9 @@ def explain(report: Path, question: str, output: Path, model: str,
         system_prompt = BOUND_DRAFT_PROMPT
     elif _prompt_version == PROMPT_VERSION and manual_draft_scope:
         system_prompt = MANUAL_GAP_DRAFT_PROMPT + (
-            " No approved manual excerpt was supplied for this request."
-            if not manuals else
-            " Retrieved excerpts were supplied, but their applicability remains unreviewed."
+            " Required mode sentence: 本次未查询资料库；资料适用性尚未审核。"
+            if not knowledge else
+            " Required mode sentence: 资料适用性尚未审核。"
         )
     else:
         system_prompt = PROMPTS[_prompt_version]
@@ -722,7 +742,8 @@ def explain(report: Path, question: str, output: Path, model: str,
                {"role": "user", "content": canonical(user_context)}], "stream": False, "think": _prompt_version in FOCUSED_PROMPTS,
                "format": format_schema,
                "options": {"temperature": 0, "seed": 0, "num_ctx": context_tokens,
-                           "num_predict": 4096 if _prompt_version in FOCUSED_PROMPTS else 1600}, "keep_alive": "2m"}
+                           "num_predict": generation_token_budget(
+                               _prompt_version, draft_only=draft_only_scope)}, "keep_alive": "2m"}
     if _prompt_version in FOCUSED_PROMPTS:
         # Preserve model defaults: forcing false bypasses format on the observed
         # Qwen3.5 service, while forcing true rejects non-thinking models.
@@ -739,11 +760,8 @@ def explain(report: Path, question: str, output: Path, model: str,
                           "knowledge_query": knowledge_query, "timeout": timeout}}
     generated = False
     try:
-        version = ollama.request("/api/version")
-        if not isinstance(version, dict) or not isinstance(version.get("version"), str) or not version["version"]:
-            raise ServiceError("missing_service_version")
-        result["service_version"] = version["version"]
-        identity = model_identity(ollama, model)
+        result["service_version"] = ollama.service_version()
+        identity = ollama.identity(model)
         result["model"] = identity
         families = set(identity.get("details", {}).get("families", []))
         if families & NO_THINK_FAMILIES.get(_prompt_version, set()):
@@ -752,11 +770,12 @@ def explain(report: Path, question: str, output: Path, model: str,
             payload["think"] = False
             result["input_sha256"] = digest(payload)
             _write(output / "model-input.json", payload)
-        response = ollama.request("/api/chat", payload)
+        response = ollama.complete(payload)
         generated = True
         _write(output / "raw-model-response.json", response)
         result["raw_output_sha256"] = digest(response)
-        if model_identity(ollama, model) != identity:
+        result["metrics"] = ollama.usage(response)
+        if ollama.identity(model) != identity:
             raise ServiceError("model_identity_changed")
         if (not isinstance(response, dict) or response.get("done") is not True or response.get("done_reason") != "stop"
                 or response.get("model") != model or not isinstance(response.get("message"), dict)
@@ -780,6 +799,8 @@ def explain(report: Path, question: str, output: Path, model: str,
                 draft = validate_exact_draft(value, context["request_id"])
             if _prompt_version == PROMPT_VERSION and exact_draft_scope:
                 draft = validate_bound_draft_literals(draft, facts)
+            if _prompt_version == PROMPT_VERSION and manual_draft_scope:
+                draft = validate_manual_gap_draft(draft, knowledge_requested=knowledge is not None)
             result["answer"] = {"project_facts": facts, "manual_quotes": [],
                                 "draft_explanation": draft, "suggestions": [],
                                 "semantic_status": "unassessed",
@@ -793,7 +814,6 @@ def explain(report: Path, question: str, output: Path, model: str,
             result["status"] = "passed" if value["status"] == "selected" else "unassessed"
             result["reason"] = ("structured_citations_validated_prose_unverified"
                                 if value["status"] == "selected" else "model_reports_insufficient_evidence")
-        result["metrics"] = {k: response[k] for k in ("total_duration", "load_duration", "prompt_eval_count", "eval_count", "eval_duration") if k in response}
     except (ServiceError, ValueError, TypeError, KeyError) as exc:
         result["status"] = "refused" if generated else "blocked"
         result["reason"] = str(exc)
