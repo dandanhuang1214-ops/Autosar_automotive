@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-11）
 
-当前主阶段 P30 implementing。提示 0.22 工程实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / run `38066909019` 已 remote-accepted，但 v9 内容验收仍为 0/6。提示 0.23 的 Agent-ready 基础也已 remote-accepted：新增统一模型客户端边界，短草稿输出预算由 4096 收紧至 512，严格输出门与失败 usage 生效；修复实现 `5c1f3e427d3f00b54b787a753fc78d94edf50c5d` / run `38105657902` 七 job 全部成功。下一门知识来源信任策略 0.1 已 local-accepted：未来 Agent 必须使用绑定文档 ID、SHA-256、authority 和审核记录的显式 allowlist，`legacy_trusted` 仅保留历史兼容；436 tests（434 passed、2 环境跳过）、合成 HTTP、隔离 wheel 与静态门通过，远端 CI 待本实现提交。一般复杂解释、真实资料适用性和完整 Agent 均未验收；远端门后下一项是最小只读 `ToolRegistry + AgentRunner`。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.22 工程实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / run `38066909019` 已 remote-accepted，但 v9 内容验收仍为 0/6。提示 0.23 的 Agent-ready 基础也已 remote-accepted：新增统一模型客户端边界，短草稿输出预算由 4096 收紧至 512，严格输出门与失败 usage 生效；修复实现 `5c1f3e427d3f00b54b787a753fc78d94edf50c5d` / run `38105657902` 七 job 全部成功。知识来源信任策略 0.1 现也已 remote-accepted：未来 Agent 必须使用绑定文档 ID、SHA-256、authority 和审核记录的显式 allowlist，`legacy_trusted` 仅保留历史兼容；实现 `268482a0c730b77c5b915c702b070cb071258136` / run `38123214672` 七 job 全部成功。一般复杂解释、真实资料适用性和完整 Agent 均未验收；下一项是最小只读 `ToolRegistry + AgentRunner`。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1703,4 +1703,5 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 保留旧 `retrieve()` 供提示 0.1–0.23 历史兼容；新增 `retrieve_for_agent()` 和只读 CLI `retrieve-agent-knowledge`，不存在无策略回退。严格输出逐来源保存策略 ID、审核记录、文档摘要与 chunk 内容摘要；合成示例只绑定 fixture，不冒充真实手册审核。
 - 场景接入既有模型协议链：源码及隔离安装均完成 12 类模型协议、Agent policy 检索、两工程事实链与离线归档复验。隔离 wheel SHA-256 `09d6b51477edf104ea74c3bd49d84d6c77669995a62565ae47e273d547089e66`。
 - 本地最终 436 tests（434 passed、2 环境跳过）；59 schemas / 77 schema-bound / 25 syntax-only examples、Ruff、9-source mypy、CI topology、compileall、pip check 和 diff check 通过。首次全量因契约测试仍固定旧 57 schema 计数而 1 项失败，更新为实际 59 后定向及全量重跑通过。
-- 状态：本轮信任策略 local-accepted，提交和远端七 job 待记录。P30 保持 implementing；没有真实模型推理、真实资料人工适用性、策略签名或完整 Agent 验收。远端通过后的下一项为最小只读 typed `ToolRegistry + AgentRunner`，加入步骤/token/时间/工具次数预算与 trace。
+- 远端验收：实现 `268482a0c730b77c5b915c702b070cb071258136` / [run `38123214672`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38123214672) completed/success。实际 job 均 success：core-contracts Windows `114422065726`、Ubuntu `114422065880`；runtime-currency `114422065900`；runtime-evidence Windows `114423302217`、Ubuntu `114423302259`；controlled-rejections Ubuntu `114423302250`、Windows `114423302260`。本轮信任策略 remote-accepted；本条及总览是随后纯文档状态回填，不替代实现 CI。
+- P30 保持 implementing；没有真实模型推理、真实资料人工适用性、策略签名或完整 Agent 验收。下一项为最小只读 typed `ToolRegistry + AgentRunner`，加入步骤/token/时间/工具次数预算与 trace。

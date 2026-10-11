@@ -1,6 +1,6 @@
 # P30 Agent 知识来源信任策略
 
-状态：implementing。本门只建立未来只读 Agent 的资料准入边界，不宣称资料内容、模型解释或完整 Agent 已通过人工验收。
+状态：本门 remote-accepted；P30 整阶段仍 implementing。本门只建立未来只读 Agent 的资料准入边界，不宣称资料内容、模型解释或完整 Agent 已通过人工验收。实现 `268482a0c730b77c5b915c702b070cb071258136` / [run `38123214672`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38123214672) 七 job 全部成功。
 
 ## 为什么不能沿用旧字段
 
