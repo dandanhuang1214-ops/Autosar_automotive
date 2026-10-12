@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-12）
 
-当前主阶段 P30 implementing。提示 0.22、0.23 与 Agent 知识来源策略 0.1 已分别通过实现远端验收（最新策略实现 `268482a0c730b77c5b915c702b070cb071258136` / run `38123214672` 七 job 成功）。最小只读 `ToolRegistry + AgentRunner` 现已 local-accepted：原生 Ollama tool calling 与结构化回退、三个绑定只读工具、动态工具隐藏、完整结果/紧凑 projection、调用/token/时间预算及可离线验签哈希链均已实现。真实 Ollama 0.31.1 / qwen3.5:2b 开发试验以 2 次模型调用、1 次工具调用、1574 tokens 在 12.706 秒完成，正确选中 `diagnostic_backend_mismatch` / `blocked`，但自然语言仍标记 unassessed。本轮实现提交与远端 CI 尚未产生，不标记 remote-accepted。下一项是冻结独立只读 Agent eval cohort，随后再做 checkpoint/暂停/审批；一般复杂解释、真实资料适用性、写入和硬件均未验收。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.22、0.23、Agent 知识来源策略 0.1 和最小只读 `ToolRegistry + AgentRunner` 均已通过各自实现远端验收；最新 Agent 实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / run `38189854764` 七 job 成功。原生 Ollama tool calling 与结构化回退、三个绑定只读工具、动态工具隐藏、完整结果/紧凑 projection、调用/token/时间预算及可离线验签哈希链均已实现。真实 Ollama 0.31.1 / qwen3.5:2b 开发试验以 2 次模型调用、1 次工具调用、1574 tokens 在 12.706 秒完成，正确选中 `diagnostic_backend_mismatch` / `blocked`，但自然语言仍标记 unassessed。下一项是冻结独立只读 Agent eval cohort，随后再做 checkpoint/暂停/审批；一般复杂解释、真实资料适用性、写入和硬件均未验收。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1713,4 +1713,5 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - trace 分开保存完整工具结果和模型使用的紧凑 projection，observation ID 同时绑定两者；超时或无效响应也记录为已尝试的模型事件。模型摘要恒为 `semantic_status=unassessed`，不改写工程状态。
 - 本地验证：446 tests 通过（2 个环境跳过）；10 项 Agent 单测；60 schemas / 77 schema-bound / 25 syntax-only examples；Ruff、mypy、compileall、pip check、diff check；源码与隔离 wheel 的 12 类 HTTP 场景及服务停止后验签均通过。wheel SHA-256 `a2d43ae44845511d1d784ec47bf29a643b2c73efbce10d1da736433b32cc7698`。
 - 真实 Ollama 0.31.1 / qwen3.5:2b 最终开发试验 trace `82aa1a83e319450df9d5ff8123cf9a154742d52e83667194f477ede7556e2da6`：2 次模型调用、1 次 `project_query_facts`、1417 input + 157 output = 1574 tokens、12.706 秒；选中的确定性事实包含 `diagnostic_backend_mismatch` 和 `blocked`，结束引用有效，离线验签通过。这是开发证据，不是独立质量样本。
-- 本轮仅 local-accepted；实现提交、push 和远端七 job 尚待执行。P30 保持 implementing。下一项是冻结独立只读 Agent cohort，测量工具选择、参数、引用、拒绝和 token 成本；通过后再做 checkpoint/幂等/暂停/审批。
+- 远端验收：实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) completed/success。实际 job 均 success：runtime-currency `114620063262`；core-contracts Windows `114620063355`、Ubuntu `114620063368`；runtime-evidence Ubuntu `114621961465`、Windows `114621961532`；controlled-rejections Ubuntu `114621961479`、Windows `114621961579`。本轮只读 Agent 基础设施 remote-accepted；本条与总览由随后纯文档状态提交回填，不替代实现 CI。
+- P30 保持 implementing。下一项是冻结独立只读 Agent cohort，测量工具选择、参数、引用、拒绝和 token 成本；通过后再做 checkpoint/幂等/暂停/审批。

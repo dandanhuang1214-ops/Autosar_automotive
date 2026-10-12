@@ -1,6 +1,6 @@
 # P30 只读 Agent 工具链与 LLM API 评审
 
-状态：**local-accepted，remote CI pending**。P30 整阶段仍为 implementing；本文只验收只读 Agent 基础设施，不把一次真实模型成功当作通用解释质量或工程判定验收。
+状态：**remote-accepted**。实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` 的 [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七个 job 全部成功。P30 整阶段仍为 implementing；本文只验收只读 Agent 基础设施，不把一次真实模型成功当作通用解释质量或工程判定验收。
 
 ## 结论
 
@@ -90,5 +90,6 @@ python -m automotive_workbench.cli verify-readonly-agent-trace \
 - 源码与隔离 wheel 的 12 类 HTTP 协议场景、Agent 知识策略、3 工具/4 模型轮次和服务停止后验签通过。wheel SHA-256 为 `a2d43ae44845511d1d784ec47bf29a643b2c73efbce10d1da736433b32cc7698`。
 - 真实 Ollama 0.31.1 / `qwen3.5:2b` digest `324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df` 的最终开发试验为 2 次模型调用、1 次事实工具调用、1574 tokens、12.706 秒；模型选中 `diagnostic_backend_mismatch` 和 `blocked`，然后引用该 observation 结束，离线验签通过。
 - 前置开发试验暴露过 JSON grammar 不遵循、Ollama `function.index` 差异、冗余工具选择、token 耗尽和超时；这些被作为协议与编排修复依据，不算独立质量样本。
+- 远端实现验收 completed/success：runtime-currency `114620063262`；core-contracts Windows `114620063355`、Ubuntu `114620063368`；runtime-evidence Ubuntu `114621961465`、Windows `114621961532`；controlled-rejections Ubuntu `114621961479`、Windows `114621961579`。后续纯文档状态提交不替代该实现 run。
 
 未验收：独立未见的工具选择准确率、一般复杂解释、真实资料适用性、流式调用、checkpoint/恢复、幂等副作用、执行/写入/硬件工具和人工审批。下一门是冻结只读 Agent eval cohort，对工具选择、参数、引用、拒绝和 token 成本进行独立评测；通过后再进入 checkpoint/暂停/审批，不直接开放写入或硬件。

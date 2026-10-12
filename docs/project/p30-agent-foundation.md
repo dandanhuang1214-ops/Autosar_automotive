@@ -62,7 +62,7 @@ CLI / UI
 
 验收：单元测试、历史版本 payload 回归、合成 HTTP 场景、schema、类型检查、全量测试和远端七 job。它只验收基础设施，不验收模型内容质量。
 
-### B. 只读 AgentRunner（local-accepted，remote CI pending）
+### B. 只读 AgentRunner（remote-accepted）
 
 - 增加 typed `ToolRegistry`、最多 N 步的显式循环、调用/时间/token 预算及完整 trace。
 - 首批仅开放项目事实查询、报告复验和已审核资料检索；未知工具、参数越界、重复调用和预算耗尽均拒绝。
@@ -81,4 +81,4 @@ CLI / UI
 
 ## 下一实现项
 
-B 的最小只读 `ToolRegistry + AgentRunner` 已完成本地实现验收：包含原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace。实现提交的远端 CI 通过前不标记 remote-accepted。随后先冻结独立只读 Agent cohort，量化工具选择、参数、引用、拒绝和 token 成本；该门通过后再实现 C 的 checkpoint、幂等键、暂停/恢复和审批，仍不直接开放写入或硬件。
+B 的最小只读 `ToolRegistry + AgentRunner` 已完成远端实现验收：原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace 由实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job 固定。下一门先冻结独立只读 Agent cohort，量化工具选择、参数、引用、拒绝和 token 成本；该门通过后再实现 C 的 checkpoint、幂等键、暂停/恢复和审批，仍不直接开放写入或硬件。
