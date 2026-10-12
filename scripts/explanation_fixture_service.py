@@ -41,26 +41,50 @@ def fixture_service():
                 value = {"models": [{"name": "fixture:1", "digest": ("b" if mode == "model_changed" and server.tags_count > 1 else "a") * 64, "details": {"fixture": True}}]}
             elif self.path == "/api/chat":
                 context = json.loads(payload["messages"][1]["content"])
-                fact = context["facts"][0]
-                answer = {"request_id": context["request_id"], "status": "selected",
-                          "project_claims": [{"fact_id": fact["fact_id"], "value": fact["value"]}],
-                          "manual_claims": [], "draft_explanation": "项目状态请以核对后的事实为准。", "suggestions": []}
-                if context["manuals"]:
-                    manual = context["manuals"][0]
-                    answer["manual_claims"] = [{"source_id": manual["source_id"], "quote": manual["excerpt"]}]
-                if mode == "invalid_reference":
-                    answer["project_claims"][0]["fact_id"] = "0" * 64
-                if mode == "value_drift":
-                    answer["project_claims"][0]["value"] = "passed"
-                if mode == "manual_mismatch":
-                    answer["manual_claims"][0]["quote"] = "The project passed physical ECU certification."
-                if mode == "unassessed":
-                    answer.update(status="unassessed", project_claims=[], manual_claims=[])
-                if mode == "unsupported_prose":
-                    answer["draft_explanation"] = "Physical ECU certified."
-                value = {"model": "fixture:1", "done": True, "done_reason": "length" if mode == "truncation" else "stop",
-                         "message": {"role": "assistant", "content": "{bad" if mode == "malformed" else json.dumps(answer)},
-                         "eval_count": 20, "prompt_eval_count": 100, "total_duration": 1000000}
+                answer: dict[str, Any]
+                if mode == "agent":
+                    observations = context["observations"]
+                    if len(observations) == 0:
+                        function = {"name": "project_verify_report", "arguments": {}}
+                    elif len(observations) == 1:
+                        function = {"name": "project_query_facts",
+                                    "arguments": {"question": "为什么项目被阻断？"}}
+                    elif len(observations) == 2:
+                        function = {"name": "knowledge_retrieve_reviewed",
+                                    "arguments": {"question": "diagnostic timeout evidence"}}
+                    else:
+                        function = {"name": "agent_finish", "arguments": {
+                            "summary": "已获取项目复验、事实与已审核资料；文字结论仍待人工审核。",
+                            "evidence_ids": [item["observation_id"] for item in observations],
+                        }}
+                    value = {
+                        "model": "fixture:1", "done": True, "done_reason": "stop",
+                        "message": {"role": "assistant", "content": "",
+                                    "tool_calls": [{"function": function}]},
+                        "eval_count": 20, "prompt_eval_count": 100,
+                        "total_duration": 1000000,
+                    }
+                else:
+                    fact = context["facts"][0]
+                    answer = {"request_id": context["request_id"], "status": "selected",
+                              "project_claims": [{"fact_id": fact["fact_id"], "value": fact["value"]}],
+                              "manual_claims": [], "draft_explanation": "项目状态请以核对后的事实为准。", "suggestions": []}
+                    if context["manuals"]:
+                        manual = context["manuals"][0]
+                        answer["manual_claims"] = [{"source_id": manual["source_id"], "quote": manual["excerpt"]}]
+                    if mode == "invalid_reference":
+                        answer["project_claims"][0]["fact_id"] = "0" * 64
+                    if mode == "value_drift":
+                        answer["project_claims"][0]["value"] = "passed"
+                    if mode == "manual_mismatch":
+                        answer["manual_claims"][0]["quote"] = "The project passed physical ECU certification."
+                    if mode == "unassessed":
+                        answer.update(status="unassessed", project_claims=[], manual_claims=[])
+                    if mode == "unsupported_prose":
+                        answer["draft_explanation"] = "Physical ECU certified."
+                    value = {"model": "fixture:1", "done": True, "done_reason": "length" if mode == "truncation" else "stop",
+                             "message": {"role": "assistant", "content": "{bad" if mode == "malformed" else json.dumps(answer)},
+                             "eval_count": 20, "prompt_eval_count": 100, "total_duration": 1000000}
             elif self.path == "/api/search":
                 value = {"query": payload["query"], "results": [evidence]}
             elif self.path == "/api/documents":

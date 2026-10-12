@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-trace.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trace_id", "schema_version", "status", "reason", "semantic_status",
+    "goal", "model", "service_version", "tool_manifest", "budget", "usage",
+    "events", "final", "boundary"
+  ],
+  "properties": {
+    "trace_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "readonly-agent-trace-0.1"},
+    "status": {"enum": ["passed", "refused", "blocked"]},
+    "reason": {"type": "string", "minLength": 1},
+    "semantic_status": {"const": "unassessed"},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "model": {"type": ["object", "null"]},
+    "service_version": {"type": ["string", "null"]},
+    "tool_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "permission", "input_schema", "supersedes"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "permission": {"const": "read"},
+          "input_schema": {"type": "object"},
+          "supersedes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_steps", "max_model_calls", "max_tool_calls", "max_total_tokens",
+        "max_output_tokens_per_call", "context_window", "max_seconds",
+        "max_observation_chars"
+      ],
+      "properties": {
+        "max_steps": {"type": "integer", "minimum": 1, "maximum": 8},
+        "max_model_calls": {"type": "integer", "minimum": 1, "maximum": 8},
+        "max_tool_calls": {"type": "integer", "minimum": 0, "maximum": 7},
+        "max_total_tokens": {"type": "integer", "minimum": 64, "maximum": 32768},
+        "max_output_tokens_per_call": {"type": "integer", "minimum": 1, "maximum": 1024},
+        "context_window": {"type": "integer", "minimum": 512, "maximum": 32768},
+        "max_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 120},
+        "max_observation_chars": {"type": "integer", "minimum": 1000, "maximum": 100000}
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_calls", "tool_calls", "prompt_tokens", "output_tokens",
+        "total_tokens", "elapsed_ms"
+      ],
+      "properties": {
+        "model_calls": {"type": "integer", "minimum": 0},
+        "tool_calls": {"type": "integer", "minimum": 0},
+        "prompt_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "total_tokens": {"type": "integer", "minimum": 0},
+        "elapsed_ms": {"type": "number", "minimum": 0}
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/model_event"},
+          {"$ref": "#/$defs/tool_event"}
+        ]
+      }
+    },
+    "final": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "evidence_ids", "semantic_status"],
+          "properties": {
+            "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "evidence_ids": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            },
+            "semantic_status": {"const": "unassessed"}
+          }
+        }
+      ]
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "event_header": {
+      "type": "object",
+      "properties": {
+        "event_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "previous_event_id": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "model_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id", "sequence", "previous_event_id", "kind", "request_sha256",
+        "response_sha256", "response_content", "usage", "action", "error"
+      ],
+      "properties": {
+        "event_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "previous_event_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "kind": {"const": "model"},
+        "request_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "response_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "response_content": {"type": ["string", "null"], "maxLength": 8000},
+        "usage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prompt_tokens", "output_tokens"],
+          "properties": {
+            "prompt_tokens": {"type": "integer", "minimum": 0},
+            "output_tokens": {"type": "integer", "minimum": 0}
+          }
+        },
+        "action": {"type": ["object", "null"]},
+        "error": {"type": ["string", "null"]}
+      }
+    },
+    "tool_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id", "sequence", "previous_event_id", "kind", "tool_name",
+        "arguments", "call_id", "status", "result", "result_sha256",
+        "model_projection", "projection_sha256", "observation_id", "error"
+      ],
+      "properties": {
+        "event_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "previous_event_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "kind": {"const": "tool"},
+        "tool_name": {"type": "string", "minLength": 1},
+        "arguments": {"type": "object"},
+        "call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["passed", "refused", "blocked"]},
+        "result": {"type": ["object", "null"]},
+        "result_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "model_projection": {"type": ["object", "null"]},
+        "projection_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "observation_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "error": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

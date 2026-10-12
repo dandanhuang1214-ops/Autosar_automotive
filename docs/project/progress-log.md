@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-11）
+## 当前总览（2026-10-12）
 
-当前主阶段 P30 implementing。提示 0.22 工程实现 `78e88085d836fd16ebc83447b0f36a601920ba8c` / run `38066909019` 已 remote-accepted，但 v9 内容验收仍为 0/6。提示 0.23 的 Agent-ready 基础也已 remote-accepted：新增统一模型客户端边界，短草稿输出预算由 4096 收紧至 512，严格输出门与失败 usage 生效；修复实现 `5c1f3e427d3f00b54b787a753fc78d94edf50c5d` / run `38105657902` 七 job 全部成功。知识来源信任策略 0.1 现也已 remote-accepted：未来 Agent 必须使用绑定文档 ID、SHA-256、authority 和审核记录的显式 allowlist，`legacy_trusted` 仅保留历史兼容；实现 `268482a0c730b77c5b915c702b070cb071258136` / run `38123214672` 七 job 全部成功。一般复杂解释、真实资料适用性和完整 Agent 均未验收；下一项是最小只读 `ToolRegistry + AgentRunner`。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。提示 0.22、0.23 与 Agent 知识来源策略 0.1 已分别通过实现远端验收（最新策略实现 `268482a0c730b77c5b915c702b070cb071258136` / run `38123214672` 七 job 成功）。最小只读 `ToolRegistry + AgentRunner` 现已 local-accepted：原生 Ollama tool calling 与结构化回退、三个绑定只读工具、动态工具隐藏、完整结果/紧凑 projection、调用/token/时间预算及可离线验签哈希链均已实现。真实 Ollama 0.31.1 / qwen3.5:2b 开发试验以 2 次模型调用、1 次工具调用、1574 tokens 在 12.706 秒完成，正确选中 `diagnostic_backend_mismatch` / `blocked`，但自然语言仍标记 unassessed。本轮实现提交与远端 CI 尚未产生，不标记 remote-accepted。下一项是冻结独立只读 Agent eval cohort，随后再做 checkpoint/暂停/审批；一般复杂解释、真实资料适用性、写入和硬件均未验收。P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1705,3 +1705,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地最终 436 tests（434 passed、2 环境跳过）；59 schemas / 77 schema-bound / 25 syntax-only examples、Ruff、9-source mypy、CI topology、compileall、pip check 和 diff check 通过。首次全量因契约测试仍固定旧 57 schema 计数而 1 项失败，更新为实际 59 后定向及全量重跑通过。
 - 远端验收：实现 `268482a0c730b77c5b915c702b070cb071258136` / [run `38123214672`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38123214672) completed/success。实际 job 均 success：core-contracts Windows `114422065726`、Ubuntu `114422065880`；runtime-currency `114422065900`；runtime-evidence Windows `114423302217`、Ubuntu `114423302259`；controlled-rejections Ubuntu `114423302250`、Windows `114423302260`。本轮信任策略 remote-accepted；本条及总览是随后纯文档状态回填，不替代实现 CI。
 - P30 保持 implementing；没有真实模型推理、真实资料人工适用性、策略签名或完整 Agent 验收。下一项为最小只读 typed `ToolRegistry + AgentRunner`，加入步骤/token/时间/工具次数预算与 trace。
+
+### P30：最小只读 Agent 工具链（2026-10-12）
+
+- 新增 [只读 Agent 工具链与 API 评审](p30-readonly-agent-guide.md)、`agent_runtime.py`、`readonly-agent-trace-0.1` schema，以及 `run-readonly-agent` / `verify-readonly-agent-trace` CLI。`ModelClient` 新增原生函数调用能力，Ollama 适配器严格校验消息、工具、单个 function call、模型身份和 usage；不支持时仍可用单对象结构化动作回退。
+- 首批仅注册报告复验、项目事实查询和受 digest-bound 策略约束的资料检索。路径、endpoint 与策略由运行时绑定；成功工具自动隐藏，具体查询可 supersede 冗余概览工具。未知/隐藏/重复工具、非法参数、伪造 observation、模型 digest 漂移和预算耗尽均 fail closed。
+- trace 分开保存完整工具结果和模型使用的紧凑 projection，observation ID 同时绑定两者；超时或无效响应也记录为已尝试的模型事件。模型摘要恒为 `semantic_status=unassessed`，不改写工程状态。
+- 本地验证：446 tests 通过（2 个环境跳过）；10 项 Agent 单测；60 schemas / 77 schema-bound / 25 syntax-only examples；Ruff、mypy、compileall、pip check、diff check；源码与隔离 wheel 的 12 类 HTTP 场景及服务停止后验签均通过。wheel SHA-256 `a2d43ae44845511d1d784ec47bf29a643b2c73efbce10d1da736433b32cc7698`。
+- 真实 Ollama 0.31.1 / qwen3.5:2b 最终开发试验 trace `82aa1a83e319450df9d5ff8123cf9a154742d52e83667194f477ede7556e2da6`：2 次模型调用、1 次 `project_query_facts`、1417 input + 157 output = 1574 tokens、12.706 秒；选中的确定性事实包含 `diagnostic_backend_mismatch` 和 `blocked`，结束引用有效，离线验签通过。这是开发证据，不是独立质量样本。
+- 本轮仅 local-accepted；实现提交、push 和远端七 job 尚待执行。P30 保持 implementing。下一项是冻结独立只读 Agent cohort，测量工具选择、参数、引用、拒绝和 token 成本；通过后再做 checkpoint/幂等/暂停/审批。

@@ -50,6 +50,7 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     validator = Draft202012Validator(schemas[0], registry=registry)
     cases = []
     agent_retrieval = None
+    agent_trace = None
     with fixture_service() as (server, origin):
         for mode, status in CASES.items():
             server.mode, server.tags_count = mode, 0
@@ -83,13 +84,48 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             json.dumps(agent_retrieval, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+        server.mode, server.tags_count = "agent", 0
+        agent_trace = cli(
+            "readonly-agent",
+            ["run-readonly-agent", report, "--goal", "核对项目阻断状态及资料边界",
+             "--model", "fixture:1", "--output", output / "readonly-agent-trace.json",
+             "--ollama-url", origin, "--knowledge-url", origin,
+             "--knowledge-policy", ROOT / "examples/knowledge/agent-read-policy.json",
+             "--timeout", "5"],
+            0,
+        )
+        agent_schema = json.loads(
+            (ROOT / "schemas/readonly-agent-trace.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        Draft202012Validator(agent_schema).validate(agent_trace)
+        if (
+            agent_trace["status"] != "passed"
+            or agent_trace["semantic_status"] != "unassessed"
+            or agent_trace["usage"]["model_calls"] != 4
+            or agent_trace["usage"]["tool_calls"] != 3
+        ):
+            raise ValueError("Read-only Agent fixture did not complete its bounded loop")
     # Reverification works with services already stopped and without source checkout imports.
     cli("services-stopped", ["verify-model-explanation", report, output / "normal"], 0)
+    agent_verification = cli(
+        "readonly-agent-services-stopped",
+        ["verify-readonly-agent-trace", output / "readonly-agent-trace.json"],
+        0,
+    )
     summary = {"status": "passed", "evidence_kind": "synthetic-http-contract-fixture", "real_model_inference": False,
                "cases": cases, "model_semantic_quality": "unassessed",
                "agent_knowledge_policy": {
                    "status": "passed", "policy_id": agent_retrieval["policy_id"],
                    "sources": len(agent_retrieval["sources"]), "legacy_trusted_allowed": False,
+               },
+               "readonly_agent": {
+                   "status": agent_trace["status"],
+                   "semantic_status": agent_trace["semantic_status"],
+                   "model_calls": agent_trace["usage"]["model_calls"],
+                   "tool_calls": agent_trace["usage"]["tool_calls"],
+                   "offline_verification": agent_verification["status"],
                }}
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary

@@ -203,3 +203,13 @@ P30 保持 implementing。下一项以新提示版本让适配器严格拒绝超
 ## Agent 知识来源信任策略 0.1（2026-10-11）
 
 本轮 remote-accepted：新增 digest-bound `knowledge-source-policy-0.1` 和结构化 `agent-knowledge-retrieval-0.1`；Agent 资料必须出现在显式 allowlist，绑定文档 ID/SHA-256/authority 和带时区的人工审核记录，现场注册表与 evidence chunk 再做一致性复验。`legacy_trusted` 被 schema 和运行时拒绝，旧 `retrieve()` 仅为提示历史回放保留兼容。新增只读 CLI `retrieve-agent-knowledge`，没有策略时不存在默认信任回退。436 tests（434 passed、2 环境跳过），59 schemas / 77 bound / 25 syntax-only、9-source mypy、Ruff、CI topology、compileall、pip check 和 diff check 通过；源码与隔离 wheel 的 12 类模型协议、Agent 策略检索、两工程事实链及归档复验通过。wheel SHA-256 `09d6b51477edf104ea74c3bd49d84d6c77669995a62565ae47e273d547089e66`。实现 `268482a0c730b77c5b915c702b070cb071258136` / [run `38123214672`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38123214672) completed/success；七个实际 job 均 success：core-contracts Windows `114422065726`、Ubuntu `114422065880`；runtime-currency `114422065900`；runtime-evidence Windows `114423302217`、Ubuntu `114423302259`；controlled-rejections Ubuntu `114423302250`、Windows `114423302260`。本轮未运行真实模型，示例策略仅绑定合成 fixture，真实资料清单、内容适用性、策略签名和 AgentRunner 均未验收；随后纯文档状态提交不替代该实现 run。
+
+## 只读 AgentRunner 本地验收（2026-10-12）
+
+状态：**local-accepted，remote CI pending**。新增 typed `ToolRegistry`、原生 Ollama function calling 及结构化回退、步骤/模型/工具/token/输出/context/时间/观测预算、动态工具隐藏和 `readonly-agent-trace-0.1` 离线验签。项目报告、endpoint 和知识策略由运行时绑定；模型只能选择注册的 read 工具，无权改写项目判定。
+
+本地 446 tests 通过（2 环境跳过）；10 项 Agent 定向单测、Ruff、mypy、60 schemas / 77 schema-bound / 25 syntax-only、compileall、pip check 和 diff check 通过。源码与隔离 wheel 的 12 类 HTTP 场景、受策略资料检索、三工具循环及服务停止后验签通过；wheel SHA-256 `a2d43ae44845511d1d784ec47bf29a643b2c73efbce10d1da736433b32cc7698`。
+
+真实 Ollama 0.31.1 / qwen3.5:2b 最终开发试验用 2 次模型调用、1 次工具调用和 1574 tokens 在 12.706 秒完成；确定性工具返回 `diagnostic_backend_mismatch` / `blocked`，模型用有效 observation ID 结束，trace `82aa1a83e319450df9d5ff8123cf9a154742d52e83667194f477ede7556e2da6` 离线验签通过。该问题已用于开发，不是 held-out；摘要仍为 `semantic_status=unassessed`。远端验收必须引用后续实现提交的实际 run 和七个 job，未取得前不标记 remote-accepted。
+
+P30 保持 implementing。下一门为冻结独立只读 Agent cohort；它通过后才进入 checkpoint/幂等/暂停/审批。写配置、执行总线、操作物理 ECU、真实资料适用性和通用自然语言质量仍未验收。

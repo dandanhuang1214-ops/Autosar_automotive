@@ -88,3 +88,9 @@ v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料�
 ### P30：Agent 知识来源信任策略 0.1（2026-10-11）
 
 [知识来源信任策略](p30-knowledge-trust-policy.md)将未来 Agent 的资料准入与历史解释兼容路径分离。`knowledge-source-policy-0.1` 必须显式绑定文档 ID、SHA-256、`official` / `user_reviewed` authority 及人工审核记录，策略 ID 绑定全部正文；`legacy_trusted` 在 schema 和运行时均不能进入 `agent-read`。新增 `retrieve-agent-knowledge` CLI 和 `agent-knowledge-retrieval-0.1` 输出，每个 source 保存策略 ID 与审核记录；未知、漂移或未列入来源 fail closed。源码/隔离 wheel 的合成 HTTP 场景、436 tests（434 passed、2 环境跳过）、59 schemas / 77 bound / 25 syntax-only、9-source mypy、Ruff 和 CI topology 通过，wheel SHA-256 `09d6b51477edf104ea74c3bd49d84d6c77669995a62565ae47e273d547089e66`。实现 `268482a0c730b77c5b915c702b070cb071258136` / [run `38123214672`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38123214672) 七 job success，本轮 remote-accepted；示例清单仅绑定 fixture，不代表真实资料已完成人工适用性审核。下一项为最小只读 `ToolRegistry + AgentRunner`。
+
+### P30：只读 Agent 工具链（2026-10-12）
+
+[只读 Agent 指南](p30-readonly-agent-guide.md)已实现 provider-neutral 循环：Ollama 优先使用原生 function calling，其他客户端可走结构化动作回退；工具执行、参数校验、路径与策略绑定、预算、工程状态和 trace 仍由 Workbench 代码控制。完整工具输出留在 trace，模型只接收紧凑 projection；成功工具自动隐藏，以减少 schema token 和重复调用。Docker 仅承载旧 Ollama/API/Qdrant 服务，不是 Agent 编排器。
+
+本地实现门、源码/隔离 wheel 合成协议门和一条真实 qwen3.5:2b 开发试验已通过；最终试验为 2 模型调用、1 工具调用、1574 tokens、12.706 秒，选中确定性的阻断原因并引用有效 observation。这不是独立质量证据，模型摘要继续 unassessed。本轮尚待实现提交自身的远端七 job；随后冻结独立只读 Agent cohort，再进入 checkpoint/暂停/审批，不跳到写入或硬件。

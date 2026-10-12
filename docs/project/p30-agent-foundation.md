@@ -30,7 +30,7 @@ CLI / UI
 
 工作台不导入另一个仓库的 Python 包。当前路径通过受限 HTTP 直接调用本地 Ollama，并按需读取知识服务的原始检索接口；Docker 负责承载已有 Ollama、知识 API 和向量库等运行服务，不等于 Agent 本身。
 
-本轮增加 `ModelClient` 协议与 `OllamaModelClient`：模型版本、精确模型 digest、结构化生成和 usage 由统一边界提供。当前适配器只声明已经实现和测试的能力：结构化输出、身份固定和 usage；tool calling 与 streaming 明确为未实现，不能因 Ollama 服务本身支持就自动视为工作台能力。
+本轮增加 `ModelClient` 协议与 `OllamaModelClient`：模型版本、精确模型 digest、结构化生成、原生 tool calling 和 usage 由统一边界提供。当前适配器只声明已经实现和测试的能力：结构化输出、原生函数选择、身份固定和 usage；streaming 仍明确为未实现，不能因 Ollama 服务本身支持就自动视为工作台能力。详见[只读 Agent 指南](p30-readonly-agent-guide.md)。
 
 ## 上下文与 token 原则
 
@@ -62,7 +62,7 @@ CLI / UI
 
 验收：单元测试、历史版本 payload 回归、合成 HTTP 场景、schema、类型检查、全量测试和远端七 job。它只验收基础设施，不验收模型内容质量。
 
-### B. 只读 AgentRunner
+### B. 只读 AgentRunner（local-accepted，remote CI pending）
 
 - 增加 typed `ToolRegistry`、最多 N 步的显式循环、调用/时间/token 预算及完整 trace。
 - 首批仅开放项目事实查询、报告复验和已审核资料检索；未知工具、参数越界、重复调用和预算耗尽均拒绝。
@@ -81,4 +81,4 @@ CLI / UI
 
 ## 下一实现项
 
-0.1 知识来源策略先隔离 `legacy_trusted` 并提供 digest-bound `agent-read` allowlist。该门验收后，下一项是 B 的最小只读 `ToolRegistry + AgentRunner`，不是继续堆提示词；以项目事实查询、报告复验和受策略约束的资料检索验证完整循环、预算、trace 与 fail-closed。
+B 的最小只读 `ToolRegistry + AgentRunner` 已完成本地实现验收：包含原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace。实现提交的远端 CI 通过前不标记 remote-accepted。随后先冻结独立只读 Agent cohort，量化工具选择、参数、引用、拒绝和 token 成本；该门通过后再实现 C 的 checkpoint、幂等键、暂停/恢复和审批，仍不直接开放写入或硬件。

@@ -169,6 +169,31 @@ def build_parser() -> argparse.ArgumentParser:
     agent_knowledge.add_argument("--query", required=True)
     agent_knowledge.add_argument("--knowledge-url", required=True)
     agent_knowledge.add_argument("--timeout", type=float, default=30)
+    readonly_agent = commands.add_parser(
+        "run-readonly-agent",
+        help="Run a budgeted Agent over bound read-only project and knowledge tools",
+    )
+    readonly_agent.add_argument("report", type=Path)
+    readonly_agent.add_argument("--goal", required=True)
+    readonly_agent.add_argument("--model", required=True)
+    readonly_agent.add_argument("--output", type=Path, required=True)
+    readonly_agent.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    readonly_agent.add_argument("--knowledge-url")
+    readonly_agent.add_argument("--knowledge-policy", type=Path)
+    readonly_agent.add_argument("--timeout", type=float, default=30)
+    readonly_agent.add_argument("--max-steps", type=int, default=4)
+    readonly_agent.add_argument("--max-model-calls", type=int, default=4)
+    readonly_agent.add_argument("--max-tool-calls", type=int, default=3)
+    readonly_agent.add_argument("--max-total-tokens", type=int, default=4096)
+    readonly_agent.add_argument("--max-output-tokens-per-call", type=int, default=256)
+    readonly_agent.add_argument("--context-window", type=int, default=8192)
+    readonly_agent.add_argument("--max-seconds", type=float, default=120)
+    readonly_agent.add_argument("--max-observation-chars", type=int, default=20_000)
+    readonly_agent_verify = commands.add_parser(
+        "verify-readonly-agent-trace",
+        help="Verify a saved read-only Agent trace without model or knowledge services",
+    )
+    readonly_agent_verify.add_argument("trace", type=Path)
 
     explanation = commands.add_parser("prepare-project-explanation", help="Export replay-verified project facts without a model")
     explanation.add_argument("report", type=Path)
@@ -541,6 +566,59 @@ def main() -> int:
                 args.query,
                 load_agent_knowledge_policy(args.policy),
             )
+        elif args.command == "run-readonly-agent":
+            from automotive_workbench.agent_runtime import (
+                AgentBudget,
+                AgentRunner,
+                build_readonly_registry,
+                save_agent_trace,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.knowledge_policy import (
+                load_agent_knowledge_policy,
+            )
+            from automotive_workbench.model_client import OllamaModelClient
+
+            if (args.knowledge_url is None) != (args.knowledge_policy is None):
+                raise ValueError(
+                    "--knowledge-url and --knowledge-policy must be supplied together"
+                )
+            knowledge_endpoint = (
+                Endpoint(args.knowledge_url, args.timeout)
+                if args.knowledge_url is not None
+                else None
+            )
+            knowledge_policy = (
+                load_agent_knowledge_policy(args.knowledge_policy)
+                if args.knowledge_policy is not None
+                else None
+            )
+            registry = build_readonly_registry(
+                args.report,
+                knowledge_endpoint=knowledge_endpoint,
+                knowledge_policy=knowledge_policy,
+            )
+            budget = AgentBudget(
+                max_steps=args.max_steps,
+                max_model_calls=args.max_model_calls,
+                max_tool_calls=args.max_tool_calls,
+                max_total_tokens=args.max_total_tokens,
+                max_output_tokens_per_call=args.max_output_tokens_per_call,
+                context_window=args.context_window,
+                max_seconds=args.max_seconds,
+                max_observation_chars=args.max_observation_chars,
+            )
+            trace = AgentRunner(
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                registry,
+                budget,
+            ).run(args.goal, args.model)
+            result = save_agent_trace(trace, args.output)
+        elif args.command == "verify-readonly-agent-trace":
+            from automotive_workbench.agent_runtime import verify_agent_trace
+            from automotive_workbench.project_explanation import read
+
+            result = verify_agent_trace(read(args.trace))
         elif args.command == "prepare-project-explanation":
             from automotive_workbench.project_explanation import prepare
             result = prepare(args.report, args.question, args.output)
