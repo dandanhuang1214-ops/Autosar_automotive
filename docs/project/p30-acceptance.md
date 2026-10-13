@@ -234,10 +234,12 @@ v1 五题已在真实推理前冻结，manifest ID `49d621b65a4a0e78b1dc986c3b18
 
 首个远端 run `38390570775` 的 Ubuntu core 与 Python 3.14 runtime-currency 成功，Windows core 因测试 fixture 同一临时目录被长用户名和 8.3 `RUNNER~1` 两种路径表示而出现 4 个测试错误，下游跳过；这不是模型或运行实现失败。测试改为已知 POSIX 相对 fixture 路径，修复提交 `49a5b5231be7c531ef355b1e38948f56c90c95ef` 的 [run `38402213934`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38402213934) 已通过：runtime-currency `115312437795`、Ubuntu/Windows core `115312436947`/`115312437066`、Ubuntu/Windows runtime-evidence `115315880620`/`115315880394`、Ubuntu/Windows controlled-rejections `115315880362`/`115315880680` 全部 success。评测基础设施和跨平台修复已远端验收；P30 仍为 implementing，模型质量仍是 v1 3/5 failed。
 
-## 只读 Agent checkpoint / resume（本地，2026-10-13）
+## 只读 Agent checkpoint / resume（远端验收，2026-10-14）
 
 新增 `readonly-agent-checkpoint-0.1` 和 `readonly-agent-resume-0.1`：只在成功 read tool 后暂停，恢复继承原事件链与全部预算；报告摘要、知识 origin/策略、模型 identity、服务版本、工具 manifest 和预算任一漂移均拒绝。原 `readonly-agent-trace-0.1` 不变。
 
 同一 checkpoint + 同一 output 的已完成恢复可在服务不可用时直接复用已验签结果，不再次调用模型/工具。该结论不包含并发 exactly-once，也不适用于未来写入或硬件副作用；进程在落盘前崩溃仍可能重做只读调用。
 
-本地 457 tests（455 passed、2 环境跳过）；64 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、pip/diff check、源码合成场景及隔离 wheel 场景通过。wheel SHA-256 `4836288bd3d03447084c5dafc6b32a5413f02533f3922b814a5d86dd155d6d7c`。实现提交与远端七 job 尚待记录，当前仅 local-accepted；P30 保持 implementing。
+本地 457 tests（455 passed、2 环境跳过）；64 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、pip/diff check、源码合成场景及隔离 wheel 场景通过。wheel SHA-256 `4836288bd3d03447084c5dafc6b32a5413f02533f3922b814a5d86dd155d6d7c`。
+
+实现 `a96193087bb9a09b01e635c37e57e3556024a686` 的首轮 run `38416579539` 在 Windows core 暴露既有稳定报告哈希断言对低时间分辨率平台不成立；该 run 失败且下游跳过，不计验收。跨平台测试修复 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d` 的 [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) completed/success，七个实际 job 均 success：runtime-currency `115407126528`；core-contracts Windows `115407126843`、Ubuntu `115407127074`；runtime-evidence Ubuntu `115411137168`、Windows `115411137377`；controlled-rejections Windows `115411137213`、Ubuntu `115411137546`。本门 remote-accepted；P30 保持 implementing，下一门为 approval request/decision、拒绝与过期状态，不开放写入或硬件工具。

@@ -81,4 +81,4 @@ CLI / UI
 
 ## 下一实现项
 
-B 的最小只读 `ToolRegistry + AgentRunner` 已完成远端实现验收：原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace 由实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job 固定。下一门先冻结独立只读 Agent cohort，量化工具选择、参数、引用、拒绝和 token 成本；该门通过后再实现 C 的 checkpoint、幂等键、暂停/恢复和审批，仍不直接开放写入或硬件。
+B 的最小只读 `ToolRegistry + AgentRunner` 已完成远端实现验收：原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace 由实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job 固定。独立 v1 cohort 已得到真实 3/5 failed 基线；checkpoint、幂等键与暂停/恢复由 `a96193087bb9a09b01e635c37e57e3556024a686`、跨平台修复 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d` / [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 七 job 验收。下一门实现 approval request/decision、拒绝和过期状态，仍不直接开放写入或硬件。

@@ -1,6 +1,6 @@
 # P30 只读 Agent checkpoint、暂停与幂等恢复
 
-状态：**local-accepted / remote CI pending**。本门只增加只读 Agent 的持久状态与恢复协议，不注册写入、执行或硬件工具，也不改变 v1 模型质量 3/5 failed 结论。
+状态：**remote-accepted**。本门只增加只读 Agent 的持久状态与恢复协议，不注册写入、执行或硬件工具，也不改变 v1 模型质量 3/5 failed 结论。
 
 ## 已实现能力
 
@@ -79,4 +79,8 @@ python -m automotive_workbench.cli verify-readonly-agent-resume \
 - 源码合成 HTTP 场景完成 pause、离线 checkpoint 复验、resume、服务不可用下完成态重试及停服 resume 复验。
 - 隔离 wheel 环境重复通过同一场景；wheel SHA-256 `4836288bd3d03447084c5dafc6b32a5413f02533f3922b814a5d86dd155d6d7c`。
 
-远端 CI 尚未运行，因此本门当前不能写成 remote-accepted。下一门是在不开放写/硬件工具的前提下，定义可审计的 approval request/decision 状态、拒绝与过期语义；只有副作用工具具备独立授权、事务边界和幂等键后，才讨论执行型 Agent。
+实现提交 `a96193087bb9a09b01e635c37e57e3556024a686` 的首轮 [run `38416579539`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38416579539) 因既有跨运行测试错误要求两个稳定报告必须具有不同字节而在 Windows core 失败，下游跳过；Ubuntu core 和 runtime-currency 成功。测试改为核对两个独立路径及各自真实 SHA-256，只有声明语义 mutation 时才要求不同哈希；修复提交 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d`。
+
+最终 [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 对应 head `fdf5e217683b97454f1677b1a8bb7c72f18dad3d`，七个实际 job 全部 success：runtime-currency `115407126528`；core-contracts Windows `115407126843`、Ubuntu `115407127074`；runtime-evidence Ubuntu `115411137168`、Windows `115411137377`；controlled-rejections Windows `115411137213`、Ubuntu `115411137546`。本门 remote-accepted；随后纯文档状态提交不替代上述实现 run。
+
+下一门是在不开放写/硬件工具的前提下，定义可审计的 approval request/decision 状态、拒绝与过期语义；只有副作用工具具备独立授权、事务边界和幂等键后，才讨论执行型 Agent。
