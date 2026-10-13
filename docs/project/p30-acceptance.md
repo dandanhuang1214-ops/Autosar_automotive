@@ -224,4 +224,12 @@ P30 保持 implementing。下一门为冻结独立只读 Agent cohort；它通�
 
 v1 五题已在真实推理前冻结，manifest ID `49d621b65a4a0e78b1dc986c3b18ec63cf44a3539cc7e83f54e5d29f78a3672d`，绑定 implementation SHA `def142cff649ebc24b63fd7ccfc4729cd1d952b6c4f9b1df6812965c09dacf6d`、公开合成 communication-gap bundle、Agent 知识策略和 qwen3.5:2b digest。冻结集覆盖报告复验、项目事实、资料路由、混合路由和越权拒绝；尚未运行本组模型推理。
 
-冻结前本地 453 tests（451 passed、2 环境跳过）；62 schemas / 77 bound / 25 syntax-only，Ruff、mypy、topology、compileall、pip check、diff check、源码合成协议和隔离 wheel 场景通过。wheel SHA-256 `78f355bd47e8905713aeabbd019d2a3a3d1f9fa271c177675d18b13f6386fb0d`。实现提交和远端 CI 待回填；P30 保持 implementing，不能将评测器通过写成模型质量通过。
+冻结前本地 453 tests（451 passed、2 环境跳过）；62 schemas / 77 bound / 25 syntax-only，Ruff、mypy、topology、compileall、pip check、diff check、源码合成协议和隔离 wheel 场景通过。wheel SHA-256 `78f355bd47e8905713aeabbd019d2a3a3d1f9fa271c177675d18b13f6386fb0d`。该冻结时点尚未取得实现提交和远端 CI，现已由下节按实际结果回填；P30 保持 implementing，不能将评测器通过写成模型质量通过。
+
+## 只读 Agent v1 真实基线（2026-10-13）
+
+真实 Ollama 0.31.1 / qwen3.5:2b 在预推理提交 `2ebda9be20a709a2783ad164d5c721b5171256be` 推送后执行。结果 3/5：报告复验、纯资料路由、模型主动拒绝写入/硬件通过；项目明细和项目+资料混合题都误选 `project_verify_report` 后结束，gold recall 0/2。五题 status/cost 均满足，tool selection/parameters/citation 各 3/5；共 9 模型调用、4 read tool、9017 tokens。result ID `6a90e1c5dbd9d3423fc3b51851a82bf779b63ad4e8d48de45826dbcc4dbf6f6b`，停服式离线重评分通过。
+
+该结果是模型路由基线 failed，不是评测基础设施失败。自然语言、真实资料适用性仍 unassessed；不得在 v1 上调参后继续称其 held-out。下一阶段可实现只读 checkpoint/幂等/暂停基础，同时用新的开发题分析“概览工具过早结束”，最终须由新 v2 cohort 验收后才能提升 Agent 质量结论。
+
+首个远端 run `38390570775` 的 Ubuntu core 与 Python 3.14 runtime-currency 成功，Windows core 因测试 fixture 同一临时目录被长用户名和 8.3 `RUNNER~1` 两种路径表示而出现 4 个测试错误，下游跳过；这不是模型或运行实现失败。测试改为已知 POSIX 相对 fixture 路径，修复提交 `49a5b5231be7c531ef355b1e38948f56c90c95ef` 的 [run `38402213934`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38402213934) 已通过：runtime-currency `115312437795`、Ubuntu/Windows core `115312436947`/`115312437066`、Ubuntu/Windows runtime-evidence `115315880620`/`115315880394`、Ubuntu/Windows controlled-rejections `115315880362`/`115315880680` 全部 success。评测基础设施和跨平台修复已远端验收；P30 仍为 implementing，模型质量仍是 v1 3/5 failed。

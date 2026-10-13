@@ -1723,3 +1723,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - v1 五题在任何本组推理前冻结，manifest `49d621b65a4a0e78b1dc986c3b18ec63cf44a3539cc7e83f54e5d29f78a3672d`，implementation `def142cff649ebc24b63fd7ccfc4729cd1d952b6c4f9b1df6812965c09dacf6d`；绑定 public communication-gap bundle、示例 reviewed policy 和本机 qwen3.5:2b digest。
 - 冻结前本地 453 tests（451 passed、2 环境跳过）；62 schemas / 77 bound / 25 syntax-only，Ruff、scoped mypy、CI topology、compileall、pip check、diff check、源码合成场景和隔离 wheel 场景通过；wheel SHA-256 `78f355bd47e8905713aeabbd019d2a3a3d1f9fa271c177675d18b13f6386fb0d`。
 - 本条尚未包含真实 v1 推理，也未取得本轮实现提交或远端 CI。下一步先提交/推送这份预推理冻结状态，再在既有 Docker backend 内执行 qwen3.5:2b，原样保留通过和失败；不得用 v1 输出回调实现。P30 保持 implementing。
+
+### P30：只读 Agent v1 真实基线与评测基础设施远端验收（2026-10-13）
+
+- 预推理实现/冻结提交 `2ebda9be20a709a2783ad164d5c721b5171256be` 已先推送，随后才在既有 Docker backend 对 qwen3.5:2b 执行五题；没有下载模型、重建知识库或暴露 Ollama 端口。
+- v1 为 3/5：报告复验、纯资料路由和显式 `model_declined:requires_write` 通过；项目明细及混合路由均误选顶层复验并过早结束，gold recall 0/2。五题 cost 全通过；总计 9 模型调用、4 read tool、9017 tokens。result `6a90e1c5dbd9d3423fc3b51851a82bf779b63ad4e8d48de45826dbcc4dbf6f6b` 停服式离线重评分通过。
+- v1 已见且整体 failed，不用于回调当前实现。它证明合法模型拒绝可测，也暴露 qwen3.5:2b 的工具粒度路由不足；模型摘要、真实资料适用性和人工可用性仍 unassessed。
+- 首轮 run `38390570775` 失败：Ubuntu core 与 runtime-currency success；Windows core 因测试临时目录长路径/8.3 短路径别名导致 4 项 fixture `relative_to` 错误，下游跳过。运行实现未失败。测试改用稳定的已知相对路径，6 项定向和 v1 离线复验通过；修复提交 `49a5b5231be7c531ef355b1e38948f56c90c95ef`。
+- 修复 [run `38402213934`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38402213934) 对应 head `49a5b5231be7c531ef355b1e38948f56c90c95ef`，七 job 全部 success：runtime-currency `115312437795`；Ubuntu/Windows core-contracts `115312436947`/`115312437066`；Ubuntu/Windows runtime-evidence `115315880620`/`115315880394`；Ubuntu/Windows controlled-rejections `115315880362`/`115315880680`。评测基础设施及跨平台修复已 remote-accepted；实现提交与本条后续文档状态提交保持分离。
+- P30 保持 implementing。下一实现门为只读 checkpoint、幂等 resume 与暂停状态；对 v1 路由缺口只在独立开发题上研究，需新的 v2 held-out cohort 才能改变质量结论。
