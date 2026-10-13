@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-checkpoint.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "checkpoint_id", "schema_version", "status", "reason", "semantic_status",
+    "goal", "model", "service_version", "tool_manifest", "budget", "usage",
+    "events", "boundary", "resume_count", "parent_checkpoint_id",
+    "registry_binding_sha256"
+  ],
+  "properties": {
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "readonly-agent-checkpoint-0.1"},
+    "status": {"const": "paused"},
+    "reason": {"const": "operator_pause_after_tool"},
+    "semantic_status": {"const": "unassessed"},
+    "goal": {"$ref": "readonly-agent-trace.schema.json#/properties/goal"},
+    "model": {
+      "type": "object",
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "service_version": {"type": "string", "minLength": 1},
+    "tool_manifest": {"$ref": "readonly-agent-trace.schema.json#/properties/tool_manifest"},
+    "budget": {"$ref": "readonly-agent-trace.schema.json#/properties/budget"},
+    "usage": {"$ref": "readonly-agent-trace.schema.json#/properties/usage"},
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "oneOf": [
+          {"$ref": "readonly-agent-trace.schema.json#/$defs/model_event"},
+          {"$ref": "readonly-agent-trace.schema.json#/$defs/tool_event"}
+        ]
+      }
+    },
+    "boundary": {"type": "string", "minLength": 1},
+    "resume_count": {"type": "integer", "minimum": 0},
+    "parent_checkpoint_id": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "registry_binding_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

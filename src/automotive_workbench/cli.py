@@ -189,11 +189,39 @@ def build_parser() -> argparse.ArgumentParser:
     readonly_agent.add_argument("--context-window", type=int, default=8192)
     readonly_agent.add_argument("--max-seconds", type=float, default=120)
     readonly_agent.add_argument("--max-observation-chars", type=int, default=20_000)
+    readonly_agent.add_argument(
+        "--pause-after-tool-calls",
+        type=int,
+        help="Pause at a safe boundary after this many successful read tools",
+    )
     readonly_agent_verify = commands.add_parser(
         "verify-readonly-agent-trace",
         help="Verify a saved read-only Agent trace without model or knowledge services",
     )
     readonly_agent_verify.add_argument("trace", type=Path)
+    agent_checkpoint_verify = commands.add_parser(
+        "verify-readonly-agent-checkpoint",
+        help="Verify a paused read-only Agent checkpoint without services",
+    )
+    agent_checkpoint_verify.add_argument("checkpoint", type=Path)
+    agent_resume = commands.add_parser(
+        "resume-readonly-agent",
+        help="Idempotently resume a verified read-only Agent checkpoint",
+    )
+    agent_resume.add_argument("report", type=Path)
+    agent_resume.add_argument("checkpoint", type=Path)
+    agent_resume.add_argument("--output", type=Path, required=True)
+    agent_resume.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    agent_resume.add_argument("--knowledge-url")
+    agent_resume.add_argument("--knowledge-policy", type=Path)
+    agent_resume.add_argument("--timeout", type=float, default=30)
+    agent_resume.add_argument("--pause-after-tool-calls", type=int)
+    agent_resume_verify = commands.add_parser(
+        "verify-readonly-agent-resume",
+        help="Verify a checkpoint-bound resume result without services",
+    )
+    agent_resume_verify.add_argument("checkpoint", type=Path)
+    agent_resume_verify.add_argument("result", type=Path)
     agent_eval_freeze = commands.add_parser(
         "freeze-readonly-agent-eval",
         help="Freeze held-out Agent questions and structural gold before inference",
@@ -614,7 +642,7 @@ def main() -> int:
                 AgentBudget,
                 AgentRunner,
                 build_readonly_registry,
-                save_agent_trace,
+                save_agent_artifact,
             )
             from automotive_workbench.explanation_services import Endpoint
             from automotive_workbench.knowledge_policy import (
@@ -655,13 +683,75 @@ def main() -> int:
                 OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
                 registry,
                 budget,
-            ).run(args.goal, args.model)
-            result = save_agent_trace(trace, args.output)
+            ).run(
+                args.goal,
+                args.model,
+                pause_after_tool_calls=args.pause_after_tool_calls,
+            )
+            result = save_agent_artifact(trace, args.output)
         elif args.command == "verify-readonly-agent-trace":
             from automotive_workbench.agent_runtime import verify_agent_trace
             from automotive_workbench.project_explanation import read
 
             result = verify_agent_trace(read(args.trace))
+        elif args.command == "verify-readonly-agent-checkpoint":
+            from automotive_workbench.agent_runtime import verify_agent_checkpoint
+            from automotive_workbench.project_explanation import read
+
+            result = verify_agent_checkpoint(read(args.checkpoint))
+        elif args.command == "resume-readonly-agent":
+            from automotive_workbench.agent_runtime import (
+                AgentBudget,
+                AgentRunner,
+                build_readonly_registry,
+                resume_agent_idempotent,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.knowledge_policy import (
+                load_agent_knowledge_policy,
+            )
+            from automotive_workbench.model_client import OllamaModelClient
+            from automotive_workbench.project_explanation import read
+
+            if (args.knowledge_url is None) != (args.knowledge_policy is None):
+                raise ValueError(
+                    "--knowledge-url and --knowledge-policy must be supplied together"
+                )
+            checkpoint = read(args.checkpoint)
+            knowledge_endpoint = (
+                Endpoint(args.knowledge_url, args.timeout)
+                if args.knowledge_url is not None
+                else None
+            )
+            knowledge_policy = (
+                load_agent_knowledge_policy(args.knowledge_policy)
+                if args.knowledge_policy is not None
+                else None
+            )
+            registry = build_readonly_registry(
+                args.report,
+                knowledge_endpoint=knowledge_endpoint,
+                knowledge_policy=knowledge_policy,
+            )
+            result = resume_agent_idempotent(
+                AgentRunner(
+                    OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                    registry,
+                    AgentBudget(**checkpoint["budget"]),
+                ),
+                checkpoint,
+                args.output,
+                pause_after_tool_calls=args.pause_after_tool_calls,
+            )
+        elif args.command == "verify-readonly-agent-resume":
+            from automotive_workbench.agent_runtime import (
+                verify_agent_resume_result,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = verify_agent_resume_result(
+                read(args.checkpoint), read(args.result)
+            )
         elif args.command == "freeze-readonly-agent-eval":
             from automotive_workbench.agent_evaluation import (
                 freeze_agent_evaluation,

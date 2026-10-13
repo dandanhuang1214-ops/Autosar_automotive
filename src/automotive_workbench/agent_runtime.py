@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+import hashlib
 import math
 from pathlib import Path
 import time
@@ -18,6 +19,8 @@ from automotive_workbench.model_client import (
 from automotive_workbench.project_explanation import build_request, canonical, digest
 
 TRACE_VERSION = "readonly-agent-trace-0.1"
+CHECKPOINT_VERSION = "readonly-agent-checkpoint-0.1"
+RESUME_VERSION = "readonly-agent-resume-0.1"
 BOUNDARY = (
     "The Agent may choose only registered read tools. Tool results remain the evidence; "
     "the model summary is unassessed and cannot change engineering status, approve a "
@@ -120,8 +123,10 @@ class ToolSpec:
 class ToolRegistry:
     """Closed registry: this milestone accepts read-only tools only."""
 
-    def __init__(self) -> None:
+    def __init__(self, binding_context: dict[str, Any] | None = None) -> None:
         self._tools: dict[str, ToolSpec] = {}
+        self._binding_context = copy.deepcopy(binding_context or {})
+        canonical(self._binding_context)
 
     def register(self, tool: ToolSpec) -> None:
         if (
@@ -151,6 +156,14 @@ class ToolRegistry:
             for name in sorted(self._tools)
             if name not in hidden
         ]
+
+    def binding_sha256(self) -> str:
+        return digest(
+            {
+                "tool_manifest": self.manifest(),
+                "binding_context": self._binding_context,
+            }
+        )
 
     def invoke(self, name: str, arguments: Any) -> dict[str, Any]:
         tool = self._tools.get(name)
@@ -321,11 +334,36 @@ def build_readonly_registry(
     """Bind model-visible arguments to one operator-selected project and policy."""
     if (knowledge_endpoint is None) != (knowledge_policy is None):
         raise ValueError("Knowledge endpoint and policy must be configured together")
-    registry = ToolRegistry()
+    if report.is_symlink() or not report.is_file():
+        raise ValueError("Agent report must be a regular non-symlink file")
+    report_sha256 = hashlib.sha256(report.read_bytes()).hexdigest()
+    checked_policy = (
+        validate_agent_knowledge_policy(knowledge_policy)
+        if knowledge_policy is not None
+        else None
+    )
+    registry = ToolRegistry(
+        {
+            "report_sha256": report_sha256,
+            "knowledge": (
+                {
+                    "origin": knowledge_endpoint.url,
+                    "policy_id": checked_policy["policy_id"],
+                }
+                if knowledge_endpoint is not None and checked_policy is not None
+                else None
+            ),
+        }
+    )
+
+    def require_bound_report() -> None:
+        if hashlib.sha256(report.read_bytes()).hexdigest() != report_sha256:
+            raise ValueError("Agent bound report changed after registry creation")
 
     def verify_report(_: dict[str, Any]) -> dict[str, Any]:
         from automotive_workbench.project_ecuc import verify
 
+        require_bound_report()
         return {
             "schema_version": "agent-tool-project-verification-0.1",
             "verification": verify(report),
@@ -355,6 +393,7 @@ def build_readonly_registry(
     def query_facts(arguments: dict[str, Any]) -> dict[str, Any]:
         from automotive_workbench.model_explanation import PROMPT_VERSION, select_facts
 
+        require_bound_report()
         request = build_request(report, arguments["question"])
         facts = select_facts(request, limit=6, prompt_version=PROMPT_VERSION)
         return {
@@ -405,7 +444,8 @@ def build_readonly_registry(
     if knowledge_endpoint is not None and knowledge_policy is not None:
         from automotive_workbench.explanation_services import retrieve_for_agent
 
-        checked_policy = validate_agent_knowledge_policy(knowledge_policy)
+        if checked_policy is None:
+            raise ValueError("Agent knowledge policy was not validated")
 
         def retrieve_knowledge(arguments: dict[str, Any]) -> dict[str, Any]:
             return retrieve_for_agent(
@@ -518,11 +558,63 @@ class AgentRunner:
         self.budget = budget or AgentBudget()
         self.clock = clock
 
-    def run(self, goal: str, model: str) -> dict[str, Any]:
+    def run(
+        self,
+        goal: str,
+        model: str,
+        *,
+        pause_after_tool_calls: int | None = None,
+    ) -> dict[str, Any]:
+        return self._execute(
+            goal,
+            model,
+            pause_after_tool_calls=pause_after_tool_calls,
+            checkpoint=None,
+        )
+
+    def resume(
+        self,
+        checkpoint: dict[str, Any],
+        *,
+        pause_after_tool_calls: int | None = None,
+    ) -> dict[str, Any]:
+        self.validate_checkpoint(checkpoint)
+        model = checkpoint["model"]["name"]
+        return self._execute(
+            checkpoint["goal"],
+            model,
+            pause_after_tool_calls=pause_after_tool_calls,
+            checkpoint=checkpoint,
+        )
+
+    def validate_checkpoint(self, checkpoint: dict[str, Any]) -> None:
+        verify_agent_checkpoint(checkpoint)
+        if canonical(self.registry.manifest()) != canonical(
+            checkpoint["tool_manifest"]
+        ):
+            raise ValueError("Agent checkpoint tool manifest differs from registry")
+        if self.registry.binding_sha256() != checkpoint["registry_binding_sha256"]:
+            raise ValueError("Agent checkpoint binding differs from registry")
+        if self.budget.as_dict() != checkpoint["budget"]:
+            raise ValueError("Agent checkpoint budget differs from runner")
+
+    def _execute(
+        self,
+        goal: str,
+        model: str,
+        *,
+        pause_after_tool_calls: int | None,
+        checkpoint: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         if not isinstance(goal, str) or not 0 < len(goal.strip()) <= 2000:
             raise ValueError("Agent goal must contain 1..2000 characters")
         if not isinstance(model, str) or not model:
             raise ValueError("Agent model must be nonempty")
+        if pause_after_tool_calls is not None and (
+            type(pause_after_tool_calls) is not int
+            or not 1 <= pause_after_tool_calls <= self.budget.max_tool_calls
+        ):
+            raise ValueError("Pause threshold must fit the Agent tool-call budget")
         if not self.registry.manifest():
             raise ValueError("Agent requires at least one registered tool")
         capabilities = self.client.capabilities
@@ -534,29 +626,64 @@ class AgentRunner:
             raise ValueError("Model client lacks required Agent capabilities")
 
         started = self.clock()
-        events: list[dict[str, Any]] = []
+        events: list[dict[str, Any]] = (
+            copy.deepcopy(checkpoint["events"]) if checkpoint else []
+        )
         observations: list[dict[str, Any]] = []
         called: set[str] = set()
         unavailable_tools: set[str] = set()
-        identity: dict[str, Any] | None = None
-        service_version: str | None = None
+        if checkpoint:
+            for event in events:
+                if event["kind"] != "tool" or event["status"] != "passed":
+                    continue
+                observations.append(
+                    {
+                        "observation_id": event["observation_id"],
+                        "tool_name": event["tool_name"],
+                        "result": copy.deepcopy(event["model_projection"]),
+                    }
+                )
+                called.add(event["call_id"])
+                unavailable_tools.add(event["tool_name"])
+                unavailable_tools.update(
+                    self.registry.superseded_by(event["tool_name"])
+                )
+        identity: dict[str, Any] | None = (
+            copy.deepcopy(checkpoint["model"]) if checkpoint else None
+        )
+        service_version: str | None = (
+            checkpoint["service_version"] if checkpoint else None
+        )
         status = "blocked"
         reason = "model_unavailable"
         final: dict[str, Any] | None = None
-        prompt_tokens = 0
-        output_tokens = 0
-        model_calls = 0
-        tool_calls = 0
+        prior_usage = checkpoint["usage"] if checkpoint else {}
+        prompt_tokens = prior_usage.get("prompt_tokens", 0)
+        output_tokens = prior_usage.get("output_tokens", 0)
+        model_calls = prior_usage.get("model_calls", 0)
+        tool_calls = prior_usage.get("tool_calls", 0)
+        prior_elapsed = prior_usage.get("elapsed_ms", 0) / 1000
+        invocation_tool_calls = 0
 
         def elapsed() -> float:
-            return max(0.0, self.clock() - started)
+            return prior_elapsed + max(0.0, self.clock() - started)
 
         try:
-            service_version = self.client.service_version()
-            identity = self.client.identity(model)
-            if not isinstance(identity, dict):
+            current_service_version = self.client.service_version()
+            current_identity = self.client.identity(model)
+            if not isinstance(current_identity, dict):
                 raise ServiceError("invalid_model_identity")
-            for _ in range(self.budget.max_steps):
+            if checkpoint:
+                if current_service_version != service_version:
+                    status, reason = "refused", "service_version_changed"
+                elif current_identity != identity:
+                    status, reason = "refused", "model_identity_changed"
+            else:
+                service_version = current_service_version
+                identity = current_identity
+            for _ in range(max(0, self.budget.max_steps - model_calls)):
+                if status == "refused":
+                    break
                 if elapsed() > self.budget.max_seconds:
                     status, reason = "refused", "wall_clock_budget_exhausted"
                     break
@@ -845,16 +972,23 @@ class AgentRunner:
                 unavailable_tools.update(
                     self.registry.superseded_by(action["tool_name"])
                 )
+                invocation_tool_calls += 1
+                if (
+                    pause_after_tool_calls is not None
+                    and invocation_tool_calls >= pause_after_tool_calls
+                    and model_calls < self.budget.max_model_calls
+                    and model_calls < self.budget.max_steps
+                    and prompt_tokens + output_tokens < self.budget.max_total_tokens
+                    and elapsed() <= self.budget.max_seconds
+                ):
+                    status, reason = "paused", "operator_pause_after_tool"
+                    break
             else:
                 status, reason = "refused", "step_budget_exhausted"
         except (OSError, ValueError, TypeError, KeyError, ServiceError) as exc:
             status, reason = "blocked", str(exc)
 
-        body = {
-            "schema_version": TRACE_VERSION,
-            "status": status,
-            "reason": reason,
-            "semantic_status": "unassessed",
+        common = {
             "goal": goal.strip(),
             "model": identity,
             "service_version": service_version,
@@ -869,8 +1003,31 @@ class AgentRunner:
                 "elapsed_ms": round(elapsed() * 1000, 3),
             },
             "events": events,
-            "final": final,
             "boundary": BOUNDARY,
+        }
+        if status == "paused":
+            body = {
+                "schema_version": CHECKPOINT_VERSION,
+                "status": status,
+                "reason": reason,
+                "semantic_status": "unassessed",
+                **common,
+                "resume_count": (
+                    checkpoint["resume_count"] + 1 if checkpoint else 0
+                ),
+                "parent_checkpoint_id": (
+                    checkpoint["checkpoint_id"] if checkpoint else None
+                ),
+                "registry_binding_sha256": self.registry.binding_sha256(),
+            }
+            return {"checkpoint_id": digest(body), **body}
+        body = {
+            "schema_version": TRACE_VERSION,
+            "status": status,
+            "reason": reason,
+            "semantic_status": "unassessed",
+            **common,
+            "final": final,
         }
         return {"trace_id": digest(body), **body}
 
@@ -1132,6 +1289,211 @@ def verify_agent_trace(trace: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def verify_agent_checkpoint(checkpoint: dict[str, Any]) -> dict[str, Any]:
+    """Verify a safe-boundary checkpoint without contacting model/tool services."""
+    fields = {
+        "checkpoint_id",
+        "schema_version",
+        "status",
+        "reason",
+        "semantic_status",
+        "goal",
+        "model",
+        "service_version",
+        "tool_manifest",
+        "budget",
+        "usage",
+        "events",
+        "boundary",
+        "resume_count",
+        "parent_checkpoint_id",
+        "registry_binding_sha256",
+    }
+    if not isinstance(checkpoint, dict) or set(checkpoint) != fields:
+        raise ValueError("Invalid Agent checkpoint fields")
+    if (
+        checkpoint["schema_version"] != CHECKPOINT_VERSION
+        or checkpoint["status"] != "paused"
+        or checkpoint["reason"] != "operator_pause_after_tool"
+        or checkpoint["semantic_status"] != "unassessed"
+        or checkpoint["boundary"] != BOUNDARY
+        or not isinstance(checkpoint["registry_binding_sha256"], str)
+        or len(checkpoint["registry_binding_sha256"]) != 64
+        or any(
+            char not in "0123456789abcdef"
+            for char in checkpoint["registry_binding_sha256"]
+        )
+        or not isinstance(checkpoint["model"], dict)
+        or not isinstance(checkpoint["model"].get("name"), str)
+        or not checkpoint["model"]["name"]
+        or not isinstance(checkpoint["model"].get("digest"), str)
+        or len(checkpoint["model"]["digest"]) != 64
+        or any(
+            char not in "0123456789abcdef"
+            for char in checkpoint["model"]["digest"]
+        )
+        or not isinstance(checkpoint["service_version"], str)
+        or not checkpoint["service_version"]
+        or type(checkpoint["resume_count"]) is not int
+        or checkpoint["resume_count"] < 0
+        or (
+            checkpoint["resume_count"] == 0
+            and checkpoint["parent_checkpoint_id"] is not None
+        )
+        or (
+            checkpoint["resume_count"] > 0
+            and (
+                not isinstance(checkpoint["parent_checkpoint_id"], str)
+                or len(checkpoint["parent_checkpoint_id"]) != 64
+                or any(
+                    char not in "0123456789abcdef"
+                    for char in checkpoint["parent_checkpoint_id"]
+                )
+            )
+        )
+    ):
+        raise ValueError("Invalid Agent checkpoint metadata")
+    if checkpoint["checkpoint_id"] != digest(
+        {key: checkpoint[key] for key in checkpoint if key != "checkpoint_id"}
+    ):
+        raise ValueError("Agent checkpoint ID does not bind checkpoint content")
+    validation_body = {
+        "schema_version": TRACE_VERSION,
+        "status": "refused",
+        "reason": "checkpoint_validation",
+        "semantic_status": checkpoint["semantic_status"],
+        "goal": checkpoint["goal"],
+        "model": checkpoint["model"],
+        "service_version": checkpoint["service_version"],
+        "tool_manifest": checkpoint["tool_manifest"],
+        "budget": checkpoint["budget"],
+        "usage": checkpoint["usage"],
+        "events": checkpoint["events"],
+        "final": None,
+        "boundary": checkpoint["boundary"],
+    }
+    verification = verify_agent_trace(
+        {"trace_id": digest(validation_body), **validation_body}
+    )
+    if (
+        not checkpoint["events"]
+        or checkpoint["events"][-1].get("kind") != "tool"
+        or checkpoint["events"][-1].get("status") != "passed"
+    ):
+        raise ValueError("Agent checkpoint is not at a successful tool boundary")
+    budget = AgentBudget(**checkpoint["budget"])
+    usage = checkpoint["usage"]
+    if (
+        usage["model_calls"] >= budget.max_model_calls
+        or usage["model_calls"] >= budget.max_steps
+        or usage["total_tokens"] >= budget.max_total_tokens
+        or usage["elapsed_ms"] > budget.max_seconds * 1000
+    ):
+        raise ValueError("Agent checkpoint has no resumable budget")
+    return {
+        "status": "passed",
+        "checkpoint_id": checkpoint["checkpoint_id"],
+        "model_calls": verification["model_calls"],
+        "tool_calls": verification["tool_calls"],
+        "observation_count": verification["observation_count"],
+        "resume_count": checkpoint["resume_count"],
+    }
+
+
+def _outcome_identity(outcome: dict[str, Any]) -> tuple[str, str]:
+    version = outcome.get("schema_version") if isinstance(outcome, dict) else None
+    if version == TRACE_VERSION:
+        verify_agent_trace(outcome)
+        return "trace", outcome["trace_id"]
+    if version == CHECKPOINT_VERSION:
+        verify_agent_checkpoint(outcome)
+        return "checkpoint", outcome["checkpoint_id"]
+    raise ValueError("Unsupported Agent resume outcome")
+
+
+def build_agent_resume_result(
+    checkpoint: dict[str, Any],
+    outcome: dict[str, Any],
+    *,
+    pause_after_tool_calls: int | None = None,
+) -> dict[str, Any]:
+    verify_agent_checkpoint(checkpoint)
+    if pause_after_tool_calls is not None and (
+        type(pause_after_tool_calls) is not int
+        or not 1 <= pause_after_tool_calls <= checkpoint["budget"]["max_tool_calls"]
+    ):
+        raise ValueError("Invalid Agent resume pause threshold")
+    outcome_kind, outcome_id = _outcome_identity(outcome)
+    for field in (
+        "goal",
+        "model",
+        "service_version",
+        "tool_manifest",
+        "budget",
+        "boundary",
+    ):
+        if outcome[field] != checkpoint[field]:
+            raise ValueError("Agent resume outcome changed pinned checkpoint state")
+    checkpoint_events = checkpoint["events"]
+    if outcome["events"][: len(checkpoint_events)] != checkpoint_events:
+        raise ValueError("Agent resume outcome does not extend checkpoint events")
+    if outcome["usage"]["elapsed_ms"] < checkpoint["usage"]["elapsed_ms"]:
+        raise ValueError("Agent resume outcome reduced elapsed usage")
+    if outcome_kind == "checkpoint" and (
+        outcome["parent_checkpoint_id"] != checkpoint["checkpoint_id"]
+        or outcome["resume_count"] != checkpoint["resume_count"] + 1
+    ):
+        raise ValueError("Agent checkpoint lineage differs from resumed checkpoint")
+    body = {
+        "schema_version": RESUME_VERSION,
+        "status": outcome["status"],
+        "checkpoint_id": checkpoint["checkpoint_id"],
+        "outcome_kind": outcome_kind,
+        "outcome_id": outcome_id,
+        "request": {"pause_after_tool_calls": pause_after_tool_calls},
+        "outcome": copy.deepcopy(outcome),
+    }
+    return {"resume_id": digest(body), **body}
+
+
+def verify_agent_resume_result(
+    checkpoint: dict[str, Any], result: dict[str, Any]
+) -> dict[str, Any]:
+    fields = {
+        "resume_id",
+        "schema_version",
+        "status",
+        "checkpoint_id",
+        "outcome_kind",
+        "outcome_id",
+        "request",
+        "outcome",
+    }
+    if (
+        not isinstance(result, dict)
+        or set(result) != fields
+        or result["schema_version"] != RESUME_VERSION
+        or not isinstance(result["request"], dict)
+        or set(result["request"]) != {"pause_after_tool_calls"}
+    ):
+        raise ValueError("Invalid Agent resume result fields")
+    expected = build_agent_resume_result(
+        checkpoint,
+        result["outcome"],
+        pause_after_tool_calls=result["request"]["pause_after_tool_calls"],
+    )
+    if result != expected:
+        raise ValueError("Agent resume result differs from checkpoint-bound outcome")
+    return {
+        "status": "passed",
+        "resume_id": result["resume_id"],
+        "checkpoint_id": result["checkpoint_id"],
+        "outcome_kind": result["outcome_kind"],
+        "outcome_id": result["outcome_id"],
+        "outcome_status": result["status"],
+    }
+
+
 def save_agent_trace(trace: dict[str, Any], output: Path) -> dict[str, Any]:
     if output.is_symlink() or output.exists():
         raise ValueError("Agent trace output must be absent")
@@ -1139,3 +1501,56 @@ def save_agent_trace(trace: dict[str, Any], output: Path) -> dict[str, Any]:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(canonical(trace) + "\n", encoding="utf-8", newline="\n")
     return trace
+
+
+def save_agent_checkpoint(
+    checkpoint: dict[str, Any], output: Path
+) -> dict[str, Any]:
+    if output.is_symlink() or output.exists():
+        raise ValueError("Agent checkpoint output must be absent")
+    verify_agent_checkpoint(checkpoint)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        canonical(checkpoint) + "\n", encoding="utf-8", newline="\n"
+    )
+    return checkpoint
+
+
+def save_agent_artifact(artifact: dict[str, Any], output: Path) -> dict[str, Any]:
+    if artifact.get("schema_version") == TRACE_VERSION:
+        return save_agent_trace(artifact, output)
+    if artifact.get("schema_version") == CHECKPOINT_VERSION:
+        return save_agent_checkpoint(artifact, output)
+    raise ValueError("Unsupported Agent artifact")
+
+
+def resume_agent_idempotent(
+    runner: AgentRunner,
+    checkpoint: dict[str, Any],
+    output: Path,
+    *,
+    pause_after_tool_calls: int | None = None,
+) -> dict[str, Any]:
+    """Resume once per immutable output path; completed retries use saved output."""
+    from automotive_workbench.project_explanation import read
+
+    runner.validate_checkpoint(checkpoint)
+    if output.is_symlink():
+        raise ValueError("Agent resume output must not be a symlink")
+    if output.exists():
+        saved = read(output)
+        verify_agent_resume_result(checkpoint, saved)
+        if saved["request"]["pause_after_tool_calls"] != pause_after_tool_calls:
+            raise ValueError("Agent resume idempotency key reused with new parameters")
+        return saved
+    outcome = runner.resume(
+        checkpoint, pause_after_tool_calls=pause_after_tool_calls
+    )
+    result = build_agent_resume_result(
+        checkpoint,
+        outcome,
+        pause_after_tool_calls=pause_after_tool_calls,
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(canonical(result) + "\n", encoding="utf-8", newline="\n")
+    return result

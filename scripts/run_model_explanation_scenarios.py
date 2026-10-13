@@ -52,6 +52,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     cases = []
     agent_retrieval = None
     agent_trace = None
+    agent_checkpoint = None
+    agent_resume = None
     agent_evaluation = None
     agent_evaluation_manifest = None
     with fixture_service() as (server, origin):
@@ -110,6 +112,46 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_trace["usage"]["tool_calls"] != 3
         ):
             raise ValueError("Read-only Agent fixture did not complete its bounded loop")
+        server.mode, server.tags_count = "agent", 0
+        checkpoint_path = output / "readonly-agent-checkpoint.json"
+        agent_checkpoint = cli(
+            "readonly-agent-pause",
+            ["run-readonly-agent", report, "--goal", "核对项目阻断状态及资料边界",
+             "--model", "fixture:1", "--output", checkpoint_path,
+             "--ollama-url", origin, "--knowledge-url", origin,
+             "--knowledge-policy", ROOT / "examples/knowledge/agent-read-policy.json",
+             "--pause-after-tool-calls", "1", "--timeout", "5"],
+            0,
+        )
+        if agent_checkpoint["status"] != "paused":
+            raise ValueError("Read-only Agent did not pause at the requested boundary")
+        cli("readonly-agent-checkpoint-offline", [
+            "verify-readonly-agent-checkpoint", checkpoint_path], 0)
+        resume_path = output / "readonly-agent-resume.json"
+        agent_resume = cli(
+            "readonly-agent-resume",
+            ["resume-readonly-agent", report, checkpoint_path, "--output", resume_path,
+             "--ollama-url", origin, "--knowledge-url", origin,
+             "--knowledge-policy", ROOT / "examples/knowledge/agent-read-policy.json",
+             "--timeout", "5"],
+            0,
+        )
+        if (
+            agent_resume["status"] != "passed"
+            or agent_resume["outcome_kind"] != "trace"
+        ):
+            raise ValueError("Read-only Agent checkpoint did not resume to completion")
+        server.mode = "unavailable"
+        retried = cli(
+            "readonly-agent-resume-idempotent-retry",
+            ["resume-readonly-agent", report, checkpoint_path, "--output", resume_path,
+             "--ollama-url", origin, "--knowledge-url", origin,
+             "--knowledge-policy", ROOT / "examples/knowledge/agent-read-policy.json",
+             "--timeout", "5"],
+            0,
+        )
+        if retried != agent_resume:
+            raise ValueError("Completed Agent resume retry changed its saved result")
         policy_name = "agent-read-policy.json"
         shutil.copy2(ROOT / "examples/knowledge/agent-read-policy.json", output / policy_name)
         evaluation_spec = {
@@ -215,6 +257,17 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ["verify-readonly-agent-trace", output / "readonly-agent-trace.json"],
         0,
     )
+    checkpoint_verification = cli(
+        "readonly-agent-checkpoint-services-stopped",
+        ["verify-readonly-agent-checkpoint", output / "readonly-agent-checkpoint.json"],
+        0,
+    )
+    resume_verification = cli(
+        "readonly-agent-resume-services-stopped",
+        ["verify-readonly-agent-resume", output / "readonly-agent-checkpoint.json",
+         output / "readonly-agent-resume.json"],
+        0,
+    )
     evaluation_verification = cli(
         "readonly-agent-evaluation-services-stopped",
         [
@@ -236,6 +289,14 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "model_calls": agent_trace["usage"]["model_calls"],
                    "tool_calls": agent_trace["usage"]["tool_calls"],
                    "offline_verification": agent_verification["status"],
+               },
+               "readonly_agent_resume": {
+                   "checkpoint_status": agent_checkpoint["status"],
+                   "outcome_status": agent_resume["status"],
+                   "outcome_kind": agent_resume["outcome_kind"],
+                   "checkpoint_offline_verification": checkpoint_verification["status"],
+                   "resume_offline_verification": resume_verification["status"],
+                   "completed_retry_reused_output": True,
                },
                "readonly_agent_evaluation": {
                    "status": agent_evaluation["status"],

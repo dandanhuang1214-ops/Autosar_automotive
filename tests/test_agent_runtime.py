@@ -8,14 +8,20 @@ from pathlib import Path
 from unittest.mock import patch
 
 from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 from automotive_workbench.agent_runtime import (
     AgentBudget,
     AgentRunner,
     ToolRegistry,
     ToolSpec,
+    build_agent_resume_result,
     build_readonly_registry,
+    resume_agent_idempotent,
+    save_agent_checkpoint,
     save_agent_trace,
+    verify_agent_checkpoint,
+    verify_agent_resume_result,
     verify_agent_trace,
 )
 from automotive_workbench.can_io import BusConfig
@@ -111,8 +117,8 @@ class FakeNativeClient:
         return self.completions.pop(0)
 
 
-def simple_registry() -> ToolRegistry:
-    registry = ToolRegistry()
+def simple_registry(binding_context=None) -> ToolRegistry:
+    registry = ToolRegistry(binding_context)
     registry.register(
         ToolSpec(
             name="project_lookup",
@@ -371,6 +377,190 @@ class AgentRunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "trace ID"):
             verify_agent_trace(changed)
 
+    def test_pause_resume_is_hash_bound_and_completed_retry_is_idempotent(self):
+        arguments = {"question": "status"}
+        result = {
+            "schema_version": "fixture-result-0.1",
+            "question": "status",
+            "value": "blocked",
+        }
+        evidence = observation_id("project_lookup", arguments, result)
+        client = FakeClient(
+            [
+                {
+                    "action": "tool",
+                    "tool_name": "project_lookup",
+                    "arguments": arguments,
+                },
+                {
+                    "action": "finish",
+                    "summary": "记录状态为 blocked。",
+                    "evidence_ids": [evidence],
+                },
+            ]
+        )
+        runner = AgentRunner(client, simple_registry())
+        checkpoint = runner.run(
+            "检查状态", "fixture:1", pause_after_tool_calls=1
+        )
+        self.assertEqual(checkpoint["status"], "paused")
+        self.assertEqual(checkpoint["resume_count"], 0)
+        self.assertEqual(checkpoint["usage"]["model_calls"], 1)
+        verify_agent_checkpoint(checkpoint)
+
+        schemas = [
+            json.loads((ROOT / "schemas" / name).read_text(encoding="utf-8"))
+            for name in (
+                "readonly-agent-trace.schema.json",
+                "readonly-agent-checkpoint.schema.json",
+                "readonly-agent-resume.schema.json",
+            )
+        ]
+        registry = Registry().with_resources(
+            (schema["$id"], Resource.from_contents(schema)) for schema in schemas
+        )
+        Draft202012Validator(schemas[1], registry=registry).validate(checkpoint)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint_path = root / "checkpoint.json"
+            save_agent_checkpoint(checkpoint, checkpoint_path)
+            with self.assertRaisesRegex(ValueError, "absent"):
+                save_agent_checkpoint(checkpoint, checkpoint_path)
+            output = root / "resume.json"
+            resumed = resume_agent_idempotent(runner, checkpoint, output)
+            self.assertEqual(resumed["status"], "passed")
+            self.assertEqual(resumed["outcome_kind"], "trace")
+            self.assertEqual(resumed["outcome"]["usage"]["model_calls"], 2)
+            self.assertEqual(
+                resumed["outcome"]["events"][: len(checkpoint["events"])],
+                checkpoint["events"],
+            )
+            verify_agent_resume_result(checkpoint, resumed)
+            Draft202012Validator(schemas[2], registry=registry).validate(resumed)
+            calls = client.completions
+            retried = resume_agent_idempotent(runner, checkpoint, output)
+            self.assertEqual(retried, resumed)
+            self.assertEqual(client.completions, calls)
+            with self.assertRaisesRegex(ValueError, "new parameters"):
+                resume_agent_idempotent(
+                    runner,
+                    checkpoint,
+                    output,
+                    pause_after_tool_calls=1,
+                )
+            with self.assertRaisesRegex(ValueError, "binding differs"):
+                resume_agent_idempotent(
+                    AgentRunner(
+                        FakeClient([]), simple_registry({"report": "different"})
+                    ),
+                    checkpoint,
+                    output,
+                )
+
+    def test_checkpoint_and_resume_drift_fail_closed(self):
+        action = {
+            "action": "tool",
+            "tool_name": "project_lookup",
+            "arguments": {"question": "status"},
+        }
+        checkpoint = AgentRunner(
+            FakeClient([action]), simple_registry()
+        ).run("goal", "fixture:1", pause_after_tool_calls=1)
+        changed = copy.deepcopy(checkpoint)
+        changed["events"][-1]["model_projection"]["value"] = "passed"
+        with self.assertRaisesRegex(ValueError, "checkpoint ID"):
+            verify_agent_checkpoint(changed)
+
+        different_budget = AgentRunner(
+            FakeClient([]),
+            simple_registry(),
+            AgentBudget(max_steps=3, max_model_calls=3, max_tool_calls=2),
+        )
+        with self.assertRaisesRegex(ValueError, "budget differs"):
+            different_budget.resume(checkpoint)
+
+        different_binding = AgentRunner(
+            FakeClient([]), simple_registry({"report_sha256": "f" * 64})
+        )
+        with self.assertRaisesRegex(ValueError, "binding differs"):
+            different_binding.resume(checkpoint)
+
+        changed_identity = FakeClient([], change_identity=True)
+        changed_identity.completions = 1
+        refused = AgentRunner(changed_identity, simple_registry()).resume(checkpoint)
+        self.assertEqual(refused["status"], "refused")
+        self.assertEqual(refused["reason"], "model_identity_changed")
+        self.assertEqual(
+            refused["usage"]["model_calls"], checkpoint["usage"]["model_calls"]
+        )
+        self.assertEqual(
+            refused["usage"]["tool_calls"], checkpoint["usage"]["tool_calls"]
+        )
+        resume = build_agent_resume_result(checkpoint, refused)
+        verify_agent_resume_result(checkpoint, resume)
+
+        exhausted = AgentRunner(
+            FakeClient([action]),
+            simple_registry(),
+            AgentBudget(max_steps=2, max_model_calls=1, max_tool_calls=1),
+        ).run("goal", "fixture:1", pause_after_tool_calls=1)
+        self.assertEqual(exhausted["schema_version"], "readonly-agent-trace-0.1")
+        self.assertEqual(exhausted["reason"], "model_call_budget_exhausted")
+
+    def test_resumed_pause_records_parent_checkpoint_lineage(self):
+        registry = simple_registry()
+        registry.register(
+            ToolSpec(
+                name="knowledge_lookup",
+                description="Return one fixture source.",
+                input_schema={
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["question"],
+                    "properties": {
+                        "question": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 20,
+                        }
+                    },
+                },
+                handler=lambda arguments: {
+                    "schema_version": "fixture-source-0.1",
+                    "question": arguments["question"],
+                    "source": "reviewed",
+                },
+            )
+        )
+        client = FakeClient(
+            [
+                {
+                    "action": "tool",
+                    "tool_name": "project_lookup",
+                    "arguments": {"question": "status"},
+                },
+                {
+                    "action": "tool",
+                    "tool_name": "knowledge_lookup",
+                    "arguments": {"question": "source"},
+                },
+            ]
+        )
+        runner = AgentRunner(client, registry)
+        first = runner.run("goal", "fixture:1", pause_after_tool_calls=1)
+        second = runner.resume(first, pause_after_tool_calls=1)
+        self.assertEqual(second["status"], "paused")
+        self.assertEqual(second["resume_count"], 1)
+        self.assertEqual(second["parent_checkpoint_id"], first["checkpoint_id"])
+        self.assertEqual(second["events"][: len(first["events"])], first["events"])
+        verify_agent_checkpoint(second)
+        resume = build_agent_resume_result(
+            first, second, pause_after_tool_calls=1
+        )
+        self.assertEqual(resume["outcome_kind"], "checkpoint")
+        verify_agent_resume_result(first, resume)
+
     def test_registry_rejects_non_read_and_duplicate_tools(self):
         registry = ToolRegistry()
         write = ToolSpec(
@@ -489,6 +679,15 @@ class BoundAgentToolTests(unittest.TestCase):
             )
         self.assertEqual(result["policy_id"], policy["policy_id"])
         self.assertEqual(result["sources"][0]["authority"], "official")
+
+    def test_bound_report_cannot_change_after_registry_creation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            copied = Path(temporary) / "project-report.json"
+            copied.write_bytes(self.report.read_bytes())
+            registry = build_readonly_registry(copied)
+            copied.write_bytes(copied.read_bytes() + b"\n")
+            with self.assertRaisesRegex(ValueError, "bound report changed"):
+                registry.invoke("project_verify_report", {})
 
 
 class StructuredModelClientTests(unittest.TestCase):

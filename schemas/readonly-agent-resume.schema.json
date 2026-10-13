@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-resume.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "resume_id", "schema_version", "status", "checkpoint_id",
+    "outcome_kind", "outcome_id", "request", "outcome"
+  ],
+  "properties": {
+    "resume_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "readonly-agent-resume-0.1"},
+    "status": {"enum": ["passed", "refused", "blocked", "paused"]},
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "outcome_kind": {"enum": ["trace", "checkpoint"]},
+    "outcome_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pause_after_tool_calls"],
+      "properties": {
+        "pause_after_tool_calls": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "outcome": {
+      "oneOf": [
+        {"$ref": "readonly-agent-trace.schema.json"},
+        {"$ref": "readonly-agent-checkpoint.schema.json"}
+      ]
+    }
+  }
+}

@@ -1732,3 +1732,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 首轮 run `38390570775` 失败：Ubuntu core 与 runtime-currency success；Windows core 因测试临时目录长路径/8.3 短路径别名导致 4 项 fixture `relative_to` 错误，下游跳过。运行实现未失败。测试改用稳定的已知相对路径，6 项定向和 v1 离线复验通过；修复提交 `49a5b5231be7c531ef355b1e38948f56c90c95ef`。
 - 修复 [run `38402213934`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38402213934) 对应 head `49a5b5231be7c531ef355b1e38948f56c90c95ef`，七 job 全部 success：runtime-currency `115312437795`；Ubuntu/Windows core-contracts `115312436947`/`115312437066`；Ubuntu/Windows runtime-evidence `115315880620`/`115315880394`；Ubuntu/Windows controlled-rejections `115315880362`/`115315880680`。评测基础设施及跨平台修复已 remote-accepted；实现提交与本条后续文档状态提交保持分离。
 - P30 保持 implementing。下一实现门为只读 checkpoint、幂等 resume 与暂停状态；对 v1 路由缺口只在独立开发题上研究，需新的 v2 held-out cohort 才能改变质量结论。
+
+### P30：只读 Agent checkpoint、暂停与完成态幂等恢复（2026-10-13）
+
+- 新增 `readonly-agent-checkpoint-0.1` / `readonly-agent-resume-0.1`、pause/resume/offline-verify CLI；旧 trace 0.1 兼容。暂停只发生于成功 read tool 后、下一模型调用前，恢复继承事件、observation 和累计 step/model/tool/token/执行时间预算。
+- checkpoint 绑定报告字节摘要、知识服务 origin、策略 ID、模型 identity、服务版本、完整工具 manifest 与预算。绑定漂移、事件/结果篡改、无可恢复预算、非安全边界及 symlink 输出均 fail closed。
+- 已完成 resume 以同一 checkpoint + 不可变 output 为幂等键；服务停止后重复命令复用已验签 envelope，不重新调用模型/工具。未实现并发 claim、崩溃前 exactly-once 或副作用幂等，当前仍只允许 read tools。
+- 本地全量 457 tests（455 passed、2 环境跳过）；15 项 Agent runtime 定向；64 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、compileall、pip check、diff check、源码合成 HTTP 场景通过。隔离 wheel 同场景通过，SHA-256 `4836288bd3d03447084c5dafc6b32a5413f02533f3922b814a5d86dd155d6d7c`。
+- 本门当前 local-accepted，提交和远端 CI 待记录。P30 保持 implementing；下一门为不开放写/硬件能力的 approval request/decision 状态、拒绝与过期语义，随后再评估副作用事务与幂等键。
