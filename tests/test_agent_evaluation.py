@@ -111,7 +111,9 @@ class AgentEvaluationTests(unittest.TestCase):
                 {
                     "case_id": "diagnostic-reason",
                     "category": "project-facts",
-                    "report": self.report.relative_to(self.evidence_root).as_posix(),
+                    # Windows CI may expose the same temporary directory once by its
+                    # long user name and once through an 8.3 alias (RUNNER~1).
+                    "report": "project/bundle/project-report.json",
                     "goal": self.goal,
                     "expected": {
                         "status": "passed",
