@@ -181,11 +181,26 @@ class ReviewEvaluationTests(unittest.TestCase):
             self.assertEqual(result["metrics"]["conflict_recall"], 1.0)
             self.assertEqual(result["metrics"]["false_conflict_count"], 0)
             for case in result["cases"]:
-                hashes = {
-                    report["source_sha256"]
-                    for report in case["producer"]["reports"]
-                }
-                self.assertEqual(len(hashes), 2)
+                reports = case["producer"]["reports"]
+                self.assertEqual(len(reports), 2)
+                self.assertEqual(len({report["report"] for report in reports}), 2)
+                hashes = {report["source_sha256"] for report in reports}
+                for report_evidence in reports:
+                    report_path = (
+                        output
+                        / case["case_id"]
+                        / "producer"
+                        / report_evidence["report"]
+                    )
+                    self.assertEqual(
+                        report_evidence["source_sha256"],
+                        hashlib.sha256(report_path.read_bytes()).hexdigest(),
+                    )
+                # Stable deterministic producers may emit identical bytes when
+                # the platform clock does not advance between fast runs. A
+                # declared semantic mutation, however, must change the bytes.
+                if case["producer"].get("mutations"):
+                    self.assertEqual(len(hashes), 2)
                 for report_evidence in case["producer"]["reports"]:
                     report_path = (
                         output / case["case_id"] / "producer" / report_evidence["report"]
