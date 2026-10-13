@@ -1715,3 +1715,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 真实 Ollama 0.31.1 / qwen3.5:2b 最终开发试验 trace `82aa1a83e319450df9d5ff8123cf9a154742d52e83667194f477ede7556e2da6`：2 次模型调用、1 次 `project_query_facts`、1417 input + 157 output = 1574 tokens、12.706 秒；选中的确定性事实包含 `diagnostic_backend_mismatch` 和 `blocked`，结束引用有效，离线验签通过。这是开发证据，不是独立质量样本。
 - 远端验收：实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) completed/success。实际 job 均 success：runtime-currency `114620063262`；core-contracts Windows `114620063355`、Ubuntu `114620063368`；runtime-evidence Ubuntu `114621961465`、Windows `114621961532`；controlled-rejections Ubuntu `114621961479`、Windows `114621961579`。本轮只读 Agent 基础设施 remote-accepted；本条与总览由随后纯文档状态提交回填，不替代实现 CI。
 - P30 保持 implementing。下一项是冻结独立只读 Agent cohort，测量工具选择、参数、引用、拒绝和 token 成本；通过后再做 checkpoint/幂等/暂停/审批。
+
+### P30：只读 Agent v1 评测预推理冻结（2026-10-13）
+
+- 新增无 LLM judge 的冻结评测器、manifest/result schema 及 freeze/run/offline-verify CLI。评分分别核对工具选择、实际参数效果、observation 引用、token/调用成本和策略拒绝；模型文字保持 unassessed。
+- 修正冻结边界：implementation SHA 纳入项目复验实现，逐 trace 重新绑定模型名称/digest；模型协议补充只允许三个固定原因码的 `agent_decline`。模型主动拒绝不再与不存在的写工具触发 runtime guard 混淆，运行时安全边界不放宽。
+- v1 五题在任何本组推理前冻结，manifest `49d621b65a4a0e78b1dc986c3b18ec63cf44a3539cc7e83f54e5d29f78a3672d`，implementation `def142cff649ebc24b63fd7ccfc4729cd1d952b6c4f9b1df6812965c09dacf6d`；绑定 public communication-gap bundle、示例 reviewed policy 和本机 qwen3.5:2b digest。
+- 冻结前本地 453 tests（451 passed、2 环境跳过）；62 schemas / 77 bound / 25 syntax-only，Ruff、scoped mypy、CI topology、compileall、pip check、diff check、源码合成场景和隔离 wheel 场景通过；wheel SHA-256 `78f355bd47e8905713aeabbd019d2a3a3d1f9fa271c177675d18b13f6386fb0d`。
+- 本条尚未包含真实 v1 推理，也未取得本轮实现提交或远端 CI。下一步先提交/推送这份预推理冻结状态，再在既有 Docker backend 内执行 qwen3.5:2b，原样保留通过和失败；不得用 v1 输出回调实现。P30 保持 implementing。

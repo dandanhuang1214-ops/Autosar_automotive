@@ -64,9 +64,10 @@ class FakeClient:
         if action.get("action") == "tool":
             action.setdefault("summary", "")
             action.setdefault("evidence_ids", [])
-        elif action.get("action") == "finish":
+        elif action.get("action") in {"finish", "decline"}:
             action.setdefault("tool_name", "")
             action.setdefault("arguments", {})
+            action.setdefault("evidence_ids", [])
         prompt, output = self.usages.pop(0)
         self.completions += 1
         return StructuredCompletion(
@@ -268,10 +269,28 @@ class AgentRunnerTests(unittest.TestCase):
         self.assertEqual(
             client.tool_sets,
             [
-                ["project_lookup", "agent_finish"],
-                ["agent_finish"],
+                ["project_lookup", "agent_finish", "agent_decline"],
+                ["agent_finish", "agent_decline"],
             ],
         )
+        verify_agent_trace(trace)
+
+    def test_model_can_declare_a_bounded_policy_refusal(self):
+        trace = AgentRunner(
+            FakeClient(
+                [
+                    {
+                        "action": "decline",
+                        "summary": "requires_write",
+                    }
+                ]
+            ),
+            simple_registry(),
+        ).run("修改配置", "fixture:1")
+        self.assertEqual(trace["status"], "refused")
+        self.assertEqual(trace["reason"], "model_declined:requires_write")
+        self.assertEqual(trace["usage"]["tool_calls"], 0)
+        self.assertIsNone(trace["final"])
         verify_agent_trace(trace)
 
     def test_failed_model_attempt_is_recorded_and_verifiable(self):
@@ -415,7 +434,10 @@ class BoundAgentToolTests(unittest.TestCase):
             item["function"]["name"]
             for item in registry.native_tools({"project_verify_report"})
         }
-        self.assertEqual(available, {"project_query_facts", "agent_finish"})
+        self.assertEqual(
+            available,
+            {"project_query_facts", "agent_finish", "agent_decline"},
+        )
 
     def test_reviewed_knowledge_tool_is_registered_only_as_bound_pair(self):
         endpoint = Endpoint("http://localhost", 1)

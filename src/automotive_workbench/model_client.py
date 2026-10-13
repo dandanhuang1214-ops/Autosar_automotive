@@ -96,9 +96,13 @@ class ToolCompletion:
 class ModelClient(Protocol):
     """Small provider-neutral contract needed by the evidence explanation path."""
 
-    url: str
-    records: list[dict[str, Any]]
     capabilities: ModelCapabilities
+
+    @property
+    def url(self) -> str: ...
+
+    @property
+    def records(self) -> list[dict[str, Any]]: ...
 
     def service_version(self) -> str: ...
 

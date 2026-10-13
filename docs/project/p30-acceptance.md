@@ -215,3 +215,13 @@ P30 保持 implementing。下一项以新提示版本让适配器严格拒绝超
 远端实现验收：`3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) completed/success。实际 job 均 success：runtime-currency `114620063262`；core-contracts Windows `114620063355`、Ubuntu `114620063368`；runtime-evidence Ubuntu `114621961465`、Windows `114621961532`；controlled-rejections Ubuntu `114621961479`、Windows `114621961579`。随后纯文档状态提交不替代该实现 run。
 
 P30 保持 implementing。下一门为冻结独立只读 Agent cohort；它通过后才进入 checkpoint/幂等/暂停/审批。写配置、执行总线、操作物理 ECU、真实资料适用性和通用自然语言质量仍未验收。
+
+## 只读 Agent 评测预推理冻结（2026-10-13）
+
+新增 `readonly-agent-evaluation-manifest/result-0.1`、三个 CLI 和确定性 trace 评分器；结构 gold 在冻结时必须唯一匹配复验后的事实。评测将工具选择、参数有效性、引用、成本和策略拒绝分开，不使用 LLM judge。离线复验重新验证每条 trace、模型身份、哈希链、逐题评分、汇总和 result ID。
+
+协议新增 `agent_decline` 合法终态，仅允许三个固定原因码；它使模型主动拒绝与 runtime guard 拒绝可区分，不授予写入或硬件权限。未知写工具仍由运行时独立拒绝，不能冒充模型正确拒答。
+
+v1 五题已在真实推理前冻结，manifest ID `49d621b65a4a0e78b1dc986c3b18ec63cf44a3539cc7e83f54e5d29f78a3672d`，绑定 implementation SHA `def142cff649ebc24b63fd7ccfc4729cd1d952b6c4f9b1df6812965c09dacf6d`、公开合成 communication-gap bundle、Agent 知识策略和 qwen3.5:2b digest。冻结集覆盖报告复验、项目事实、资料路由、混合路由和越权拒绝；尚未运行本组模型推理。
+
+冻结前本地 453 tests（451 passed、2 环境跳过）；62 schemas / 77 bound / 25 syntax-only，Ruff、mypy、topology、compileall、pip check、diff check、源码合成协议和隔离 wheel 场景通过。wheel SHA-256 `78f355bd47e8905713aeabbd019d2a3a3d1f9fa271c177675d18b13f6386fb0d`。实现提交和远端 CI 待回填；P30 保持 implementing，不能将评测器通过写成模型质量通过。

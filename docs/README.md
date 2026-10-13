@@ -93,3 +93,4 @@
 - [P29 配置与独立诊断依赖](project/p29-diagnostic-link-guide.md)
 - [P30 本地模型证据解释计划](project/p30-evidence-explanation-plan.md)
 - [P30 只读 Agent 工具链与 LLM API 评审](project/p30-readonly-agent-guide.md)
+- [P30 只读 Agent 冻结评测指南](project/p30-readonly-agent-evaluation-guide.md)

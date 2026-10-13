@@ -194,6 +194,49 @@ def build_parser() -> argparse.ArgumentParser:
         help="Verify a saved read-only Agent trace without model or knowledge services",
     )
     readonly_agent_verify.add_argument("trace", type=Path)
+    agent_eval_freeze = commands.add_parser(
+        "freeze-readonly-agent-eval",
+        help="Freeze held-out Agent questions and structural gold before inference",
+    )
+    agent_eval_freeze.add_argument("spec", type=Path)
+    agent_eval_freeze.add_argument("--root", type=Path, required=True)
+    agent_eval_freeze.add_argument("--implementation-root", type=Path)
+    agent_eval_freeze.add_argument("--output", type=Path, required=True)
+    agent_eval_freeze.add_argument("--model", required=True)
+    agent_eval_freeze.add_argument("--model-digest", required=True)
+    agent_eval_freeze.add_argument("--knowledge-policy")
+    agent_eval_freeze.add_argument("--max-steps", type=int, default=4)
+    agent_eval_freeze.add_argument("--max-model-calls", type=int, default=4)
+    agent_eval_freeze.add_argument("--max-tool-calls", type=int, default=3)
+    agent_eval_freeze.add_argument("--max-total-tokens", type=int, default=4096)
+    agent_eval_freeze.add_argument(
+        "--max-output-tokens-per-call", type=int, default=256
+    )
+    agent_eval_freeze.add_argument("--context-window", type=int, default=8192)
+    agent_eval_freeze.add_argument("--max-seconds", type=float, default=120)
+    agent_eval_freeze.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    agent_eval_run = commands.add_parser(
+        "run-readonly-agent-eval",
+        help="Run a frozen Agent cohort and score traces without an LLM judge",
+    )
+    agent_eval_run.add_argument("manifest", type=Path)
+    agent_eval_run.add_argument("--root", type=Path, required=True)
+    agent_eval_run.add_argument("--implementation-root", type=Path)
+    agent_eval_run.add_argument("--manifest-id", required=True)
+    agent_eval_run.add_argument("--output", type=Path, required=True)
+    agent_eval_run.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    agent_eval_run.add_argument("--knowledge-url")
+    agent_eval_run.add_argument("--timeout", type=float, default=30)
+    agent_eval_verify = commands.add_parser(
+        "verify-readonly-agent-eval",
+        help="Re-score a saved Agent cohort from immutable traces without services",
+    )
+    agent_eval_verify.add_argument("manifest", type=Path)
+    agent_eval_verify.add_argument("directory", type=Path)
 
     explanation = commands.add_parser("prepare-project-explanation", help="Export replay-verified project facts without a model")
     explanation.add_argument("report", type=Path)
@@ -619,6 +662,55 @@ def main() -> int:
             from automotive_workbench.project_explanation import read
 
             result = verify_agent_trace(read(args.trace))
+        elif args.command == "freeze-readonly-agent-eval":
+            from automotive_workbench.agent_evaluation import (
+                freeze_agent_evaluation,
+            )
+            from automotive_workbench.agent_runtime import AgentBudget
+
+            result = freeze_agent_evaluation(
+                args.root,
+                args.implementation_root or args.root,
+                args.spec,
+                args.output,
+                model=args.model,
+                model_digest=args.model_digest,
+                budget=AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+                knowledge_policy_path=args.knowledge_policy,
+            )
+        elif args.command == "run-readonly-agent-eval":
+            from automotive_workbench.agent_evaluation import run_agent_evaluation
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.model_client import OllamaModelClient
+
+            result = run_agent_evaluation(
+                args.root,
+                args.implementation_root or args.root,
+                args.manifest,
+                args.manifest_id,
+                args.output,
+                client=OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                knowledge_endpoint=(
+                    Endpoint(args.knowledge_url, args.timeout)
+                    if args.knowledge_url is not None
+                    else None
+                ),
+            )
+        elif args.command == "verify-readonly-agent-eval":
+            from automotive_workbench.agent_evaluation import (
+                verify_agent_evaluation,
+            )
+
+            result = verify_agent_evaluation(args.manifest, args.directory)
         elif args.command == "prepare-project-explanation":
             from automotive_workbench.project_explanation import prepare
             result = prepare(args.report, args.question, args.output)

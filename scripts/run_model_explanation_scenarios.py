@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -51,6 +52,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     cases = []
     agent_retrieval = None
     agent_trace = None
+    agent_evaluation = None
+    agent_evaluation_manifest = None
     with fixture_service() as (server, origin):
         for mode, status in CASES.items():
             server.mode, server.tags_count = mode, 0
@@ -107,11 +110,118 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_trace["usage"]["tool_calls"] != 3
         ):
             raise ValueError("Read-only Agent fixture did not complete its bounded loop")
+        policy_name = "agent-read-policy.json"
+        shutil.copy2(ROOT / "examples/knowledge/agent-read-policy.json", output / policy_name)
+        evaluation_spec = {
+            "evaluation_id": "synthetic-readonly-agent-contract",
+            "split": "held-out",
+            "formation": "Synthetic protocol case; never a model-quality claim.",
+            "cases": [
+                {
+                    "case_id": "bounded-three-tool-loop",
+                    "category": "synthetic-contract",
+                    "report": "project/bundle/project-report.json",
+                    "goal": "核对项目阻断状态及资料边界",
+                    "expected": {
+                        "status": "passed",
+                        "reason_prefix": "completed_with_unassessed_model_summary",
+                        "first_tool": "project_verify_report",
+                        "required_tools": [
+                            "project_verify_report",
+                            "project_query_facts",
+                            "knowledge_retrieve_reviewed",
+                        ],
+                        "forbidden_tools": [],
+                        "required_evidence_tools": [
+                            "project_verify_report",
+                            "project_query_facts",
+                            "knowledge_retrieve_reviewed",
+                        ],
+                        "gold_facts": [
+                            {
+                                "artifact_id": "stage-ecuc",
+                                "pointer": "/checks/diagnostic.read-version/status",
+                                "value": "blocked",
+                            },
+                            {
+                                "artifact_id": "stage-ecuc",
+                                "pointer": "/checks/diagnostic.read-version/reason",
+                                "value": "diagnostic_backend_mismatch",
+                            },
+                        ],
+                        "knowledge_document_ids": [1],
+                        "max_model_calls": 4,
+                        "max_tool_calls": 3,
+                        "max_total_tokens": 4096,
+                    },
+                }
+            ],
+        }
+        spec_path = output / "readonly-agent-eval-spec.json"
+        spec_path.write_text(
+            json.dumps(evaluation_spec, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        manifest_path = output / "readonly-agent-eval-manifest.json"
+        agent_evaluation_manifest = cli(
+            "freeze-readonly-agent-evaluation",
+            [
+                "freeze-readonly-agent-eval",
+                spec_path,
+                "--root",
+                output,
+                "--implementation-root",
+                ROOT,
+                "--output",
+                manifest_path,
+                "--model",
+                "fixture:1",
+                "--model-digest",
+                "a" * 64,
+                "--knowledge-policy",
+                policy_name,
+            ],
+            0,
+        )
+        server.mode, server.tags_count = "agent", 0
+        agent_evaluation = cli(
+            "run-readonly-agent-evaluation",
+            [
+                "run-readonly-agent-eval",
+                manifest_path,
+                "--root",
+                output,
+                "--implementation-root",
+                ROOT,
+                "--manifest-id",
+                agent_evaluation_manifest["manifest_id"],
+                "--output",
+                output / "readonly-agent-evaluation",
+                "--ollama-url",
+                origin,
+                "--knowledge-url",
+                origin,
+                "--timeout",
+                "5",
+            ],
+            0,
+        )
+        if agent_evaluation["status"] != "passed":
+            raise ValueError("Synthetic read-only Agent evaluation did not pass")
     # Reverification works with services already stopped and without source checkout imports.
     cli("services-stopped", ["verify-model-explanation", report, output / "normal"], 0)
     agent_verification = cli(
         "readonly-agent-services-stopped",
         ["verify-readonly-agent-trace", output / "readonly-agent-trace.json"],
+        0,
+    )
+    evaluation_verification = cli(
+        "readonly-agent-evaluation-services-stopped",
+        [
+            "verify-readonly-agent-eval",
+            output / "readonly-agent-eval-manifest.json",
+            output / "readonly-agent-evaluation",
+        ],
         0,
     )
     summary = {"status": "passed", "evidence_kind": "synthetic-http-contract-fixture", "real_model_inference": False,
@@ -126,6 +236,13 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "model_calls": agent_trace["usage"]["model_calls"],
                    "tool_calls": agent_trace["usage"]["tool_calls"],
                    "offline_verification": agent_verification["status"],
+               },
+               "readonly_agent_evaluation": {
+                   "status": agent_evaluation["status"],
+                   "manifest_id": agent_evaluation_manifest["manifest_id"],
+                   "cases": agent_evaluation["summary"]["case_count"],
+                   "offline_verification": evaluation_verification["status"],
+                   "semantic_quality": "unassessed",
                }}
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary

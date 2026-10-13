@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-evaluation-manifest.schema.json",
+  "title": "Frozen Read-only Agent Evaluation Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_id", "artifact_type", "schema_version", "evaluation_id",
+    "split", "formation", "spec_sha256", "implementation_sha256",
+    "model", "knowledge_policy", "budget", "cases", "boundary"
+  ],
+  "properties": {
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "readonly-agent-evaluation-manifest"},
+    "schema_version": {"const": "readonly-agent-evaluation-manifest-0.1"},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "split": {"const": "held-out"},
+    "formation": {"type": "string", "minLength": 1},
+    "spec_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "implementation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "knowledge_policy": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "policy_id"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "policy_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      ]
+    },
+    "budget": {"$ref": "#/$defs/budget"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id", "category", "report", "report_sha256",
+          "bundle_sha256", "goal", "expected"
+        ],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+          "category": {"type": "string", "minLength": 1},
+          "report": {"type": "string", "minLength": 1},
+          "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "bundle_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "expected": {"$ref": "#/$defs/expectation"}
+        }
+      }
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_steps", "max_model_calls", "max_tool_calls", "max_total_tokens",
+        "max_output_tokens_per_call", "context_window", "max_seconds",
+        "max_observation_chars"
+      ],
+      "properties": {
+        "max_steps": {"type": "integer", "minimum": 1, "maximum": 8},
+        "max_model_calls": {"type": "integer", "minimum": 1, "maximum": 8},
+        "max_tool_calls": {"type": "integer", "minimum": 0, "maximum": 7},
+        "max_total_tokens": {"type": "integer", "minimum": 64, "maximum": 32768},
+        "max_output_tokens_per_call": {"type": "integer", "minimum": 1, "maximum": 1024},
+        "context_window": {"type": "integer", "minimum": 512, "maximum": 32768},
+        "max_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 120},
+        "max_observation_chars": {"type": "integer", "minimum": 1000, "maximum": 100000}
+      }
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "reason_prefix", "first_tool", "required_tools",
+        "forbidden_tools", "required_evidence_tools", "gold_fact_ids",
+        "knowledge_document_ids", "max_model_calls", "max_tool_calls",
+        "max_total_tokens"
+      ],
+      "properties": {
+        "status": {"enum": ["passed", "refused"]},
+        "reason_prefix": {"type": "string", "minLength": 1},
+        "first_tool": {"type": ["string", "null"], "minLength": 1},
+        "required_tools": {"$ref": "#/$defs/string_array"},
+        "forbidden_tools": {"$ref": "#/$defs/string_array"},
+        "required_evidence_tools": {"$ref": "#/$defs/string_array"},
+        "gold_fact_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "knowledge_document_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1}
+        },
+        "max_model_calls": {"type": "integer", "minimum": 0},
+        "max_tool_calls": {"type": "integer", "minimum": 0},
+        "max_total_tokens": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

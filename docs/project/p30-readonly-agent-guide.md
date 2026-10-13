@@ -26,6 +26,7 @@ Docker 的职责是承载和隔离运行服务：
 - `project_query_facts`：重放后最多选取 6 条与问题相关的结构化事实。
 - `knowledge_retrieve_reviewed`：仅在 endpoint 与 digest-bound `agent-read` 策略成对提供时注册。
 - `agent_finish`：协议级结束工具，必须引用已存在的 observation ID。
+- `agent_decline`：协议级拒绝终态，只能返回 `requires_write`、`requires_external_action` 或 `outside_registered_tools`；它不授予权限，也不生成工程结论。
 
 每个成功的只读工具在本次运行中只暴露一次；更具体的事实查询还会隐藏已被它覆盖的顶层报告复验。模型伪造隐藏工具、重复调用、未知工具、越界参数或伪造 evidence ID 都会被运行时拒绝。
 
@@ -92,4 +93,4 @@ python -m automotive_workbench.cli verify-readonly-agent-trace \
 - 前置开发试验暴露过 JSON grammar 不遵循、Ollama `function.index` 差异、冗余工具选择、token 耗尽和超时；这些被作为协议与编排修复依据，不算独立质量样本。
 - 远端实现验收 completed/success：runtime-currency `114620063262`；core-contracts Windows `114620063355`、Ubuntu `114620063368`；runtime-evidence Ubuntu `114621961465`、Windows `114621961532`；controlled-rejections Ubuntu `114621961479`、Windows `114621961579`。后续纯文档状态提交不替代该实现 run。
 
-未验收：独立未见的工具选择准确率、一般复杂解释、真实资料适用性、流式调用、checkpoint/恢复、幂等副作用、执行/写入/硬件工具和人工审批。下一门是冻结只读 Agent eval cohort，对工具选择、参数、引用、拒绝和 token 成本进行独立评测；通过后再进入 checkpoint/暂停/审批，不直接开放写入或硬件。
+未验收：独立未见的工具选择准确率、一般复杂解释、真实资料适用性、流式调用、checkpoint/恢复、幂等副作用、执行/写入/硬件工具和人工审批。独立只读 Agent cohort 已按[评测指南](p30-readonly-agent-evaluation-guide.md)在推理前冻结；必须先保留实际结果，再进入 checkpoint/暂停/审批，不直接开放写入或硬件。

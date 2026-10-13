@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-evaluation-result.schema.json",
+  "title": "Read-only Agent Evaluation Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "status",
+    "evaluation_id", "manifest_id", "split", "model", "semantic_status",
+    "summary", "cases", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "readonly-agent-evaluation-result"},
+    "schema_version": {"const": "readonly-agent-evaluation-result-0.1"},
+    "status": {"enum": ["passed", "failed"]},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "split": {"const": "held-out"},
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "semantic_status": {"const": "unassessed"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_count", "passed_cases", "failed_cases", "check_pass_counts",
+        "total_tokens", "model_calls", "tool_calls"
+      ],
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "passed_cases": {"type": "integer", "minimum": 0},
+        "failed_cases": {"type": "integer", "minimum": 0},
+        "check_pass_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "tool_selection", "parameters", "citation", "cost"],
+          "properties": {
+            "status": {"type": "integer", "minimum": 0},
+            "tool_selection": {"type": "integer", "minimum": 0},
+            "parameters": {"type": "integer", "minimum": 0},
+            "citation": {"type": "integer", "minimum": 0},
+            "cost": {"type": "integer", "minimum": 0}
+          }
+        },
+        "total_tokens": {"type": "integer", "minimum": 0},
+        "model_calls": {"type": "integer", "minimum": 0},
+        "tool_calls": {"type": "integer", "minimum": 0}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_calls", "tool_calls", "prompt_tokens", "output_tokens",
+        "total_tokens", "elapsed_ms"
+      ],
+      "properties": {
+        "model_calls": {"type": "integer", "minimum": 0},
+        "tool_calls": {"type": "integer", "minimum": 0},
+        "prompt_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "total_tokens": {"type": "integer", "minimum": 0},
+        "elapsed_ms": {"type": "number", "minimum": 0}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "tool_selection", "parameters", "citation", "cost"],
+      "properties": {
+        "status": {"type": "boolean"},
+        "tool_selection": {"type": "boolean"},
+        "parameters": {"type": "boolean"},
+        "citation": {"type": "boolean"},
+        "cost": {"type": "boolean"}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id", "category", "status", "trace_id", "agent_status",
+        "agent_reason", "tool_sequence", "selected_gold_facts",
+        "required_gold_facts", "gold_fact_recall",
+        "matched_knowledge_documents", "refusal_kind", "checks", "usage",
+        "trace"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "category": {"type": "string", "minLength": 1},
+        "status": {"enum": ["passed", "failed"]},
+        "trace_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "agent_status": {"enum": ["passed", "refused", "blocked"]},
+        "agent_reason": {"type": "string", "minLength": 1},
+        "tool_sequence": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "selected_gold_facts": {"type": "integer", "minimum": 0},
+        "required_gold_facts": {"type": "integer", "minimum": 0},
+        "gold_fact_recall": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "number", "minimum": 0, "maximum": 1}
+          ]
+        },
+        "matched_knowledge_documents": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1}
+        },
+        "refusal_kind": {
+          "enum": ["not-applicable", "model-declared", "runtime-guard", "missing"]
+        },
+        "checks": {"$ref": "#/$defs/checks"},
+        "usage": {"$ref": "#/$defs/usage"},
+        "trace": {"type": "string", "pattern": "^traces/[a-z0-9][a-z0-9_-]{0,63}\\.json$"}
+      }
+    }
+  }
+}
