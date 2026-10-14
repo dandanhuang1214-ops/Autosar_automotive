@@ -100,4 +100,4 @@ LangGraph 后续可以承载 graph scheduling、持久 checkpointer、interrupt/
 - 没有 write/execute/hardware tool，不能据批准 artifact 写配置、运行总线或操作 ECU；
 - v1 模型质量仍为 3/5 failed，一般复杂解释与真实资料适用性仍未验收。
 
-[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)已 local-accepted：同一 ledger 内使用排他原子发布解决并发占用，并用 `simulated/aborted` receipt 演练恢复；它仍不授权或执行副作用。远端验收后才考虑默认禁用、virtual-only、可回滚的受限 execute tool。
+[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)已 remote-accepted：同一 ledger 内使用排他原子发布解决并发占用，并用 `simulated/aborted` receipt 演练恢复；它仍不授权或执行副作用。下一门才考虑默认禁用、virtual-only、可回滚的受限 execute tool。

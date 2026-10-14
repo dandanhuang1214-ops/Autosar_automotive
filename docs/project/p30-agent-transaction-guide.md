@@ -1,6 +1,6 @@
 # P30 Agent 本地一次性 claim 与非执行事务
 
-状态：**local-accepted，remote pending**。本门在审批记录之后增加本地单账本内的排他 claim、崩溃后恢复入口和幂等终态 receipt，但不注册或调用任何副作用工具。
+状态：**remote-accepted**。本门在审批记录之后增加本地单账本内的排他 claim、崩溃后恢复入口和幂等终态 receipt，但不注册或调用任何副作用工具。
 
 ## 状态
 
@@ -58,14 +58,14 @@ python -m automotive_workbench.cli verify-agent-transaction \
 
 批准必须在 request 到期前被 claim；到期后即使已有 approved decision 也拒绝新 claim。已在到期前成功 claim 的事务可以在之后记录 `simulated/aborted` receipt。
 
-## 本地验收
+## 验收
 
 - 全量 467 tests 完成，2 项环境条件跳过；新增 5 项事务测试，含 16 次并发 claim、决定分支冲突、过期/拒绝、崩溃恢复、终态冲突、schema 与篡改拒绝。
 - 68 schemas / 77 schema-bound / 25 syntax-only examples，Ruff、scoped mypy、compileall、CI topology、pip check 和 diff check 通过。
 - 源码合成 HTTP 场景完成 approval → claim → simulated receipt，并在模型/知识服务停止后离线复验。
 - 隔离 wheel、无依赖安装、排除 checkout 后重复通过；wheel SHA-256 `783c2a36c3c548c44340a9dde85ce371a74bf533dfe3baca7fe79c9d426411c8`。
 
-本地成功不等于远端验收；实现提交和七 job run 尚待记录。
+实现提交 `f1f0cef42588086840ae7fef9f4db8eef295056f` 的 [run `38503978397`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38503978397) completed/success。七个实际 job 全部 success：runtime-currency `115657114310`；core-contracts Windows `115657114175`、Ubuntu `115657114271`；controlled-rejections Ubuntu `115659495873`、Windows `115659495886`；runtime-evidence Windows `115659495883`、Ubuntu `115659495904`。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
 
 ## 限制与下一门
 
@@ -74,4 +74,4 @@ python -m automotive_workbench.cli verify-agent-transaction \
 - 原子发布依赖同一文件系统支持硬链接；跨平台能力须由本实现的 Windows/Ubuntu CI 结论确认。
 - 未实现执行前后事务、补偿、真实 side-effect idempotency key 或执行结果的独立观测。
 
-远端验收后，下一门才考虑一个默认禁用、virtual-only、可回滚的 execute tool。它必须消费 claim、以 transaction ID 作为工具幂等键，并把“命令返回”和“独立验证到的实际效果”分开记录；硬件与配置写入仍不开放。
+下一门才考虑一个默认禁用、virtual-only、可回滚的 execute tool。它必须消费 claim、以 transaction ID 作为工具幂等键，并把“命令返回”和“独立验证到的实际效果”分开记录；硬件与配置写入仍不开放。
