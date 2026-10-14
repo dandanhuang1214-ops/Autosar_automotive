@@ -56,6 +56,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_resume = None
     agent_approval_request = None
     agent_approval_decision = None
+    agent_transaction_claim = None
+    agent_transaction_receipt = None
     agent_evaluation = None
     agent_evaluation_manifest = None
     with fixture_service() as (server, origin):
@@ -209,6 +211,43 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_approval_decision["execution_authorized"] is not False
         ):
             raise ValueError("Agent approval record incorrectly authorized execution")
+        transaction_ledger = output / "agent-transaction-ledger"
+        agent_transaction_claim = cli(
+            "agent-transaction-claim",
+            [
+                "claim-agent-approval",
+                checkpoint_path,
+                approval_request_path,
+                approval_decision_path,
+                "--ledger",
+                transaction_ledger,
+            ],
+            0,
+        )
+        agent_transaction_receipt = cli(
+            "agent-transaction-receipt",
+            [
+                "complete-agent-transaction",
+                checkpoint_path,
+                approval_request_path,
+                approval_decision_path,
+                "--ledger",
+                transaction_ledger,
+                "--outcome",
+                "simulated",
+                "--reason",
+                "No side-effect tool is registered or invoked.",
+            ],
+            0,
+        )
+        if (
+            agent_transaction_claim["execution_authorized"] is not False
+            or agent_transaction_claim["side_effect_performed"] is not False
+            or agent_transaction_receipt["status"] != "simulated"
+            or agent_transaction_receipt["execution_authorized"] is not False
+            or agent_transaction_receipt["side_effect_performed"] is not False
+        ):
+            raise ValueError("Agent transaction rehearsal performed a side effect")
         policy_name = "agent-read-policy.json"
         shutil.copy2(ROOT / "examples/knowledge/agent-read-policy.json", output / policy_name)
         evaluation_spec = {
@@ -344,6 +383,18 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    transaction_verification = cli(
+        "agent-transaction-services-stopped",
+        [
+            "verify-agent-transaction",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-approval-request.json",
+            output / "agent-approval-decision.json",
+            "--ledger",
+            output / "agent-transaction-ledger",
+        ],
+        0,
+    )
     evaluation_verification = cli(
         "readonly-agent-evaluation-services-stopped",
         [
@@ -380,6 +431,13 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "request_offline_verification": approval_request_verification["status"],
                    "decision_offline_verification": approval_decision_verification["status"],
                    "execution_authorized": False,
+               },
+               "readonly_agent_transaction": {
+                   "claim_status": agent_transaction_claim["status"],
+                   "receipt_status": agent_transaction_receipt["status"],
+                   "offline_verification": transaction_verification["status"],
+                   "execution_authorized": False,
+                   "side_effect_performed": False,
                },
                "readonly_agent_evaluation": {
                    "status": agent_evaluation["status"],

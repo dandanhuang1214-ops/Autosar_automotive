@@ -272,6 +272,34 @@ def build_parser() -> argparse.ArgumentParser:
     agent_approval_decision_verify.add_argument("checkpoint", type=Path)
     agent_approval_decision_verify.add_argument("request", type=Path)
     agent_approval_decision_verify.add_argument("decision", type=Path)
+    agent_approval_claim = commands.add_parser(
+        "claim-agent-approval",
+        help="Claim one approved request in a local non-executing ledger",
+    )
+    agent_approval_claim.add_argument("checkpoint", type=Path)
+    agent_approval_claim.add_argument("request", type=Path)
+    agent_approval_claim.add_argument("decision", type=Path)
+    agent_approval_claim.add_argument("--ledger", type=Path, required=True)
+    agent_transaction_complete = commands.add_parser(
+        "complete-agent-transaction",
+        help="Record a simulated or aborted non-executing transaction receipt",
+    )
+    agent_transaction_complete.add_argument("checkpoint", type=Path)
+    agent_transaction_complete.add_argument("request", type=Path)
+    agent_transaction_complete.add_argument("decision", type=Path)
+    agent_transaction_complete.add_argument("--ledger", type=Path, required=True)
+    agent_transaction_complete.add_argument(
+        "--outcome", choices=["simulated", "aborted"], required=True
+    )
+    agent_transaction_complete.add_argument("--reason", required=True)
+    agent_transaction_verify = commands.add_parser(
+        "verify-agent-transaction",
+        help="Verify a local approval claim and optional terminal receipt",
+    )
+    agent_transaction_verify.add_argument("checkpoint", type=Path)
+    agent_transaction_verify.add_argument("request", type=Path)
+    agent_transaction_verify.add_argument("decision", type=Path)
+    agent_transaction_verify.add_argument("--ledger", type=Path, required=True)
     agent_eval_freeze = commands.add_parser(
         "freeze-readonly-agent-eval",
         help="Freeze held-out Agent questions and structural gold before inference",
@@ -886,6 +914,49 @@ def main() -> int:
 
             result = load_and_verify_agent_approval(
                 args.checkpoint, args.request, args.decision
+            )
+        elif args.command == "claim-agent-approval":
+            from datetime import datetime, timezone
+
+            from automotive_workbench.agent_transaction import (
+                claim_agent_approval,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = claim_agent_approval(
+                read(args.checkpoint),
+                read(args.request),
+                read(args.decision),
+                args.ledger,
+                claimed_at=datetime.now(timezone.utc),
+            )
+        elif args.command == "complete-agent-transaction":
+            from datetime import datetime, timezone
+
+            from automotive_workbench.agent_transaction import (
+                complete_agent_transaction,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = complete_agent_transaction(
+                read(args.checkpoint),
+                read(args.request),
+                read(args.decision),
+                args.ledger,
+                status=args.outcome,
+                reason=args.reason,
+                completed_at=datetime.now(timezone.utc),
+            )
+        elif args.command == "verify-agent-transaction":
+            from automotive_workbench.agent_transaction import (
+                load_and_verify_agent_transaction,
+            )
+
+            result = load_and_verify_agent_transaction(
+                args.checkpoint,
+                args.request,
+                args.decision,
+                args.ledger,
             )
         elif args.command == "freeze-readonly-agent-eval":
             from automotive_workbench.agent_evaluation import (

@@ -255,3 +255,13 @@ v1 五题已在真实推理前冻结，manifest ID `49d621b65a4a0e78b1dc986c3b18
 实现 `a713f7106db29278d13d1c68e554fbdc45a1d217` 的 [run `38499330921`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38499330921) completed/success。七个实际 job 全部 success：runtime-currency `115642281123`；core-contracts Ubuntu `115642281370`、Windows `115642281371`；runtime-evidence Windows `115644643716`、Ubuntu `115644643888`；controlled-rejections Windows `115644643801`、Ubuntu `115644643838`。本门 remote-accepted；详见[审批状态指南](p30-agent-approval-guide.md)。
 
 P30 保持 implementing，v1 模型质量仍为 3/5 failed。下一门为一次性授权消费和副作用事务状态；在并发、崩溃恢复与幂等 receipt 验收前，不开放受限 execute tool。状态真相继续由 Workbench 可离线验签协议承载；当前不使用 LangGraph 作为状态内核。
+
+## Agent 本地一次性 claim 与非执行事务（本地验收，2026-10-14）
+
+新增 `readonly-agent-approval-claim-0.1` / `readonly-agent-transaction-receipt-0.1` 和 claim/complete/verify CLI。同一 request 在一个 ledger 内映射到同一 transaction ID；完整临时文件经 `fsync` 后以 no-overwrite 硬链接原子发布，16 次并发 claim 收敛为同一 artifact。不同 decision 或终态竞争、拒绝/过期请求、篡改与缺失 claim 均 fail closed；完成态相同语义重试复用原 receipt。
+
+receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `execution_authorized=false`、`side_effect_performed=false`。本轮没有 execute/write/hardware tool；本地 ledger 也不是分布式唯一服务或身份认证系统。
+
+本地 467 tests 完成（2 项环境跳过）；68 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、CI topology、pip/diff check 通过。源码与隔离 wheel 场景完成 approval → claim → receipt → 停服离线复验；wheel SHA-256 `783c2a36c3c548c44340a9dde85ce371a74bf533dfe3baca7fe79c9d426411c8`。当前 local-accepted、远端待验收，见[事务指南](p30-agent-transaction-guide.md)。
+
+远端验收后下一门才考虑默认禁用、virtual-only、可回滚的受限 execute tool；它必须以 transaction ID 为幂等键，并把命令结果与独立效果验证分开。配置写入和硬件仍不开放，v1 模型质量仍为 3/5 failed。

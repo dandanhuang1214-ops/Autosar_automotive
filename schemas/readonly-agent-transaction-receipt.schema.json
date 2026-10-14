@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-transaction-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id", "schema_version", "status", "transaction_id", "claim_id",
+    "request_id", "decision_id", "completed_at", "reason",
+    "execution_authorized", "side_effect_performed", "boundary"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "readonly-agent-transaction-receipt-0.1"},
+    "status": {"enum": ["simulated", "aborted"]},
+    "transaction_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "claim_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "execution_authorized": {"const": false},
+    "side_effect_performed": {"const": false},
+    "boundary": {
+      "const": "This local transaction consumes one approval decision for a non-executing rehearsal. It does not authenticate an operator or authorize or perform a side effect."
+    }
+  }
+}

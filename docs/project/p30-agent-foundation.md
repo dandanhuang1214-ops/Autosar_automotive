@@ -71,7 +71,7 @@ CLI / UI
 ### C. 耐久执行与审批（审批记录 remote-accepted）
 
 - checkpoint、完成态幂等恢复和暂停已 remote-accepted；[审批请求与决定状态](p30-agent-approval-guide.md)也已 remote-accepted。
-- 审批状态始终 `execution_authorized=false`；进程重启后的副作用 exactly-once、一次性授权消费和事务型 idempotency key 尚未实现。
+- 审批状态始终 `execution_authorized=false`；[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)已 local-accepted，但真实副作用 exactly-once 和执行型 idempotency key 尚未实现。
 - 再逐级开放 virtual 执行，最后才讨论写配置和硬件操作。远端 virtual 成功不代表现场 ECU 验收。
 
 ### D. 独立评测
@@ -82,4 +82,4 @@ CLI / UI
 
 ## 下一实现项
 
-B 的最小只读 `ToolRegistry + AgentRunner` 已完成远端实现验收：原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace 由实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job 固定。独立 v1 cohort 已得到真实 3/5 failed 基线；checkpoint、幂等键与暂停/恢复由 `a96193087bb9a09b01e635c37e57e3556024a686`、跨平台修复 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d` / [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 七 job 验收。审批 request/decision、拒绝和过期状态由 `a713f7106db29278d13d1c68e554fbdc45a1d217` / [run `38499330921`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38499330921) 七 job 验收，仍不直接开放写入或硬件；下一门先完成一次性授权消费、副作用事务和幂等 receipt 设计。
+B 的最小只读 `ToolRegistry + AgentRunner` 已完成远端实现验收：原生函数调用、结构化回退、紧凑 projection、动态工具隐藏、显式预算和可离线验签 trace 由实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job 固定。独立 v1 cohort 已得到真实 3/5 failed 基线；checkpoint、幂等键与暂停/恢复由 `a96193087bb9a09b01e635c37e57e3556024a686`、跨平台修复 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d` / [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 七 job 验收。审批 request/decision、拒绝和过期状态由 `a713f7106db29278d13d1c68e554fbdc45a1d217` / [run `38499330921`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38499330921) 七 job 验收。本地一次性 claim 与非执行 receipt 已 local-accepted；远端验收后下一门才考虑默认禁用、virtual-only、可回滚的受限 execute tool，写入和硬件仍不开放。
