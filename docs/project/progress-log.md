@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-14）
 
-当前主阶段 P30 implementing。只读 `ToolRegistry + AgentRunner`、v1 冻结评测、checkpoint/暂停/完成态幂等恢复均已远端验收；v1 真实模型质量为 3/5 failed，不能由基础设施通过改写。[审批请求与决定状态](p30-agent-approval-guide.md)现已 local-accepted：`pending → approved | denied | expired` 绑定 checkpoint、精确动作和 observation，服务停止后可离线复验，但全部固定 `execution_authorized=false`，未开放 execute/write/hardware tool。状态内核是 Workbench 显式版本化协议，不是 LangGraph；后者仅保留为未来编排适配候选。下一门为批准的一次性 claim/consume、副作用事务、并发冲突和幂等 receipt；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 `ToolRegistry + AgentRunner`、v1 冻结评测、checkpoint/暂停/完成态幂等恢复和[审批请求与决定状态](p30-agent-approval-guide.md)均已远端验收；v1 真实模型质量为 3/5 failed，不能由基础设施通过改写。审批状态 `pending → approved | denied | expired` 绑定 checkpoint、精确动作和 observation，服务停止后可离线复验，但全部固定 `execution_authorized=false`，未开放 execute/write/hardware tool。状态内核是 Workbench 显式版本化协议，不是 LangGraph；后者仅保留为未来编排适配候选。下一门为批准的一次性 claim/consume、副作用事务、并发冲突和幂等 receipt；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1750,3 +1750,4 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地全量 462 tests 通过（2 项环境跳过）；66 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、compileall、CI topology、diff check、源码合成 HTTP 场景通过。隔离 wheel、无依赖安装、排除 checkout 后重复通过，wheel SHA-256 `11d4118ecc703d20bb70cbbba746083163eae79afa62e9e6a0e0d3b9c503624d`。
 - 本门 local-accepted，尚未提交/推送，远端七 job 待执行。operator ID 仍是本地声明，不是身份认证；不同输出路径可产生终态分支，尚无单一消费账本。下一门先定义批准的一次性 claim/consume、并发冲突、事务/idempotency key 和 execution receipt，再考虑只在 virtual、可回滚环境开放受限 execute tool。
 - 状态真相仍由 Workbench 版本化 artifact、哈希链和离线 verifier 提供，不是 LangGraph。LangGraph 可作为后续 graph scheduling、checkpointer 和 interrupt/UI 适配层，但不得替代权限判断、证据验证或副作用账本。v1 模型质量仍为 3/5 failed。
+- 远端验收：实现 `a713f7106db29278d13d1c68e554fbdc45a1d217` / [run `38499330921`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38499330921) completed/success。runtime-currency `115642281123`；core-contracts Ubuntu `115642281370`、Windows `115642281371`；runtime-evidence Windows `115644643716`、Ubuntu `115644643888`；controlled-rejections Windows `115644643801`、Ubuntu `115644643838` 均 success。本门 remote-accepted；本条后续纯文档状态提交不替代该实现 run。

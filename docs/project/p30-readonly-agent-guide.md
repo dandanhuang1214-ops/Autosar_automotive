@@ -93,4 +93,4 @@ python -m automotive_workbench.cli verify-readonly-agent-trace \
 - 前置开发试验暴露过 JSON grammar 不遵循、Ollama `function.index` 差异、冗余工具选择、token 耗尽和超时；这些被作为协议与编排修复依据，不算独立质量样本。
 - 远端实现验收 completed/success：runtime-currency `114620063262`；core-contracts Windows `114620063355`、Ubuntu `114620063368`；runtime-evidence Ubuntu `114621961465`、Windows `114621961532`；controlled-rejections Ubuntu `114621961479`、Windows `114621961579`。后续纯文档状态提交不替代该实现 run。
 
-独立只读 Agent cohort 已按[评测指南](p30-readonly-agent-evaluation-guide.md)完成真实 3/5 基线；[checkpoint、暂停与完成态幂等恢复](p30-agent-durability-guide.md)已通过远端七 job 验收，[审批请求与决定状态](p30-agent-approval-guide.md)已 local-accepted。未验收：一般复杂解释、真实资料适用性、流式调用、并发/崩溃 exactly-once、一次性授权消费、幂等副作用及执行/写入/硬件工具。批准记录不认证操作者且不授权执行。
+独立只读 Agent cohort 已按[评测指南](p30-readonly-agent-evaluation-guide.md)完成真实 3/5 基线；[checkpoint、暂停与完成态幂等恢复](p30-agent-durability-guide.md)和[审批请求与决定状态](p30-agent-approval-guide.md)均已通过远端七 job 验收。未验收：一般复杂解释、真实资料适用性、流式调用、并发/崩溃 exactly-once、一次性授权消费、幂等副作用及执行/写入/硬件工具。批准记录不认证操作者且不授权执行。

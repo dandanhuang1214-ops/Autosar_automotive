@@ -1,6 +1,6 @@
 # P30 Agent 审批请求与决定状态
 
-状态：**local-accepted，remote pending**。本门只记录可审计的审批状态，不注册或执行 `execute`、`write`、`hardware` 工具，也不把“已批准”解释成执行授权。
+状态：**remote-accepted**。本门只记录可审计的审批状态，不注册或执行 `execute`、`write`、`hardware` 工具，也不把“已批准”解释成执行授权。
 
 ## 状态与边界
 
@@ -83,14 +83,14 @@ python -m automotive_workbench.cli verify-agent-approval-decision \
 
 LangGraph 后续可以承载 graph scheduling、持久 checkpointer、interrupt/UI 恢复等编排职责，但只能调用这一状态协议，不能替代权限判断、证据验证器或未来的一次性消费账本。仓库当前没有 LangGraph 运行依赖。
 
-## 本地验收
+## 验收
 
 - 全量 462 tests 通过，其中 2 项因环境条件跳过；新增 5 项审批测试覆盖批准、拒绝、过期、篡改、模型自批、证据越界、有效期和不可覆盖输出。
 - 66 schemas / 77 schema-bound / 25 syntax-only examples 通过；Ruff、scoped mypy、compileall、CI topology 和 diff check 通过。
 - 源码合成 HTTP 场景完成 checkpoint → request → approved decision，并在服务停止后离线复验；`execution_authorized=false`。
 - 隔离 wheel、无依赖安装、排除 checkout 后重复通过相同链路；wheel SHA-256 `11d4118ecc703d20bb70cbbba746083163eae79afa62e9e6a0e0d3b9c503624d`。
 
-本地成功不等于远端验收；实现提交和七 job run 尚待记录。
+实现提交 `a713f7106db29278d13d1c68e554fbdc45a1d217` 的 [run `38499330921`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38499330921) completed/success。七个实际 job 全部 success：runtime-currency `115642281123`；core-contracts Ubuntu `115642281370`、Windows `115642281371`；runtime-evidence Windows `115644643716`、Ubuntu `115644643888`；controlled-rejections Windows `115644643801`、Ubuntu `115644643838`。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
 
 ## 尚未实现
 
