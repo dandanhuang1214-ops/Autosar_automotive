@@ -243,3 +243,13 @@ v1 五题已在真实推理前冻结，manifest ID `49d621b65a4a0e78b1dc986c3b18
 本地 457 tests（455 passed、2 环境跳过）；64 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、pip/diff check、源码合成场景及隔离 wheel 场景通过。wheel SHA-256 `4836288bd3d03447084c5dafc6b32a5413f02533f3922b814a5d86dd155d6d7c`。
 
 实现 `a96193087bb9a09b01e635c37e57e3556024a686` 的首轮 run `38416579539` 在 Windows core 暴露既有稳定报告哈希断言对低时间分辨率平台不成立；该 run 失败且下游跳过，不计验收。跨平台测试修复 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d` 的 [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) completed/success，七个实际 job 均 success：runtime-currency `115407126528`；core-contracts Windows `115407126843`、Ubuntu `115407127074`；runtime-evidence Ubuntu `115411137168`、Windows `115411137377`；controlled-rejections Windows `115411137213`、Ubuntu `115411137546`。本门 remote-accepted；P30 保持 implementing，下一门为 approval request/decision、拒绝与过期状态，不开放写入或硬件工具。
+
+## Agent 审批请求与决定状态（本地验收，2026-10-14）
+
+新增 `readonly-agent-approval-request-0.1` 与 `readonly-agent-approval-decision-0.1`。请求绑定暂停 checkpoint、registry、精确的非 read 动作、参数、权限、已有 observation 和最长 24 小时有效期；终态为 `approved`、`denied` 或 `expired`。模型 actor、自批、已注册 read tool、证据越界、动作/决定篡改、过早过期和过期后批准均 fail closed。
+
+所有请求与决定均为 `execution_authorized=false`。当前 operator ID 是本地声明，不是身份认证；审批没有执行效果，未注册 write/execute/hardware tool。不同路径仍可能产生决定分支；未来副作用协议必须增加认证、单一一次性 claim/consume、事务/idempotency key 和 execution receipt。
+
+本地 462 tests 全部通过（2 项环境跳过）；66 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、CI topology 和 diff check 通过。源码合成 HTTP 和隔离 wheel 场景均完成 request/approved/offline verify，隔离 wheel SHA-256 `11d4118ecc703d20bb70cbbba746083163eae79afa62e9e6a0e0d3b9c503624d`。本门当前 local-accepted、远端待验收；详见[审批状态指南](p30-agent-approval-guide.md)。
+
+P30 保持 implementing，v1 模型质量仍为 3/5 failed。下一门为一次性授权消费和副作用事务状态；在并发、崩溃恢复与幂等 receipt 验收前，不开放受限 execute tool。状态真相继续由 Workbench 可离线验签协议承载；当前不使用 LangGraph 作为状态内核。

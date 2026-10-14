@@ -12,6 +12,8 @@ P21 新增 [通信对象图与配置影响](docs/project/p21-communication-graph
 
 P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38066909019) 已远端验收，但 v9 内容仍为 0/6。0.23 的 [Agent-ready 基础](docs/project/p30-agent-foundation.md)和 [Agent 知识来源信任策略](docs/project/p30-knowledge-trust-policy.md)也已 remote-accepted：最新策略实现 `268482a` / [run `38123214672`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38123214672) 七 job 全部成功。[最小只读 Agent 工具链](docs/project/p30-readonly-agent-guide.md)也已 remote-accepted：实现 `3d69f54` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job 全部成功。独立 [Agent v1 评测](docs/project/p30-readonly-agent-evaluation-guide.md)在推理前冻结后取得真实 3/5 基线：单一报告复验、资料路由和主动越权拒绝通过，项目明细与混合路由失败；停服式离线重评分通过。评测基础设施及跨平台修复 `49a5b52` / [run `38402213934`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38402213934) 七 job 全部成功，但这不改变模型质量 3/5 的 failed 结论。[只读 Agent checkpoint、暂停与幂等恢复](docs/project/p30-agent-durability-guide.md)已 remote-accepted：实现 `a961930`、跨平台测试修复 `fdf5e21` / [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 七 job 全部成功。一般复杂解释、真实资料适用性和完整 Agent 均未验收，P30 保持 implementing；下一门为不开放写/硬件的审批状态契约。当前状态见[进度账本](docs/project/progress-log.md)。
 
+[Agent 审批请求与决定状态](docs/project/p30-agent-approval-guide.md)已 local-accepted：`pending → approved | denied | expired` 可在服务停止后离线复验，且始终 `execution_authorized=false`。当前状态内核不是 LangGraph，而是 Workbench 版本化、哈希绑定协议；LangGraph 只保留为未来编排适配候选。P30 下一门为一次性授权消费、副作用事务和幂等 receipt，尚不开放 execute/write/hardware tool。
+
 日常项目验收从 `run-project` 开始：
 
 ```bash

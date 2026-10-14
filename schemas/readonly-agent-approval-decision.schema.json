@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-approval-decision.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id", "schema_version", "status", "request_id", "checkpoint_id",
+    "action_call_id", "decided_at", "actor", "reason",
+    "execution_authorized", "boundary"
+  ],
+  "properties": {
+    "decision_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "readonly-agent-approval-decision-0.1"},
+    "status": {"enum": ["approved", "denied", "expired"]},
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "action_call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decided_at": {"type": "string", "format": "date-time"},
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": {"enum": ["operator", "system"]},
+        "id": {"type": "string", "minLength": 1, "maxLength": 200}
+      }
+    },
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "execution_authorized": {"const": false},
+    "boundary": {
+      "const": "This artifact records a local approval state only. It does not authenticate the operator, execute a tool, or authorize a side effect."
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "expired"}}},
+      "then": {
+        "properties": {
+          "actor": {"const": {"kind": "system", "id": "workbench-expiry"}},
+          "reason": {"const": "request_expired"}
+        }
+      },
+      "else": {
+        "properties": {
+          "actor": {
+            "type": "object",
+            "properties": {"kind": {"const": "operator"}}
+          }
+        }
+      }
+    }
+  ]
+}

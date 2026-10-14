@@ -83,4 +83,4 @@ python -m automotive_workbench.cli verify-readonly-agent-resume \
 
 最终 [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 对应 head `fdf5e217683b97454f1677b1a8bb7c72f18dad3d`，七个实际 job 全部 success：runtime-currency `115407126528`；core-contracts Windows `115407126843`、Ubuntu `115407127074`；runtime-evidence Ubuntu `115411137168`、Windows `115411137377`；controlled-rejections Windows `115411137213`、Ubuntu `115411137546`。本门 remote-accepted；随后纯文档状态提交不替代上述实现 run。
 
-下一门是在不开放写/硬件工具的前提下，定义可审计的 approval request/decision 状态、拒绝与过期语义；只有副作用工具具备独立授权、事务边界和幂等键后，才讨论执行型 Agent。
+[审批请求与决定状态](p30-agent-approval-guide.md)现已 local-accepted，仍不开放写/硬件工具。下一门先定义批准的一次性 claim/consume、事务边界、并发冲突和幂等 receipt；这些通过后才讨论受限执行型 Agent。

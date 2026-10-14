@@ -54,6 +54,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_trace = None
     agent_checkpoint = None
     agent_resume = None
+    agent_approval_request = None
+    agent_approval_decision = None
     agent_evaluation = None
     agent_evaluation_manifest = None
     with fixture_service() as (server, origin):
@@ -152,6 +154,61 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         )
         if retried != agent_resume:
             raise ValueError("Completed Agent resume retry changed its saved result")
+        approval_arguments_path = output / "agent-approval-arguments.json"
+        approval_arguments_path.write_text(
+            json.dumps(
+                {"object": "ComSignal/WindowPosition", "value": 42},
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        approval_request_path = output / "agent-approval-request.json"
+        agent_approval_request = cli(
+            "agent-approval-request",
+            [
+                "request-agent-approval",
+                checkpoint_path,
+                approval_arguments_path,
+                "--tool-name",
+                "configuration.write",
+                "--permission",
+                "write",
+                "--reason",
+                "Operator review required; no action will execute.",
+                "--evidence-id",
+                agent_checkpoint["events"][-1]["observation_id"],
+                "--output",
+                approval_request_path,
+            ],
+            0,
+        )
+        approval_decision_path = output / "agent-approval-decision.json"
+        agent_approval_decision = cli(
+            "agent-approval-decision",
+            [
+                "decide-agent-approval",
+                checkpoint_path,
+                approval_request_path,
+                "--decision",
+                "approved",
+                "--actor",
+                "synthetic-local-operator",
+                "--reason",
+                "Recorded approval only; execution remains disabled.",
+                "--output",
+                approval_decision_path,
+            ],
+            0,
+        )
+        if (
+            agent_approval_request["status"] != "pending"
+            or agent_approval_request["execution_authorized"] is not False
+            or agent_approval_decision["status"] != "approved"
+            or agent_approval_decision["execution_authorized"] is not False
+        ):
+            raise ValueError("Agent approval record incorrectly authorized execution")
         policy_name = "agent-read-policy.json"
         shutil.copy2(ROOT / "examples/knowledge/agent-read-policy.json", output / policy_name)
         evaluation_spec = {
@@ -268,6 +325,25 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
          output / "readonly-agent-resume.json"],
         0,
     )
+    approval_request_verification = cli(
+        "agent-approval-request-services-stopped",
+        [
+            "verify-agent-approval-request",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-approval-request.json",
+        ],
+        0,
+    )
+    approval_decision_verification = cli(
+        "agent-approval-decision-services-stopped",
+        [
+            "verify-agent-approval-decision",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-approval-request.json",
+            output / "agent-approval-decision.json",
+        ],
+        0,
+    )
     evaluation_verification = cli(
         "readonly-agent-evaluation-services-stopped",
         [
@@ -297,6 +373,13 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "checkpoint_offline_verification": checkpoint_verification["status"],
                    "resume_offline_verification": resume_verification["status"],
                    "completed_retry_reused_output": True,
+               },
+               "readonly_agent_approval": {
+                   "request_status": agent_approval_request["status"],
+                   "decision_status": agent_approval_decision["status"],
+                   "request_offline_verification": approval_request_verification["status"],
+                   "decision_offline_verification": approval_decision_verification["status"],
+                   "execution_authorized": False,
                },
                "readonly_agent_evaluation": {
                    "status": agent_evaluation["status"],

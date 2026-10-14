@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-12）
+## 当前总览（2026-10-14）
 
-当前主阶段 P30 implementing。提示 0.22、0.23、Agent 知识来源策略 0.1 和最小只读 `ToolRegistry + AgentRunner` 均已通过各自实现远端验收；最新 Agent 实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / run `38189854764` 七 job 成功。原生 Ollama tool calling 与结构化回退、三个绑定只读工具、动态工具隐藏、完整结果/紧凑 projection、调用/token/时间预算及可离线验签哈希链均已实现。真实 Ollama 0.31.1 / qwen3.5:2b 开发试验以 2 次模型调用、1 次工具调用、1574 tokens 在 12.706 秒完成，正确选中 `diagnostic_backend_mismatch` / `blocked`，但自然语言仍标记 unassessed。下一项是冻结独立只读 Agent eval cohort，随后再做 checkpoint/暂停/审批；一般复杂解释、真实资料适用性、写入和硬件均未验收。P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 `ToolRegistry + AgentRunner`、v1 冻结评测、checkpoint/暂停/完成态幂等恢复均已远端验收；v1 真实模型质量为 3/5 failed，不能由基础设施通过改写。[审批请求与决定状态](p30-agent-approval-guide.md)现已 local-accepted：`pending → approved | denied | expired` 绑定 checkpoint、精确动作和 observation，服务停止后可离线复验，但全部固定 `execution_authorized=false`，未开放 execute/write/hardware tool。状态内核是 Workbench 显式版本化协议，不是 LangGraph；后者仅保留为未来编排适配候选。下一门为批准的一次性 claim/consume、副作用事务、并发冲突和幂等 receipt；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1742,3 +1742,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 实现提交 `a96193087bb9a09b01e635c37e57e3556024a686` 的首轮 [run `38416579539`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38416579539) 因 Windows 上既有跨运行测试把独立执行误等同于报告字节必须不同而失败；Ubuntu core/runtime-currency 成功、下游跳过，不计远端验收。修复不伪造时间戳：改为核对独立路径与各自真实 SHA-256，并仅对声明 mutation 的用例要求哈希不同；修复提交 `fdf5e217683b97454f1677b1a8bb7c72f18dad3d`。
 - 最终 [run `38429351251`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38429351251) 对应 head `fdf5e217683b97454f1677b1a8bb7c72f18dad3d`，七 job 全部 success：runtime-currency `115407126528`；core-contracts Windows `115407126843`、Ubuntu `115407127074`；runtime-evidence Ubuntu `115411137168`、Windows `115411137377`；controlled-rejections Windows `115411137213`、Ubuntu `115411137546`。本门 remote-accepted；本条后续纯文档状态提交不替代该实现 run。
 - P30 保持 implementing；下一门为不开放写/硬件能力的 approval request/decision 状态、拒绝与过期语义，随后再评估副作用事务与幂等键。状态机核心继续使用 Workbench 显式、可离线验签的事件/状态契约；LangGraph 可在后续作为调度/interrupt 适配层，但不替代权限和证据验证器。
+
+### P30：Agent 审批请求、决定、拒绝与过期状态（2026-10-14）
+
+- 新增 `agent_approval.py`、两个 Draft 2020-12 schema 及五个 CLI：从暂停 checkpoint 创建 `pending` 请求，记录 `approved` / `denied` / `expired` 决定，并可在服务停止后离线复验。请求绑定 registry、精确 action/call ID、参数、证据 observation 和最长 24 小时有效期。
+- 模型不能自批，已注册 read tool 不进入审批；证据越界、篡改、过早过期、过期后批准和覆盖既有输出均 fail closed。请求与所有终态都固定 `execution_authorized=false`，本轮没有注册 write/execute/hardware tool。
+- 本地全量 462 tests 通过（2 项环境跳过）；66 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、compileall、CI topology、diff check、源码合成 HTTP 场景通过。隔离 wheel、无依赖安装、排除 checkout 后重复通过，wheel SHA-256 `11d4118ecc703d20bb70cbbba746083163eae79afa62e9e6a0e0d3b9c503624d`。
+- 本门 local-accepted，尚未提交/推送，远端七 job 待执行。operator ID 仍是本地声明，不是身份认证；不同输出路径可产生终态分支，尚无单一消费账本。下一门先定义批准的一次性 claim/consume、并发冲突、事务/idempotency key 和 execution receipt，再考虑只在 virtual、可回滚环境开放受限 execute tool。
+- 状态真相仍由 Workbench 版本化 artifact、哈希链和离线 verifier 提供，不是 LangGraph。LangGraph 可作为后续 graph scheduling、checkpointer 和 interrupt/UI 适配层，但不得替代权限判断、证据验证或副作用账本。v1 模型质量仍为 3/5 failed。

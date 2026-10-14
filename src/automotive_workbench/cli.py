@@ -222,6 +222,56 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_resume_verify.add_argument("checkpoint", type=Path)
     agent_resume_verify.add_argument("result", type=Path)
+    agent_approval_request = commands.add_parser(
+        "request-agent-approval",
+        help="Record a non-executing approval request bound to a paused Agent",
+    )
+    agent_approval_request.add_argument("checkpoint", type=Path)
+    agent_approval_request.add_argument("arguments", type=Path)
+    agent_approval_request.add_argument("--tool-name", required=True)
+    agent_approval_request.add_argument(
+        "--permission", choices=["execute", "write", "hardware"], required=True
+    )
+    agent_approval_request.add_argument("--reason", required=True)
+    agent_approval_request.add_argument(
+        "--evidence-id", action="append", required=True
+    )
+    agent_approval_request.add_argument(
+        "--expires-in-seconds", type=int, default=900
+    )
+    agent_approval_request.add_argument("--output", type=Path, required=True)
+    agent_approval_decision = commands.add_parser(
+        "decide-agent-approval",
+        help="Record an approved or denied local operator decision",
+    )
+    agent_approval_decision.add_argument("checkpoint", type=Path)
+    agent_approval_decision.add_argument("request", type=Path)
+    agent_approval_decision.add_argument(
+        "--decision", choices=["approved", "denied"], required=True
+    )
+    agent_approval_decision.add_argument("--actor", required=True)
+    agent_approval_decision.add_argument("--reason", required=True)
+    agent_approval_decision.add_argument("--output", type=Path, required=True)
+    agent_approval_expiry = commands.add_parser(
+        "expire-agent-approval",
+        help="Record expiry after an approval request deadline",
+    )
+    agent_approval_expiry.add_argument("checkpoint", type=Path)
+    agent_approval_expiry.add_argument("request", type=Path)
+    agent_approval_expiry.add_argument("--output", type=Path, required=True)
+    agent_approval_request_verify = commands.add_parser(
+        "verify-agent-approval-request",
+        help="Verify a checkpoint-bound approval request offline",
+    )
+    agent_approval_request_verify.add_argument("checkpoint", type=Path)
+    agent_approval_request_verify.add_argument("request", type=Path)
+    agent_approval_decision_verify = commands.add_parser(
+        "verify-agent-approval-decision",
+        help="Verify a terminal approval decision offline",
+    )
+    agent_approval_decision_verify.add_argument("checkpoint", type=Path)
+    agent_approval_decision_verify.add_argument("request", type=Path)
+    agent_approval_decision_verify.add_argument("decision", type=Path)
     agent_eval_freeze = commands.add_parser(
         "freeze-readonly-agent-eval",
         help="Freeze held-out Agent questions and structural gold before inference",
@@ -751,6 +801,91 @@ def main() -> int:
 
             result = verify_agent_resume_result(
                 read(args.checkpoint), read(args.result)
+            )
+        elif args.command == "request-agent-approval":
+            from datetime import datetime, timedelta, timezone
+
+            from automotive_workbench.agent_approval import (
+                build_agent_approval_request,
+                save_agent_approval_request,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            arguments = read(args.arguments)
+            created_at = datetime.now(timezone.utc)
+            request = build_agent_approval_request(
+                checkpoint,
+                tool_name=args.tool_name,
+                permission=args.permission,
+                arguments=arguments,
+                reason=args.reason,
+                evidence_ids=args.evidence_id,
+                created_at=created_at,
+                expires_at=created_at
+                + timedelta(seconds=args.expires_in_seconds),
+            )
+            result = save_agent_approval_request(
+                checkpoint, request, args.output
+            )
+        elif args.command == "decide-agent-approval":
+            from datetime import datetime, timezone
+
+            from automotive_workbench.agent_approval import (
+                build_agent_approval_decision,
+                save_agent_approval_decision,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            request = read(args.request)
+            decision = build_agent_approval_decision(
+                checkpoint,
+                request,
+                status=args.decision,
+                decided_at=datetime.now(timezone.utc),
+                actor_id=args.actor,
+                reason=args.reason,
+            )
+            result = save_agent_approval_decision(
+                checkpoint, request, decision, args.output
+            )
+        elif args.command == "expire-agent-approval":
+            from datetime import datetime, timezone
+
+            from automotive_workbench.agent_approval import (
+                build_agent_approval_decision,
+                save_agent_approval_decision,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            request = read(args.request)
+            decision = build_agent_approval_decision(
+                checkpoint,
+                request,
+                status="expired",
+                decided_at=datetime.now(timezone.utc),
+                reason="request_expired",
+            )
+            result = save_agent_approval_decision(
+                checkpoint, request, decision, args.output
+            )
+        elif args.command == "verify-agent-approval-request":
+            from automotive_workbench.agent_approval import (
+                load_and_verify_agent_approval,
+            )
+
+            result = load_and_verify_agent_approval(
+                args.checkpoint, args.request
+            )
+        elif args.command == "verify-agent-approval-decision":
+            from automotive_workbench.agent_approval import (
+                load_and_verify_agent_approval,
+            )
+
+            result = load_and_verify_agent_approval(
+                args.checkpoint, args.request, args.decision
             )
         elif args.command == "freeze-readonly-agent-eval":
             from automotive_workbench.agent_evaluation import (

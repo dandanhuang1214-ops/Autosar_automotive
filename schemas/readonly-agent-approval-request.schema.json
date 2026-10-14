@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/readonly-agent-approval-request.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id", "schema_version", "status", "checkpoint_id",
+    "registry_binding_sha256", "requested_by", "requested_action", "reason",
+    "evidence_ids", "created_at", "expires_at", "execution_authorized",
+    "boundary"
+  ],
+  "properties": {
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "readonly-agent-approval-request-0.1"},
+    "status": {"const": "pending"},
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "registry_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "requested_by": {"const": "workbench-control-plane"},
+    "requested_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_name", "permission", "arguments", "call_id"],
+      "properties": {
+        "tool_name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{0,127}$"
+        },
+        "permission": {"enum": ["execute", "write", "hardware"]},
+        "arguments": {"type": "object"},
+        "call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "execution_authorized": {"const": false},
+    "boundary": {
+      "const": "This artifact records a local approval state only. It does not authenticate the operator, execute a tool, or authorize a side effect."
+    }
+  }
+}
