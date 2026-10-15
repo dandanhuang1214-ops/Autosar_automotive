@@ -401,6 +401,47 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_eval_verify.add_argument("manifest", type=Path)
     agent_eval_verify.add_argument("directory", type=Path)
+    proposal_eval_freeze = commands.add_parser(
+        "freeze-agent-proposal-eval",
+        help="Freeze end-to-end action-proposal cases before target-model inference",
+    )
+    proposal_eval_freeze.add_argument("spec", type=Path)
+    proposal_eval_freeze.add_argument("--root", type=Path, required=True)
+    proposal_eval_freeze.add_argument("--implementation-root", type=Path)
+    proposal_eval_freeze.add_argument("--output", type=Path, required=True)
+    proposal_eval_freeze.add_argument("--model", required=True)
+    proposal_eval_freeze.add_argument("--model-digest", required=True)
+    proposal_eval_freeze.add_argument("--max-steps", type=int, default=3)
+    proposal_eval_freeze.add_argument("--max-model-calls", type=int, default=3)
+    proposal_eval_freeze.add_argument("--max-tool-calls", type=int, default=1)
+    proposal_eval_freeze.add_argument("--max-total-tokens", type=int, default=4096)
+    proposal_eval_freeze.add_argument(
+        "--max-output-tokens-per-call", type=int, default=256
+    )
+    proposal_eval_freeze.add_argument("--context-window", type=int, default=8192)
+    proposal_eval_freeze.add_argument("--max-seconds", type=float, default=120)
+    proposal_eval_freeze.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    proposal_eval_run = commands.add_parser(
+        "run-agent-proposal-eval",
+        help="Run a frozen read-then-propose cohort without executing actions",
+    )
+    proposal_eval_run.add_argument("manifest", type=Path)
+    proposal_eval_run.add_argument("--root", type=Path, required=True)
+    proposal_eval_run.add_argument("--implementation-root", type=Path)
+    proposal_eval_run.add_argument("--manifest-id", required=True)
+    proposal_eval_run.add_argument("--output", type=Path, required=True)
+    proposal_eval_run.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    proposal_eval_run.add_argument("--timeout", type=float, default=120)
+    proposal_eval_verify = commands.add_parser(
+        "verify-agent-proposal-eval",
+        help="Re-score proposal evaluation artifacts without model services",
+    )
+    proposal_eval_verify.add_argument("manifest", type=Path)
+    proposal_eval_verify.add_argument("directory", type=Path)
 
     explanation = commands.add_parser("prepare-project-explanation", help="Export replay-verified project facts without a model")
     explanation.add_argument("report", type=Path)
@@ -1155,6 +1196,53 @@ def main() -> int:
             )
 
             result = verify_agent_evaluation(args.manifest, args.directory)
+        elif args.command == "freeze-agent-proposal-eval":
+            from automotive_workbench.agent_proposal_evaluation import (
+                freeze_agent_proposal_evaluation,
+            )
+            from automotive_workbench.agent_runtime import AgentBudget
+
+            result = freeze_agent_proposal_evaluation(
+                args.root,
+                args.implementation_root or args.root,
+                args.spec,
+                args.output,
+                model=args.model,
+                model_digest=args.model_digest,
+                budget=AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+            )
+        elif args.command == "run-agent-proposal-eval":
+            from automotive_workbench.agent_proposal_evaluation import (
+                run_agent_proposal_evaluation,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.model_client import OllamaModelClient
+
+            result = run_agent_proposal_evaluation(
+                args.root,
+                args.implementation_root or args.root,
+                args.manifest,
+                args.manifest_id,
+                args.output,
+                client=OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+            )
+        elif args.command == "verify-agent-proposal-eval":
+            from automotive_workbench.agent_proposal_evaluation import (
+                verify_agent_proposal_evaluation,
+            )
+
+            result = verify_agent_proposal_evaluation(
+                args.manifest, args.directory
+            )
         elif args.command == "prepare-project-explanation":
             from automotive_workbench.project_explanation import prepare
             result = prepare(args.report, args.question, args.output)

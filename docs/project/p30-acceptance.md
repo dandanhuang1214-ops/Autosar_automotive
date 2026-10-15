@@ -287,3 +287,11 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 本地 478 tests 通过（2 项环境跳过）；71 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、compileall、topology、pip/diff check 通过。source 合成场景完成 proposal → exact approval → decision → claim → 默认关闭 → 显式 virtual 执行 → 停服复验。隔离无依赖 wheel 场景通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`；无可选 CAN 依赖时只验证默认关闭。
 
 实现 `541a7df588a6aa029f2293aa92321a25caa471df` 的 [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) completed/success。七个实际 job 均 success：runtime-currency `116223488395`；core-contracts Ubuntu `116223488653`、Windows `116223488692`；controlled-rejections Ubuntu `116225842956`、Windows `116225842989`；runtime-evidence Windows `116225842973`、Ubuntu `116225843079`。本门 remote-accepted；后续纯文档状态提交不替代该实现 run，也不把合成 fixture 写成真实模型质量。下一门先冻结新的 v2 cohort，再运行真实模型；配置写入、SocketCAN、硬件和认证 operator 仍未开放，v1 质量仍为 3/5 failed。
+
+## 动作提案 v2 预推理冻结（2026-10-15）
+
+新增 `agent_proposal_evaluation.py`、manifest/result 两个 schema、freeze/run/offline-verify CLI 和真实 Ollama runner。每题先由同一固定模型选择只读证据工具并暂停，再进入 proposal-only catalog；checkpoint preparation 与 proposal 各自计分，避免把只读路由失败误标为动作选择失败，也不伪造目标模型 checkpoint。
+
+五题 spec 与 agent-authored structural gold 已在任何目标模型推理前冻结，manifest ID `1c760f1ebbb5ddf54ee4d7445d7fd212cb59a522e4e4e7d5ebc510cec722c1ca`。范围是两个精确 virtual CAN 正例及 action-not-required、SocketCAN/can0 越权、证据条件不成立三个拒绝题；不使用 LLM judge，不评估 prose，也不执行动作。
+
+本地 481 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only。当前为 pre-inference frozen / local-validated，尚无真实 v2 模型结果，也尚无本冻结实现的远端 CI，不能改变 v1 3/5 failed。下一步先提交推送并完成远端七 job，再运行冻结 manifest 和停服式离线复验；不得根据结果修改同一 v2。

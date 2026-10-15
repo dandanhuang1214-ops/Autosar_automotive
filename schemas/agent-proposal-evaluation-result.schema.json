@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-proposal-evaluation-result.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "status",
+    "evaluation_id", "manifest_id", "split", "model", "semantic_status",
+    "summary", "cases", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-proposal-evaluation-result"},
+    "schema_version": {"const": "agent-proposal-evaluation-result-0.1"},
+    "status": {"enum": ["passed", "failed"]},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "split": {"const": "held-out"},
+    "model": {"type": "object"},
+    "semantic_status": {"const": "unassessed"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_count", "passed_cases", "failed_cases", "check_pass_counts",
+        "cumulative_total_tokens"
+      ],
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "passed_cases": {"type": "integer", "minimum": 0},
+        "failed_cases": {"type": "integer", "minimum": 0},
+        "check_pass_counts": {"type": "object"},
+        "cumulative_total_tokens": {"type": "integer", "minimum": 0}
+      }
+    },
+    "cases": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "boundary": {
+      "const": "Scoring is deterministic and artifact-based. A preparation failure remains distinct from proposal behavior, no LLM judges the result, and no action was authorized or invoked."
+    }
+  }
+}

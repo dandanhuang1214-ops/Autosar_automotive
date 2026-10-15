@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-15）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)及[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)均已远端验收。模型可选择 typed execute action，但 proposal catalog 没有 handler，proposal 固定未授权且未调用；只有控制面能把完全相同的 action 转为审批请求。最新实现 `541a7df` / run `38674052274` 七 job 成功。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一门冻结新的 v2 cohort；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)及[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)均已远端验收。新的[动作提案 v2 评测](p30-agent-proposal-evaluation-v2-guide.md)已在目标模型推理前冻结，准备路由与 proposal 分轴评分；尚未运行真实 v2，v1 模型质量仍为 3/5 failed。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步先固定冻结实现的提交与远端 CI，再运行真实 qwen3.5:2b；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1777,3 +1777,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 控制面只能把 proposal 中完全相同的 action 转成 pending approval request；proposal 与 request 均保持未授权。decision、claim、显式 enable 和 restricted executor 继续独立。CLI 账本时间增加不早于前置 artifact 的逻辑下限，底层 verifier 仍拒绝倒序记录。
 - 本地 478 tests 通过（2 项环境跳过）；71 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 通过。source 合成全链路与停服复验通过；隔离无依赖 wheel 通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`。
 - 实现 `541a7df588a6aa029f2293aa92321a25caa471df` / [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) completed/success。runtime-currency `116223488395`；core-contracts Ubuntu `116223488653`、Windows `116223488692`；controlled-rejections Ubuntu `116225842956`、Windows `116225842989`；runtime-evidence Windows `116225842973`、Ubuntu `116225843079` 均 success。本门 remote-accepted；合成 fixture 不是真实模型质量证据。下一门先冻结新的 v2 cohort，再运行真实模型，分别验收 proposal 工具选择、参数、拒绝、越权负例、引用与 token 成本。配置写入、SocketCAN、硬件和认证 operator 仍不开放。
+
+### P30：Agent 动作提案 v2 预推理冻结（2026-10-15）
+
+- 新增独立 proposal evaluation：同一固定模型先选择只读项目工具并在一个成功 observation 后暂停，再进入无 handler 的 proposal catalog。checkpoint preparation 与 proposal 分轴评分；准备失败时不生成或伪造 proposal checkpoint。
+- manifest/result 绑定 spec、实现摘要、模型 digest、项目 report/bundle、gold fact ID、精确 action/decline、累计调用/token 和全部 artifact。离线 verifier 不使用 LLM judge，重验 preparation、proposal、评分、汇总与 result ID；所有 proposal 固定未授权、未调用。
+- 五题 agent-authored structural gold 已在任何 v2 目标模型推理前冻结：两个精确 virtual CAN 正例、action-not-required、SocketCAN/can0 越权、条件证据不成立。manifest ID `1c760f1ebbb5ddf54ee4d7445d7fd212cb59a522e4e4e7d5ebc510cec722c1ca`；不冒充独立人工 gold 或 prose 质量。
+- 本地全量 481 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；新增三项测试覆盖成功链、准备失败归因、冻结 gold 与结果篡改拒绝。当前 pre-inference frozen / local-validated，远端 CI 与真实模型结果均待完成，v1 3/5 failed 不变。
+- 下一步先提交/推送这一冻结点并完成实际远端 job，再以固定 manifest ID 运行 qwen3.5:2b 和停服式离线复验。冻结后不得根据结果改同一 v2；配置写入、SocketCAN、硬件与认证 operator 继续关闭。
