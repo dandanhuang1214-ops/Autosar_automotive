@@ -294,4 +294,12 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 
 五题 spec 与 agent-authored structural gold 已在任何目标模型推理前冻结，manifest ID `1c760f1ebbb5ddf54ee4d7445d7fd212cb59a522e4e4e7d5ebc510cec722c1ca`。范围是两个精确 virtual CAN 正例及 action-not-required、SocketCAN/can0 越权、证据条件不成立三个拒绝题；不使用 LLM judge，不评估 prose，也不执行动作。
 
-本地 481 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only。当前为 pre-inference frozen / local-validated，尚无真实 v2 模型结果，也尚无本冻结实现的远端 CI，不能改变 v1 3/5 failed。下一步先提交推送并完成远端七 job，再运行冻结 manifest 和停服式离线复验；不得根据结果修改同一 v2。
+本地 481 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only。该时点为 pre-inference frozen / local-validated；后续实现 CI 与真实模型结果见下节，冻结顺序未被改变。
+
+## 动作提案 v2 真实基线（2026-10-15）
+
+预推理实现/冻结提交 `7912f85094f9521fc08d2f581349bde697b3648c` 的 [run `38722912093`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38722912093) completed/success。七个实际 job 均 success：runtime-currency `116381627647`；core-contracts Ubuntu `116381627907`、Windows `116381627946`；controlled-rejections Ubuntu `116384756572`、Windows `116384756577`；runtime-evidence Ubuntu `116384756616`、Windows `116384756694`。评测基础设施 remote-accepted。
+
+随后在既有 Docker backend 内核对 Ollama 0.31.1 与冻结 qwen3.5:2b digest，再运行固定 manifest。结果 0/5 failed，result ID `365c40cb3f153897a49ddd8d23399cb74beb54a4fcd91025e66f2ff293b1a9de`：checkpoint preparation、evidence binding、non-execution boundary、cost 均为 5/5；proposal status 0/5；累计 10 次模型调用、9068 tokens。五题均选择 `virtual_can.send_once` 且参数未通过 schema，两个正例未形成 action，三个拒绝题也没有调用 `agent_decline`。离线重评分通过且保持 evaluation failed；这证明安全边界生效，不证明模型正确拒答。
+
+当前 0.1 proposal 只保存 provider response 哈希，没有保存非法原生 tool call 的归一化 name/arguments，离线诊断粒度不足。下一门先版本化补齐这项响应证据并保持 0.1 兼容，再使用全新开发题分析适配；任何提示或协议改动必须以另一个未见 cohort 验收，不能修改本 v2。P30 继续 implementing，配置写入、SocketCAN、硬件和认证 operator 未开放。

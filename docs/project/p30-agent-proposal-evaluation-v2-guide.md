@@ -1,6 +1,6 @@
 # P30 Agent 动作提案 v2 冻结评测
 
-状态：**pre-inference frozen / local-validated**。评测基础设施与五题 manifest 已固定，真实 qwen3.5:2b 尚未读取本 cohort；因此当前不能更新模型质量结论，v1 仍为 3/5 failed。
+状态：**evaluated / infrastructure remote-accepted / model quality failed**。五题 manifest 在任何目标模型推理前固定；实现远端七 job 通过后才运行真实 qwen3.5:2b，结果 0/5。基础设施通过不等于模型能力通过。
 
 ## 评测对象
 
@@ -73,4 +73,23 @@ python -m automotive_workbench.cli verify-agent-proposal-eval \
 
 新增 3 项专项测试后，全量 481 tests 通过（2 项环境跳过）；73 schemas / 77 schema-bound / 25 syntax-only examples 通过。专项覆盖成功链路、准备失败单独归因、gold 不存在、结果篡改与停服式离线复验。
 
-下一步先提交并推送这一预推理冻结点，取得对应远端 CI；之后才运行真实模型。冻结后不根据结果修改本 v2 题目或 gold。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+预推理实现/冻结提交为 `7912f85094f9521fc08d2f581349bde697b3648c`。[run `38722912093`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38722912093) 对应该精确 head，七 job 全部 success：runtime-currency `116381627647`；core-contracts Ubuntu `116381627907`、Windows `116381627946`；controlled-rejections Ubuntu `116384756572`、Windows `116384756577`；runtime-evidence Ubuntu `116384756616`、Windows `116384756694`。评测基础设施 remote-accepted。
+
+## 真实结果
+
+远端验收之后，复用原 `simulink-assistant_backend` 内 Ollama 0.31.1；服务报告的 qwen3.5:2b digest 与 manifest 完全一致。运行容器只读挂载仓库，仅向指定 `output/` 写证据，没有下载模型、重建服务或发布 11434。
+
+结果为 `failed`，0/5 题通过，result ID `365c40cb3f153897a49ddd8d23399cb74beb54a4fcd91025e66f2ff293b1a9de`：
+
+- checkpoint preparation 5/5；全部先选中 `project_query_facts` 并获得冻结 fact；
+- evidence binding、non-execution boundary、cost 各 5/5；共 10 模型调用、9068 tokens；
+- proposal status 0/5；五题均为 `refused / Invalid virtual CAN tool arguments`；
+- 两个正例没有形成 typed action；三个拒绝题虽然最终没有 requested action，但模型没有调用 `agent_decline`，而是同样选择了参数非法的 `virtual_can.send_once`。这属于运行时 fail closed，不是正确拒答。
+
+离线 verifier 返回 `status=passed`、`evaluation_status=failed`，说明 artifact 和确定性评分可重放，不能把 verifier 通过写成模型通过。本结果不用于修改同一 v2 spec、gold 或输出。
+
+## 审计限制与下一门
+
+`agent-action-proposal-0.1` 会保存 provider response SHA-256、content 和合法 selection；但非法 tool call 在校验失败后将 selection 清空，artifact 没有保存可独立复核的归一化 function name/arguments。因此当前证据能证明“实际响应哈希对应一次失败并被安全拒绝”，却不能在服务停止后仅凭 artifact 还原具体非法字段。
+
+下一实现门是向后兼容的 proposal evidence 0.2：保存并验签归一化原生 tool call 或 decline 响应，同时避免记录隐藏推理；先以新的开发题判断是字段名、十六进制类型还是拒绝路由问题。任何适配最终都必须另建未见 cohort，不能回写或重跑 v2 改变 0/5。配置写入、SocketCAN、硬件和认证 operator 继续关闭。

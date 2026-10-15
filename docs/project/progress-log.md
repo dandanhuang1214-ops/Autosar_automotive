@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-15）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)及[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)均已远端验收。新的[动作提案 v2 评测](p30-agent-proposal-evaluation-v2-guide.md)已在目标模型推理前冻结，准备路由与 proposal 分轴评分；尚未运行真实 v2，v1 模型质量仍为 3/5 failed。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步先固定冻结实现的提交与远端 CI，再运行真实 qwen3.5:2b；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)及 v2 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)在预推理冻结后取得真实 0/5 failed：读证、引用、非执行和成本均 5/5，但五题动作阶段都选择了参数非法的 virtual CAN 调用，三个应拒绝题也未走 `agent_decline`。离线重评分通过，不回改已见 cohort。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步先补齐原生 tool-call 的可核验响应归档，再用新开发题分析模型/API 适配；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1785,3 +1785,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 五题 agent-authored structural gold 已在任何 v2 目标模型推理前冻结：两个精确 virtual CAN 正例、action-not-required、SocketCAN/can0 越权、条件证据不成立。manifest ID `1c760f1ebbb5ddf54ee4d7445d7fd212cb59a522e4e4e7d5ebc510cec722c1ca`；不冒充独立人工 gold 或 prose 质量。
 - 本地全量 481 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；新增三项测试覆盖成功链、准备失败归因、冻结 gold 与结果篡改拒绝。当前 pre-inference frozen / local-validated，远端 CI 与真实模型结果均待完成，v1 3/5 failed 不变。
 - 下一步先提交/推送这一冻结点并完成实际远端 job，再以固定 manifest ID 运行 qwen3.5:2b 和停服式离线复验。冻结后不得根据结果改同一 v2；配置写入、SocketCAN、硬件与认证 operator 继续关闭。
+
+### P30：Agent 动作提案 v2 真实基线与评测基础设施远端验收（2026-10-15）
+
+- 预推理实现/冻结提交 `7912f85094f9521fc08d2f581349bde697b3648c` 先推送并完成 [run `38722912093`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38722912093)，head 完全一致且七 job 均 success：runtime-currency `116381627647`；core-contracts Ubuntu `116381627907`、Windows `116381627946`；controlled-rejections Ubuntu `116384756572`、Windows `116384756577`；runtime-evidence Ubuntu `116384756616`、Windows `116384756694`。本轮评测基础设施 remote-accepted；后续文档状态提交不替代该实现 run。
+- 远端通过后才复用现有 `simulink-assistant_backend`：Ollama 0.31.1、qwen3.5:2b digest `324d162b…20df` 与 manifest 一致；仓库只读挂载，仅既有 `output/` 可写，没有下载模型、重建容器、发布端口或调用执行 handler。
+- 固定五题结果为 0/5 failed，result ID `365c40cb3f153897a49ddd8d23399cb74beb54a4fcd91025e66f2ff293b1a9de`。checkpoint preparation、evidence binding、non-execution boundary、cost 均 5/5；proposal status 0/5，精确 action selection 仅按当前“无 requested action”口径为 3/5。共 10 次模型调用、9068 tokens。
+- 五份 proposal 均为 `refused / Invalid virtual CAN tool arguments`：模型都选择了 `virtual_can.send_once`，参数未通过精确 schema；两个正例未形成 action，三个拒绝题也未调用 `agent_decline`。这是运行时安全拒绝，不是模型正确拒答。停服式离线 verifier 返回 passed，并保留 `evaluation_status=failed`。
+- 0.1 artifact 保存 response SHA-256、空 content 与最终 selection，但非法 selection 被清空，没有保存可独立核验的归一化原生 tool-call 参数；因此能够验证 artifact 未篡改和确定性评分，却不能仅凭归档还原每个非法参数。下一实现门是向后兼容的 proposal evidence 0.2，保存并验签归一化 tool call/decline 响应；随后只在新开发题上研究模型/API 适配，最终用全新未见 cohort 验收，绝不回调或重跑 v2 改写结论。
+- P30 保持 implementing。配置写入、SocketCAN、硬件和认证 operator 继续关闭；v1 3/5 与 v2 0/5 是不同能力切面的真实 failed 基线，均不被基础设施 CI 通过覆盖。

@@ -16,7 +16,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [模型提案与控制面执行边界](docs/project/p30-agent-action-proposal-guide.md)已 remote-accepted：模型能看到 typed `virtual_can.send_once`，但 proposal catalog 没有 handler，输出始终 `execution_authorized=false` / `tool_invoked=false`；控制面只能把完全相同的 action 转为待审批请求。实现 `541a7df` / [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) 七 job 成功。下一门冻结新的 v2 cohort；配置写入、SocketCAN、硬件与认证 operator 仍不开放。
 
-[动作提案 v2 评测](docs/project/p30-agent-proposal-evaluation-v2-guide.md)已在真实推理前冻结：同一模型先只读取证并暂停，再进入无 handler 的 proposal-only catalog；准备路由与 proposal 分轴评分。五题 manifest ID `1c760f1e…c1ca`，覆盖两个精确参数正例及不需要动作、SocketCAN 越权、证据不足三个拒绝题。当前尚未运行真实 qwen3.5:2b，不能修改 v1 3/5 failed 结论；下一步先固定本实现提交和远端 CI，再运行冻结 cohort。
+[动作提案 v2 评测](docs/project/p30-agent-proposal-evaluation-v2-guide.md)已按预推理冻结边界完成：实现 `7912f85` / [run `38722912093`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38722912093) 七 job 成功，随后才在原 Docker backend 运行固定的 qwen3.5:2b。真实结果为 0/5 failed：读证 checkpoint、证据绑定、非执行边界和成本均 5/5，但五题 proposal 都因模型选择 `virtual_can.send_once` 且参数结构非法而 fail closed；三个拒绝题也未调用 `agent_decline`。result `365c40cb…a9de` 已离线重评分通过。该结果不回改同一 v2；下一门先补 proposal 原生 tool-call 的可核验归档，再只用新开发题分析协议/模型适配，配置写入、SocketCAN、硬件和认证 operator 仍不开放。
 
 日常项目验收从 `run-project` 开始：
 
