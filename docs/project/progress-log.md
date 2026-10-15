@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-15）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)及 v2 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)在预推理冻结后取得真实 0/5 failed：读证、引用、非执行和成本均 5/5，但五题动作阶段都选择了参数非法的 virtual CAN 调用，三个应拒绝题也未走 `agent_decline`。离线重评分通过，不回改已见 cohort。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步先补齐原生 tool-call 的可核验响应归档，再用新开发题分析模型/API 适配；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)及 v2 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)在预推理冻结后取得真实 0/5 failed：读证、引用、非执行和成本均 5/5，但五题动作阶段都选择了参数非法的 virtual CAN 调用，三个应拒绝题也未走 `agent_decline`。离线重评分通过，不回改已见 cohort。proposal evidence 0.2 已 local-accepted：归一化原生 tool-call 可离线核验，0.1 独立 artifact 兼容。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步先取得 0.2 实现提交和远端 CI，再用全新开发题分析模型/API 适配；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1794,3 +1794,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 五份 proposal 均为 `refused / Invalid virtual CAN tool arguments`：模型都选择了 `virtual_can.send_once`，参数未通过精确 schema；两个正例未形成 action，三个拒绝题也未调用 `agent_decline`。这是运行时安全拒绝，不是模型正确拒答。停服式离线 verifier 返回 passed，并保留 `evaluation_status=failed`。
 - 0.1 artifact 保存 response SHA-256、空 content 与最终 selection，但非法 selection 被清空，没有保存可独立核验的归一化原生 tool-call 参数；因此能够验证 artifact 未篡改和确定性评分，却不能仅凭归档还原每个非法参数。下一实现门是向后兼容的 proposal evidence 0.2，保存并验签归一化 tool call/decline 响应；随后只在新开发题上研究模型/API 适配，最终用全新未见 cohort 验收，绝不回调或重跑 v2 改写结论。
 - P30 保持 implementing。配置写入、SocketCAN、硬件和认证 operator 继续关闭；v1 3/5 与 v2 0/5 是不同能力切面的真实 failed 基线，均不被基础设施 CI 通过覆盖。
+
+### P30：Agent proposal 响应证据 0.2（本地验收，2026-10-15）
+
+- 将新 proposal 协议升级为 `agent-action-proposal-0.2`。原生 tool calling 无论最终合法、参数非法或选择错误，都会保存不含隐藏推理的归一化 `interface/content/tool_call{name,arguments}`；`model_response_sha256` 改为该记录的可重算摘要，不再只是无法从 artifact 重建的 provider raw hash。
+- 离线 verifier 从归档响应重新推导 proposal/decline selection，并核对最终状态、原因、requested action 与非执行边界。即使同时重算响应摘要和 proposal ID，响应语义与最终 selection 不一致仍拒绝；非法响应保留具体 name/arguments，但仍不生成 action。独立 `agent-action-proposal-0.1` artifact 保持兼容验证。
+- 未来 proposal evaluation 的 implementation digest 现在同时绑定真实 runner、proposal/evaluation 三个 schema 和既有实现文件，避免只固定 Python 逻辑却遗漏证据契约。已见 v2 仍严格绑定旧实现 `7912f85`；要重放完整 v2 evaluator 必须使用该冻结提交，不能以 0.2 重新解释 0/5。
+- 本地全量 483 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。源码合成全链及停服复验通过；最终隔离无依赖 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3` 同样通过，未运行真实模型。
+- 当前 local-accepted，尚无本实现提交或远端 CI。下一步先完成实现 CI，再用不同于 v2 的开发问题读取并归档 qwen3.5:2b 的实际非法字段；不得重跑同一 v2 改变质量结论，也不扩大任何执行能力。

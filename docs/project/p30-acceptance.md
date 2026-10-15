@@ -303,3 +303,9 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 随后在既有 Docker backend 内核对 Ollama 0.31.1 与冻结 qwen3.5:2b digest，再运行固定 manifest。结果 0/5 failed，result ID `365c40cb3f153897a49ddd8d23399cb74beb54a4fcd91025e66f2ff293b1a9de`：checkpoint preparation、evidence binding、non-execution boundary、cost 均为 5/5；proposal status 0/5；累计 10 次模型调用、9068 tokens。五题均选择 `virtual_can.send_once` 且参数未通过 schema，两个正例未形成 action，三个拒绝题也没有调用 `agent_decline`。离线重评分通过且保持 evaluation failed；这证明安全边界生效，不证明模型正确拒答。
 
 当前 0.1 proposal 只保存 provider response 哈希，没有保存非法原生 tool call 的归一化 name/arguments，离线诊断粒度不足。下一门先版本化补齐这项响应证据并保持 0.1 兼容，再使用全新开发题分析适配；任何提示或协议改动必须以另一个未见 cohort 验收，不能修改本 v2。P30 继续 implementing，配置写入、SocketCAN、硬件和认证 operator 未开放。
+
+## Proposal 响应证据 0.2（本地验收，2026-10-15）
+
+`agent-action-proposal-0.2` 将归一化原生 function name/arguments 和 content 写入 artifact，响应摘要可离线重算；verifier 从响应重新推导 selection，并核对状态、原因与 requested action。非法 call 的具体字段不再因 fail closed 被清空；它仍不能形成 action。0.1 独立 proposal 保持兼容，未来评测 implementation digest 增加 runner 与三个 schema 绑定。
+
+本地 483 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、pip/diff check、源码合成全链与停服复验通过。最终隔离无依赖 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3`，安装后 proposal、审批转换和离线复验均通过。本门尚待提交与远端 CI；没有运行新的真实模型推理，也没有改变 v2 0/5。

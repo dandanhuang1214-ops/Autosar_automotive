@@ -7,13 +7,13 @@
     "proposal_id", "schema_version", "status", "reason", "checkpoint_id",
     "registry_binding_sha256", "goal", "model", "service_version",
     "model_interface", "capability_manifest", "capability_binding_sha256",
-    "model_request_sha256", "model_response_sha256", "model_response_content",
+    "model_request_sha256", "model_response_sha256", "model_response",
     "model_selection", "requested_action", "evidence_ids", "usage",
     "execution_authorized", "tool_invoked", "boundary"
   ],
   "properties": {
     "proposal_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "schema_version": {"const": "agent-action-proposal-0.1"},
+    "schema_version": {"const": "agent-action-proposal-0.2"},
     "status": {"enum": ["approval_required", "declined", "refused", "blocked"]},
     "reason": {"type": "string", "minLength": 1},
     "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -40,7 +40,34 @@
     "capability_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "model_request_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "model_response_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
-    "model_response_content": {"type": ["string", "null"], "maxLength": 8000},
+    "model_response": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["interface", "content", "tool_call"],
+          "properties": {
+            "interface": {"enum": ["native_tool_call", "structured_output"]},
+            "content": {"type": "string", "maxLength": 8000},
+            "tool_call": {
+              "oneOf": [
+                {"type": "null"},
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "arguments"],
+                  "properties": {
+                    "name": {"type": "string", "minLength": 1},
+                    "arguments": {"type": "object"}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
     "model_selection": {"type": ["object", "null"]},
     "requested_action": {
       "oneOf": [

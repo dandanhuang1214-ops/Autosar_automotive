@@ -1,6 +1,6 @@
 # P30 Agent 模型提案与控制面执行边界
 
-状态：**remote-accepted**。P30 整阶段仍为 implementing，模型质量仍沿用 v1 的 3/5 failed。
+状态：**0.1 remote-accepted；response evidence 0.2 local-accepted**。P30 整阶段仍为 implementing；真实动作提案 v2 质量为 0/5 failed。
 
 ## 结论
 
@@ -35,7 +35,7 @@ verified paused checkpoint
 
 提案只进行一次模型调用，并继承 checkpoint 尚未消费的模型调用、token、单次输出、context window 和墙钟预算。请求只发送目标、已成功工具的紧凑 projection、一个延迟加载的 execute capability 和剩余预算，不发送完整工程或所有工具 schema。
 
-`agent-action-proposal-0.1` 固定记录本次及累计 token。若调用后越过 token/时间上限，只能生成 `refused`，不能产生 requested action。任何 `approval_required`/`declined` 结果都必须有一次模型调用和响应证据。
+`agent-action-proposal-0.2` 固定记录本次及累计 token，并把归一化 `interface/content/tool_call{name,arguments}` 纳入响应摘要。离线 verifier 会从该记录重新推导 proposal/decline selection；合法或非法参数都可审计，但非法选择仍只能生成 `refused`，不能产生 requested action。任何 `approval_required`/`declined` 结果都必须有一次模型调用和响应证据。0.1 独立 proposal 仍可验证；完整历史评测继续由其冻结实现摘要约束。
 
 ## CLI
 
@@ -73,4 +73,4 @@ CLI 自动生成的账本时间增加“不得早于前置 artifact”的逻辑�
 
 ## 下一门
 
-在不使用 v1 已见题回调实现的前提下，先冻结新的 v2 cohort，再运行绑定的真实模型。v2 分开计量 execute proposal 的工具选择、精确参数、主动拒绝、越权负例、引用和 token 成本；冻结前不得推理，冻结后不得用结果修改同一版本。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+真实 v2 已按冻结顺序运行并得到 0/5；详见[评测指南](p30-agent-proposal-evaluation-v2-guide.md)。0.2 本地验证为 483 tests、源码合成全链和隔离无依赖 wheel 通过，最终 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3`，尚待本实现远端 CI。CI 通过后只用全新的开发题读取实际原生 tool-call 字段，再决定 provider 归一化、工具描述或小模型用途边界；最终必须另冻新 cohort，不能在已见 v2 上宣称提升。配置写入、SocketCAN、硬件和认证 operator 继续关闭。

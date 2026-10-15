@@ -47,6 +47,10 @@ RESULT_BOUNDARY = (
 _CASE_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 _HEX = re.compile(r"^[0-9a-f]{64}$")
 _IMPLEMENTATION_FILES = (
+    "scripts/run_agent_proposal_evaluation.py",
+    "schemas/agent-action-proposal.schema.json",
+    "schemas/agent-proposal-evaluation-manifest.schema.json",
+    "schemas/agent-proposal-evaluation-result.schema.json",
     "src/automotive_workbench/agent_proposal_evaluation.py",
     "src/automotive_workbench/agent_proposal.py",
     "src/automotive_workbench/agent_runtime.py",

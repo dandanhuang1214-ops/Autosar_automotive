@@ -24,7 +24,7 @@ from automotive_workbench.model_client import (
     StructuredCompletion,
     ToolCompletion,
 )
-from automotive_workbench.project_explanation import canonical
+from automotive_workbench.project_explanation import canonical, digest
 from tests.test_agent_approval import approval_checkpoint
 
 
@@ -36,9 +36,18 @@ class StructuredProposalClient:
     url = "fixture://proposal"
     records: list[dict] = []
 
-    def __init__(self, selection, *, identity="a") -> None:
+    def __init__(
+        self,
+        selection,
+        *,
+        identity="a",
+        input_tokens=30,
+        output_tokens=8,
+    ) -> None:
         self.selection = selection
         self.identity_value = identity
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
         self.requests = []
 
     def service_version(self):
@@ -57,8 +66,8 @@ class StructuredProposalClient:
         self.requests.append(copy.deepcopy(kwargs))
         return StructuredCompletion(
             content=canonical(self.selection),
-            input_tokens=30,
-            output_tokens=8,
+            input_tokens=self.input_tokens,
+            output_tokens=self.output_tokens,
             raw={"selection": self.selection},
         )
 
@@ -75,8 +84,8 @@ class NativeProposalClient(StructuredProposalClient):
             name=self.selection["tool_name"],
             arguments=copy.deepcopy(self.selection["arguments"]),
             content="",
-            input_tokens=32,
-            output_tokens=6,
+            input_tokens=self.input_tokens,
+            output_tokens=self.output_tokens,
             raw={"selection": self.selection},
         )
 
@@ -121,7 +130,31 @@ class AgentProposalTests(unittest.TestCase):
         self.assertEqual(proposal["model_interface"], "native_tool_call")
         names = [item["function"]["name"] for item in client.requests[0]["tools"]]
         self.assertEqual(names, [VIRTUAL_CAN_TOOL, "agent_decline"])
+        self.assertEqual(
+            proposal["model_response"]["tool_call"],
+            {
+                "name": VIRTUAL_CAN_TOOL,
+                "arguments": proposed_action()["arguments"],
+            },
+        )
+        self.assertEqual(
+            proposal["model_response_sha256"], digest(proposal["model_response"])
+        )
         self.assertFalse(proposal["tool_invoked"])
+
+        changed = copy.deepcopy(proposal)
+        changed["model_response"]["tool_call"] = {
+            "name": "agent_decline",
+            "arguments": {"reason": "action_not_required"},
+        }
+        changed["model_response_sha256"] = digest(changed["model_response"])
+        changed["proposal_id"] = digest(
+            {key: changed[key] for key in changed if key != "proposal_id"}
+        )
+        with self.assertRaisesRegex(
+            ValueError, "Invalid Agent proposed action"
+        ):
+            verify_action_proposal(self.checkpoint, changed)
 
     def test_decline_and_invalid_arguments_do_not_create_actions(self) -> None:
         declined = ActionProposalRunner(
@@ -151,6 +184,47 @@ class AgentProposalTests(unittest.TestCase):
         self.assertFalse(refused["tool_invoked"])
         verify_action_proposal(self.checkpoint, refused)
 
+        native_invalid = proposed_action()
+        native_invalid["arguments"]["channel"] = "can0"
+        native_refused = ActionProposalRunner(
+            NativeProposalClient(native_invalid)
+        ).run(self.checkpoint)
+        self.assertEqual(native_refused["status"], "refused")
+        self.assertEqual(
+            native_refused["model_response"]["tool_call"]["arguments"][
+                "channel"
+            ],
+            "can0",
+        )
+        self.assertIsNone(native_refused["model_selection"])
+        verify_action_proposal(self.checkpoint, native_refused)
+
+        changed_response = copy.deepcopy(native_refused)
+        changed_response["model_response"]["tool_call"]["arguments"][
+            "channel"
+        ] = "vcan0"
+        with self.assertRaisesRegex(
+            ValueError, "Invalid Agent action proposal response"
+        ):
+            verify_action_proposal(self.checkpoint, changed_response)
+
+    def test_legacy_proposal_remains_verifiable(self) -> None:
+        current = ActionProposalRunner(
+            StructuredProposalClient(proposed_action())
+        ).run(self.checkpoint)
+        legacy = copy.deepcopy(current)
+        legacy["schema_version"] = "agent-action-proposal-0.1"
+        response = legacy.pop("model_response")
+        legacy["model_response_content"] = response["content"]
+        legacy["model_response_sha256"] = "a" * 64
+        legacy["proposal_id"] = digest(
+            {key: legacy[key] for key in legacy if key != "proposal_id"}
+        )
+        self.assertEqual(
+            verify_action_proposal(self.checkpoint, legacy)["proposal_status"],
+            "approval_required",
+        )
+
     def test_identity_drift_fails_before_model_call(self) -> None:
         client = StructuredProposalClient(proposed_action(), identity="b")
         proposal = ActionProposalRunner(client).run(self.checkpoint)
@@ -158,6 +232,24 @@ class AgentProposalTests(unittest.TestCase):
         self.assertEqual(proposal["reason"], "model_identity_changed")
         self.assertEqual(proposal["usage"]["model_calls"], 0)
         self.assertEqual(client.requests, [])
+        verify_action_proposal(self.checkpoint, proposal)
+
+    def test_post_response_token_refusal_remains_verifiable(self) -> None:
+        remaining = (
+            self.checkpoint["budget"]["max_total_tokens"]
+            - self.checkpoint["usage"]["total_tokens"]
+        )
+        proposal = ActionProposalRunner(
+            StructuredProposalClient(
+                proposed_action(), input_tokens=remaining, output_tokens=1
+            )
+        ).run(self.checkpoint)
+        self.assertEqual(proposal["status"], "refused")
+        self.assertEqual(proposal["reason"], "token_budget_exhausted")
+        self.assertGreater(
+            proposal["usage"]["cumulative_total_tokens"],
+            self.checkpoint["budget"]["max_total_tokens"],
+        )
         verify_action_proposal(self.checkpoint, proposal)
 
     def test_proposal_converts_to_exact_approval_and_reverifies_offline(self) -> None:

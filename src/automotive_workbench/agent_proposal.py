@@ -29,7 +29,8 @@ from automotive_workbench.model_client import (
 from automotive_workbench.project_explanation import canonical, digest, read
 
 
-ACTION_PROPOSAL_VERSION = "agent-action-proposal-0.1"
+ACTION_PROPOSAL_VERSION = "agent-action-proposal-0.2"
+LEGACY_ACTION_PROPOSAL_VERSION = "agent-action-proposal-0.1"
 ACTION_PROPOSAL_BOUNDARY = (
     "The model selected a typed action proposal only. No tool handler was registered "
     "or invoked, the proposal is not approval or authenticated authorization, and "
@@ -266,6 +267,69 @@ def _selection(value: Any, catalog: ActionCatalog) -> dict[str, Any]:
     }
 
 
+def _requested_action(
+    catalog: ActionCatalog, selection: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    if selection is None or selection["action"] != "propose":
+        return None
+    permission = catalog.permission(selection["tool_name"])
+    arguments = copy.deepcopy(selection["arguments"])
+    return {
+        "tool_name": selection["tool_name"],
+        "permission": permission,
+        "arguments": arguments,
+        "call_id": digest(
+            {
+                "tool_name": selection["tool_name"],
+                "permission": permission,
+                "arguments": arguments,
+            }
+        ),
+    }
+
+
+def _model_response(
+    interface: str, completion: StructuredCompletion | ToolCompletion
+) -> dict[str, Any]:
+    tool_call = None
+    if interface == "native_tool_call":
+        if not isinstance(completion, ToolCompletion):
+            raise ValueError("Invalid native proposal completion")
+        tool_call = {
+            "name": completion.name,
+            "arguments": copy.deepcopy(completion.arguments),
+        }
+    return {
+        "interface": interface,
+        "content": completion.content,
+        "tool_call": tool_call,
+    }
+
+
+def _selection_from_response(
+    response: dict[str, Any], catalog: ActionCatalog
+) -> dict[str, Any]:
+    if response["interface"] == "native_tool_call":
+        call = response["tool_call"]
+        if call["name"] == "agent_decline":
+            value: Any = {
+                "action": "decline",
+                "tool_name": "",
+                "arguments": {},
+                "reason": call["arguments"].get("reason"),
+            }
+        else:
+            value = {
+                "action": "propose",
+                "tool_name": call["name"],
+                "arguments": call["arguments"],
+                "reason": "",
+            }
+    else:
+        value = parse_json(response["content"])
+    return _selection(value, catalog)
+
+
 def _proposal_body(
     checkpoint: dict[str, Any],
     catalog: ActionCatalog,
@@ -275,28 +339,14 @@ def _proposal_body(
     interface: str,
     request_sha256: str,
     response_sha256: str | None,
-    response_content: str | None,
+    response: dict[str, Any] | None,
     selection: dict[str, Any] | None,
     model_calls: int,
     input_tokens: int,
     output_tokens: int,
     elapsed_ms: float,
 ) -> dict[str, Any]:
-    requested_action = None
-    if selection is not None and selection["action"] == "propose":
-        permission = catalog.permission(selection["tool_name"])
-        requested_action = {
-            "tool_name": selection["tool_name"],
-            "permission": permission,
-            "arguments": copy.deepcopy(selection["arguments"]),
-            "call_id": digest(
-                {
-                    "tool_name": selection["tool_name"],
-                    "permission": permission,
-                    "arguments": selection["arguments"],
-                }
-            ),
-        }
+    requested_action = _requested_action(catalog, selection)
     evidence_ids = [item["observation_id"] for item in _observations(checkpoint)]
     body = {
         "schema_version": ACTION_PROPOSAL_VERSION,
@@ -312,7 +362,7 @@ def _proposal_body(
         "capability_binding_sha256": catalog.binding_sha256(),
         "model_request_sha256": request_sha256,
         "model_response_sha256": response_sha256,
-        "model_response_content": response_content,
+        "model_response": copy.deepcopy(response),
         "model_selection": copy.deepcopy(selection),
         "requested_action": requested_action,
         "evidence_ids": evidence_ids,
@@ -371,7 +421,7 @@ class ActionProposalRunner:
         reason = "model_unavailable"
         selection = None
         response_sha256 = None
-        response_content = None
+        response = None
         input_tokens = output_tokens = 0
         model_calls = 0
         try:
@@ -390,6 +440,7 @@ class ActionProposalRunner:
                     context_window=checkpoint["budget"]["context_window"],
                 )
                 native = completion
+                response = _model_response(interface, completion)
                 if native.name == "agent_decline":
                     value: Any = {
                         "action": "decline",
@@ -412,11 +463,11 @@ class ActionProposalRunner:
                     max_output_tokens=max_output_tokens,
                     context_window=checkpoint["budget"]["context_window"],
                 )
+                response = _model_response(interface, completion)
                 value = parse_json(completion.content)
             input_tokens = completion.input_tokens
             output_tokens = completion.output_tokens
-            response_sha256 = digest(completion.raw)
-            response_content = completion.content
+            response_sha256 = digest(response)
             selection = _selection(value, self.catalog)
             if self.client.identity(model) != checkpoint["model"]:
                 raise ValueError("model_identity_changed")
@@ -452,7 +503,7 @@ class ActionProposalRunner:
             interface=interface,
             request_sha256=digest(request),
             response_sha256=response_sha256,
-            response_content=response_content,
+            response=response,
             selection=selection,
             model_calls=model_calls,
             input_tokens=input_tokens,
@@ -469,18 +520,24 @@ def verify_action_proposal(
 ) -> dict[str, Any]:
     verify_agent_checkpoint(checkpoint)
     action_catalog = catalog or build_restricted_action_catalog()
-    fields = {
+    common_fields = {
         "proposal_id", "schema_version", "status", "reason", "checkpoint_id",
         "registry_binding_sha256", "goal", "model", "service_version",
         "model_interface", "capability_manifest", "capability_binding_sha256",
-        "model_request_sha256", "model_response_sha256", "model_response_content",
-        "model_selection", "requested_action", "evidence_ids", "usage",
+        "model_request_sha256", "model_response_sha256", "model_selection",
+        "requested_action", "evidence_ids", "usage",
         "execution_authorized", "tool_invoked", "boundary",
     }
+    version = proposal.get("schema_version") if isinstance(proposal, dict) else None
+    version_fields = (
+        {"model_response_content"}
+        if version == LEGACY_ACTION_PROPOSAL_VERSION
+        else {"model_response"}
+    )
     if (
         not isinstance(proposal, dict)
-        or set(proposal) != fields
-        or proposal.get("schema_version") != ACTION_PROPOSAL_VERSION
+        or set(proposal) != common_fields | version_fields
+        or version not in {LEGACY_ACTION_PROPOSAL_VERSION, ACTION_PROPOSAL_VERSION}
         or proposal.get("status")
         not in {"approval_required", "declined", "refused", "blocked"}
         or not isinstance(proposal.get("reason"), str)
@@ -532,8 +589,14 @@ def verify_action_proposal(
         != checkpoint["usage"]["total_tokens"] + usage["total_tokens"]
         or usage["cumulative_model_calls"]
         > checkpoint["budget"]["max_model_calls"]
-        or usage["cumulative_total_tokens"]
-        > checkpoint["budget"]["max_total_tokens"]
+        or (
+            usage["cumulative_total_tokens"]
+            > checkpoint["budget"]["max_total_tokens"]
+            and not (
+                proposal["status"] == "refused"
+                and proposal["reason"] == "token_budget_exhausted"
+            )
+        )
         or not isinstance(usage.get("elapsed_ms"), (int, float))
         or isinstance(usage.get("elapsed_ms"), bool)
         or not math.isfinite(usage["elapsed_ms"])
@@ -541,17 +604,60 @@ def verify_action_proposal(
     ):
         raise ValueError("Invalid Agent action proposal usage")
     response_sha = proposal.get("model_response_sha256")
-    response_content = proposal.get("model_response_content")
-    if not (
-        (response_sha is None and response_content is None)
-        or (
-            isinstance(response_sha, str)
-            and len(response_sha) == 64
-            and all(character in "0123456789abcdef" for character in response_sha)
-            and isinstance(response_content, str)
-        )
-    ):
-        raise ValueError("Invalid Agent action proposal response")
+    response: dict[str, Any] | None = None
+    if version == LEGACY_ACTION_PROPOSAL_VERSION:
+        response_content = proposal.get("model_response_content")
+        if not (
+            (response_sha is None and response_content is None)
+            or (
+                isinstance(response_sha, str)
+                and len(response_sha) == 64
+                and all(
+                    character in "0123456789abcdef"
+                    for character in response_sha
+                )
+                and isinstance(response_content, str)
+            )
+        ):
+            raise ValueError("Invalid Agent action proposal response")
+    else:
+        candidate = proposal.get("model_response")
+        if candidate is not None:
+            if (
+                not isinstance(candidate, dict)
+                or set(candidate) != {"interface", "content", "tool_call"}
+                or candidate.get("interface") != proposal["model_interface"]
+                or not isinstance(candidate.get("content"), str)
+                or len(canonical(candidate)) > 32_000
+            ):
+                raise ValueError("Invalid Agent action proposal response")
+            tool_call = candidate.get("tool_call")
+            if proposal["model_interface"] == "native_tool_call":
+                if (
+                    not isinstance(tool_call, dict)
+                    or set(tool_call) != {"name", "arguments"}
+                    or not isinstance(tool_call.get("name"), str)
+                    or not tool_call["name"]
+                    or not isinstance(tool_call.get("arguments"), dict)
+                ):
+                    raise ValueError("Invalid Agent action proposal response")
+            elif tool_call is not None:
+                raise ValueError("Invalid Agent action proposal response")
+            response = copy.deepcopy(candidate)
+        if not (
+            (response_sha is None and response is None)
+            or (
+                isinstance(response_sha, str)
+                and len(response_sha) == 64
+                and all(
+                    character in "0123456789abcdef"
+                    for character in response_sha
+                )
+                and response is not None
+                and response_sha == digest(response)
+            )
+        ):
+            raise ValueError("Invalid Agent action proposal response")
     if (
         (response_sha is not None and usage["model_calls"] != 1)
         or (
@@ -576,26 +682,68 @@ def verify_action_proposal(
         raise ValueError("Invalid Agent action proposal model evidence")
     selection = proposal.get("model_selection")
     requested = proposal.get("requested_action")
+    response_selection = None
+    if version == ACTION_PROPOSAL_VERSION and response is not None:
+        try:
+            response_selection = _selection_from_response(response, action_catalog)
+        except (TypeError, KeyError, ServiceError) as exc:
+            if (
+                proposal["status"] != "blocked"
+                or proposal["reason"] != str(exc)
+                or selection is not None
+                or requested is not None
+            ):
+                raise ValueError(
+                    "Agent action proposal differs from recorded model response"
+                ) from exc
+        except ValueError as exc:
+            if (
+                proposal["status"] != "refused"
+                or proposal["reason"] != str(exc)
+                or selection is not None
+                or requested is not None
+            ):
+                raise ValueError(
+                    "Agent action proposal differs from recorded model response"
+                ) from exc
+        if (
+            response_selection is not None
+            and proposal["status"] == "refused"
+        ):
+            token_exhausted = (
+                usage["cumulative_total_tokens"]
+                > checkpoint["budget"]["max_total_tokens"]
+            )
+            time_exhausted = (
+                checkpoint["usage"]["elapsed_ms"] / 1000
+                + usage["elapsed_ms"] / 1000
+                > checkpoint["budget"]["max_seconds"]
+            )
+            valid_post_response_refusal = (
+                proposal["reason"] == "model_identity_changed"
+                or (
+                    proposal["reason"] == "token_budget_exhausted"
+                    and token_exhausted
+                )
+                or (
+                    proposal["reason"] == "wall_clock_budget_exhausted"
+                    and not token_exhausted
+                    and time_exhausted
+                )
+            )
+            if not valid_post_response_refusal:
+                raise ValueError(
+                    "Agent action proposal differs from recorded model response"
+                )
     if proposal["status"] == "approval_required":
         checked = _selection(selection, action_catalog)
         if (
             checked["action"] != "propose"
-            or requested
-            != _proposal_body(
-                checkpoint,
-                action_catalog,
-                status=proposal["status"],
-                reason=proposal["reason"],
-                interface=proposal["model_interface"],
-                request_sha256=proposal["model_request_sha256"],
-                response_sha256=response_sha,
-                response_content=response_content,
-                selection=checked,
-                model_calls=usage["model_calls"],
-                input_tokens=usage["prompt_tokens"],
-                output_tokens=usage["output_tokens"],
-                elapsed_ms=usage["elapsed_ms"],
-            )["requested_action"]
+            or (
+                version == ACTION_PROPOSAL_VERSION
+                and response_selection != checked
+            )
+            or requested != _requested_action(action_catalog, checked)
             or proposal["reason"] != "model_proposed_typed_action"
         ):
             raise ValueError("Invalid Agent proposed action")
@@ -603,6 +751,10 @@ def verify_action_proposal(
         checked = _selection(selection, action_catalog)
         if (
             checked["action"] != "decline"
+            or (
+                version == ACTION_PROPOSAL_VERSION
+                and response_selection != checked
+            )
             or requested is not None
             or proposal["reason"] != f"model_declined:{checked['reason']}"
         ):
