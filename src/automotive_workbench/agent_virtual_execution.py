@@ -32,6 +32,18 @@ VIRTUAL_EXECUTION_BOUNDARY = (
     "The approval is not authenticated authorization, no hardware or configuration "
     "write is permitted, and uniqueness is limited to one local ledger."
 )
+VIRTUAL_CAN_ARGUMENT_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["frame_id", "payload_hex"],
+    "properties": {
+        "frame_id": {"type": "integer", "minimum": 0, "maximum": 0x7FF},
+        "payload_hex": {
+            "type": "string",
+            "pattern": "^(?:[0-9a-fA-F]{2}){0,8}$",
+        },
+    },
+}
 
 
 def _virtual_channel(transaction_id: str) -> str:
@@ -45,15 +57,7 @@ def virtual_execution_paths(
     return claim_path.parent / "execution-attempt.json", receipt_path
 
 
-def _validate_action(request: dict[str, Any]) -> dict[str, Any]:
-    action = request.get("requested_action")
-    if (
-        not isinstance(action, dict)
-        or action.get("tool_name") != VIRTUAL_CAN_TOOL
-        or action.get("permission") != "execute"
-    ):
-        raise ValueError("Agent virtual execution requires the exact execute tool")
-    arguments = action.get("arguments")
+def validate_virtual_can_arguments(arguments: Any) -> dict[str, Any]:
     if not isinstance(arguments, dict) or set(arguments) != {"frame_id", "payload_hex"}:
         raise ValueError("Invalid virtual CAN tool arguments")
     frame_id = arguments.get("frame_id")
@@ -71,7 +75,18 @@ def _validate_action(request: dict[str, Any]) -> dict[str, Any]:
         bytes.fromhex(payload_hex)
     except ValueError as exc:
         raise ValueError("Invalid virtual CAN tool arguments") from exc
-    return arguments
+    return dict(arguments)
+
+
+def _validate_action(request: dict[str, Any]) -> dict[str, Any]:
+    action = request.get("requested_action")
+    if (
+        not isinstance(action, dict)
+        or action.get("tool_name") != VIRTUAL_CAN_TOOL
+        or action.get("permission") != "execute"
+    ):
+        raise ValueError("Agent virtual execution requires the exact execute tool")
+    return validate_virtual_can_arguments(action.get("arguments"))
 
 
 def build_virtual_execution_attempt(

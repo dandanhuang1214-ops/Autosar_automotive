@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-14）
+## 当前总览（2026-10-15）
 
-当前主阶段 P30 implementing。只读 `ToolRegistry + AgentRunner`、v1 冻结评测、checkpoint/暂停/完成态幂等恢复、[审批请求与决定状态](p30-agent-approval-guide.md)、[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)和[受限 virtual CAN execute tool](p30-agent-virtual-execution-guide.md)均已远端验收。受限执行默认关闭，只允许 transaction ID 派生的进程内 virtual channel，命令、效果和补偿证据分离；未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph；后者仅保留为未来编排适配候选。下一门为模型只提议、控制面审批执行的暂停边界及新 v2 cohort；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务和[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)均已远端验收；[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)已 local-accepted，等待实现提交和远端七 job。模型可选择 typed execute action，但 proposal catalog 没有 handler，proposal 固定未授权且未调用；只有控制面能把完全相同的 action 转为审批请求。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一门冻结新的 v2 cohort；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1769,3 +1769,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地 473 tests 全部通过（2 项环境跳过）；70 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 和 source 合成端到端场景通过。隔离无依赖 wheel 场景通过，SHA-256 `a32b472665ce0851ccd12173ff7940b83ea9dffd1c9166e88ccd12ac60dbe40f`，该环境只验证默认关闭而不声称实际 CAN 执行。
 - 实现 `d37c36214b58a1fe4b7d6bf672d72e762e0eac1e` / [run `38664606675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38664606675) completed/success。runtime-currency `116193525598`；core-contracts Windows `116193525835`、Ubuntu `116193525958`；controlled-rejections Ubuntu `116196258406`、Windows `116196258536`；runtime-evidence Windows `116196258501`、Ubuntu `116196258509` 均 success。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
 - 下一门把 execute capability 接入 Agent 的“模型只提议、控制面审批执行”暂停边界，并冻结新的 v2 cohort；配置写入、SocketCAN、硬件及认证 operator 仍不开放，v1 模型质量仍为 3/5 failed。
+
+### P30：Agent 模型提案与控制面执行边界（2026-10-15）
+
+- 新增 `agent_proposal.py`、`agent-action-proposal-0.1` schema 和 proposal/create-approval/offline-verify CLI。`ActionCatalog` 只有 typed manifest 与参数校验器，没有 `invoke` 或 handler；Ollama function call 只产生 proposal，不会分派执行。
+- proposal 绑定暂停 checkpoint、模型 identity、service version、capability binding、请求/响应、剩余预算、成功 observation 和精确 action call ID。模型 decline、非法参数、未知能力、identity 漂移与预算越界 fail closed。
+- 控制面只能把 proposal 中完全相同的 action 转成 pending approval request；proposal 与 request 均保持未授权。decision、claim、显式 enable 和 restricted executor 继续独立。CLI 账本时间增加不早于前置 artifact 的逻辑下限，底层 verifier 仍拒绝倒序记录。
+- 本地 478 tests 通过（2 项环境跳过）；71 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 通过。source 合成全链路与停服复验通过；隔离无依赖 wheel 通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`。
+- 本门 local-accepted，尚未提交/推送，远端七 job 待执行。合成 fixture 不是真实模型质量证据；下一门先冻结新的 v2 cohort，再运行真实模型，分别验收 proposal 工具选择、参数、拒绝、越权负例、引用与 token 成本。配置写入、SocketCAN、硬件和认证 operator 仍不开放。

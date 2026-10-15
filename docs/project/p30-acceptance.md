@@ -279,3 +279,11 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 实现 `d37c36214b58a1fe4b7d6bf672d72e762e0eac1e` 的 [run `38664606675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38664606675) completed/success。七 job 均 success：runtime-currency `116193525598`；core-contracts Windows `116193525835`、Ubuntu `116193525958`；controlled-rejections Ubuntu `116196258406`、Windows `116196258536`；runtime-evidence Windows `116196258501`、Ubuntu `116196258509`。本门 remote-accepted；后续纯文档状态提交不替代该实现 run。
 
 下一门把 execute capability 接入 Agent 的“提议而不执行”暂停边界，并用新 v2 frozen cohort 验收工具选择、精确参数、拒绝、成本和越权负例；配置写入、SocketCAN、硬件与认证 operator 仍未开放，v1 模型质量仍为 3/5 failed。
+
+## Agent 模型提案与控制面执行边界（本地验收，2026-10-15）
+
+新增 proposal-only `ActionCatalog`、`ActionProposalRunner`、`agent-action-proposal-0.1` 和三个 CLI。模型能通过原生 function calling 或结构化回退选择 `virtual_can.send_once` 的精确参数，但 catalog 没有 handler，artifact 固定 `execution_authorized=false` / `tool_invoked=false`。proposal 绑定 checkpoint、模型/服务身份、capability manifest、请求/响应、usage 与 observation；控制面转换审批时必须保持完整 `requested_action` 相等。
+
+本地 478 tests 通过（2 项环境跳过）；71 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、compileall、topology、pip/diff check 通过。source 合成场景完成 proposal → exact approval → decision → claim → 默认关闭 → 显式 virtual 执行 → 停服复验。隔离无依赖 wheel 场景通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`；无可选 CAN 依赖时只验证默认关闭。
+
+本门 local-accepted，等待实现提交与远端七 job，不把本地成功写成远端验收，也不把合成 fixture 写成真实模型质量。下一门先冻结新的 v2 cohort，再运行真实模型；配置写入、SocketCAN、硬件和认证 operator 仍未开放，v1 质量仍为 3/5 failed。

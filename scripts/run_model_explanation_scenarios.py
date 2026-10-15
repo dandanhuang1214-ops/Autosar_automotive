@@ -58,6 +58,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_approval_decision = None
     agent_transaction_claim = None
     agent_transaction_receipt = None
+    agent_action_proposal = None
+    agent_action_proposal_verification = None
     virtual_execution_claim = None
     virtual_execution_receipt = None
     agent_evaluation = None
@@ -250,28 +252,48 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_transaction_receipt["side_effect_performed"] is not False
         ):
             raise ValueError("Agent transaction rehearsal performed a side effect")
-        virtual_arguments_path = output / "agent-virtual-can-arguments.json"
-        virtual_arguments_path.write_text(
-            json.dumps(
-                {"frame_id": 0x321, "payload_hex": "102A"},
-                ensure_ascii=False,
-                indent=2,
-            )
-            + "\n",
-            encoding="utf-8",
-        )
-        virtual_request_path = output / "agent-virtual-can-request.json"
-        cli(
-            "agent-virtual-can-request",
+        server.mode, server.tags_count = "agent_proposal", 0
+        proposal_path = output / "agent-action-proposal.json"
+        agent_action_proposal = cli(
+            "agent-action-proposal",
             [
-                "request-agent-approval", checkpoint_path, virtual_arguments_path,
-                "--tool-name", "virtual_can.send_once", "--permission", "execute",
+                "propose-agent-action", checkpoint_path,
+                "--output", proposal_path,
+                "--ollama-url", origin,
+                "--timeout", "5",
+            ],
+            0,
+        )
+        proposal_schema = json.loads(
+            (ROOT / "schemas/agent-action-proposal.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        Draft202012Validator(proposal_schema).validate(agent_action_proposal)
+        if (
+            agent_action_proposal["status"] != "approval_required"
+            or agent_action_proposal["requested_action"]["tool_name"]
+            != "virtual_can.send_once"
+            or agent_action_proposal["execution_authorized"] is not False
+            or agent_action_proposal["tool_invoked"] is not False
+        ):
+            raise ValueError("Model action proposal crossed the execution boundary")
+        virtual_request_path = output / "agent-virtual-can-request.json"
+        virtual_request = cli(
+            "agent-virtual-can-request-from-proposal",
+            [
+                "request-agent-approval-from-proposal", checkpoint_path,
+                proposal_path,
                 "--reason", "Review one isolated process-local virtual CAN frame.",
-                "--evidence-id", agent_checkpoint["events"][-1]["observation_id"],
                 "--output", virtual_request_path,
             ],
             0,
         )
+        if (
+            virtual_request["requested_action"]
+            != agent_action_proposal["requested_action"]
+        ):
+            raise ValueError("Approval request changed the model-proposed action")
         virtual_decision_path = output / "agent-virtual-can-decision.json"
         cli(
             "agent-virtual-can-decision",
@@ -436,6 +458,15 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
          output / "readonly-agent-resume.json"],
         0,
     )
+    agent_action_proposal_verification = cli(
+        "agent-action-proposal-services-stopped",
+        [
+            "verify-agent-action-proposal",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-action-proposal.json",
+        ],
+        0,
+    )
     approval_request_verification = cli(
         "agent-approval-request-services-stopped",
         [
@@ -523,6 +554,14 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "offline_verification": transaction_verification["status"],
                    "execution_authorized": False,
                    "side_effect_performed": False,
+               },
+               "agent_action_proposal": {
+                   "status": agent_action_proposal["status"],
+                   "model_interface": agent_action_proposal["model_interface"],
+                   "offline_verification": agent_action_proposal_verification["status"],
+                   "approval_action_matches": True,
+                   "execution_authorized": False,
+                   "tool_invoked": False,
                },
                "restricted_virtual_execution": {
                    "claim_status": virtual_execution_claim["status"],

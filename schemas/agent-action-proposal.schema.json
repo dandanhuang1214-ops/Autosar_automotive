@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-action-proposal.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "proposal_id", "schema_version", "status", "reason", "checkpoint_id",
+    "registry_binding_sha256", "goal", "model", "service_version",
+    "model_interface", "capability_manifest", "capability_binding_sha256",
+    "model_request_sha256", "model_response_sha256", "model_response_content",
+    "model_selection", "requested_action", "evidence_ids", "usage",
+    "execution_authorized", "tool_invoked", "boundary"
+  ],
+  "properties": {
+    "proposal_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "agent-action-proposal-0.1"},
+    "status": {"enum": ["approval_required", "declined", "refused", "blocked"]},
+    "reason": {"type": "string", "minLength": 1},
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "registry_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "model": {"type": "object"},
+    "service_version": {"type": "string", "minLength": 1},
+    "model_interface": {"enum": ["native_tool_call", "structured_output"]},
+    "capability_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "permission", "input_schema"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "permission": {"const": "execute"},
+          "input_schema": {"type": "object"}
+        }
+      }
+    },
+    "capability_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model_request_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model_response_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "model_response_content": {"type": ["string", "null"], "maxLength": 8000},
+    "model_selection": {"type": ["object", "null"]},
+    "requested_action": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tool_name", "permission", "arguments", "call_id"],
+          "properties": {
+            "tool_name": {"type": "string", "minLength": 1},
+            "permission": {"const": "execute"},
+            "arguments": {"type": "object"},
+            "call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      ]
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_calls", "prompt_tokens", "output_tokens", "total_tokens",
+        "cumulative_model_calls", "cumulative_total_tokens", "elapsed_ms"
+      ],
+      "properties": {
+        "model_calls": {"type": "integer", "minimum": 0, "maximum": 1},
+        "prompt_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "total_tokens": {"type": "integer", "minimum": 0},
+        "cumulative_model_calls": {"type": "integer", "minimum": 0},
+        "cumulative_total_tokens": {"type": "integer", "minimum": 0},
+        "elapsed_ms": {"type": "number", "minimum": 0}
+      }
+    },
+    "execution_authorized": {"const": false},
+    "tool_invoked": {"const": false},
+    "boundary": {
+      "const": "The model selected a typed action proposal only. No tool handler was registered or invoked, the proposal is not approval or authenticated authorization, and execution still requires control-plane review, decision, claim, and explicit enable."
+    }
+  }
+}

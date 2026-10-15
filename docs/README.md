@@ -95,3 +95,4 @@
 - [P30 只读 Agent 工具链与 LLM API 评审](project/p30-readonly-agent-guide.md)
 - [P30 只读 Agent 冻结评测指南](project/p30-readonly-agent-evaluation-guide.md)
 - [P30 Agent 受限 virtual CAN execute tool](project/p30-agent-virtual-execution-guide.md)
+- [P30 Agent 模型提案与控制面执行边界](project/p30-agent-action-proposal-guide.md)

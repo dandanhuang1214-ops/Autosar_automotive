@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import sys
 from pathlib import Path
@@ -65,6 +66,15 @@ def _print_json(result: dict) -> None:
     except UnicodeEncodeError:
         text = json.dumps(result, ensure_ascii=True, indent=2)
     print(text)
+
+
+def _utc_now_at_or_after(recorded: str) -> datetime:
+    """Keep CLI-authored ledger time monotonic across host clock corrections."""
+    now = datetime.now(timezone.utc)
+    previous = datetime.fromisoformat(recorded.replace("Z", "+00:00"))
+    if previous.tzinfo is None:
+        raise ValueError("Recorded transaction time requires a timezone")
+    return max(now, previous.astimezone(timezone.utc))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -222,6 +232,33 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_resume_verify.add_argument("checkpoint", type=Path)
     agent_resume_verify.add_argument("result", type=Path)
+    agent_action_proposal = commands.add_parser(
+        "propose-agent-action",
+        help="Ask the pinned model for one typed proposal without registering a handler",
+    )
+    agent_action_proposal.add_argument("checkpoint", type=Path)
+    agent_action_proposal.add_argument("--output", type=Path, required=True)
+    agent_action_proposal.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    agent_action_proposal.add_argument("--timeout", type=float, default=30)
+    agent_action_proposal_verify = commands.add_parser(
+        "verify-agent-action-proposal",
+        help="Verify a checkpoint-bound action proposal without model services",
+    )
+    agent_action_proposal_verify.add_argument("checkpoint", type=Path)
+    agent_action_proposal_verify.add_argument("proposal", type=Path)
+    agent_approval_from_proposal = commands.add_parser(
+        "request-agent-approval-from-proposal",
+        help="Create a pending approval request for the exact proposed action",
+    )
+    agent_approval_from_proposal.add_argument("checkpoint", type=Path)
+    agent_approval_from_proposal.add_argument("proposal", type=Path)
+    agent_approval_from_proposal.add_argument("--reason", required=True)
+    agent_approval_from_proposal.add_argument(
+        "--expires-in-seconds", type=int, default=900
+    )
+    agent_approval_from_proposal.add_argument("--output", type=Path, required=True)
     agent_approval_request = commands.add_parser(
         "request-agent-approval",
         help="Record a non-executing approval request bound to a paused Agent",
@@ -851,6 +888,53 @@ def main() -> int:
             result = verify_agent_resume_result(
                 read(args.checkpoint), read(args.result)
             )
+        elif args.command == "propose-agent-action":
+            from automotive_workbench.agent_proposal import (
+                ActionProposalRunner,
+                save_action_proposal,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.model_client import OllamaModelClient
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            proposal = ActionProposalRunner(
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout))
+            ).run(checkpoint)
+            result = save_action_proposal(checkpoint, proposal, args.output)
+        elif args.command == "verify-agent-action-proposal":
+            from automotive_workbench.agent_proposal import (
+                load_and_verify_action_proposal,
+            )
+
+            result = load_and_verify_action_proposal(
+                args.checkpoint, args.proposal
+            )
+        elif args.command == "request-agent-approval-from-proposal":
+            from datetime import datetime, timedelta, timezone
+
+            from automotive_workbench.agent_approval import (
+                save_agent_approval_request,
+            )
+            from automotive_workbench.agent_proposal import (
+                build_approval_request_from_proposal,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            proposal = read(args.proposal)
+            created_at = datetime.now(timezone.utc)
+            request = build_approval_request_from_proposal(
+                checkpoint,
+                proposal,
+                reason=args.reason,
+                created_at=created_at,
+                expires_at=created_at
+                + timedelta(seconds=args.expires_in_seconds),
+            )
+            result = save_agent_approval_request(
+                checkpoint, request, args.output
+            )
         elif args.command == "request-agent-approval":
             from datetime import datetime, timedelta, timezone
 
@@ -878,8 +962,6 @@ def main() -> int:
                 checkpoint, request, args.output
             )
         elif args.command == "decide-agent-approval":
-            from datetime import datetime, timezone
-
             from automotive_workbench.agent_approval import (
                 build_agent_approval_decision,
                 save_agent_approval_decision,
@@ -892,7 +974,7 @@ def main() -> int:
                 checkpoint,
                 request,
                 status=args.decision,
-                decided_at=datetime.now(timezone.utc),
+                decided_at=_utc_now_at_or_after(request["created_at"]),
                 actor_id=args.actor,
                 reason=args.reason,
             )
@@ -937,36 +1019,43 @@ def main() -> int:
                 args.checkpoint, args.request, args.decision
             )
         elif args.command == "claim-agent-approval":
-            from datetime import datetime, timezone
-
             from automotive_workbench.agent_transaction import (
                 claim_agent_approval,
             )
             from automotive_workbench.project_explanation import read
 
+            checkpoint = read(args.checkpoint)
+            request = read(args.request)
+            decision = read(args.decision)
             result = claim_agent_approval(
-                read(args.checkpoint),
-                read(args.request),
-                read(args.decision),
+                checkpoint,
+                request,
+                decision,
                 args.ledger,
-                claimed_at=datetime.now(timezone.utc),
+                claimed_at=_utc_now_at_or_after(decision["decided_at"]),
             )
         elif args.command == "complete-agent-transaction":
-            from datetime import datetime, timezone
-
             from automotive_workbench.agent_transaction import (
                 complete_agent_transaction,
+                transaction_paths,
             )
             from automotive_workbench.project_explanation import read
 
+            checkpoint = read(args.checkpoint)
+            request = read(args.request)
+            decision = read(args.decision)
+            claim_path, _ = transaction_paths(
+                args.ledger, checkpoint, request
+            )
+            claim = read(claim_path)
             result = complete_agent_transaction(
-                read(args.checkpoint),
-                read(args.request),
-                read(args.decision),
+                checkpoint,
+                request,
+                decision,
                 args.ledger,
                 status=args.outcome,
                 reason=args.reason,
-                completed_at=datetime.now(timezone.utc),
+                completed_at=_utc_now_at_or_after(claim["claimed_at"]),
             )
         elif args.command == "verify-agent-transaction":
             from automotive_workbench.agent_transaction import (
@@ -982,18 +1071,29 @@ def main() -> int:
         elif args.command == "execute-agent-virtual-can":
             from datetime import datetime, timezone
 
+            from automotive_workbench.agent_transaction import transaction_paths
             from automotive_workbench.agent_virtual_execution import (
                 execute_agent_virtual_can,
             )
             from automotive_workbench.project_explanation import read
 
+            checkpoint = read(args.checkpoint)
+            request = read(args.request)
+            decision = read(args.decision)
+            started_at = datetime.now(timezone.utc)
+            if args.enable_virtual_execution:
+                claim_path, _ = transaction_paths(
+                    args.ledger, checkpoint, request
+                )
+                claim = read(claim_path)
+                started_at = _utc_now_at_or_after(claim["claimed_at"])
             result = execute_agent_virtual_can(
-                read(args.checkpoint),
-                read(args.request),
-                read(args.decision),
+                checkpoint,
+                request,
+                decision,
                 args.ledger,
                 enabled=args.enable_virtual_execution,
-                started_at=datetime.now(timezone.utc),
+                started_at=started_at,
             )
         elif args.command == "verify-agent-virtual-execution":
             from automotive_workbench.agent_virtual_execution import (
