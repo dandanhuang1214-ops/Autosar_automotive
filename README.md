@@ -14,7 +14,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [Agent 审批请求与决定状态](docs/project/p30-agent-approval-guide.md)和[本地一次性 claim 与非执行事务](docs/project/p30-agent-transaction-guide.md)已 remote-accepted，分别对应实现 `a713f71` / run `38499330921` 与 `f1f0cef` / run `38503978397`。[受限 virtual CAN execute tool](docs/project/p30-agent-virtual-execution-guide.md)也已 remote-accepted：实现 `d37c362` / [run `38664606675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38664606675) 七 job 成功；它默认关闭，只允许 transaction ID 派生的进程内 virtual channel，并将命令结果、独立效果观测和补偿清理分开记录。配置写入、SocketCAN 和硬件仍不开放。当前状态内核不是 LangGraph，而是 Workbench 版本化、哈希绑定协议；LangGraph 只保留为未来编排适配候选。下一门是模型只提议、控制面审批执行的暂停边界和新的 v2 frozen cohort；v1 质量仍为 3/5 failed。
 
-[模型提案与控制面执行边界](docs/project/p30-agent-action-proposal-guide.md)已 local-accepted：模型能看到 typed `virtual_can.send_once`，但 proposal catalog 没有 handler，输出始终 `execution_authorized=false` / `tool_invoked=false`；控制面只能把完全相同的 action 转为待审批请求。478 项回归、source 全链路和隔离 wheel 已通过，远端七 job 待本实现提交后验收。下一门冻结新的 v2 cohort；配置写入、SocketCAN、硬件与认证 operator 仍不开放。
+[模型提案与控制面执行边界](docs/project/p30-agent-action-proposal-guide.md)已 remote-accepted：模型能看到 typed `virtual_can.send_once`，但 proposal catalog 没有 handler，输出始终 `execution_authorized=false` / `tool_invoked=false`；控制面只能把完全相同的 action 转为待审批请求。实现 `541a7df` / [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) 七 job 成功。下一门冻结新的 v2 cohort；配置写入、SocketCAN、硬件与认证 operator 仍不开放。
 
 日常项目验收从 `run-project` 开始：
 

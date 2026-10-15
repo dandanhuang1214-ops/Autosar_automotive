@@ -286,4 +286,4 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 
 本地 478 tests 通过（2 项环境跳过）；71 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、compileall、topology、pip/diff check 通过。source 合成场景完成 proposal → exact approval → decision → claim → 默认关闭 → 显式 virtual 执行 → 停服复验。隔离无依赖 wheel 场景通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`；无可选 CAN 依赖时只验证默认关闭。
 
-本门 local-accepted，等待实现提交与远端七 job，不把本地成功写成远端验收，也不把合成 fixture 写成真实模型质量。下一门先冻结新的 v2 cohort，再运行真实模型；配置写入、SocketCAN、硬件和认证 operator 仍未开放，v1 质量仍为 3/5 failed。
+实现 `541a7df588a6aa029f2293aa92321a25caa471df` 的 [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) completed/success。七个实际 job 均 success：runtime-currency `116223488395`；core-contracts Ubuntu `116223488653`、Windows `116223488692`；controlled-rejections Ubuntu `116225842956`、Windows `116225842989`；runtime-evidence Windows `116225842973`、Ubuntu `116225843079`。本门 remote-accepted；后续纯文档状态提交不替代该实现 run，也不把合成 fixture 写成真实模型质量。下一门先冻结新的 v2 cohort，再运行真实模型；配置写入、SocketCAN、硬件和认证 operator 仍未开放，v1 质量仍为 3/5 failed。

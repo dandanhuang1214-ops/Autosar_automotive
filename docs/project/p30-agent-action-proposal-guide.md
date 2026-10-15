@@ -1,6 +1,6 @@
 # P30 Agent 模型提案与控制面执行边界
 
-状态：**local-accepted**，等待本实现提交和远端七 job。P30 整阶段仍为 implementing，模型质量仍沿用 v1 的 3/5 failed。
+状态：**remote-accepted**。P30 整阶段仍为 implementing，模型质量仍沿用 v1 的 3/5 failed。
 
 ## 结论
 
@@ -68,6 +68,8 @@ CLI 自动生成的账本时间增加“不得早于前置 artifact”的逻辑�
 - 隔离无依赖 wheel、排除 checkout 场景通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`。proposal 与精确审批转换在安装后通过；该环境没有可选 `python-can`，因此只验证执行默认关闭，不宣称完成实际发送。
 
 以上是合成 HTTP 协议与控制面安全边界证据，不是真实模型质量证据。
+
+实现 `541a7df588a6aa029f2293aa92321a25caa471df` 的 [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) completed/success。七个实际 job 均 success：runtime-currency `116223488395`；core-contracts Ubuntu `116223488653`、Windows `116223488692`；controlled-rejections Ubuntu `116225842956`、Windows `116225842989`；runtime-evidence Windows `116225842973`、Ubuntu `116225843079`。本门 remote-accepted；本条之后的纯文档状态提交不替代该实现 run。
 
 ## 下一门
 

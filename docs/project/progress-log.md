@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-15）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务和[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)均已远端验收；[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)已 local-accepted，等待实现提交和远端七 job。模型可选择 typed execute action，但 proposal catalog 没有 handler，proposal 固定未授权且未调用；只有控制面能把完全相同的 action 转为审批请求。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一门冻结新的 v2 cohort；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)及[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)均已远端验收。模型可选择 typed execute action，但 proposal catalog 没有 handler，proposal 固定未授权且未调用；只有控制面能把完全相同的 action 转为审批请求。最新实现 `541a7df` / run `38674052274` 七 job 成功。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一门冻结新的 v2 cohort；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1776,4 +1776,4 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - proposal 绑定暂停 checkpoint、模型 identity、service version、capability binding、请求/响应、剩余预算、成功 observation 和精确 action call ID。模型 decline、非法参数、未知能力、identity 漂移与预算越界 fail closed。
 - 控制面只能把 proposal 中完全相同的 action 转成 pending approval request；proposal 与 request 均保持未授权。decision、claim、显式 enable 和 restricted executor 继续独立。CLI 账本时间增加不早于前置 artifact 的逻辑下限，底层 verifier 仍拒绝倒序记录。
 - 本地 478 tests 通过（2 项环境跳过）；71 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 通过。source 合成全链路与停服复验通过；隔离无依赖 wheel 通过，SHA-256 `af74bc144b48c34df0e5be023d6f07c97c35d7c88d8ac1dbc78a5dd562a1dac3`。
-- 本门 local-accepted，尚未提交/推送，远端七 job 待执行。合成 fixture 不是真实模型质量证据；下一门先冻结新的 v2 cohort，再运行真实模型，分别验收 proposal 工具选择、参数、拒绝、越权负例、引用与 token 成本。配置写入、SocketCAN、硬件和认证 operator 仍不开放。
+- 实现 `541a7df588a6aa029f2293aa92321a25caa471df` / [run `38674052274`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38674052274) completed/success。runtime-currency `116223488395`；core-contracts Ubuntu `116223488653`、Windows `116223488692`；controlled-rejections Ubuntu `116225842956`、Windows `116225842989`；runtime-evidence Windows `116225842973`、Ubuntu `116225843079` 均 success。本门 remote-accepted；合成 fixture 不是真实模型质量证据。下一门先冻结新的 v2 cohort，再运行真实模型，分别验收 proposal 工具选择、参数、拒绝、越权负例、引用与 token 成本。配置写入、SocketCAN、硬件和认证 operator 仍不开放。
