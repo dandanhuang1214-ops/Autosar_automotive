@@ -1,6 +1,6 @@
 # P30 Agent 模型提案与控制面执行边界
 
-状态：**0.1 remote-accepted；response evidence 0.2 local-accepted**。P30 整阶段仍为 implementing；真实动作提案 v2 质量为 0/5 failed。
+状态：**response evidence 0.2 remote-accepted**。P30 整阶段仍为 implementing；真实动作提案 v2 质量为 0/5 failed。
 
 ## 结论
 
@@ -73,4 +73,8 @@ CLI 自动生成的账本时间增加“不得早于前置 artifact”的逻辑�
 
 ## 下一门
 
-真实 v2 已按冻结顺序运行并得到 0/5；详见[评测指南](p30-agent-proposal-evaluation-v2-guide.md)。0.2 本地验证为 483 tests、源码合成全链和隔离无依赖 wheel 通过，最终 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3`，尚待本实现远端 CI。CI 通过后只用全新的开发题读取实际原生 tool-call 字段，再决定 provider 归一化、工具描述或小模型用途边界；最终必须另冻新 cohort，不能在已见 v2 上宣称提升。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+真实 v2 已按冻结顺序运行并得到 0/5；详见[评测指南](p30-agent-proposal-evaluation-v2-guide.md)。0.2 本地验证为 483 tests、源码合成全链和隔离无依赖 wheel 通过，最终 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3`。实现 `7a7aeec98134f3a7c2844b48197c6dfa6d40f54e` / [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) 七 job 全部 success，本门 remote-accepted。
+
+远端通过后的新开发题没有复用 v2 参数：qwen 先正确读取 `failed / structural_gap`，随后 proposal 0.2 保存的原生 call 为 `virtual_can.send_once(frame_id=1, payload_hex="BEEF")`，而目标明确要求 `0x456`。proposal 离线验签通过且保持未授权/未调用；这说明 provider tool call 结构有效不等于参数语义正确。
+
+下一门采用 control-plane-issued action candidate：由确定性调用方先绑定精确 tool/arguments/candidate ID，模型只允许选择 candidate ID 或固定原因 decline，不再生成执行参数。这样既减少重复 schema/参数 token，也让审批对象与用户/自动化输入在模型调用前就固定；当前开放参数 proposal 保留兼容但不作为小模型的安全默认。新路径仍需新的开发题和全新冻结 cohort，配置写入、SocketCAN、硬件和认证 operator 继续关闭。

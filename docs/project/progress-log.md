@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-15）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)及 v2 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)在预推理冻结后取得真实 0/5 failed：读证、引用、非执行和成本均 5/5，但五题动作阶段都选择了参数非法的 virtual CAN 调用，三个应拒绝题也未走 `agent_decline`。离线重评分通过，不回改已见 cohort。proposal evidence 0.2 已 local-accepted：归一化原生 tool-call 可离线核验，0.1 独立 artifact 兼容。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步先取得 0.2 实现提交和远端 CI，再用全新开发题分析模型/API 适配；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施及 proposal evidence 0.2 均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)预推理冻结后真实 0/5 failed；0.2 的新开发题又记录到 qwen 把明确 frame `0x456` 生成成 `1`，证明问题不仅是 schema 非法，还包括结构合法的参数语义漂移。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件；状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步实现哈希绑定的 control-plane action candidate，模型只选择 candidate ID 或拒绝，避免重写参数并减少工具 schema token；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1801,4 +1801,6 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 离线 verifier 从归档响应重新推导 proposal/decline selection，并核对最终状态、原因、requested action 与非执行边界。即使同时重算响应摘要和 proposal ID，响应语义与最终 selection 不一致仍拒绝；非法响应保留具体 name/arguments，但仍不生成 action。独立 `agent-action-proposal-0.1` artifact 保持兼容验证。
 - 未来 proposal evaluation 的 implementation digest 现在同时绑定真实 runner、proposal/evaluation 三个 schema 和既有实现文件，避免只固定 Python 逻辑却遗漏证据契约。已见 v2 仍严格绑定旧实现 `7912f85`；要重放完整 v2 evaluator 必须使用该冻结提交，不能以 0.2 重新解释 0/5。
 - 本地全量 483 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。源码合成全链及停服复验通过；最终隔离无依赖 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3` 同样通过，未运行真实模型。
-- 当前 local-accepted，尚无本实现提交或远端 CI。下一步先完成实现 CI，再用不同于 v2 的开发问题读取并归档 qwen3.5:2b 的实际非法字段；不得重跑同一 v2 改变质量结论，也不扩大任何执行能力。
+- 实现 `7a7aeec98134f3a7c2844b48197c6dfa6d40f54e` / [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) completed/success。七个实际 job 均 success：core-contracts Windows `116443824510`、Ubuntu `116443824579`；runtime-currency `116443824843`；runtime-evidence Windows `116448183001`、Ubuntu `116448183121`；controlled-rejections Windows `116448183266`、Ubuntu `116448183324`。本门 remote-accepted。
+- 远端通过后才运行一个不同于 v2 的真实开发题：同一 qwen3.5:2b 先正确读取 `communication failed / structural_gap` 并暂停，checkpoint `600c9e50…f5c0`；proposal 0.2 `621d3aa2…75cc` 选择正确工具和 payload `BEEF`，却把明确的 `0x456`（1110）生成成 `frame_id=1`。两次模型调用累计 1814 tokens，墙钟约 118.7 秒；离线验签 passed，且目录没有 approval、claim 或 execution artifact。
+- 该开发结果不改变 v2 0/5，也不能作为新质量评测。它证明仅靠 JSON Schema 只能保证类型/范围，不能保证参数忠于用户意图。下一门改为 control-plane-issued、哈希绑定的 action candidate：模型只能选择 candidate ID 或固定原因拒绝，不能重写 tool/arguments；保留 0.2 兼容路径并最终以全新 cohort 验收。

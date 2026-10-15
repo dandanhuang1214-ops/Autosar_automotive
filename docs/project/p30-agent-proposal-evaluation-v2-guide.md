@@ -92,4 +92,4 @@ python -m automotive_workbench.cli verify-agent-proposal-eval \
 
 `agent-action-proposal-0.1` 会保存 provider response SHA-256、content 和合法 selection；但非法 tool call 在校验失败后将 selection 清空，artifact 没有保存可独立复核的归一化 function name/arguments。因此当前证据能证明“实际响应哈希对应一次失败并被安全拒绝”，却不能在服务停止后仅凭 artifact 还原具体非法字段。
 
-向后兼容的 proposal evidence 0.2 已 local-accepted：保存并验签归一化原生 tool call 或 decline 响应，同时不记录隐藏推理；0.1 独立 artifact 仍可验证。下一步先取得 0.2 的实现提交与远端 CI，再以新的开发题判断是字段名、十六进制类型还是拒绝路由问题。完整 v2 复验仍应使用 manifest 绑定的 `7912f85`，不能用新实现重新解释 0/5。任何适配最终都必须另建未见 cohort；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+向后兼容的 proposal evidence 0.2 已由 `7a7aeec` / [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) 七 job 远端验收。一个不同于 v2 的开发题记录到结构合法但语义错误的 `frame_id=1`（目标 `0x456`），说明问题不只是不合法字段。完整 v2 复验仍应使用 manifest 绑定的 `7912f85`，不能用新实现重新解释 0/5。下一门让模型只选择控制面预先哈希绑定的 action candidate ID 或拒绝，任何改进最终都必须另建未见 cohort；配置写入、SocketCAN、硬件和认证 operator 继续关闭。

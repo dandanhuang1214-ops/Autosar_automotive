@@ -308,4 +308,8 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 
 `agent-action-proposal-0.2` 将归一化原生 function name/arguments 和 content 写入 artifact，响应摘要可离线重算；verifier 从响应重新推导 selection，并核对状态、原因与 requested action。非法 call 的具体字段不再因 fail closed 被清空；它仍不能形成 action。0.1 独立 proposal 保持兼容，未来评测 implementation digest 增加 runner 与三个 schema 绑定。
 
-本地 483 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、pip/diff check、源码合成全链与停服复验通过。最终隔离无依赖 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3`，安装后 proposal、审批转换和离线复验均通过。本门尚待提交与远端 CI；没有运行新的真实模型推理，也没有改变 v2 0/5。
+本地 483 tests 通过（2 项环境跳过）；73 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、pip/diff check、源码合成全链与停服复验通过。最终隔离无依赖 wheel SHA-256 `d0b67d9de2d0a3aeadb584aa816c76eea4d3e4d0b60848753f84b22192a079d3`，安装后 proposal、审批转换和离线复验均通过。
+
+实现 `7a7aeec98134f3a7c2844b48197c6dfa6d40f54e` 的 [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) completed/success。七 job 均 success：core-contracts Windows `116443824510`、Ubuntu `116443824579`；runtime-currency `116443824843`；runtime-evidence Windows `116448183001`、Ubuntu `116448183121`；controlled-rejections Windows `116448183266`、Ubuntu `116448183324`。本门 remote-accepted。
+
+远端通过后，一个新开发问题用 2 次模型调用、1814 tokens 在约 118.7 秒内形成 checkpoint `600c9e50…f5c0` 和 proposal `621d3aa2…75cc`。读证正确，payload `BEEF` 正确，但目标 `0x456` 被写成 `frame_id=1`；离线 verifier 通过，未生成任何 approval/claim/execution。该结果不改变 v2 0/5，却证明参数生成需要从 execute 模型路径移出。下一门为哈希绑定 action candidate，模型只能选 candidate ID 或拒绝。
