@@ -1,6 +1,6 @@
 # P30 Agent 受限 virtual CAN execute tool
 
-状态：**local-accepted，远端 CI 待执行**。本门首次允许一个有副作用的 Agent 控制面工具，但模型仍不能直接调用它，配置写入、SocketCAN 和物理硬件仍全部关闭。
+状态：**remote-accepted**。本门首次允许一个有副作用的 Agent 控制面工具，但模型仍不能直接调用它，配置写入、SocketCAN 和物理硬件仍全部关闭。
 
 ## 唯一开放动作
 
@@ -67,7 +67,7 @@ python -m automotive_workbench.cli verify-agent-virtual-execution \
 - source 合成协议场景完成 approval → claim → 默认拒绝 → 显式执行 → 停服离线复验。
 - 隔离 wheel、无依赖安装和排除 checkout 场景通过，SHA-256 `a32b472665ce0851ccd12173ff7940b83ea9dffd1c9166e88ccd12ac60dbe40f`。该环境故意不安装可选 `python-can`，只验收新 CLI 的默认关闭；不声称完成实际 virtual 发送。
 
-远端验收必须记录实现提交、实际 run 和七个 job 结论后才能改为 remote-accepted。
+实现 `d37c36214b58a1fe4b7d6bf672d72e762e0eac1e` 的 [run `38664606675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38664606675) completed/success。七个实际 job 均 success：runtime-currency `116193525598`；core-contracts Windows `116193525835`、Ubuntu `116193525958`；controlled-rejections Ubuntu `116196258406`、Windows `116196258536`；runtime-evidence Windows `116196258501`、Ubuntu `116196258509`。本门 remote-accepted；本条之后的纯文档状态提交不替代该实现 run。
 
 ## 下一门
 

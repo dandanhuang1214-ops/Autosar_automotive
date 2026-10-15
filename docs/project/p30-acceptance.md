@@ -276,4 +276,6 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 
 本地 473 tests 全部通过（2 项环境跳过）；70 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 和 source 合成场景通过。隔离 wheel 无依赖、排除 checkout 场景通过，SHA-256 `a32b472665ce0851ccd12173ff7940b83ea9dffd1c9166e88ccd12ac60dbe40f`；由于故意不安装可选 CAN 依赖，该环境只验证默认关闭，不冒充实际发送。
 
-本门 local-accepted，尚未提交/推送，远端七 job 待执行。通过后下一门把 execute capability 接入 Agent 的“提议而不执行”暂停边界，并用新 v2 frozen cohort 验收工具选择、精确参数、拒绝、成本和越权负例；配置写入、SocketCAN、硬件与认证 operator 仍未开放，v1 模型质量仍为 3/5 failed。
+实现 `d37c36214b58a1fe4b7d6bf672d72e762e0eac1e` 的 [run `38664606675`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38664606675) completed/success。七 job 均 success：runtime-currency `116193525598`；core-contracts Windows `116193525835`、Ubuntu `116193525958`；controlled-rejections Ubuntu `116196258406`、Windows `116196258536`；runtime-evidence Windows `116196258501`、Ubuntu `116196258509`。本门 remote-accepted；后续纯文档状态提交不替代该实现 run。
+
+下一门把 execute capability 接入 Agent 的“提议而不执行”暂停边界，并用新 v2 frozen cohort 验收工具选择、精确参数、拒绝、成本和越权负例；配置写入、SocketCAN、硬件与认证 operator 仍未开放，v1 模型质量仍为 3/5 failed。
