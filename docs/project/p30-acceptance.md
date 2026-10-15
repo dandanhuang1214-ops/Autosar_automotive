@@ -267,3 +267,13 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 实现 `f1f0cef42588086840ae7fef9f4db8eef295056f` 的 [run `38503978397`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38503978397) completed/success。七 job 均 success：runtime-currency `115657114310`；core-contracts Windows `115657114175`、Ubuntu `115657114271`；controlled-rejections Ubuntu `115659495873`、Windows `115659495886`；runtime-evidence Windows `115659495883`、Ubuntu `115659495904`。本门 remote-accepted，见[事务指南](p30-agent-transaction-guide.md)。
 
 下一门才考虑默认禁用、virtual-only、可回滚的受限 execute tool；它必须以 transaction ID 为幂等键，并把命令结果与独立效果验证分开。配置写入和硬件仍不开放，v1 模型质量仍为 3/5 failed。
+
+## Agent 受限 virtual CAN execute tool（本地验收，2026-10-15）
+
+新增 `agent_virtual_execution.py`、attempt/receipt 两个 schema 和 execute/verify CLI。唯一动作 `virtual_can.send_once` 强制使用 transaction ID 派生的进程内 `python-can virtual` channel，只接受 classic CAN ID 和最多 8 字节 payload；调用方不能选择 interface/channel。approval 仍不是认证授权，实际命令必须显式提供 `--enable-virtual-execution`。
+
+执行前原子发布 attempt marker；已有 terminal receipt 的重试复用原 artifact，不再次发送。attempt 已存在但 receipt 缺失时结果为 indeterminate 并禁止自动重放。receipt 分开保存 `send()` 返回、独立 receiver 的精确帧观测和关闭句柄后的无缓冲残留探测；发送抛错时副作用状态可为 indeterminate。CAN 帧不能字面撤销，`literal_undo=false`；本门只证明唯一 virtual channel 的瞬态补偿和无持久状态，不能外推到配置 rollback。
+
+本地 473 tests 全部通过（2 项环境跳过）；70 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 和 source 合成场景通过。隔离 wheel 无依赖、排除 checkout 场景通过，SHA-256 `a32b472665ce0851ccd12173ff7940b83ea9dffd1c9166e88ccd12ac60dbe40f`；由于故意不安装可选 CAN 依赖，该环境只验证默认关闭，不冒充实际发送。
+
+本门 local-accepted，尚未提交/推送，远端七 job 待执行。通过后下一门把 execute capability 接入 Agent 的“提议而不执行”暂停边界，并用新 v2 frozen cohort 验收工具选择、精确参数、拒绝、成本和越权负例；配置写入、SocketCAN、硬件与认证 operator 仍未开放，v1 模型质量仍为 3/5 failed。

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-virtual-execution-attempt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "attempt_id", "schema_version", "status", "transaction_id", "claim_id",
+    "request_id", "decision_id", "action_call_id", "tool_name",
+    "arguments_sha256", "idempotency_key", "started_at", "execution_scope",
+    "virtual_channel", "local_execution_gate",
+    "hardware_accessed", "configuration_written", "authenticated_authorization",
+    "boundary"
+  ],
+  "properties": {
+    "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "agent-virtual-execution-attempt-0.1"},
+    "status": {"const": "started"},
+    "transaction_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "claim_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "action_call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "tool_name": {"const": "virtual_can.send_once"},
+    "arguments_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "idempotency_key": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "execution_scope": {"const": "isolated_process_local_virtual_can"},
+    "virtual_channel": {"type": "string", "pattern": "^workbench-agent-[0-9a-f]{24}$"},
+    "local_execution_gate": {"const": "explicit_enable_flag"},
+    "hardware_accessed": {"const": false},
+    "configuration_written": {"const": false},
+    "authenticated_authorization": {"const": false},
+    "boundary": {
+      "const": "This receipt records an explicitly enabled process-local virtual CAN action. The approval is not authenticated authorization, no hardware or configuration write is permitted, and uniqueness is limited to one local ledger."
+    }
+  }
+}

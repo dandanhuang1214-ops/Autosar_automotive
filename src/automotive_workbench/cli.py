@@ -300,6 +300,27 @@ def build_parser() -> argparse.ArgumentParser:
     agent_transaction_verify.add_argument("request", type=Path)
     agent_transaction_verify.add_argument("decision", type=Path)
     agent_transaction_verify.add_argument("--ledger", type=Path, required=True)
+    agent_virtual_execute = commands.add_parser(
+        "execute-agent-virtual-can",
+        help="Explicitly run one claimed send on an isolated process-local virtual CAN bus",
+    )
+    agent_virtual_execute.add_argument("checkpoint", type=Path)
+    agent_virtual_execute.add_argument("request", type=Path)
+    agent_virtual_execute.add_argument("decision", type=Path)
+    agent_virtual_execute.add_argument("--ledger", type=Path, required=True)
+    agent_virtual_execute.add_argument(
+        "--enable-virtual-execution",
+        action="store_true",
+        help="Required local execution gate; approval alone is not authorization",
+    )
+    agent_virtual_verify = commands.add_parser(
+        "verify-agent-virtual-execution",
+        help="Verify a claimed virtual execution attempt and receipt offline",
+    )
+    agent_virtual_verify.add_argument("checkpoint", type=Path)
+    agent_virtual_verify.add_argument("request", type=Path)
+    agent_virtual_verify.add_argument("decision", type=Path)
+    agent_virtual_verify.add_argument("--ledger", type=Path, required=True)
     agent_eval_freeze = commands.add_parser(
         "freeze-readonly-agent-eval",
         help="Freeze held-out Agent questions and structural gold before inference",
@@ -953,6 +974,33 @@ def main() -> int:
             )
 
             result = load_and_verify_agent_transaction(
+                args.checkpoint,
+                args.request,
+                args.decision,
+                args.ledger,
+            )
+        elif args.command == "execute-agent-virtual-can":
+            from datetime import datetime, timezone
+
+            from automotive_workbench.agent_virtual_execution import (
+                execute_agent_virtual_can,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = execute_agent_virtual_can(
+                read(args.checkpoint),
+                read(args.request),
+                read(args.decision),
+                args.ledger,
+                enabled=args.enable_virtual_execution,
+                started_at=datetime.now(timezone.utc),
+            )
+        elif args.command == "verify-agent-virtual-execution":
+            from automotive_workbench.agent_virtual_execution import (
+                load_and_verify_virtual_execution,
+            )
+
+            result = load_and_verify_virtual_execution(
                 args.checkpoint,
                 args.request,
                 args.decision,

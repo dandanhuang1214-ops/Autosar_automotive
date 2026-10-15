@@ -20,7 +20,7 @@ class ContractConformanceTests(unittest.TestCase):
         schema_count, validated, syntax_only = validate_checked_in_json(
             ROOT, verbose=False
         )
-        self.assertEqual(schema_count, 68)
+        self.assertEqual(schema_count, 70)
         self.assertGreaterEqual(validated, 42)
         self.assertGreaterEqual(syntax_only, 1)
 

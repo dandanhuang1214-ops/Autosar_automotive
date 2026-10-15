@@ -58,6 +58,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_approval_decision = None
     agent_transaction_claim = None
     agent_transaction_receipt = None
+    virtual_execution_claim = None
+    virtual_execution_receipt = None
     agent_evaluation = None
     agent_evaluation_manifest = None
     with fixture_service() as (server, origin):
@@ -248,6 +250,76 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_transaction_receipt["side_effect_performed"] is not False
         ):
             raise ValueError("Agent transaction rehearsal performed a side effect")
+        virtual_arguments_path = output / "agent-virtual-can-arguments.json"
+        virtual_arguments_path.write_text(
+            json.dumps(
+                {"frame_id": 0x321, "payload_hex": "102A"},
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        virtual_request_path = output / "agent-virtual-can-request.json"
+        cli(
+            "agent-virtual-can-request",
+            [
+                "request-agent-approval", checkpoint_path, virtual_arguments_path,
+                "--tool-name", "virtual_can.send_once", "--permission", "execute",
+                "--reason", "Review one isolated process-local virtual CAN frame.",
+                "--evidence-id", agent_checkpoint["events"][-1]["observation_id"],
+                "--output", virtual_request_path,
+            ],
+            0,
+        )
+        virtual_decision_path = output / "agent-virtual-can-decision.json"
+        cli(
+            "agent-virtual-can-decision",
+            [
+                "decide-agent-approval", checkpoint_path, virtual_request_path,
+                "--decision", "approved", "--actor", "synthetic-local-operator",
+                "--reason", "Reviewed only; explicit local enable remains required.",
+                "--output", virtual_decision_path,
+            ],
+            0,
+        )
+        virtual_ledger = output / "agent-virtual-can-ledger"
+        virtual_execution_claim = cli(
+            "agent-virtual-can-claim",
+            [
+                "claim-agent-approval", checkpoint_path, virtual_request_path,
+                virtual_decision_path, "--ledger", virtual_ledger,
+            ],
+            0,
+        )
+        disabled = cli(
+            "agent-virtual-can-default-disabled",
+            [
+                "execute-agent-virtual-can", checkpoint_path, virtual_request_path,
+                virtual_decision_path, "--ledger", virtual_ledger,
+            ],
+            1,
+        )
+        if disabled.get("status") != "error" or "explicit enable" not in disabled.get("message", ""):
+            raise ValueError("Agent virtual CAN execution was not disabled by default")
+        if cli_python is None:
+            virtual_execution_receipt = cli(
+                "agent-virtual-can-execute",
+                [
+                    "execute-agent-virtual-can", checkpoint_path, virtual_request_path,
+                    virtual_decision_path, "--ledger", virtual_ledger,
+                    "--enable-virtual-execution",
+                ],
+                0,
+            )
+            if (
+                virtual_execution_receipt["status"] != "succeeded"
+                or virtual_execution_receipt["effect_verification"]["status"] != "passed"
+                or virtual_execution_receipt["compensation"]["status"] != "passed"
+                or virtual_execution_receipt["hardware_accessed"] is not False
+                or virtual_execution_receipt["configuration_written"] is not False
+            ):
+                raise ValueError("Agent virtual CAN execution boundary failed")
         policy_name = "agent-read-policy.json"
         shutil.copy2(ROOT / "examples/knowledge/agent-read-policy.json", output / policy_name)
         evaluation_spec = {
@@ -395,6 +467,19 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    virtual_execution_verification = None
+    if virtual_execution_receipt is not None:
+        virtual_execution_verification = cli(
+            "agent-virtual-can-services-stopped",
+            [
+                "verify-agent-virtual-execution",
+                output / "readonly-agent-checkpoint.json",
+                output / "agent-virtual-can-request.json",
+                output / "agent-virtual-can-decision.json",
+                "--ledger", output / "agent-virtual-can-ledger",
+            ],
+            0,
+        )
     evaluation_verification = cli(
         "readonly-agent-evaluation-services-stopped",
         [
@@ -438,6 +523,32 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "offline_verification": transaction_verification["status"],
                    "execution_authorized": False,
                    "side_effect_performed": False,
+               },
+               "restricted_virtual_execution": {
+                   "claim_status": virtual_execution_claim["status"],
+                   "default_disabled": True,
+                   "execution_status": (
+                       "not_run_in_dependency_free_install"
+                       if virtual_execution_receipt is None
+                       else virtual_execution_receipt["status"]
+                   ),
+                   "effect_status": (
+                       "not_run"
+                       if virtual_execution_receipt is None
+                       else virtual_execution_receipt["effect_verification"]["status"]
+                   ),
+                   "compensation_status": (
+                       "not_run"
+                       if virtual_execution_receipt is None
+                       else virtual_execution_receipt["compensation"]["status"]
+                   ),
+                   "offline_verification": (
+                       "not_run"
+                       if virtual_execution_verification is None
+                       else virtual_execution_verification["status"]
+                   ),
+                   "hardware_accessed": False,
+                   "configuration_written": False,
                },
                "readonly_agent_evaluation": {
                    "status": agent_evaluation["status"],

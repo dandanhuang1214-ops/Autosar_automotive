@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-virtual-execution-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id", "schema_version", "status", "transaction_id", "claim_id",
+    "request_id", "decision_id", "attempt_id", "tool_name", "idempotency_key",
+    "virtual_channel",
+    "completed_at", "command_result", "effect_verification", "compensation",
+    "side_effect_status", "hardware_accessed", "configuration_written",
+    "authenticated_authorization", "boundary"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "agent-virtual-execution-receipt-0.1"},
+    "status": {"enum": ["succeeded", "failed"]},
+    "transaction_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "claim_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "attempt_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "tool_name": {"const": "virtual_can.send_once"},
+    "idempotency_key": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "virtual_channel": {"type": "string", "pattern": "^workbench-agent-[0-9a-f]{24}$"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "command_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "send_invoked", "error_type"],
+      "properties": {
+        "status": {"enum": ["not_run", "returned", "raised"]},
+        "send_invoked": {"type": "boolean"},
+        "error_type": {"type": ["string", "null"]}
+      }
+    },
+    "effect_verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "expected_frame", "observed_frame", "error_type"],
+      "properties": {
+        "status": {"enum": ["not_run", "passed", "failed"]},
+        "expected_frame": {"$ref": "#/$defs/frame"},
+        "observed_frame": {"oneOf": [{"$ref": "#/$defs/frame"}, {"type": "null"}]},
+        "error_type": {"type": ["string", "null"]}
+      }
+    },
+    "compensation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "mechanism", "literal_undo", "residual_observation", "errors"],
+      "properties": {
+        "status": {"enum": ["passed", "failed"]},
+        "mechanism": {"const": "shutdown_owned_bus_handles_and_probe_no_buffered_frame"},
+        "literal_undo": {"const": false},
+        "residual_observation": {"oneOf": [{"$ref": "#/$defs/frame"}, {"type": "null"}]},
+        "errors": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "side_effect_status": {"enum": ["not_performed", "performed", "indeterminate"]},
+    "hardware_accessed": {"const": false},
+    "configuration_written": {"const": false},
+    "authenticated_authorization": {"const": false},
+    "boundary": {
+      "const": "This receipt records an explicitly enabled process-local virtual CAN action. The approval is not authenticated authorization, no hardware or configuration write is permitted, and uniqueness is limited to one local ledger."
+    }
+  },
+  "$defs": {
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frame_id", "frame_id_hex", "payload_hex"],
+      "properties": {
+        "frame_id": {"type": "integer", "minimum": 0, "maximum": 2047},
+        "frame_id_hex": {"type": "string", "pattern": "^0x[0-7][0-9A-F]{2}$"},
+        "payload_hex": {"type": "string", "pattern": "^(?:[0-9A-F]{2}){0,8}$"}
+      }
+    }
+  }
+}

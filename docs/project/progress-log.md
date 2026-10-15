@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-14）
 
-当前主阶段 P30 implementing。只读 `ToolRegistry + AgentRunner`、v1 冻结评测、checkpoint/暂停/完成态幂等恢复、[审批请求与决定状态](p30-agent-approval-guide.md)和[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)均已远端验收。claim/receipt 全部固定 `execution_authorized=false`、`side_effect_performed=false`，未开放 execute/write/hardware tool。状态内核是 Workbench 显式版本化协议，不是 LangGraph；后者仅保留为未来编排适配候选。下一门考虑默认禁用、virtual-only、可回滚的受限 execute tool；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 `ToolRegistry + AgentRunner`、v1 冻结评测、checkpoint/暂停/完成态幂等恢复、[审批请求与决定状态](p30-agent-approval-guide.md)和[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)均已远端验收。[受限 virtual CAN execute tool](p30-agent-virtual-execution-guide.md)已本地验收、远端 CI 待执行：默认关闭，只允许 transaction ID 派生的进程内 virtual channel，命令、效果和补偿证据分离；未开放配置写入、SocketCAN 或硬件。状态内核是 Workbench 显式版本化协议，不是 LangGraph；后者仅保留为未来编排适配候选。远端通过后的下一门为模型只提议、控制面审批执行的暂停边界及新 v2 cohort；v1 模型质量仍为 3/5 failed，一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1760,3 +1760,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地 467 tests 完成（2 项环境跳过）；68 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check、源码合成场景和隔离 wheel 场景通过。wheel SHA-256 `783c2a36c3c548c44340a9dde85ce371a74bf533dfe3baca7fe79c9d426411c8`。
 - 本门 local-accepted，尚未提交/推送，远端七 job 待执行。通过后下一门才考虑默认禁用、virtual-only、可回滚 execute tool；它必须消费 transaction ID 并独立验证效果。配置写入与硬件仍不开放，v1 模型质量仍为 3/5 failed。
 - 远端验收：实现 `f1f0cef42588086840ae7fef9f4db8eef295056f` / [run `38503978397`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38503978397) completed/success。runtime-currency `115657114310`；core-contracts Windows `115657114175`、Ubuntu `115657114271`；controlled-rejections Ubuntu `115659495873`、Windows `115659495886`；runtime-evidence Windows `115659495883`、Ubuntu `115659495904` 均 success。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
+
+### P30：Agent 受限 virtual CAN execute tool（2026-10-15）
+
+- 新增 `agent_virtual_execution.py`、attempt/receipt 两个 schema 和 execute/verify CLI。唯一动作 `virtual_can.send_once` 默认关闭，强制 transaction ID 派生的进程内 virtual channel；不能指定 SocketCAN/硬件 channel，也不能写配置。
+- approval 仍非认证授权；执行还要求本地显式 enable。attempt 在副作用前原子发布，terminal 重试不再发送；attempt 无 receipt 时视为 indeterminate 并禁止自动重放。
+- receipt 将命令返回、独立 receiver 精确帧观测和关闭句柄后的残留探测分离。CAN 帧不能字面撤销，明确 `literal_undo=false`；本门只证明瞬态 virtual 动作的补偿和无持久状态。
+- 本地 473 tests 全部通过（2 项环境跳过）；70 schemas / 77 bound / 25 syntax-only；Ruff、mypy、compileall、topology、pip/diff check 和 source 合成端到端场景通过。隔离无依赖 wheel 场景通过，SHA-256 `a32b472665ce0851ccd12173ff7940b83ea9dffd1c9166e88ccd12ac60dbe40f`，该环境只验证默认关闭而不声称实际 CAN 执行。
+- 本门 local-accepted，尚未提交/推送，远端七 job 待执行。远端通过后下一门把 execute capability 接入 Agent 的“模型只提议、控制面审批执行”暂停边界，并冻结新的 v2 cohort；配置写入、SocketCAN、硬件及认证 operator 仍不开放，v1 模型质量仍为 3/5 failed。

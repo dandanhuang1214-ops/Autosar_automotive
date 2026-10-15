@@ -352,7 +352,22 @@ def load_and_verify_agent_transaction(
     if receipt_path.exists():
         if receipt_path.is_symlink():
             raise ValueError("Agent transaction receipt must not be a symlink")
+        receipt = read(receipt_path)
+        if receipt.get("schema_version") == "agent-virtual-execution-receipt-0.1":
+            from automotive_workbench.agent_virtual_execution import (
+                verify_virtual_execution_receipt,
+                virtual_execution_paths,
+            )
+
+            attempt_path, _ = virtual_execution_paths(
+                ledger, checkpoint, request
+            )
+            if attempt_path.is_symlink() or not attempt_path.is_file():
+                raise ValueError("Agent virtual execution attempt is missing or unsafe")
+            return verify_virtual_execution_receipt(
+                request, claim, read(attempt_path), receipt
+            )
         return verify_agent_transaction_receipt(
-            checkpoint, request, decision, claim, read(receipt_path)
+            checkpoint, request, decision, claim, receipt
         )
     return verified
