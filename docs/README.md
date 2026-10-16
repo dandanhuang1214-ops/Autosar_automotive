@@ -98,3 +98,4 @@
 - [P30 Agent 模型提案与控制面执行边界](project/p30-agent-action-proposal-guide.md)
 - [P30 Agent 动作提案 v2 冻结评测](project/p30-agent-proposal-evaluation-v2-guide.md)
 - [P30 控制面动作候选与 ID-only 模型选择](project/p30-agent-action-candidate-guide.md)
+- [P30 Agent candidate-selection v1 预推理冻结](project/p30-agent-candidate-evaluation-v1-guide.md)

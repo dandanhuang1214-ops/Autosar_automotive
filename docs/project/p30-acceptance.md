@@ -321,3 +321,11 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 最终本地 492 tests 通过（2 项环境跳过）；9 项候选专项覆盖 schema、原生/结构化选择、decline、未知 ID/额外参数、身份/服务/预算失败、篡改、精确审批关系和文件重放。75 schemas / 77 bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。源码和隔离 wheel 合成全链及停服复验通过，wheel SHA-256 `9c8e45866d4526ba291fd65997ca464c0ba6b0eb23a43b502e340de5bc6b1adf`。
 
 实现 `09522dd1c8733fc4ed410915348118f99f43e561` 的 [run `38873638394`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38873638394) completed/success，head 完全一致。七个实际 job 均 success：runtime-currency `116883383780`；core-contracts Windows `116883384086`、Ubuntu `116883384190`；runtime-evidence Windows `116886383782`、Ubuntu `116886383901`；controlled-rejections Ubuntu `116886383809`、Windows `116886384023`。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。合成 fixture 不是真实模型质量证据，v2 0/5 failed 不变。下一门预推理冻结全新 candidate-selection cohort，且冻结实现自己的远端 CI 通过后才运行真实模型；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+## Candidate-selection v1 评测预推理冻结（2026-10-16）
+
+新增独立 evaluator、manifest/result schema 和 freeze/run/offline-verify CLI。manifest 在运行时 checkpoint 尚不存在的前提下冻结精确 action/call ID、candidate key 与 evidence fact ID；运行时 candidate ID 再绑定真实 checkpoint/observation。评分将准备、控制面签发、ID-only 选择、拒绝、证据、非执行边界和成本分轴，不用 LLM judge。
+
+五题新 cohort 含两个多候选精确选择、无需动作、SocketCAN 越权和条件证据不成立。manifest ID `718ca9f09f996b7bef0e05b2b457f860a35cbc8e6c971ef889fe07447bd5d137`，implementation SHA-256 `c686d83eab5845d595595096cb139dd904b204733ac014e9f5e153b62d359e88`；固定 qwen3.5:2b digest 与既有服务一致。gold 为 agent-authored structural gold，不是独立人工 gold。
+
+本地全量 496 tests 通过（2 项环境跳过）；77 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、diff check、fixture 完整评测、已签入 manifest 重算与停服式离线重评分通过。当前 pre-inference frozen / local-accepted，尚未提交推送、取得本实现远端 CI 或运行目标模型。下一步先完成冻结提交自身的七 job；通过前不得运行 qwen，也不得根据未来结果修改本 cohort。所有 artifact 仍未授权、未调用执行器。
