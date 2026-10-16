@@ -20,7 +20,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [控制面动作候选与 ID-only 模型选择](docs/project/p30-agent-action-candidate-guide.md)已 remote-accepted：候选在推理前绑定精确 tool/arguments、checkpoint、observation 和 capability digest，模型 function schema 只含 `candidate_id` 或固定 decline reason；服务停止后可同时复验 candidate、selection 与标准 approval 的精确关系。最终本地 492 tests、75 schemas、源码合成全链及隔离 wheel 通过，wheel SHA-256 `9c8e4586…adf`；实现 `09522dd` / [run `38873638394`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38873638394) 七 job 全部成功。尚未运行真实模型；下一步预推理冻结全新 candidate-selection cohort，并先完成冻结实现自身的远端验收。
 
-[Agent candidate-selection v1 评测](docs/project/p30-agent-candidate-evaluation-v1-guide.md)已在任何目标模型推理前冻结：五题分别覆盖两个多候选精确 ID 选择和三个固定原因拒绝；manifest `718ca9f0…d137` 同时绑定结构化 gold、精确 action template、模型 digest、项目证据和实现摘要。本地 496 tests 与离线 fixture 重评分通过，当前 pre-inference frozen / local-accepted；尚未运行 qwen。下一步先取得冻结实现自己的七 job 远端验收，再运行一次固定 cohort。
+[Agent candidate-selection v1 评测](docs/project/p30-agent-candidate-evaluation-v1-guide.md)已按预推理冻结边界完成：实现 `c619883` / [run `38877648265`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38877648265) 七 job 成功后，固定 qwen3.5:2b cohort 只运行一次。真实结果 1/5 failed：准备、候选签发、证据绑定、非执行和成本均 5/5，但两个精确候选都选错，三个拒绝题仅 SocketCAN 越权正确；result `21a76c92…8b7b` 已停服离线重评分。下一门是控制面 typed action intent 与确定性 applicability gate，不在同一 cohort 上调提示或重跑。
 
 日常项目验收从 `run-project` 开始：
 

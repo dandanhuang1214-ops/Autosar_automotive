@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-16）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施、proposal evidence 0.2 及[控制面动作候选](p30-agent-action-candidate-guide.md)均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed，且开发题记录到 qwen 把 `0x456` 生成为 `1`。全新的 [candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md) 五题已在任何目标模型推理前冻结，manifest `718ca9f0…d137`；当前 local-accepted，冻结实现远端 CI 待执行。下一步先完成该提交自身七 job，远端通过后才运行一次固定 qwen cohort。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施、proposal evidence 0.2、[控制面动作候选](p30-agent-action-candidate-guide.md)及 candidate-selection v1 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed；新的 [candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md) 在预推理冻结及实现七 job 成功后只运行一次，真实结果 1/5 failed，result `21a76c92…8b7b` 已停服离线重评分。下一门为控制面 typed action intent 与确定性 applicability gate，不在同一 cohort 上调提示或重跑。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1821,3 +1821,10 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 五题新 cohort 测两个多候选精确 ID 选择及 action-not-required、SocketCAN 越权、条件证据不足三类拒绝。manifest ID `718ca9f09f996b7bef0e05b2b457f860a35cbc8e6c971ef889fe07447bd5d137`，implementation SHA-256 `c686d83eab5845d595595096cb139dd904b204733ac014e9f5e153b62d359e88`。这是 agent-authored structural gold，不是独立人工 gold或 prose 质量评测。
 - 全量 496 tests 通过（2 项环境跳过）；新增四项 evaluator 测试。77 schemas / 77 bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、diff check、fixture 完整评测、已签入冻结 manifest 重算及停服式离线重评分通过。
 - 当前 pre-inference frozen / local-accepted，尚未提交推送、取得冻结实现自己的远端七 job 或运行目标模型。下一步先冻结提交并完成远端验收；只有成功后才运行一次固定 qwen3.5:2b。任何结果都不得通过修改或重跑本 cohort 回调。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：Candidate-selection v1 远端验收与真实基线（2026-10-16）
+
+- 冻结实现 `c619883248fdb883b4b122ae1b17349fac35ad6b` / [run `38877648265`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38877648265) completed/success，head 一致。七 job 均 success：runtime-currency `116896457483`；core-contracts Ubuntu `116896457709`、Windows `116896457740`；runtime-evidence Windows `116899617398`、Ubuntu `116899617529`；controlled-rejections Ubuntu `116899617511`、Windows `116899617550`。评测基础设施 remote-accepted。
+- 在既有 Docker backend 内核对 Ollama `0.31.1` 与冻结 qwen3.5:2b digest 后，固定五题只运行一次。结果 **1/5 failed**，result ID `21a76c92d92e79c778124fd175569111ba55528161f2afb19cf6bf5f94188b7b`；准备、候选签发、证据绑定、非执行边界和成本均 5/5，selection status 3/5，candidate selection 1/5，共 10 次模型调用、10000 tokens。
+- 两个精确选择题分别选错 frame 和 payload 候选；无需动作与 bus-off 条件不足题也选择了候选；SocketCAN/can0 越权题正确拒绝。所有选择均未授权、未执行。停止 Ollama 后离线 verifier 返回 `status=passed` / `evaluation_status=failed`。
+- 本 cohort 不修改、不重跑。下一门实现控制面 typed action intent 与确定性 applicability gate，把精确动作、能力和 observation 条件过滤从模型移回控制面；确定性拒绝不可被模型覆盖。之后另冻新 cohort。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
