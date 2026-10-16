@@ -313,3 +313,11 @@ receipt 只允许 `simulated` / `aborted`，claim 与 receipt 均固定 `executi
 实现 `7a7aeec98134f3a7c2844b48197c6dfa6d40f54e` 的 [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) completed/success。七 job 均 success：core-contracts Windows `116443824510`、Ubuntu `116443824579`；runtime-currency `116443824843`；runtime-evidence Windows `116448183001`、Ubuntu `116448183121`；controlled-rejections Windows `116448183266`、Ubuntu `116448183324`。本门 remote-accepted。
 
 远端通过后，一个新开发问题用 2 次模型调用、1814 tokens 在约 118.7 秒内形成 checkpoint `600c9e50…f5c0` 和 proposal `621d3aa2…75cc`。读证正确，payload `BEEF` 正确，但目标 `0x456` 被写成 `frame_id=1`；离线 verifier 通过，未生成任何 approval/claim/execution。该结果不改变 v2 0/5，却证明参数生成需要从 execute 模型路径移出。下一门为哈希绑定 action candidate，模型只能选 candidate ID 或拒绝。
+
+## 控制面动作候选（本地验收，2026-10-16）
+
+`agent-action-candidate-0.1` 在模型推理前绑定 checkpoint、registry、goal、capability digest、精确 action/call ID 和成功 observation。`agent-action-candidate-selection-0.1` 仅允许选择已封存 ID 或固定 decline reason；function schema 不含动作参数。新的联合 verifier 可在服务停止后证明 selection 到标准 approval 的 action/evidence 未变。全部 artifact 仍为未授权、未调用。
+
+最终本地 492 tests 通过（2 项环境跳过）；9 项候选专项覆盖 schema、原生/结构化选择、decline、未知 ID/额外参数、身份/服务/预算失败、篡改、精确审批关系和文件重放。75 schemas / 77 bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。源码和隔离 wheel 合成全链及停服复验通过，wheel SHA-256 `9c8e45866d4526ba291fd65997ca464c0ba6b0eb23a43b502e340de5bc6b1adf`。
+
+本门当前 local-accepted；实现提交、推送和七 job 远端验收待完成。合成 fixture 不是真实模型质量证据，v2 0/5 failed 不变。远端通过后才预推理冻结全新 candidate-selection cohort；配置写入、SocketCAN、硬件和认证 operator 继续关闭。

@@ -97,6 +97,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 2026-10-15 续进：[审批请求与决定状态](p30-agent-approval-guide.md)、[本地一次性 claim 与非执行事务](p30-agent-transaction-guide.md)、[受限 virtual CAN execute tool](p30-agent-virtual-execution-guide.md)及[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)均已 remote-accepted。[动作提案 v2 评测](p30-agent-proposal-evaluation-v2-guide.md)实现 `7912f85094f9521fc08d2f581349bde697b3648c` / [run `38722912093`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38722912093) 七 job success；固定结果 0/5 failed，result `365c40cb…a9de` 离线重评分通过。proposal evidence 0.2 实现 `7a7aeec98134f3a7c2844b48197c6dfa6d40f54e` / [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) 七 job success，已 remote-accepted；新开发题完整记录到模型把 `0x456` 改成 `1`。下一门不是继续提示修补或扩大权限，而是 control-plane-issued、哈希绑定的 action candidate：模型只选 candidate ID 或拒绝，不能重写参数；这同时减少 schema/参数 token，最终另冻新 cohort。配置写入、SocketCAN、硬件和认证 operator 仍不开放。状态真相继续使用 Workbench 版本化、哈希绑定协议；LangGraph 仅保留为未来 graph/checkpointer/interrupt 编排适配候选。
 
+2026-10-16 续进：[控制面动作候选与 ID-only 选择](p30-agent-action-candidate-guide.md)已 local-accepted。候选在推理前封存精确 action 和证据，模型仅选 candidate ID 或固定原因拒绝；selection 到标准 approval 的精确关系可停服复验。本地 492 tests、75 schemas、源码/隔离 wheel 合成链通过；未运行真实模型。下一门先提交推送并取得该实现自身七 job，然后预推理冻结全新 candidate-selection cohort。配置写入、SocketCAN、硬件和认证 operator 仍不开放。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。

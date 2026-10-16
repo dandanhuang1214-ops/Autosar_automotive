@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 import sys
 from pathlib import Path
@@ -232,6 +232,71 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_resume_verify.add_argument("checkpoint", type=Path)
     agent_resume_verify.add_argument("result", type=Path)
+    agent_candidate_issue = commands.add_parser(
+        "issue-agent-action-candidate",
+        help="Seal one exact control-plane action candidate without model inference",
+    )
+    agent_candidate_issue.add_argument("checkpoint", type=Path)
+    agent_candidate_issue.add_argument("arguments", type=Path)
+    agent_candidate_issue.add_argument("--tool-name", required=True)
+    agent_candidate_issue.add_argument(
+        "--evidence-id", action="append", required=True
+    )
+    agent_candidate_issue.add_argument("--output", type=Path, required=True)
+    agent_candidate_verify = commands.add_parser(
+        "verify-agent-action-candidate",
+        help="Verify a checkpoint-bound control-plane action candidate offline",
+    )
+    agent_candidate_verify.add_argument("checkpoint", type=Path)
+    agent_candidate_verify.add_argument("candidate", type=Path)
+    agent_candidate_select = commands.add_parser(
+        "select-agent-action-candidate",
+        help="Ask the pinned model to select a sealed candidate ID or decline",
+    )
+    agent_candidate_select.add_argument("checkpoint", type=Path)
+    agent_candidate_select.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
+    agent_candidate_select.add_argument("--output", type=Path, required=True)
+    agent_candidate_select.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    agent_candidate_select.add_argument("--timeout", type=float, default=30)
+    agent_candidate_selection_verify = commands.add_parser(
+        "verify-agent-candidate-selection",
+        help="Verify a candidate-ID selection against its sealed candidates offline",
+    )
+    agent_candidate_selection_verify.add_argument("checkpoint", type=Path)
+    agent_candidate_selection_verify.add_argument("selection", type=Path)
+    agent_candidate_selection_verify.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
+    agent_approval_from_candidate = commands.add_parser(
+        "request-agent-approval-from-candidate",
+        help="Create a pending approval for the exact selected candidate action",
+    )
+    agent_approval_from_candidate.add_argument("checkpoint", type=Path)
+    agent_approval_from_candidate.add_argument("selection", type=Path)
+    agent_approval_from_candidate.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
+    agent_approval_from_candidate.add_argument("--reason", required=True)
+    agent_approval_from_candidate.add_argument(
+        "--expires-in-seconds", type=int, default=900
+    )
+    agent_approval_from_candidate.add_argument(
+        "--output", type=Path, required=True
+    )
+    agent_approval_from_candidate_verify = commands.add_parser(
+        "verify-agent-approval-from-candidate",
+        help="Verify that an approval preserves the selected sealed candidate",
+    )
+    agent_approval_from_candidate_verify.add_argument("checkpoint", type=Path)
+    agent_approval_from_candidate_verify.add_argument("selection", type=Path)
+    agent_approval_from_candidate_verify.add_argument("request", type=Path)
+    agent_approval_from_candidate_verify.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
     agent_action_proposal = commands.add_parser(
         "propose-agent-action",
         help="Ask the pinned model for one typed proposal without registering a handler",
@@ -929,6 +994,93 @@ def main() -> int:
             result = verify_agent_resume_result(
                 read(args.checkpoint), read(args.result)
             )
+        elif args.command == "issue-agent-action-candidate":
+            from automotive_workbench.agent_action_candidate import (
+                issue_action_candidate,
+                save_action_candidate,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            candidate = issue_action_candidate(
+                checkpoint,
+                tool_name=args.tool_name,
+                arguments=read(args.arguments),
+                evidence_ids=args.evidence_id,
+            )
+            result = save_action_candidate(
+                checkpoint, candidate, args.output
+            )
+        elif args.command == "verify-agent-action-candidate":
+            from automotive_workbench.agent_action_candidate import (
+                load_and_verify_action_candidate,
+            )
+
+            result = load_and_verify_action_candidate(
+                args.checkpoint, args.candidate
+            )
+        elif args.command == "select-agent-action-candidate":
+            from automotive_workbench.agent_action_candidate import (
+                CandidateSelectionRunner,
+                save_candidate_selection,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.model_client import OllamaModelClient
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            candidates = [read(path) for path in args.candidate]
+            selection = CandidateSelectionRunner(
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout))
+            ).run(checkpoint, candidates)
+            result = save_candidate_selection(
+                checkpoint, candidates, selection, args.output
+            )
+        elif args.command == "verify-agent-candidate-selection":
+            from automotive_workbench.agent_action_candidate import (
+                load_and_verify_candidate_selection,
+            )
+
+            result = load_and_verify_candidate_selection(
+                args.checkpoint, args.candidate, args.selection
+            )
+        elif args.command == "request-agent-approval-from-candidate":
+            from automotive_workbench.agent_action_candidate import (
+                build_approval_request_from_candidate_selection,
+            )
+            from automotive_workbench.agent_approval import (
+                save_agent_approval_request,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            candidates = [read(path) for path in args.candidate]
+            selection = read(args.selection)
+            created_at = datetime.now(timezone.utc)
+            request = build_approval_request_from_candidate_selection(
+                checkpoint,
+                candidates,
+                selection,
+                reason=args.reason,
+                created_at=created_at,
+                expires_at=created_at
+                + timedelta(seconds=args.expires_in_seconds),
+            )
+            result = save_agent_approval_request(
+                checkpoint, request, args.output
+            )
+        elif args.command == "verify-agent-approval-from-candidate":
+            from automotive_workbench.agent_action_candidate import (
+                verify_approval_request_from_candidate_selection,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = verify_approval_request_from_candidate_selection(
+                read(args.checkpoint),
+                [read(path) for path in args.candidate],
+                read(args.selection),
+                read(args.request),
+            )
         elif args.command == "propose-agent-action":
             from automotive_workbench.agent_proposal import (
                 ActionProposalRunner,
@@ -952,8 +1104,6 @@ def main() -> int:
                 args.checkpoint, args.proposal
             )
         elif args.command == "request-agent-approval-from-proposal":
-            from datetime import datetime, timedelta, timezone
-
             from automotive_workbench.agent_approval import (
                 save_agent_approval_request,
             )
@@ -977,8 +1127,6 @@ def main() -> int:
                 checkpoint, request, args.output
             )
         elif args.command == "request-agent-approval":
-            from datetime import datetime, timedelta, timezone
-
             from automotive_workbench.agent_approval import (
                 build_agent_approval_request,
                 save_agent_approval_request,
@@ -1023,8 +1171,6 @@ def main() -> int:
                 checkpoint, request, decision, args.output
             )
         elif args.command == "expire-agent-approval":
-            from datetime import datetime, timezone
-
             from automotive_workbench.agent_approval import (
                 build_agent_approval_decision,
                 save_agent_approval_decision,
@@ -1110,8 +1256,6 @@ def main() -> int:
                 args.ledger,
             )
         elif args.command == "execute-agent-virtual-can":
-            from datetime import datetime, timezone
-
             from automotive_workbench.agent_transaction import transaction_paths
             from automotive_workbench.agent_virtual_execution import (
                 execute_agent_virtual_can,

@@ -94,3 +94,9 @@ v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料�
 [只读 Agent 指南](p30-readonly-agent-guide.md)已实现 provider-neutral 循环：Ollama 优先使用原生 function calling，其他客户端可走结构化动作回退；工具执行、参数校验、路径与策略绑定、预算、工程状态和 trace 仍由 Workbench 代码控制。完整工具输出留在 trace，模型只接收紧凑 projection；成功工具自动隐藏，以减少 schema token 和重复调用。Docker 仅承载旧 Ollama/API/Qdrant 服务，不是 Agent 编排器。
 
 本地实现门、源码/隔离 wheel 合成协议门和一条真实 qwen3.5:2b 开发试验已通过；最终试验为 2 模型调用、1 工具调用、1574 tokens、12.706 秒，选中确定性的阻断原因并引用有效 observation。这不是独立质量证据，模型摘要继续 unassessed。实现 `3d69f544d0411cee201479b1b4bab9f17ce17f22` / [run `38189854764`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38189854764) 七 job success，本轮只读 Agent 基础设施 remote-accepted；随后冻结独立只读 Agent cohort，再进入 checkpoint/暂停/审批，不跳到写入或硬件。
+
+## 控制面动作候选与 ID-only 选择（2026-10-16）
+
+[候选动作指南](p30-agent-action-candidate-guide.md)已实现 `agent-action-candidate-0.1` / `agent-action-candidate-selection-0.1`。控制面先校验并封存精确 action；模型仅可选择 candidate ID 或固定 decline reason，不再生成 `frame_id` / `payload_hex`。selection 与标准 approval 的 action/evidence 关系可在服务停止后独立复验。
+
+本地 492 tests（2 项环境跳过）、75 schemas / 77 bound / 25 syntax-only、Ruff、scoped mypy、topology、compileall、pip/diff check、源码合成全链及隔离 wheel 通过；wheel SHA-256 `9c8e45866d4526ba291fd65997ca464c0ba6b0eb23a43b502e340de5bc6b1adf`。本门 local-accepted，尚未提交/推送或取得远端 CI，未运行真实模型。下一步先完成七 job 远端实现验收，然后冻结全新 candidate-selection cohort；P30 保持 implementing。

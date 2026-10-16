@@ -42,7 +42,32 @@ def fixture_service():
             elif self.path == "/api/chat":
                 context = json.loads(payload["messages"][1]["content"])
                 answer: dict[str, Any]
-                if mode == "agent_proposal":
+                if mode == "agent_candidate":
+                    value = {
+                        "model": "fixture:1",
+                        "done": True,
+                        "done_reason": "stop",
+                        "message": {
+                            "role": "assistant",
+                            "content": "",
+                            "tool_calls": [
+                                {
+                                    "function": {
+                                        "name": "select_action_candidate",
+                                        "arguments": {
+                                            "candidate_id": context[
+                                                "sealed_candidates"
+                                            ][0]["candidate_id"]
+                                        },
+                                    }
+                                }
+                            ],
+                        },
+                        "eval_count": 4,
+                        "prompt_eval_count": 80,
+                        "total_duration": 1000000,
+                    }
+                elif mode == "agent_proposal":
                     value = {
                         "model": "fixture:1",
                         "done": True,

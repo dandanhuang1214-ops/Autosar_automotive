@@ -60,6 +60,10 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_transaction_receipt = None
     agent_action_proposal = None
     agent_action_proposal_verification = None
+    agent_action_candidate = None
+    agent_candidate_selection = None
+    agent_candidate_approval = None
+    agent_candidate_approval_verification = None
     virtual_execution_claim = None
     virtual_execution_receipt = None
     agent_evaluation = None
@@ -278,6 +282,106 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_action_proposal["tool_invoked"] is not False
         ):
             raise ValueError("Model action proposal crossed the execution boundary")
+        candidate_arguments_path = output / "agent-candidate-arguments.json"
+        candidate_arguments_path.write_text(
+            json.dumps(
+                {"frame_id": 0x456, "payload_hex": "BEEF"},
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        candidate_path = output / "agent-action-candidate.json"
+        agent_action_candidate = cli(
+            "agent-action-candidate",
+            [
+                "issue-agent-action-candidate",
+                checkpoint_path,
+                candidate_arguments_path,
+                "--tool-name",
+                "virtual_can.send_once",
+                "--evidence-id",
+                agent_checkpoint["events"][-1]["observation_id"],
+                "--output",
+                candidate_path,
+            ],
+            0,
+        )
+        candidate_schema = json.loads(
+            (ROOT / "schemas/agent-action-candidate.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        Draft202012Validator(candidate_schema).validate(agent_action_candidate)
+        server.mode, server.tags_count = "agent_candidate", 0
+        candidate_selection_path = output / "agent-candidate-selection.json"
+        agent_candidate_selection = cli(
+            "agent-candidate-selection",
+            [
+                "select-agent-action-candidate",
+                checkpoint_path,
+                "--candidate",
+                candidate_path,
+                "--output",
+                candidate_selection_path,
+                "--ollama-url",
+                origin,
+                "--timeout",
+                "5",
+            ],
+            0,
+        )
+        selection_schema = json.loads(
+            (
+                ROOT
+                / "schemas/agent-action-candidate-selection.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        Draft202012Validator(selection_schema).validate(
+            agent_candidate_selection
+        )
+        if (
+            agent_candidate_selection["status"] != "approval_required"
+            or agent_candidate_selection["requested_action"]
+            != agent_action_candidate["action"]
+            or agent_candidate_selection["execution_authorized"] is not False
+            or agent_candidate_selection["tool_invoked"] is not False
+        ):
+            raise ValueError("Candidate-ID selection changed the sealed action")
+        candidate_approval_path = output / "agent-candidate-approval.json"
+        agent_candidate_approval = cli(
+            "agent-candidate-approval",
+            [
+                "request-agent-approval-from-candidate",
+                checkpoint_path,
+                candidate_selection_path,
+                "--candidate",
+                candidate_path,
+                "--reason",
+                "Review the exact control-plane-issued virtual CAN frame.",
+                "--output",
+                candidate_approval_path,
+            ],
+            0,
+        )
+        if (
+            agent_candidate_approval["requested_action"]
+            != agent_action_candidate["action"]
+        ):
+            raise ValueError("Candidate approval changed the sealed action")
+        agent_candidate_approval_verification = cli(
+            "agent-candidate-approval-verification",
+            [
+                "verify-agent-approval-from-candidate",
+                checkpoint_path,
+                candidate_selection_path,
+                candidate_approval_path,
+                "--candidate",
+                candidate_path,
+            ],
+            0,
+        )
         virtual_request_path = output / "agent-virtual-can-request.json"
         virtual_request = cli(
             "agent-virtual-can-request-from-proposal",
@@ -467,6 +571,38 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    agent_action_candidate_verification = cli(
+        "agent-action-candidate-services-stopped",
+        [
+            "verify-agent-action-candidate",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-action-candidate.json",
+        ],
+        0,
+    )
+    agent_candidate_selection_verification = cli(
+        "agent-candidate-selection-services-stopped",
+        [
+            "verify-agent-candidate-selection",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-candidate-selection.json",
+            "--candidate",
+            output / "agent-action-candidate.json",
+        ],
+        0,
+    )
+    agent_candidate_approval_verification = cli(
+        "agent-candidate-approval-services-stopped",
+        [
+            "verify-agent-approval-from-candidate",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-candidate-selection.json",
+            output / "agent-candidate-approval.json",
+            "--candidate",
+            output / "agent-action-candidate.json",
+        ],
+        0,
+    )
     approval_request_verification = cli(
         "agent-approval-request-services-stopped",
         [
@@ -560,6 +696,23 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "model_interface": agent_action_proposal["model_interface"],
                    "offline_verification": agent_action_proposal_verification["status"],
                    "approval_action_matches": True,
+                   "execution_authorized": False,
+                   "tool_invoked": False,
+               },
+               "agent_action_candidate": {
+                   "candidate_status": agent_action_candidate_verification["status"],
+                   "selection_status": agent_candidate_selection["status"],
+                   "selection_offline_verification": (
+                       agent_candidate_selection_verification["status"]
+                   ),
+                   "approval_action_matches": (
+                       agent_candidate_approval["requested_action"]
+                       == agent_action_candidate["action"]
+                   ),
+                   "approval_offline_verification": (
+                       agent_candidate_approval_verification["status"]
+                   ),
+                   "model_supplied_action_arguments": False,
                    "execution_authorized": False,
                    "tool_invoked": False,
                },

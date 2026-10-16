@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-15）
+## 当前总览（2026-10-16）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施及 proposal evidence 0.2 均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)预推理冻结后真实 0/5 failed；0.2 的新开发题又记录到 qwen 把明确 frame `0x456` 生成成 `1`，证明问题不仅是 schema 非法，还包括结构合法的参数语义漂移。受限执行仍默认关闭，未开放配置写入、SocketCAN 或硬件；状态内核是 Workbench 显式版本化协议，不是 LangGraph。下一步实现哈希绑定的 control-plane action candidate，模型只选择 candidate ID 或拒绝，避免重写参数并减少工具 schema token；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施及 proposal evidence 0.2 均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed，且开发题记录到 qwen 把 `0x456` 生成为 `1`。[控制面动作候选](p30-agent-action-candidate-guide.md)已 local-accepted：精确参数在推理前封存，模型只选 candidate ID 或拒绝，但本实现尚未提交/推送及取得远端 CI。下一步先完成七 job 实现验收，再预推理冻结全新 candidate-selection cohort。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1804,3 +1804,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 实现 `7a7aeec98134f3a7c2844b48197c6dfa6d40f54e` / [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) completed/success。七个实际 job 均 success：core-contracts Windows `116443824510`、Ubuntu `116443824579`；runtime-currency `116443824843`；runtime-evidence Windows `116448183001`、Ubuntu `116448183121`；controlled-rejections Windows `116448183266`、Ubuntu `116448183324`。本门 remote-accepted。
 - 远端通过后才运行一个不同于 v2 的真实开发题：同一 qwen3.5:2b 先正确读取 `communication failed / structural_gap` 并暂停，checkpoint `600c9e50…f5c0`；proposal 0.2 `621d3aa2…75cc` 选择正确工具和 payload `BEEF`，却把明确的 `0x456`（1110）生成成 `frame_id=1`。两次模型调用累计 1814 tokens，墙钟约 118.7 秒；离线验签 passed，且目录没有 approval、claim 或 execution artifact。
 - 该开发结果不改变 v2 0/5，也不能作为新质量评测。它证明仅靠 JSON Schema 只能保证类型/范围，不能保证参数忠于用户意图。下一门改为 control-plane-issued、哈希绑定的 action candidate：模型只能选择 candidate ID 或固定原因拒绝，不能重写 tool/arguments；保留 0.2 兼容路径并最终以全新 cohort 验收。
+
+### P30：控制面动作候选与 ID-only 选择（本地验收，2026-10-16）
+
+- 新增 `agent-action-candidate-0.1` / `agent-action-candidate-selection-0.1`。控制面在推理前用受限 catalog 校验并封存精确 `virtual_can.send_once` action，绑定 checkpoint、registry、goal、capability digest、observation 和 call ID。
+- 模型只能调用 `select_action_candidate(candidate_id)` 或带固定 reason 的 `agent_decline`；function schema 不包含 `frame_id` / `payload_hex` / channel。未知 ID、额外参数、候选/响应篡改、身份漂移、预算和服务失败均 fail closed。
+- 候选、selection 和并集 evidence 都可离线复验；联合 verifier 进一步验证标准 approval request 的 action/evidence 与选中候选完全相同。模型选择不产生授权或工具调用，后续 decision/claim/explicit enable 不变。
+- 最终本地 492 tests 通过（2 项环境跳过）；9 项候选专项；75 schemas / 77 bound / 25 syntax-only；Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。新模块已纳入 Python 3.11/3.14 CI type gate。
+- 源码合成全链与服务停止后复验通过；隔离无依赖 wheel、排除 checkout 后同样通过，SHA-256 `9c8e45866d4526ba291fd65997ca464c0ba6b0eb23a43b502e340de5bc6b1adf`。合成 fixture 不是真实模型质量证据。
+- 本门 local-accepted，尚未提交/推送，远端七 job 待执行。通过后下一门才是预推理冻结全新 candidate-selection cohort；proposal 0.2 保持兼容，v2 0/5 failed 不改写。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
