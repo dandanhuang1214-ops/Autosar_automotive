@@ -18,7 +18,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [动作提案 v2 评测](docs/project/p30-agent-proposal-evaluation-v2-guide.md)已按预推理冻结边界完成：实现 `7912f85` / [run `38722912093`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38722912093) 七 job 成功，随后才在原 Docker backend 运行固定的 qwen3.5:2b。真实结果为 0/5 failed：读证 checkpoint、证据绑定、非执行边界和成本均 5/5，但五题 proposal 都因参数非法而 fail closed；三个拒绝题也未调用 `agent_decline`。result `365c40cb…a9de` 已离线重评分通过。向后兼容的 proposal evidence 0.2 已 remote-accepted：实现 `7a7aeec` / [run `38741428620`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38741428620) 七 job 成功；新开发题进一步确证 qwen 将 `0x456` 错写为 `1`。后续进度见下方候选动作门；配置写入、SocketCAN、硬件和认证 operator 仍不开放。
 
-[控制面动作候选与 ID-only 模型选择](docs/project/p30-agent-action-candidate-guide.md)已 local-accepted：候选在推理前绑定精确 tool/arguments、checkpoint、observation 和 capability digest，模型 function schema 只含 `candidate_id` 或固定 decline reason；服务停止后可同时复验 candidate、selection 与标准 approval 的精确关系。最终本地 492 tests、75 schemas、源码合成全链及隔离 wheel 通过，wheel SHA-256 `9c8e4586…adf`。尚未提交/推送或取得远端 CI，也未运行真实模型；下一步先完成本实现的七 job 验收，再预推理冻结全新 candidate-selection cohort。
+[控制面动作候选与 ID-only 模型选择](docs/project/p30-agent-action-candidate-guide.md)已 remote-accepted：候选在推理前绑定精确 tool/arguments、checkpoint、observation 和 capability digest，模型 function schema 只含 `candidate_id` 或固定 decline reason；服务停止后可同时复验 candidate、selection 与标准 approval 的精确关系。最终本地 492 tests、75 schemas、源码合成全链及隔离 wheel 通过，wheel SHA-256 `9c8e4586…adf`；实现 `09522dd` / [run `38873638394`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38873638394) 七 job 全部成功。尚未运行真实模型；下一步预推理冻结全新 candidate-selection cohort，并先完成冻结实现自身的远端验收。
 
 日常项目验收从 `run-project` 开始：
 

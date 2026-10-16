@@ -1,6 +1,6 @@
 # P30 控制面动作候选与 ID-only 模型选择
 
-状态：**local-accepted**。P30 整阶段仍为 implementing；本门尚未取得实现提交和远端 CI。
+状态：**remote-accepted**。实现 `09522dd1c8733fc4ed410915348118f99f43e561` 已通过 [run `38873638394`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38873638394) 的七个实际 job；P30 整阶段仍为 implementing。
 
 ## 结论
 
@@ -84,8 +84,12 @@ python -m automotive_workbench.cli verify-agent-approval-from-candidate \
 
 以上是合成 HTTP 协议和确定性控制面证据，没有运行真实模型，不能改变 v2 proposal 的 0/5 failed 结论。
 
+## 远端验收
+
+实现提交 `09522dd1c8733fc4ed410915348118f99f43e561` 的 [run `38873638394`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38873638394) completed/success，head 完全一致。七个实际 job 均 success：runtime-currency `116883383780`；core-contracts Windows `116883384086`、Ubuntu `116883384190`；runtime-evidence Windows `116886383782`、Ubuntu `116886383901`；controlled-rejections Ubuntu `116886383809`、Windows `116886384023`。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
+
 ## 下一门
 
-先提交/推送本实现并取得七个实际 CI job 的结论。远端实现验收后，再冻结一个全新的 candidate-selection cohort，分别测量 checkpoint preparation、候选 ID 选择、固定原因拒绝、证据绑定和 token/时间成本；冻结后才运行固定 qwen3.5:2b。不得复用已见 v2 或本轮合成 fixture 冒充质量验收。
+下一门是预推理冻结一个全新的 candidate-selection cohort，分别测量 checkpoint preparation、候选 ID 选择、固定原因拒绝、证据绑定和 token/时间成本；冻结实现自己的远端 CI 通过后，才运行固定 qwen3.5:2b。不得复用已见 v2 或本轮合成 fixture 冒充质量验收。
 
 开放参数的 proposal 0.2 保持兼容和历史复验，但不再作为小模型 execute 意图的默认路径。P30 继续 implementing；一般复杂解释、真实资料适用性、认证 operator、配置写入、SocketCAN 与物理 ECU 均未验收。

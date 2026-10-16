@@ -99,4 +99,4 @@ v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料�
 
 [候选动作指南](p30-agent-action-candidate-guide.md)已实现 `agent-action-candidate-0.1` / `agent-action-candidate-selection-0.1`。控制面先校验并封存精确 action；模型仅可选择 candidate ID 或固定 decline reason，不再生成 `frame_id` / `payload_hex`。selection 与标准 approval 的 action/evidence 关系可在服务停止后独立复验。
 
-本地 492 tests（2 项环境跳过）、75 schemas / 77 bound / 25 syntax-only、Ruff、scoped mypy、topology、compileall、pip/diff check、源码合成全链及隔离 wheel 通过；wheel SHA-256 `9c8e45866d4526ba291fd65997ca464c0ba6b0eb23a43b502e340de5bc6b1adf`。本门 local-accepted，尚未提交/推送或取得远端 CI，未运行真实模型。下一步先完成七 job 远端实现验收，然后冻结全新 candidate-selection cohort；P30 保持 implementing。
+本地 492 tests（2 项环境跳过）、75 schemas / 77 bound / 25 syntax-only、Ruff、scoped mypy、topology、compileall、pip/diff check、源码合成全链及隔离 wheel 通过；wheel SHA-256 `9c8e45866d4526ba291fd65997ca464c0ba6b0eb23a43b502e340de5bc6b1adf`。实现 `09522dd1c8733fc4ed410915348118f99f43e561` / [run `38873638394`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38873638394) 七 job 全部 success，本门 remote-accepted；未运行真实模型。下一步预推理冻结全新 candidate-selection cohort，并先完成冻结实现自身的远端验收；P30 保持 implementing。
