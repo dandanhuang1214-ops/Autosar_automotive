@@ -99,7 +99,7 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 2026-10-16 续进：[控制面动作候选与 ID-only 选择](p30-agent-action-candidate-guide.md)已 remote-accepted。其后的 [candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md) 在预推理冻结后由实现 `c619883248fdb883b4b122ae1b17349fac35ad6b` / [run `38877648265`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38877648265) 七 job 完成基础设施远端验收，再只运行一次固定 qwen3.5:2b。真实结果 1/5 failed：准备、候选签发、证据绑定、非执行和成本均 5/5，但两个精确候选均选错，三个拒绝题仅 SocketCAN 越权正确；result `21a76c92…8b7b` 已停服离线重评分。下一门把 typed action intent、精确动作/能力/observation applicability 移回确定性控制面，模型不得覆盖过滤或拒绝；不在同一 cohort 上调提示或重跑。配置写入、SocketCAN、硬件和认证 operator 仍不开放。
 
-2026-10-17 续进：[typed action intent 与确定性准入门](p30-agent-action-admission-guide.md)已 local-accepted。控制面现在封存精确 action、受限 capability 和 checkpoint observation 条件；准入器在无模型调用时重验候选，只把唯一精确匹配交给现有审批链。无动作、越界能力、证据不足和零/多匹配不可被模型覆盖。实现远端 CI 待提交；通过后另冻全新 cohort，只评估准入后的非安全决策。旧 candidate-selection v1 维持 1/5 failed，配置写入、SocketCAN、硬件和认证 operator 仍关闭。
+2026-10-17 续进：[typed action intent 与确定性准入门](p30-agent-action-admission-guide.md)已 remote-accepted。控制面现在封存精确 action、受限 capability 和 checkpoint observation 条件；准入器在无模型调用时重验候选，只把唯一精确匹配交给现有审批链。无动作、越界能力、证据不足和零/多匹配不可被模型覆盖。实现 `36eac3b592bd060d9a27f75c0e66c57ea2987b14` / [run `38997832114`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38997832114) 七 job 全部 success。下一门另冻全新 cohort，只评估准入后的非安全决策。旧 candidate-selection v1 维持 1/5 failed，配置写入、SocketCAN、硬件和认证 operator 仍关闭。
 
 ## P30 事实选择与模型适用性进展（2026-10-08）
 

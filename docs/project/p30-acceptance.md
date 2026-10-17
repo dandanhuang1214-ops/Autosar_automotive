@@ -13,7 +13,7 @@
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
 | 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；0.12 恢复 qwen3.5 输出。0.16 的 v7 开发集 6/6 精确字段任务通过，但引用由系统绑定、草稿只经开发者审读。一般解释、独立语义与资料适用性仍未验收 |
-| Typed action intent 与确定性准入 | local-accepted | 精确 action/capability/observation 条件由控制面绑定；唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖。实现远端 CI 待提交 |
+| Typed action intent 与确定性准入 | remote-accepted | 精确 action/capability/observation 条件由控制面绑定；唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖。`36eac3b` / run `38997832114` 七 job success |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 

@@ -1,6 +1,6 @@
 # P30 typed action intent 与确定性准入门
 
-状态：**local-accepted**，本轮实现提交和远端七 job 待完成；P30 整阶段仍为 implementing。
+状态：**remote-accepted**。实现 `36eac3b592bd060d9a27f75c0e66c57ea2987b14` 已通过 [run `38997832114`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38997832114) 的七个实际 job；P30 整阶段仍为 implementing。
 
 ## 结论
 
@@ -90,8 +90,10 @@ python -m automotive_workbench.cli request-agent-approval-from-admission \
 - 隔离无依赖 wheel 从仓库外工作目录完成两工程、12 类模型协议、typed admission 和归档重放，并确认没有从 checkout 导入；wheel SHA-256 `9412c64dbcc7df74013dae137e41c154e367fe39ae1506d9bb40312d2fb00b68`。
 - 本轮不运行真实模型；它是对 1/5 failed 基线的控制面修复，不改写旧 cohort 结论。
 
+远端实现验收：`36eac3b592bd060d9a27f75c0e66c57ea2987b14` / [run `38997832114`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38997832114) completed/success，head 完全一致。七个实际 job 均 success：runtime-currency `117294186870`；core-contracts Ubuntu `117294186640`、Windows `117294186787`；controlled-rejections Ubuntu `117295898094`、Windows `117295898136`；runtime-evidence Ubuntu `117295898158`、Windows `117295898161`。后续纯文档状态提交不替代该实现 run。
+
 ## 边界与下一门
 
 内容哈希提供篡改检测，不是数字签名或身份认证。`workbench-control-plane` 仍是本地声明；配置写入、SocketCAN、物理 ECU 和远端执行没有开放。
 
-本门远端验收后，下一项是冻结全新 cohort，只评估模型在确定性准入之后需要的非安全决策，不再让模型重复决定精确 action 或证据条件。一般复杂解释和真实资料适用性仍需独立人工验收，P30 保持 implementing。
+下一项是冻结全新 cohort，只评估模型在确定性准入之后需要的非安全决策，不再让模型重复决定精确 action 或证据条件。一般复杂解释和真实资料适用性仍需独立人工验收，P30 保持 implementing。
