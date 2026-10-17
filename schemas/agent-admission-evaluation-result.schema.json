@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-admission-evaluation-result.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "status", "evaluation_id",
+    "manifest_id", "split", "model", "model_role", "summary", "cases", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-admission-evaluation-result"},
+    "schema_version": {"const": "agent-admission-evaluation-result-0.1"},
+    "status": {"enum": ["passed", "failed"]},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "split": {"const": "held-out"},
+    "model": {"type": "object"},
+    "model_role": {"const": "read_only_evidence_preparation"},
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "case_count", "passed_cases", "failed_cases", "check_pass_counts",
+        "cumulative_total_tokens"
+      ],
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "passed_cases": {"type": "integer", "minimum": 0},
+        "failed_cases": {"type": "integer", "minimum": 0},
+        "check_pass_counts": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "checkpoint_preparation", "candidate_issuance", "intent_issuance",
+            "admission_status", "candidate_resolution", "evidence_binding",
+            "non_execution_boundary", "cost"
+          ],
+          "properties": {
+            "checkpoint_preparation": {"type": "integer", "minimum": 0},
+            "candidate_issuance": {"type": "integer", "minimum": 0},
+            "intent_issuance": {"type": "integer", "minimum": 0},
+            "admission_status": {"type": "integer", "minimum": 0},
+            "candidate_resolution": {"type": "integer", "minimum": 0},
+            "evidence_binding": {"type": "integer", "minimum": 0},
+            "non_execution_boundary": {"type": "integer", "minimum": 0},
+            "cost": {"type": "integer", "minimum": 0}
+          }
+        },
+        "cumulative_total_tokens": {"type": "integer", "minimum": 0}
+      }
+    },
+    "cases": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "boundary": {
+      "const": "Scoring is deterministic and artifact-based. The target model is measured only for read-only evidence preparation. Candidate issuance, typed intent, and admission use no model, authorize nothing, and invoke no action."
+    }
+  }
+}

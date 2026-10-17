@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-admission-evaluation-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_id", "artifact_type", "schema_version", "evaluation_id",
+    "split", "formation", "spec_sha256", "implementation_sha256",
+    "model", "budget", "cases", "boundary"
+  ],
+  "properties": {
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-admission-evaluation-manifest"},
+    "schema_version": {"const": "agent-admission-evaluation-manifest-0.1"},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "split": {"const": "held-out"},
+    "formation": {"type": "string", "minLength": 1},
+    "spec_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "implementation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "budget": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "max_steps", "max_model_calls", "max_tool_calls", "max_total_tokens",
+        "max_output_tokens_per_call", "context_window", "max_seconds",
+        "max_observation_chars"
+      ],
+      "properties": {
+        "max_steps": {"type": "integer", "minimum": 1, "maximum": 8},
+        "max_model_calls": {"type": "integer", "minimum": 1, "maximum": 8},
+        "max_tool_calls": {"type": "integer", "minimum": 0, "maximum": 7},
+        "max_total_tokens": {"type": "integer", "minimum": 64, "maximum": 32768},
+        "max_output_tokens_per_call": {"type": "integer", "minimum": 1, "maximum": 1024},
+        "context_window": {"type": "integer", "minimum": 512, "maximum": 32768},
+        "max_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 120},
+        "max_observation_chars": {"type": "integer", "minimum": 1000, "maximum": 100000}
+      }
+    },
+    "cases": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": [
+          "case_id", "category", "report", "report_sha256", "bundle_sha256",
+          "goal", "candidates", "intent", "expected"
+        ],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+          "category": {"type": "string", "minLength": 1},
+          "report": {"type": "string", "minLength": 1},
+          "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "bundle_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+          "candidates": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["candidate_key", "action", "evidence_fact_ids"],
+              "properties": {
+                "candidate_key": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+                "action": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["tool_name", "permission", "arguments", "call_id"],
+                  "properties": {
+                    "tool_name": {"type": "string", "minLength": 1},
+                    "permission": {"type": "string", "minLength": 1},
+                    "arguments": {"type": "object"},
+                    "call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                  }
+                },
+                "evidence_fact_ids": {
+                  "type": "array", "minItems": 1, "uniqueItems": true,
+                  "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                }
+              }
+            }
+          },
+          "intent": {
+            "type": "object", "additionalProperties": false,
+            "required": [
+              "disposition", "requested_capability", "requested_action_candidate_key",
+              "evidence_conditions", "deterministic_decline_reason"
+            ],
+            "properties": {
+              "disposition": {"enum": ["exact_action", "no_action", "unsupported_action"]},
+              "requested_capability": {
+                "oneOf": [
+                  {"type": "null"},
+                  {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["scope", "interface", "channel"],
+                    "properties": {
+                      "scope": {"enum": ["process_local_virtual", "host_socketcan", "hardware"]},
+                      "interface": {"enum": ["virtual", "socketcan", "hardware"]},
+                      "channel": {"type": ["string", "null"]}
+                    }
+                  }
+                ]
+              },
+              "requested_action_candidate_key": {
+                "oneOf": [
+                  {"type": "null"},
+                  {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+                ]
+              },
+              "evidence_conditions": {
+                "type": "array", "uniqueItems": true,
+                "items": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["fact_id", "expected_value"],
+                  "properties": {
+                    "fact_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "expected_value": {"type": ["string", "number", "integer", "boolean", "null"]}
+                  }
+                }
+              },
+              "deterministic_decline_reason": {
+                "type": ["string", "null"]
+              }
+            }
+          },
+          "expected": {
+            "type": "object", "additionalProperties": false,
+            "required": [
+              "admission_status", "admission_reason", "selected_candidate_key",
+              "first_read_tool", "gold_fact_ids", "max_cumulative_model_calls",
+              "max_cumulative_total_tokens"
+            ],
+            "properties": {
+              "admission_status": {"enum": ["approval_required", "declined", "refused"]},
+              "admission_reason": {"type": "string", "minLength": 1},
+              "selected_candidate_key": {
+                "oneOf": [
+                  {"type": "null"},
+                  {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"}
+                ]
+              },
+              "first_read_tool": {"type": "string", "minLength": 1},
+              "gold_fact_ids": {
+                "type": "array", "minItems": 1, "uniqueItems": true,
+                "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              },
+              "max_cumulative_model_calls": {"type": "integer", "minimum": 1},
+              "max_cumulative_total_tokens": {"type": "integer", "minimum": 1}
+            }
+          }
+        }
+      }
+    },
+    "boundary": {
+      "const": "Cases, structural gold, typed intent, and exact action templates are frozen before target-model inference. The model can only prepare one read-only checkpoint; deterministic admission does not consult the model."
+    }
+  }
+}
