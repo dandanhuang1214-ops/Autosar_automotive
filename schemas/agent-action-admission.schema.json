@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-action-admission.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "admission_id", "schema_version", "status", "reason", "checkpoint_id",
+    "registry_binding_sha256", "goal", "intent_id", "candidate_ids",
+    "candidate_set_sha256", "evaluated_conditions", "eligible_candidate_ids",
+    "selected_candidate_id", "requested_action", "evidence_ids", "model_invoked",
+    "execution_authorized", "tool_invoked", "boundary"
+  ],
+  "properties": {
+    "admission_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "agent-action-admission-0.1"},
+    "status": {"enum": ["approval_required", "declined", "refused"]},
+    "reason": {"enum": [
+      "control_plane_exact_candidate_admitted",
+      "control_plane_declined:action_not_required",
+      "control_plane_declined:outside_restricted_capabilities",
+      "control_plane_declined:insufficient_evidence",
+      "no_exact_applicable_candidate",
+      "ambiguous_exact_applicable_candidate"
+    ]},
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "registry_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "intent_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate_ids": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "candidate_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evaluated_conditions": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["observation_id", "selector", "expected_value", "actual_value", "matched"],
+        "properties": {
+          "observation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "selector": {
+            "type": "object", "additionalProperties": false,
+            "required": ["kind", "value"],
+            "properties": {
+              "kind": {"enum": ["fact_id", "pointer"]},
+              "value": {"type": "string", "minLength": 1}
+            }
+          },
+          "expected_value": {"type": ["string", "number", "integer", "boolean", "null"]},
+          "actual_value": {"type": ["string", "number", "integer", "boolean", "null"]},
+          "matched": {"type": "boolean"}
+        }
+      }
+    },
+    "eligible_candidate_ids": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "selected_candidate_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "requested_action": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["tool_name", "permission", "arguments", "call_id"],
+          "properties": {
+            "tool_name": {"type": "string", "minLength": 1},
+            "permission": {"const": "execute"},
+            "arguments": {"type": "object"},
+            "call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      ]
+    },
+    "evidence_ids": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "model_invoked": {"const": false},
+    "execution_authorized": {"const": false},
+    "tool_invoked": {"const": false},
+    "boundary": {
+      "const": "The Workbench control plane deterministically checked the typed intent, capability, exact action, and evidence conditions. No model made or could override this admission decision, and no tool was invoked."
+    }
+  }
+}

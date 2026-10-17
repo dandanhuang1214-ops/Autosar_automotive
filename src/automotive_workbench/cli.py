@@ -297,6 +297,65 @@ def build_parser() -> argparse.ArgumentParser:
     agent_approval_from_candidate_verify.add_argument(
         "--candidate", type=Path, action="append", required=True
     )
+    agent_intent_issue = commands.add_parser(
+        "issue-agent-action-intent",
+        help="Seal a typed control-plane action intent without model inference",
+    )
+    agent_intent_issue.add_argument("checkpoint", type=Path)
+    agent_intent_issue.add_argument("spec", type=Path)
+    agent_intent_issue.add_argument("--output", type=Path, required=True)
+    agent_intent_verify = commands.add_parser(
+        "verify-agent-action-intent",
+        help="Verify a checkpoint-bound typed action intent offline",
+    )
+    agent_intent_verify.add_argument("checkpoint", type=Path)
+    agent_intent_verify.add_argument("intent", type=Path)
+    agent_admission = commands.add_parser(
+        "admit-agent-action-candidates",
+        help="Deterministically filter sealed candidates using a typed intent",
+    )
+    agent_admission.add_argument("checkpoint", type=Path)
+    agent_admission.add_argument("intent", type=Path)
+    agent_admission.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
+    agent_admission.add_argument("--output", type=Path, required=True)
+    agent_admission_verify = commands.add_parser(
+        "verify-agent-action-admission",
+        help="Recompute a typed candidate admission without model services",
+    )
+    agent_admission_verify.add_argument("checkpoint", type=Path)
+    agent_admission_verify.add_argument("intent", type=Path)
+    agent_admission_verify.add_argument("admission", type=Path)
+    agent_admission_verify.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
+    agent_approval_from_admission = commands.add_parser(
+        "request-agent-approval-from-admission",
+        help="Create a pending approval for one deterministically admitted action",
+    )
+    agent_approval_from_admission.add_argument("checkpoint", type=Path)
+    agent_approval_from_admission.add_argument("intent", type=Path)
+    agent_approval_from_admission.add_argument("admission", type=Path)
+    agent_approval_from_admission.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
+    agent_approval_from_admission.add_argument("--reason", required=True)
+    agent_approval_from_admission.add_argument(
+        "--expires-in-seconds", type=int, default=900
+    )
+    agent_approval_from_admission.add_argument("--output", type=Path, required=True)
+    agent_approval_from_admission_verify = commands.add_parser(
+        "verify-agent-approval-from-admission",
+        help="Verify that approval preserves a deterministic action admission",
+    )
+    agent_approval_from_admission_verify.add_argument("checkpoint", type=Path)
+    agent_approval_from_admission_verify.add_argument("intent", type=Path)
+    agent_approval_from_admission_verify.add_argument("admission", type=Path)
+    agent_approval_from_admission_verify.add_argument("request", type=Path)
+    agent_approval_from_admission_verify.add_argument(
+        "--candidate", type=Path, action="append", required=True
+    )
     agent_action_proposal = commands.add_parser(
         "propose-agent-action",
         help="Ask the pinned model for one typed proposal without registering a handler",
@@ -1120,6 +1179,81 @@ def main() -> int:
                 read(args.checkpoint),
                 [read(path) for path in args.candidate],
                 read(args.selection),
+                read(args.request),
+            )
+        elif args.command == "issue-agent-action-intent":
+            from automotive_workbench.agent_action_admission import (
+                issue_action_intent,
+                save_action_intent,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            intent = issue_action_intent(checkpoint, read(args.spec))
+            result = save_action_intent(checkpoint, intent, args.output)
+        elif args.command == "verify-agent-action-intent":
+            from automotive_workbench.agent_action_admission import (
+                load_and_verify_action_intent,
+            )
+
+            result = load_and_verify_action_intent(args.checkpoint, args.intent)
+        elif args.command == "admit-agent-action-candidates":
+            from automotive_workbench.agent_action_admission import (
+                admit_action_candidates,
+                save_action_admission,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            intent = read(args.intent)
+            candidates = [read(path) for path in args.candidate]
+            admission = admit_action_candidates(checkpoint, intent, candidates)
+            result = save_action_admission(
+                checkpoint, intent, candidates, admission, args.output
+            )
+        elif args.command == "verify-agent-action-admission":
+            from automotive_workbench.agent_action_admission import (
+                load_and_verify_action_admission,
+            )
+
+            result = load_and_verify_action_admission(
+                args.checkpoint, args.intent, args.candidate, args.admission
+            )
+        elif args.command == "request-agent-approval-from-admission":
+            from automotive_workbench.agent_action_admission import (
+                build_approval_request_from_admission,
+            )
+            from automotive_workbench.agent_approval import (
+                save_agent_approval_request,
+            )
+            from automotive_workbench.project_explanation import read
+
+            checkpoint = read(args.checkpoint)
+            created_at = datetime.now(timezone.utc)
+            request = build_approval_request_from_admission(
+                checkpoint,
+                read(args.intent),
+                [read(path) for path in args.candidate],
+                read(args.admission),
+                reason=args.reason,
+                created_at=created_at,
+                expires_at=created_at
+                + timedelta(seconds=args.expires_in_seconds),
+            )
+            result = save_agent_approval_request(
+                checkpoint, request, args.output
+            )
+        elif args.command == "verify-agent-approval-from-admission":
+            from automotive_workbench.agent_action_admission import (
+                verify_approval_request_from_admission,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = verify_approval_request_from_admission(
+                read(args.checkpoint),
+                read(args.intent),
+                [read(path) for path in args.candidate],
+                read(args.admission),
                 read(args.request),
             )
         elif args.command == "propose-agent-action":

@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-16）
+## 当前总览（2026-10-17）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施、proposal evidence 0.2、[控制面动作候选](p30-agent-action-candidate-guide.md)及 candidate-selection v1 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed；新的 [candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md) 在预推理冻结及实现七 job 成功后只运行一次，真实结果 1/5 failed，result `21a76c92…8b7b` 已停服离线重评分。下一门为控制面 typed action intent 与确定性 applicability gate，不在同一 cohort 上调提示或重跑。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施、proposal evidence 0.2、[控制面动作候选](p30-agent-action-candidate-guide.md)及 candidate-selection v1 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed；新的 [candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md) 在预推理冻结及实现七 job 成功后只运行一次，真实结果 1/5 failed，result `21a76c92…8b7b` 已停服离线重评分。[控制面 typed action intent 与确定性准入](p30-agent-action-admission-guide.md)已 local-accepted：精确 action、能力范围和 observation 条件由控制面绑定，唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖；本轮实现远端 CI 待提交。通过后下一门为新 cohort，只评估准入后的非安全模型决策，不再让模型重复决定精确 action/条件。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1828,3 +1828,13 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 在既有 Docker backend 内核对 Ollama `0.31.1` 与冻结 qwen3.5:2b digest 后，固定五题只运行一次。结果 **1/5 failed**，result ID `21a76c92d92e79c778124fd175569111ba55528161f2afb19cf6bf5f94188b7b`；准备、候选签发、证据绑定、非执行边界和成本均 5/5，selection status 3/5，candidate selection 1/5，共 10 次模型调用、10000 tokens。
 - 两个精确选择题分别选错 frame 和 payload 候选；无需动作与 bus-off 条件不足题也选择了候选；SocketCAN/can0 越权题正确拒绝。所有选择均未授权、未执行。停止 Ollama 后离线 verifier 返回 `status=passed` / `evaluation_status=failed`。
 - 本 cohort 不修改、不重跑。下一门实现控制面 typed action intent 与确定性 applicability gate，把精确动作、能力和 observation 条件过滤从模型移回控制面；确定性拒绝不可被模型覆盖。之后另冻新 cohort。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：Typed action intent 与确定性准入（2026-10-17）
+
+- 新增 `agent-action-intent-0.1` 与 `agent-action-admission-0.1`。控制面明确签发 `exact_action` / `no_action` / `unsupported_action`，绑定 checkpoint、registry、受限 capability、精确 action 和 observation 条件。
+- 准入器离线重验 intent 和全部 candidate，按 fact ID 或 JSON Pointer 读取 checkpoint observation。只有条件成立且唯一 action/evidence 精确匹配才输出 `approval_required`；无动作、越界能力、证据不足、零/多精确匹配均由确定性状态拒绝。
+- 新增六个 CLI，支持 intent 签发/复验、candidate 准入/复验、转待审批请求和 admission-to-approval 离线关系复验。准入不调模型，不授权、不执行，不改动现有 decision/claim/explicit-enable/executor 门。
+- 本地全量 500 tests 通过（2 项环境跳过）；16 项 candidate/admission/contract 定向回归、79 schemas / 77 schema-bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。完整源码合成场景通过，含实际进程内 virtual CAN 效果/补偿与停服复验。
+- 隔离无依赖 wheel 从仓库外工作目录完成两工程、12 类协议、typed admission 和归档重放，并排除 checkout 导入；wheel SHA-256 `9412c64dbcc7df74013dae137e41c154e367fe39ae1506d9bb40312d2fb00b68`。该环境无可选 CAN 依赖，只验证默认关闭，不声称实际发送。
+- 当前状态 local-accepted，实现提交和远端七 job 待完成。candidate-selection v1 保持 1/5 failed，本轮没有真实模型调用，不改写原 cohort。
+- 远端验收后下一门冻结新 cohort，只衡量确定性准入后的非安全模型决策。配置写入、SocketCAN、硬件和认证 operator 继续关闭；一般复杂解释与真实资料适用性仍未验收。

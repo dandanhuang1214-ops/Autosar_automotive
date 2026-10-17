@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-action-intent.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent_id", "schema_version", "checkpoint_id", "registry_binding_sha256",
+    "goal", "issued_by", "capability_binding_sha256", "disposition",
+    "requested_capability", "requested_action", "evidence_conditions",
+    "deterministic_decline_reason", "execution_authorized", "tool_invoked",
+    "boundary"
+  ],
+  "properties": {
+    "intent_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "agent-action-intent-0.1"},
+    "checkpoint_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "registry_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "issued_by": {"const": "workbench-control-plane"},
+    "capability_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "disposition": {"enum": ["exact_action", "no_action", "unsupported_action"]},
+    "requested_capability": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["scope", "interface", "channel"],
+          "properties": {
+            "scope": {"enum": ["process_local_virtual", "host_socketcan", "hardware"]},
+            "interface": {"enum": ["virtual", "socketcan", "hardware"]},
+            "channel": {"type": ["string", "null"], "minLength": 1}
+          }
+        }
+      ]
+    },
+    "requested_action": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["tool_name", "permission", "arguments", "call_id"],
+          "properties": {
+            "tool_name": {"type": "string", "minLength": 1},
+            "permission": {"const": "execute"},
+            "arguments": {"type": "object"},
+            "call_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      ]
+    },
+    "evidence_conditions": {
+      "type": "array", "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["observation_id", "selector", "expected_value"],
+        "properties": {
+          "observation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "selector": {
+            "type": "object", "additionalProperties": false,
+            "required": ["kind", "value"],
+            "properties": {
+              "kind": {"enum": ["fact_id", "pointer"]},
+              "value": {"type": "string", "minLength": 1}
+            }
+          },
+          "expected_value": {"type": ["string", "number", "integer", "boolean", "null"]}
+        }
+      }
+    },
+    "deterministic_decline_reason": {
+      "type": ["string", "null"],
+      "enum": [null, "action_not_required", "outside_restricted_capabilities"]
+    },
+    "execution_authorized": {"const": false},
+    "tool_invoked": {"const": false},
+    "boundary": {
+      "const": "This typed intent is issued by the Workbench control plane. It is not an operator identity, approval, or execution authorization."
+    }
+  }
+}

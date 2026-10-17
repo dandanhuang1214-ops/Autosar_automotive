@@ -13,6 +13,8 @@ from explanation_fixture_service import fixture_service
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
+from automotive_workbench.project_explanation import canonical
+
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {"normal": "passed", "invalid_reference": "refused", "value_drift": "refused",
          "manual_mismatch": "refused", "malformed": "refused", "truncation": "refused",
@@ -349,6 +351,120 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_candidate_selection["tool_invoked"] is not False
         ):
             raise ValueError("Candidate-ID selection changed the sealed action")
+        intent_spec_path = output / "agent-action-intent-spec.json"
+        intent_path = output / "agent-action-intent.json"
+        admission_path = output / "agent-action-admission.json"
+        evidence_value = agent_checkpoint["events"][-1]["result"]["verification"][
+            "project_status"
+        ]
+        intent_spec_path.write_text(
+            canonical(
+                {
+                    "disposition": "exact_action",
+                    "requested_capability": {
+                        "scope": "process_local_virtual",
+                        "interface": "virtual",
+                        "channel": None,
+                    },
+                    "requested_action": {
+                        "tool_name": "virtual_can.send_once",
+                        "arguments": {"frame_id": 0x456, "payload_hex": "BEEF"},
+                    },
+                    "evidence_conditions": [
+                        {
+                            "observation_id": agent_checkpoint["events"][-1][
+                                "observation_id"
+                            ],
+                            "selector": {
+                                "kind": "pointer",
+                                "value": "/verification/project_status",
+                            },
+                            "expected_value": evidence_value,
+                        }
+                    ],
+                    "deterministic_decline_reason": None,
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        agent_action_intent = cli(
+            "agent-action-intent",
+            [
+                "issue-agent-action-intent",
+                checkpoint_path,
+                intent_spec_path,
+                "--output",
+                intent_path,
+            ],
+            0,
+        )
+        intent_schema = json.loads(
+            (ROOT / "schemas/agent-action-intent.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        Draft202012Validator(intent_schema).validate(agent_action_intent)
+        agent_action_admission = cli(
+            "agent-action-admission",
+            [
+                "admit-agent-action-candidates",
+                checkpoint_path,
+                intent_path,
+                "--candidate",
+                candidate_path,
+                "--output",
+                admission_path,
+            ],
+            0,
+        )
+        admission_schema = json.loads(
+            (ROOT / "schemas/agent-action-admission.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        Draft202012Validator(admission_schema).validate(agent_action_admission)
+        if (
+            agent_action_admission["status"] != "approval_required"
+            or agent_action_admission["requested_action"]
+            != agent_action_candidate["action"]
+            or agent_action_admission["model_invoked"] is not False
+        ):
+            raise ValueError("Deterministic admission changed the exact action")
+        admission_approval_path = output / "agent-admission-approval.json"
+        agent_admission_approval = cli(
+            "agent-admission-approval",
+            [
+                "request-agent-approval-from-admission",
+                checkpoint_path,
+                intent_path,
+                admission_path,
+                "--candidate",
+                candidate_path,
+                "--reason",
+                "Review the deterministically admitted virtual CAN frame.",
+                "--output",
+                admission_approval_path,
+            ],
+            0,
+        )
+        if agent_admission_approval["requested_action"] != agent_action_candidate[
+            "action"
+        ]:
+            raise ValueError("Admission approval changed the exact action")
+        cli(
+            "agent-admission-approval-verification",
+            [
+                "verify-agent-approval-from-admission",
+                checkpoint_path,
+                intent_path,
+                admission_path,
+                admission_approval_path,
+                "--candidate",
+                candidate_path,
+            ],
+            0,
+        )
         candidate_approval_path = output / "agent-candidate-approval.json"
         agent_candidate_approval = cli(
             "agent-candidate-approval",
@@ -603,6 +719,40 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    agent_action_intent_verification = cli(
+        "agent-action-intent-services-stopped",
+        [
+            "verify-agent-action-intent",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-action-intent.json",
+        ],
+        0,
+    )
+    agent_action_admission_verification = cli(
+        "agent-action-admission-services-stopped",
+        [
+            "verify-agent-action-admission",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-action-intent.json",
+            output / "agent-action-admission.json",
+            "--candidate",
+            output / "agent-action-candidate.json",
+        ],
+        0,
+    )
+    agent_admission_approval_verification = cli(
+        "agent-admission-approval-services-stopped",
+        [
+            "verify-agent-approval-from-admission",
+            output / "readonly-agent-checkpoint.json",
+            output / "agent-action-intent.json",
+            output / "agent-action-admission.json",
+            output / "agent-admission-approval.json",
+            "--candidate",
+            output / "agent-action-candidate.json",
+        ],
+        0,
+    )
     approval_request_verification = cli(
         "agent-approval-request-services-stopped",
         [
@@ -713,6 +863,23 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                        agent_candidate_approval_verification["status"]
                    ),
                    "model_supplied_action_arguments": False,
+                   "execution_authorized": False,
+                   "tool_invoked": False,
+               },
+               "agent_action_admission": {
+                   "intent_status": agent_action_intent_verification["status"],
+                   "admission_status": agent_action_admission["status"],
+                   "admission_offline_verification": (
+                       agent_action_admission_verification["status"]
+                   ),
+                   "approval_action_matches": (
+                       agent_admission_approval["requested_action"]
+                       == agent_action_candidate["action"]
+                   ),
+                   "approval_offline_verification": (
+                       agent_admission_approval_verification["status"]
+                   ),
+                   "model_invoked": False,
                    "execution_authorized": False,
                    "tool_invoked": False,
                },
