@@ -1865,3 +1865,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地全量 506 tests 通过（2 项环境跳过）；84 schemas / 77 schema-bound / 25 syntax-only、Ruff、相关 mypy 通过。源码合成 HTTP 全链在服务停止后完成 pack/assessment 复验；隔离无依赖 wheel 排除 checkout 导入后同样通过，SHA-256 `1e96a37ce92aa7c8e519d027eff52652a4a29d24a0970b70378e17870b7f0c90`。
 - 合成 assessment 使用 `synthetic-contract-fixture`，所有语义项为 `not_assessable`，只证明协议可执行，不是假造的人工质量结果。当前 local-accepted；尚未提交、推送或取得本实现自己的远端 CI。
 - 下一步先提交并完成远端七 job。成功后冻结新的复杂解释/可信资料 cohort，绑定项目报告、受策略资料及摘要、模型 digest、预算和结构化期望，再只运行一次 qwen3.5:2b 并生成待独立审阅包。未得到完成的人工 assessment 前，一般复杂解释、真实资料适用性和人工可用性保持 pending；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：Agent 独立人工审阅包远端验收（2026-10-18）
+
+- 实现 `4005c32482d908510a969c4dfa1038a613c00892` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) completed/success，head 完全一致。七 job 均 success：runtime-currency `117704545916`；core-contracts Ubuntu `117704546076`、Windows `117704546082`；controlled-rejections Ubuntu `117706173256`、Windows `117706173279`；runtime-evidence Ubuntu `117706173303`、Windows `117706173340`。本门 remote-accepted。
+- Windows/Ubuntu core-contracts 均实际执行新 CLI、合成 pack/assessment、服务停止后离线复验和隔离 wheel；远端基础设施通过不改变 `semantic_quality=unassessed`，也不构成人工认可。本条后续状态回填为 `[skip ci]` 文档提交，不替代实现 run。
+- 下一门冻结新的复杂解释/可信资料 cohort，绑定项目报告、来源策略、资料内容摘要、模型 digest、预算和结构化期望。冻结提交自己的远端 CI 成功后才运行一次固定 qwen3.5:2b，并生成待独立审阅包；不在该 cohort 上调实现或重跑。完成的独立 assessment 之前，一般复杂解释、资料适用性和人工可用性仍 pending。配置写入、SocketCAN、硬件和认证 operator 继续关闭。

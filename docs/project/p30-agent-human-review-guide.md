@@ -1,6 +1,6 @@
 # P30 Agent 独立人工审阅包
 
-状态：local-accepted（2026-10-18）；尚待本实现自己的远端 CI。此门只建立可复验的审阅协议，不代表任何模型回答已获人工认可。
+状态：remote-accepted（2026-10-18）。实现 `4005c32482d908510a969c4dfa1038a613c00892` 的 [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) 与 head 一致，七个 job 全部 success。此门只建立可复验的审阅协议，不代表任何模型回答已获人工认可。
 
 ## 解决的问题
 
@@ -57,4 +57,6 @@ workbench verify-agent-human-review-assessment \
 
 本地 506 tests 全部通过（2 项环境跳过）；84 个 schema、77 个 schema-bound example 和 25 个 syntax-only example 通过。源码合成全链及停服复验通过。隔离、无依赖、排除 checkout 导入的 wheel 流程也通过，wheel SHA-256 为 `1e96a37ce92aa7c8e519d027eff52652a4a29d24a0970b70378e17870b7f0c90`。其中完成态 assessment 的 reviewer 明确为 `synthetic-contract-fixture`，全部语义项为 `not_assessable`；它只测试协议，不是假造的人工质量结论。
 
-远端 CI 通过后，下一门才冻结新的复杂解释与可信资料 cohort。题目、结构化期望、项目报告、资料策略、资料内容摘要、模型 digest 和预算必须在目标模型调用前固定；真实运行只执行一次。随后把模型结果转换为本协议的审阅包，交给独立审阅者。未取得完成的人工 assessment 前，P30 的一般复杂解释、资料适用性和人工可用性继续保持 pending。
+实现 run `39137376642` 的七个实际 job 均为 success：runtime-currency `117704545916`；core-contracts Ubuntu `117704546076`、Windows `117704546082`；controlled-rejections Ubuntu `117706173256`、Windows `117706173279`；runtime-evidence Ubuntu `117706173303`、Windows `117706173340`。本门 remote-accepted。
+
+下一门冻结新的复杂解释与可信资料 cohort。题目、结构化期望、项目报告、资料策略、资料内容摘要、模型 digest 和预算必须在目标模型调用前固定；冻结提交自己的远端 CI 通过后，真实运行只执行一次。随后把模型结果转换为本协议的审阅包，交给独立审阅者。未取得完成的人工 assessment 前，P30 的一般复杂解释、资料适用性和人工可用性继续保持 pending。
