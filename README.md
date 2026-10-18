@@ -22,7 +22,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [Agent candidate-selection v1 评测](docs/project/p30-agent-candidate-evaluation-v1-guide.md)已按预推理冻结边界完成：实现 `c619883` / [run `38877648265`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38877648265) 七 job 成功后，固定 qwen3.5:2b cohort 只运行一次。真实结果 1/5 failed：准备、候选签发、证据绑定、非执行和成本均 5/5，但两个精确候选都选错，三个拒绝题仅 SocketCAN 越权正确；result `21a76c92…8b7b` 已停服离线重评分。下一门是控制面 typed action intent 与确定性 applicability gate，不在同一 cohort 上调提示或重跑。
 
-[Typed action intent 与确定性准入门](docs/project/p30-agent-action-admission-guide.md)已 remote-accepted：控制面绑定精确 action、能力范围与 checkpoint observation 条件，并从已封存候选中确定性准入唯一精确匹配；无动作、越界能力和证据不足的拒绝不再由模型决定。所有 artifact 仍未授权、未调用工具；实现 `36eac3b` / [run `38997832114`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38997832114) 七 job 成功。新的 [deterministic admission 后只读模型评测 v1](docs/project/p30-agent-admission-evaluation-v1-guide.md) 已在任何目标推理前冻结并本地验收：模型只负责一次只读证据准备，candidate、intent 和 admission 全由控制面确定；manifest `945dfd72…0100a`，远端 CI 与真实模型结果均待完成。
+[Typed action intent 与确定性准入门](docs/project/p30-agent-action-admission-guide.md)已 remote-accepted：控制面绑定精确 action、能力范围与 checkpoint observation 条件，并从已封存候选中确定性准入唯一精确匹配；无动作、越界能力和证据不足的拒绝不再由模型决定。其后的 [deterministic admission 后只读模型评测 v1](docs/project/p30-agent-admission-evaluation-v1-guide.md) 已按冻结顺序完成：实现 `5bca6c4` / [run `39001106717`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39001106717) 七 job 成功后，固定 qwen3.5:2b cohort 只运行一次，真实结果 5/5 passed；result `57d9e802…7bf8` 已在 Ollama 停止后离线重评分。该结果只验收一次只读证据准备与确定性准入，不评估自然语言质量；所有 artifact 仍未授权、未执行。下一门回到 P30 未完成的复杂解释与真实资料适用性，配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
 日常项目验收从 `run-project` 开始：
 

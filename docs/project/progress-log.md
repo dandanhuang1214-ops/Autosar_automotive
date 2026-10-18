@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-17）
+## 当前总览（2026-10-18）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、v2 评测基础设施、proposal evidence 0.2、[控制面动作候选](p30-agent-action-candidate-guide.md)及 candidate-selection v1 评测基础设施均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed；新的 [candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md) 在预推理冻结及实现七 job 成功后只运行一次，真实结果 1/5 failed，result `21a76c92…8b7b` 已停服离线重评分。[控制面 typed action intent 与确定性准入](p30-agent-action-admission-guide.md)已 remote-accepted：精确 action、能力范围和 observation 条件由控制面绑定，唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖；实现 `36eac3b` / run `38997832114` 七 job 全部 success。新的 [deterministic admission 后只读模型评测 v1](p30-agent-admission-evaluation-v1-guide.md) 已 pre-inference frozen / local-accepted，manifest `945dfd72…0100a`；模型只负责一次只读证据准备，之后不再参与 action、条件或准入决定。下一步先取得冻结实现自己的远端七 job，成功后才运行一次固定模型并停服重评分。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、proposal evidence 0.2、[控制面动作候选](p30-agent-action-candidate-guide.md)和[控制面 typed action intent 与确定性准入](p30-agent-action-admission-guide.md)均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed，[candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md)真实 1/5 failed，均保持历史结论。新的 [deterministic admission 后只读模型评测 v1](p30-agent-admission-evaluation-v1-guide.md)在冻结实现 `5bca6c4` / run `39001106717` 七 job 成功后只运行一次，真实结果 5/5 passed，result `57d9e802…7bf8` 已在 Ollama 停止后离线重评分；模型只负责一次只读证据准备，action、条件和准入均由控制面确定。下一门冻结复杂解释/可信资料新 cohort 并形成独立人工审阅包，不继续扩大动作权限。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1847,3 +1847,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 本地全量 504 tests 通过（2 项环境跳过）；15 项 admission/candidate/contract 定向回归、81 schemas / 77 schema-bound / 25 syntax-only、CI topology、Ruff、相关 mypy、compileall、pip/diff check 均通过。fixture 完整运行只发生一次模型调用，停服式离线重评分通过；准备失败不会伪造 intent/admission。隔离 wheel 从 `/tmp` 导入并重算冻结实现摘要，SHA-256 `6763a6a12136a3279423ce892894907fa773cc14a8234c9afae892c7de379d03`。
 - 当前 pre-inference frozen / local-accepted；尚未提交、推送或取得本实现自己的远端七 job，也没有运行目标模型。下一步必须先远端验收冻结实现，成功后才对固定 manifest 运行一次 qwen3.5:2b，并在停服后离线复验。任何结果不得通过修改或重跑本 cohort 回调。
 - 所有 candidate、intent 和 admission 仍固定 `execution_authorized=false` / `tool_invoked=false`；本门不生成 decision、claim 或 execution。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：Deterministic admission 后只读模型评测 v1 远端验收与真实结果（2026-10-18）
+
+- 冻结实现 `5bca6c48324084ef7acb7c10b2cd84428de4051a` / [run `39001106717`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39001106717) completed/success，head 一致。七 job 均 success：runtime-currency `117304015248`；core-contracts Ubuntu `117304015145`、Windows `117304015238`；runtime-evidence Ubuntu `117305837204`、Windows `117305837268`；controlled-rejections Windows `117305837214`、Ubuntu `117305837247`。评测基础设施 remote-accepted；本条文档回填不替代实现 run。
+- 远端通过后才核对既有 Ollama `0.31.1` 和冻结 qwen3.5:2b 完整 digest。仓库只读挂载、仅 `output/` 可写，固定五题只运行一次；真实结果 **5/5 passed**，result ID `57d9e80269ba01ba22084f38013408663710d9b0ec72e7e11fb515fc077b7bf8`。
+- checkpoint preparation、candidate issuance、intent issuance、admission status、candidate resolution、evidence binding、non-execution boundary 和 cost 均 5/5。五题各 1 次模型调用、1 次只读 `project_query_facts` 并暂停，全部 gold facts 命中；累计 5 次模型调用、5 次只读工具调用、4266 tokens。
+- application/task-binding 的唯一精确候选由控制面得到 `approval_required`；mode-rules、硬件越界、impact 证据不足分别确定性拒绝。模型没有选择 action、决定准入或覆盖拒绝。没有 decision、claim 或 execution artifact。
+- Ollama 停止后离线 verifier 返回 `status=passed` / `evaluation_status=passed` 和相同 result ID。本 cohort 不修改、不重跑；它不评估 prose、一般复杂解释、真实资料适用性、独立人工可用性或跨项目泛化。
+- P30 保持 implementing。下一门冻结新的复杂解释/可信资料 cohort，并生成可离线复验的独立人工审阅包；不扩大动作权限。配置写入、SocketCAN、硬件和认证 operator 继续关闭。

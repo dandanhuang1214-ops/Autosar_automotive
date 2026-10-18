@@ -1,6 +1,6 @@
 # P30 deterministic admission 后只读模型评测 v1
 
-状态：**pre-inference frozen / local-accepted**。冻结 manifest ID 为 `945dfd72145acdc97a100d1d7f54bc5afafac7326d331278a2d59f56b4b0100a`；远端 CI 和真实 qwen3.5:2b 结果均待完成，不能标记 remote-accepted 或模型质量通过。
+状态：**remote-accepted / evaluation passed**。冻结 manifest ID 为 `945dfd72145acdc97a100d1d7f54bc5afafac7326d331278a2d59f56b4b0100a`；冻结实现远端七 job 成功后，固定 qwen3.5:2b cohort 只运行一次并取得 5/5，随后在模型服务停止时完成离线重评分。
 
 ## 评测问题
 
@@ -78,6 +78,15 @@ python -m automotive_workbench.cli verify-agent-admission-eval \
 
 本评测不会创建 approval decision、claim 或 execution artifact。`approval_required` 仍只是待 operator 审批状态；配置写入、SocketCAN、物理硬件、远端执行和认证 operator 继续关闭。内容哈希不是数字签名或身份认证。
 
-## 下一步
+## 远端验收与真实结果
 
-先提交并推送这一冻结点，取得与实现提交 head 完全一致的远端七 job 结论。只有远端成功后，才运行一次固定 qwen3.5:2b cohort，并在停服后离线重评分。结果无论通过或失败，都不得修改或重跑本 cohort 回调；后续改进必须使用新的开发题和新的冻结版本。
+冻结实现 `5bca6c48324084ef7acb7c10b2cd84428de4051a` 的 [run `39001106717`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39001106717) completed/success，head 完全一致。七个实际 job 均 success：runtime-currency `117304015248`；core-contracts Ubuntu `117304015145`、Windows `117304015238`；runtime-evidence Ubuntu `117305837204`、Windows `117305837268`；controlled-rejections Windows `117305837214`、Ubuntu `117305837247`。评测基础设施因此 remote-accepted；后续文档状态提交不替代该实现 run。
+
+远端通过后，核对既有 Ollama `0.31.1` 和冻结 qwen3.5:2b 完整 digest，再以仓库只读、仅 `output/` 可写的一次性容器运行固定 cohort。五题只运行一次，结果 **5/5 passed**，result ID `57d9e80269ba01ba22084f38013408663710d9b0ec72e7e11fb515fc077b7bf8`：
+
+- checkpoint preparation、candidate issuance、intent issuance、admission status、candidate resolution、evidence binding、non-execution boundary 和 cost 均为 5/5。
+- 五题均在 1 次模型调用和 1 次只读 `project_query_facts` 后暂停，命中全部冻结 fact；累计 5 次模型调用、5 次只读工具调用、4266 tokens。
+- application 与 task-binding 的唯一精确候选由控制面得到 `approval_required`；mode-rules、硬件越界和 impact 证据不足分别确定性拒绝。模型没有选择 action、判断准入或覆盖拒绝。
+- 没有 approval decision、claim 或 execution artifact，所有候选、intent 和 admission 仍未授权、未调用。停止 Ollama 后离线 verifier 返回 `status=passed` / `evaluation_status=passed` 和相同 result ID。
+
+本 cohort 不修改、不重跑。通过只证明在这五个 agent-authored structural gold 上，模型能完成一次只读证据准备，且安全相关决定已被确定性控制面接管；它不证明自然语言解释质量、独立人工适用性或跨项目泛化。下一门回到 P30 尚未完成的复杂解释与真实资料适用性：冻结新的项目事实 + 可信资料 cohort，生成可离线复验的独立人工审阅包，不扩大动作权限。

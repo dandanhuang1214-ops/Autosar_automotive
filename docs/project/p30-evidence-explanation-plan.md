@@ -106,3 +106,11 @@ v8 已用于提示开发。实现固定后冻结的 v9 六次调用中，资料�
 [独立评测指南](p30-agent-candidate-evaluation-v1-guide.md)冻结五个新 read-then-select case、精确 action template、结构化 gold、项目证据、qwen3.5:2b digest 和 evaluator implementation SHA-256。manifest ID `718ca9f09f996b7bef0e05b2b457f860a35cbc8e6c971ef889fe07447bd5d137`；本地 496 tests、77 schemas、fixture 评测和停服式离线复验通过。冻结实现 `c619883248fdb883b4b122ae1b17349fac35ad6b` / [run `38877648265`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/38877648265) 七 job success 后才运行目标模型。
 
 固定 cohort 只运行一次，真实结果 1/5 failed，result `21a76c92d92e79c778124fd175569111ba55528161f2afb19cf6bf5f94188b7b` 已停服离线重评分。checkpoint、候选签发、证据绑定、非执行和成本 5/5；selection status 3/5、candidate selection 1/5。两个精确选择均选错，三类拒绝仅 SocketCAN 越权通过；全部未授权、未执行。下一门实现控制面 typed action intent 与确定性 applicability gate，不让模型裁决安全相关的精确动作、能力和 observation 条件；本 cohort 不调优、不重跑。P30 保持 implementing。
+
+## Deterministic admission 后只读模型评测 v1（2026-10-18）
+
+[独立评测指南](p30-agent-admission-evaluation-v1-guide.md)固定五个新的 application/task/mode/policy/impact 只读准备问题、结构化 gold、typed intent、精确 action template、项目证据和 qwen3.5:2b digest。冻结实现 `5bca6c48324084ef7acb7c10b2cd84428de4051a` / [run `39001106717`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39001106717) 七 job success 后才运行目标模型。
+
+固定 cohort 只运行一次，真实结果 5/5 passed，result `57d9e80269ba01ba22084f38013408663710d9b0ec72e7e11fb515fc077b7bf8` 已在 Ollama 停止后离线重评分。八个分轴均 5/5；共 5 次模型调用、5 次只读工具调用、4266 tokens。两个精确动作只到 `approval_required`，三个确定性拒绝保持关闭；没有 decision、claim 或 execution。
+
+这项结果验收只读证据准备和控制面准入分工，不验收 prose、一般复杂解释、真实资料适用性或跨项目泛化。P30 继续 implementing；下一门冻结新的复杂解释/可信资料 cohort，并生成独立人工审阅包。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
