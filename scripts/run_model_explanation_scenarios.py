@@ -70,6 +70,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     virtual_execution_receipt = None
     agent_evaluation = None
     agent_evaluation_manifest = None
+    agent_human_review = None
+    agent_human_assessment = None
     with fixture_service() as (server, origin):
         for mode, status in CASES.items():
             server.mode, server.tags_count = mode, 0
@@ -806,6 +808,84 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    review_directory = output / "agent-human-review"
+    agent_human_review = cli(
+        "prepare-agent-human-review-services-stopped",
+        [
+            "prepare-agent-human-review",
+            output / "readonly-agent-eval-manifest.json",
+            output / "readonly-agent-evaluation",
+            "--implementation-root",
+            ROOT,
+            "--output",
+            review_directory,
+        ],
+        0,
+    )
+    review_verification = cli(
+        "verify-agent-human-review-services-stopped",
+        [
+            "verify-agent-human-review",
+            output / "readonly-agent-eval-manifest.json",
+            output / "readonly-agent-evaluation",
+            review_directory,
+            "--implementation-root",
+            ROOT,
+        ],
+        0,
+    )
+    completed_review = json.loads(
+        (review_directory / "review-template.json").read_text(encoding="utf-8")
+    )
+    completed_review.update(
+        {
+            "status": "completed",
+            "reviewer": "synthetic-contract-fixture",
+            "reviewed_at": "2026-10-18T00:00:00Z",
+        }
+    )
+    for item in completed_review["items"]:
+        item.update(
+            {
+                "independent_expected_answer": (
+                    "Synthetic protocol expectation; not a human quality judgment."
+                ),
+                "answer_coverage": "not_assessable",
+                "causal_support": "not_assessable",
+                "boundary_fidelity": "not_assessable",
+                "knowledge_applicability": "not_assessable",
+                "recommendation_boundary": "not_assessable",
+                "usability": "not_assessable",
+                "required_edits": "",
+                "notes": "Exercises the immutable assessment protocol only.",
+            }
+        )
+    completed_review_path = output / "agent-human-review-completed.json"
+    completed_review_path.write_text(
+        json.dumps(completed_review, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    assessment_path = output / "agent-human-review-assessment.json"
+    agent_human_assessment = cli(
+        "finalize-agent-human-review-services-stopped",
+        [
+            "finalize-agent-human-review",
+            review_directory / "review-pack.json",
+            completed_review_path,
+            "--output",
+            assessment_path,
+        ],
+        0,
+    )
+    assessment_verification = cli(
+        "verify-agent-human-review-assessment-services-stopped",
+        [
+            "verify-agent-human-review-assessment",
+            review_directory / "review-pack.json",
+            assessment_path,
+        ],
+        0,
+    )
     summary = {"status": "passed", "evidence_kind": "synthetic-http-contract-fixture", "real_model_inference": False,
                "cases": cases, "model_semantic_quality": "unassessed",
                "agent_knowledge_policy": {
@@ -914,6 +994,16 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "manifest_id": agent_evaluation_manifest["manifest_id"],
                    "cases": agent_evaluation["summary"]["case_count"],
                    "offline_verification": evaluation_verification["status"],
+                   "semantic_quality": "unassessed",
+               },
+               "agent_human_review": {
+                   "review_pack_id": agent_human_review["review_pack_id"],
+                   "pack_offline_verification": review_verification["status"],
+                   "assessment_id": agent_human_assessment["assessment_id"],
+                   "assessment_offline_verification": (
+                       assessment_verification["status"]
+                   ),
+                   "review_kind": "synthetic_protocol_not_human_judgment",
                    "semantic_quality": "unassessed",
                }}
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

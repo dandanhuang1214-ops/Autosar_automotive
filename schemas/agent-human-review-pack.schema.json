@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-human-review-pack.schema.json",
+  "title": "Agent Human Review Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_pack_id", "artifact_type", "schema_version", "producer_sha256",
+    "manifest_id", "result_id", "evaluation_id", "model", "items", "boundary"
+  ],
+  "properties": {
+    "review_pack_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-human-review-pack"},
+    "schema_version": {"const": "agent-human-review-pack-0.1"},
+    "producer_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evaluation_id": {"type": "string", "minLength": 1},
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/item"}
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id", "tool_name", "arguments", "result_sha256", "result"
+      ],
+      "properties": {
+        "observation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "tool_name": {"type": "string", "minLength": 1},
+        "arguments": {"type": "object"},
+        "result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "result": {"type": "object"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_item_id", "question", "agent_status", "agent_reason", "answer",
+        "semantic_status", "cited_evidence", "trace_id"
+      ],
+      "properties": {
+        "review_item_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "question": {"type": "string", "minLength": 1},
+        "agent_status": {"enum": ["passed", "refused", "blocked"]},
+        "agent_reason": {"type": "string", "minLength": 1},
+        "answer": {"type": ["string", "null"]},
+        "semantic_status": {"const": "unassessed"},
+        "cited_evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence"}
+        },
+        "trace_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

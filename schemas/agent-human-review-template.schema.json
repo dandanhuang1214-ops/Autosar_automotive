@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-human-review-template.schema.json",
+  "title": "Agent Human Review Template",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "template_id", "artifact_type", "schema_version", "review_pack_id",
+    "status", "reviewer", "reviewed_at", "items"
+  ],
+  "properties": {
+    "template_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-human-review-template"},
+    "schema_version": {"const": "agent-human-review-template-0.1"},
+    "review_pack_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["pending", "completed"]},
+    "reviewer": {"type": ["string", "null"]},
+    "reviewed_at": {"oneOf": [{"type": "null"}, {"type": "string", "format": "date-time"}]},
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/item"}
+    }
+  },
+  "$defs": {
+    "nullableText": {"type": ["string", "null"], "maxLength": 4000},
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_item_id", "independent_expected_answer", "answer_coverage",
+        "causal_support", "boundary_fidelity", "knowledge_applicability",
+        "recommendation_boundary", "usability", "required_edits", "notes"
+      ],
+      "properties": {
+        "review_item_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "independent_expected_answer": {"$ref": "#/$defs/nullableText"},
+        "answer_coverage": {"enum": ["pass", "fail", "not_assessable", null]},
+        "causal_support": {"enum": ["pass", "fail", "not_assessable", null]},
+        "boundary_fidelity": {"enum": ["pass", "fail", "not_assessable", null]},
+        "knowledge_applicability": {
+          "enum": ["applicable", "not_applicable", "uncertain", "not_assessable", null]
+        },
+        "recommendation_boundary": {"enum": ["pass", "fail", "not_assessable", null]},
+        "usability": {"enum": ["direct", "needs_edits", "not_usable", "not_assessable", null]},
+        "required_edits": {"$ref": "#/$defs/nullableText"},
+        "notes": {"$ref": "#/$defs/nullableText"}
+      }
+    }
+  }
+}

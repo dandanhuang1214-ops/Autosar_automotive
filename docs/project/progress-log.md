@@ -1856,3 +1856,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - application/task-binding 的唯一精确候选由控制面得到 `approval_required`；mode-rules、硬件越界、impact 证据不足分别确定性拒绝。模型没有选择 action、决定准入或覆盖拒绝。没有 decision、claim 或 execution artifact。
 - Ollama 停止后离线 verifier 返回 `status=passed` / `evaluation_status=passed` 和相同 result ID。本 cohort 不修改、不重跑；它不评估 prose、一般复杂解释、真实资料适用性、独立人工可用性或跨项目泛化。
 - P30 保持 implementing。下一门冻结新的复杂解释/可信资料 cohort，并生成可离线复验的独立人工审阅包；不扩大动作权限。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：Agent 独立人工审阅包（本地验收，2026-10-18）
+
+- 新增 `agent-human-review-pack/template/assessment-0.1` 和四个 CLI。pack 只能从已通过离线重评分的只读 Agent evaluation 派生，包含原问题、未认证回答及其实际引用的完整 observation；不包含 case ID、类别、frozen gold、自动逐题分数或开发者结论。
+- pending template 不预填任何语义判断。finalize 要求原始 template ID、pack ID、逐题身份、审阅者、带时区时间和所有判断完整匹配；assessment 的 identity、逐题内容及 usability 汇总可离线重算。验证器不声称人工判断正确，也不认证审阅者身份。
+- 篡改 evidence、替换 template ID、来源 evaluation/trace 漂移和 assessment 汇总漂移均 fail closed。所有新协议不调用模型或知识服务，不写配置、不访问 SocketCAN/硬件，也不产生 approval、claim 或 execution。
+- 本地全量 506 tests 通过（2 项环境跳过）；84 schemas / 77 schema-bound / 25 syntax-only、Ruff、相关 mypy 通过。源码合成 HTTP 全链在服务停止后完成 pack/assessment 复验；隔离无依赖 wheel 排除 checkout 导入后同样通过，SHA-256 `1e96a37ce92aa7c8e519d027eff52652a4a29d24a0970b70378e17870b7f0c90`。
+- 合成 assessment 使用 `synthetic-contract-fixture`，所有语义项为 `not_assessable`，只证明协议可执行，不是假造的人工质量结果。当前 local-accepted；尚未提交、推送或取得本实现自己的远端 CI。
+- 下一步先提交并完成远端七 job。成功后冻结新的复杂解释/可信资料 cohort，绑定项目报告、受策略资料及摘要、模型 digest、预算和结构化期望，再只运行一次 qwen3.5:2b 并生成待独立审阅包。未得到完成的人工 assessment 前，一般复杂解释、真实资料适用性和人工可用性保持 pending；配置写入、SocketCAN、硬件和认证 operator 继续关闭。

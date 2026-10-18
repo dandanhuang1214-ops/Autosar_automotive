@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-human-review-assessment.schema.json",
+  "title": "Agent Human Review Assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessment_id", "artifact_type", "schema_version", "review_pack_id",
+    "status", "reviewer", "reviewed_at", "summary", "items", "boundary"
+  ],
+  "properties": {
+    "assessment_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-human-review-assessment"},
+    "schema_version": {"const": "agent-human-review-assessment-0.1"},
+    "review_pack_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"const": "completed"},
+    "reviewer": {"type": "string", "minLength": 1},
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "usability_counts"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 1},
+        "usability_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["direct", "needs_edits", "not_assessable", "not_usable"],
+          "properties": {
+            "direct": {"type": "integer", "minimum": 0},
+            "needs_edits": {"type": "integer", "minimum": 0},
+            "not_assessable": {"type": "integer", "minimum": 0},
+            "not_usable": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/item"}
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "judgment": {"enum": ["pass", "fail", "not_assessable"]},
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_item_id", "independent_expected_answer", "answer_coverage",
+        "causal_support", "boundary_fidelity", "knowledge_applicability",
+        "recommendation_boundary", "usability", "required_edits", "notes"
+      ],
+      "properties": {
+        "review_item_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "independent_expected_answer": {"type": "string", "minLength": 1, "maxLength": 4000},
+        "answer_coverage": {"$ref": "#/$defs/judgment"},
+        "causal_support": {"$ref": "#/$defs/judgment"},
+        "boundary_fidelity": {"$ref": "#/$defs/judgment"},
+        "knowledge_applicability": {
+          "enum": ["applicable", "not_applicable", "uncertain", "not_assessable"]
+        },
+        "recommendation_boundary": {"$ref": "#/$defs/judgment"},
+        "usability": {"enum": ["direct", "needs_edits", "not_usable", "not_assessable"]},
+        "required_edits": {"type": "string", "maxLength": 4000},
+        "notes": {"type": "string", "maxLength": 4000}
+      }
+    }
+  }
+}

@@ -525,6 +525,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent_eval_verify.add_argument("manifest", type=Path)
     agent_eval_verify.add_argument("directory", type=Path)
+    agent_review_prepare = commands.add_parser(
+        "prepare-agent-human-review",
+        help="Prepare a blind human-review pack from a verified Agent evaluation",
+    )
+    agent_review_prepare.add_argument("manifest", type=Path)
+    agent_review_prepare.add_argument("evaluation_directory", type=Path)
+    agent_review_prepare.add_argument("--implementation-root", type=Path, default=Path("."))
+    agent_review_prepare.add_argument("--output", type=Path, required=True)
+    agent_review_verify = commands.add_parser(
+        "verify-agent-human-review",
+        help="Reconstruct and verify an Agent human-review pack offline",
+    )
+    agent_review_verify.add_argument("manifest", type=Path)
+    agent_review_verify.add_argument("evaluation_directory", type=Path)
+    agent_review_verify.add_argument("directory", type=Path)
+    agent_review_verify.add_argument("--implementation-root", type=Path, default=Path("."))
+    agent_review_finalize = commands.add_parser(
+        "finalize-agent-human-review",
+        help="Finalize a completed human-review template as an immutable assessment",
+    )
+    agent_review_finalize.add_argument("pack", type=Path)
+    agent_review_finalize.add_argument("draft", type=Path)
+    agent_review_finalize.add_argument("--output", type=Path, required=True)
+    agent_review_assessment_verify = commands.add_parser(
+        "verify-agent-human-review-assessment",
+        help="Verify a completed Agent human-review assessment offline",
+    )
+    agent_review_assessment_verify.add_argument("pack", type=Path)
+    agent_review_assessment_verify.add_argument("assessment", type=Path)
     proposal_eval_freeze = commands.add_parser(
         "freeze-agent-proposal-eval",
         help="Freeze end-to-end action-proposal cases before target-model inference",
@@ -1556,6 +1585,44 @@ def main() -> int:
             )
 
             result = verify_agent_evaluation(args.manifest, args.directory)
+        elif args.command == "prepare-agent-human-review":
+            from automotive_workbench.agent_human_review import (
+                prepare_agent_human_review,
+            )
+
+            result = prepare_agent_human_review(
+                args.implementation_root,
+                args.manifest,
+                args.evaluation_directory,
+                args.output,
+            )
+        elif args.command == "verify-agent-human-review":
+            from automotive_workbench.agent_human_review import (
+                verify_agent_human_review,
+            )
+
+            result = verify_agent_human_review(
+                args.implementation_root,
+                args.manifest,
+                args.evaluation_directory,
+                args.directory,
+            )
+        elif args.command == "finalize-agent-human-review":
+            from automotive_workbench.agent_human_review import (
+                finalize_agent_human_review,
+            )
+
+            result = finalize_agent_human_review(
+                args.pack, args.draft, args.output
+            )
+        elif args.command == "verify-agent-human-review-assessment":
+            from automotive_workbench.agent_human_review import (
+                verify_agent_human_review_assessment,
+            )
+
+            result = verify_agent_human_review_assessment(
+                args.pack, args.assessment
+            )
         elif args.command == "freeze-agent-proposal-eval":
             from automotive_workbench.agent_proposal_evaluation import (
                 freeze_agent_proposal_evaluation,
