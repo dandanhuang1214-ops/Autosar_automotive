@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-reviewed-knowledge-corpus.schema.json",
+  "title": "Agent Reviewed Knowledge Corpus",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["corpus_id", "schema_version", "documents", "boundary"],
+  "properties": {
+    "corpus_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": "agent-reviewed-knowledge-corpus-0.1"},
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/document"}
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "chunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chunk_id", "page", "content"],
+      "properties": {
+        "chunk_id": {"type": "integer", "minimum": 1},
+        "page": {"type": ["integer", "null"]},
+        "content": {"type": "string", "minLength": 1, "maxLength": 1200}
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_id", "document_sha256", "authority", "release", "title",
+        "source_url", "retrieved_at", "chunks"
+      ],
+      "properties": {
+        "document_id": {"type": "integer", "minimum": 1},
+        "document_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "authority": {"const": "official"},
+        "release": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri", "pattern": "^https://help\\.vector\\.com/"},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "chunks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/chunk"}
+        }
+      }
+    }
+  }
+}

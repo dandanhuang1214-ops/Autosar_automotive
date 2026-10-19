@@ -4,11 +4,13 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import ContextManager
 
 from automotive_workbench.agent_evaluation import run_agent_evaluation
 from automotive_workbench.explanation_services import Endpoint
 from automotive_workbench.model_client import OllamaModelClient
 from explanation_fixture_service import fixture_service
+from trusted_knowledge_fixture_service import trusted_knowledge_service
 
 
 def run(
@@ -19,9 +21,16 @@ def run(
     output: Path,
     ollama_url: str,
     timeout: float,
+    knowledge_corpus: Path | None = None,
 ) -> dict:
     """Use real Ollama inference while keeping knowledge retrieval deterministic."""
-    with fixture_service() as (_, knowledge_url):
+    service: ContextManager[tuple[object, str]]
+    service = (
+        trusted_knowledge_service(knowledge_corpus)
+        if knowledge_corpus is not None
+        else fixture_service()
+    )
+    with service as (_, knowledge_url):
         return run_agent_evaluation(
             root,
             implementation_root,
@@ -42,6 +51,11 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--timeout", type=float, default=120)
+    parser.add_argument(
+        "--knowledge-corpus",
+        type=Path,
+        help="Serve this frozen reviewed corpus instead of the synthetic fixture",
+    )
     args = parser.parse_args()
     result = run(
         args.root,
@@ -51,5 +65,6 @@ if __name__ == "__main__":
         args.output,
         args.ollama_url,
         args.timeout,
+        args.knowledge_corpus,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))

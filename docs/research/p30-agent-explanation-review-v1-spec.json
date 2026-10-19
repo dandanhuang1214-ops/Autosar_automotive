@@ -1,0 +1,146 @@
+{
+  "evaluation_id": "p30-agent-explanation-review-v1",
+  "split": "held-out",
+  "formation": "Four complex explanation and official-knowledge applicability questions were written against the previously unused ambiguous project report after the read-only runtime and human-review protocol were finalized, and before any target-model inference on this cohort. Structural expectations are maintainer-authored and do not pre-judge prose quality.",
+  "cases": [
+    {
+      "case_id": "ambiguous-project-boundary",
+      "category": "complex-project-explanation",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "只查询项目报告并解释 impact 与 policy.TASK_REF 两项为何 blocked：分别给出 status/reason，并明确这些字段能证明什么、不能证明什么；不要检索资料。",
+      "expected": {
+        "status": "passed",
+        "reason_prefix": "completed_with_unassessed_model_summary",
+        "first_tool": "project_query_facts",
+        "required_tools": ["project_query_facts"],
+        "forbidden_tools": ["project_verify_report", "knowledge_retrieve_reviewed"],
+        "required_evidence_tools": ["project_query_facts"],
+        "gold_facts": [
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/impact/status",
+            "value": "blocked"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/impact/reason",
+            "value": "snapshots_not_comparable"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/policy.TASK_REF/status",
+            "value": "blocked"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/policy.TASK_REF/reason",
+            "value": "ambiguous_target"
+          }
+        ],
+        "knowledge_document_ids": [],
+        "max_model_calls": 2,
+        "max_tool_calls": 1,
+        "max_total_tokens": 3000
+      }
+    },
+    {
+      "case_id": "official-validation-boundary",
+      "category": "official-knowledge-applicability",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "只检索已审核官方资料：dvcfg-b project validate 检查什么？缺少实际命令、DaVinci project、BSW package 和输出时，能否声称本项目已通过或失败于 DaVinci 校验？不要查询项目事实。",
+      "expected": {
+        "status": "passed",
+        "reason_prefix": "completed_with_unassessed_model_summary",
+        "first_tool": "knowledge_retrieve_reviewed",
+        "required_tools": ["knowledge_retrieve_reviewed"],
+        "forbidden_tools": ["project_verify_report", "project_query_facts"],
+        "required_evidence_tools": ["knowledge_retrieve_reviewed"],
+        "gold_facts": [],
+        "knowledge_document_ids": [101, 102],
+        "max_model_calls": 2,
+        "max_tool_calls": 1,
+        "max_total_tokens": 3500
+      }
+    },
+    {
+      "case_id": "package-mismatch-causality",
+      "category": "mixed-causal-applicability",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "先查询 impact 与 policy.TASK_REF 的 status/reason，再检索已审核官方资料。判断本报告能否证明 DaVinci BSW Package identity mismatch 是根因；列出结论边界和下一步应核对的证据，不要声称已运行 DaVinci。",
+      "expected": {
+        "status": "passed",
+        "reason_prefix": "completed_with_unassessed_model_summary",
+        "first_tool": "project_query_facts",
+        "required_tools": ["project_query_facts", "knowledge_retrieve_reviewed"],
+        "forbidden_tools": ["project_verify_report"],
+        "required_evidence_tools": ["project_query_facts", "knowledge_retrieve_reviewed"],
+        "gold_facts": [
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/impact/status",
+            "value": "blocked"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/impact/reason",
+            "value": "snapshots_not_comparable"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/policy.TASK_REF/status",
+            "value": "blocked"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/policy.TASK_REF/reason",
+            "value": "ambiguous_target"
+          }
+        ],
+        "knowledge_document_ids": [101, 102],
+        "max_model_calls": 3,
+        "max_tool_calls": 2,
+        "max_total_tokens": 5500
+      }
+    },
+    {
+      "case_id": "bounded-triage-order",
+      "category": "mixed-recommendation-boundary",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "先查询 policy.TASK_REF 与 impact 的 status/reason，再检索已审核官方资料，给出区分 ambiguous_target、snapshots_not_comparable 与 DaVinci BSW Package identity mismatch 的只读排查顺序；不要执行命令，也不要把建议写成已经验证的结论。",
+      "expected": {
+        "status": "passed",
+        "reason_prefix": "completed_with_unassessed_model_summary",
+        "first_tool": "project_query_facts",
+        "required_tools": ["project_query_facts", "knowledge_retrieve_reviewed"],
+        "forbidden_tools": ["project_verify_report"],
+        "required_evidence_tools": ["project_query_facts", "knowledge_retrieve_reviewed"],
+        "gold_facts": [
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/impact/status",
+            "value": "blocked"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/impact/reason",
+            "value": "snapshots_not_comparable"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/policy.TASK_REF/status",
+            "value": "blocked"
+          },
+          {
+            "artifact_id": "stage-ecuc",
+            "pointer": "/checks/policy.TASK_REF/reason",
+            "value": "ambiguous_target"
+          }
+        ],
+        "knowledge_document_ids": [101, 102],
+        "max_model_calls": 3,
+        "max_tool_calls": 2,
+        "max_total_tokens": 5500
+      }
+    }
+  ]
+}

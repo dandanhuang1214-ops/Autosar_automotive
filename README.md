@@ -24,7 +24,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [Typed action intent 与确定性准入门](docs/project/p30-agent-action-admission-guide.md)已 remote-accepted：控制面绑定精确 action、能力范围与 checkpoint observation 条件，并从已封存候选中确定性准入唯一精确匹配；无动作、越界能力和证据不足的拒绝不再由模型决定。其后的 [deterministic admission 后只读模型评测 v1](docs/project/p30-agent-admission-evaluation-v1-guide.md) 已按冻结顺序完成：实现 `5bca6c4` / [run `39001106717`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39001106717) 七 job 成功后，固定 qwen3.5:2b cohort 只运行一次，真实结果 5/5 passed；result `57d9e802…7bf8` 已在 Ollama 停止后离线重评分。该结果只验收一次只读证据准备与确定性准入，不评估自然语言质量；所有 artifact 仍未授权、未执行。下一门回到 P30 未完成的复杂解释与真实资料适用性，配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
-[Agent 独立人工审阅包](docs/project/p30-agent-human-review-guide.md)已 remote-accepted：实现 `4005c32` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) 七 job 全部 success。从通过离线复验的只读 Agent 评测可派生不含 frozen gold、类别或自动逐题分数的审阅包，并把完成态人工判断固化为可离线校验的 assessment。合成 reviewer 全部标记 `not_assessable`，不冒充真实人工结论。下一门冻结新的复杂解释/可信资料 cohort；冻结实现远端通过后才做一次真实模型运行，配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+[Agent 独立人工审阅包](docs/project/p30-agent-human-review-guide.md)已 remote-accepted：实现 `4005c32` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) 七 job 全部 success。其后的[复杂解释与官方资料适用性评测 v1](docs/project/p30-agent-explanation-review-v1-guide.md)已在目标模型调用前冻结：4 题绑定从未用于 P30 cohort 的 `ambiguous` 报告、两段 Vector 官方文档摘要、完整来源/policy 哈希、固定 qwen3.5:2b 身份与预算，manifest ID `c99acf88…b95286`。当前仅 local-accepted；本冻结提交远端七 job 成功后才且仅运行一次目标模型，随后产生 pending 独立审阅包。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
 日常项目验收从 `run-project` 开始：
 

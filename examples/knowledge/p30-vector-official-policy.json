@@ -1,0 +1,27 @@
+{
+  "schema_version": "knowledge-source-policy-0.1",
+  "policy_id": "b2a213dad56251d4f948112c9016c80eea4c7cfa26ac5392502fa79290fdb7b8",
+  "profile": "agent-read",
+  "documents": [
+    {
+      "document_id": 101,
+      "document_sha256": "0219b78b1ef525da51d5ea4529a45b17f708aa1eafde9f53124b3f2981c06a36",
+      "authority": "official",
+      "review": {
+        "decision": "approved",
+        "reviewer": "automotive-workbench-source-curation",
+        "reviewed_at": "2026-10-18T00:00:00Z"
+      }
+    },
+    {
+      "document_id": 102,
+      "document_sha256": "a96338107d85bb853d5591f128bac61e3fd2abd4f96f647026b86d01429f6589",
+      "authority": "official",
+      "review": {
+        "decision": "approved",
+        "reviewer": "automotive-workbench-source-curation",
+        "reviewed_at": "2026-10-18T00:00:00Z"
+      }
+    }
+  ]
+}

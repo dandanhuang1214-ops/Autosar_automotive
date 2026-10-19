@@ -105,6 +105,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 2026-10-18 续进：[Agent 独立人工审阅包](p30-agent-human-review-guide.md)已 remote-accepted：它从通过离线复验的评测生成不暴露 frozen gold、类别或自动逐题分数的 review pack，并把完整人工判断固化成哈希绑定、可重算的 assessment。实现 `4005c32482d908510a969c4dfa1038a613c00892` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) head 一致且七 job 全部 success；本地 506 tests（2 项环境跳过）、84 schemas、源码合成全链和隔离 wheel 均通过。合成 reviewer 全部为 `not_assessable`，不冒充真实人工结论。下一门冻结新的复杂解释/可信资料 cohort；冻结实现远端通过后再执行一次真实 qwen3.5:2b 并交付独立审阅。P30 保持 implementing，动作权限边界不变。
 
+2026-10-19 续进：[复杂解释与官方资料适用性评测 v1](p30-agent-explanation-review-v1-guide.md)已预推理冻结并 local-accepted。四题使用未进入既有 P30 cohort 的 `ambiguous` 项目报告，绑定 `impact` / `policy.TASK_REF` 四个事实、两段 Vector DaVinci Configurator Classic User Manual 6.4 官方摘要、资料来源/策略哈希、模型 digest 和预算；manifest `c99acf88…b95286`。官方摘要不证明本机 license/SIP、命令执行或项目适用，Workbench 原因也不得改写为 DaVinci package mismatch。下一门先完成本冻结提交的远端七 job；成功后才且仅运行一次固定 qwen3.5:2b，停服离线复验并产生 pending 人工审阅包。完成的独立 assessment 前，一般复杂解释、资料适用性和人工可用性仍 pending；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。

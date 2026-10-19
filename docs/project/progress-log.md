@@ -1871,3 +1871,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 实现 `4005c32482d908510a969c4dfa1038a613c00892` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) completed/success，head 完全一致。七 job 均 success：runtime-currency `117704545916`；core-contracts Ubuntu `117704546076`、Windows `117704546082`；controlled-rejections Ubuntu `117706173256`、Windows `117706173279`；runtime-evidence Ubuntu `117706173303`、Windows `117706173340`。本门 remote-accepted。
 - Windows/Ubuntu core-contracts 均实际执行新 CLI、合成 pack/assessment、服务停止后离线复验和隔离 wheel；远端基础设施通过不改变 `semantic_quality=unassessed`，也不构成人工认可。本条后续状态回填为 `[skip ci]` 文档提交，不替代实现 run。
 - 下一门冻结新的复杂解释/可信资料 cohort，绑定项目报告、来源策略、资料内容摘要、模型 digest、预算和结构化期望。冻结提交自己的远端 CI 成功后才运行一次固定 qwen3.5:2b，并生成待独立审阅包；不在该 cohort 上调实现或重跑。完成的独立 assessment 之前，一般复杂解释、资料适用性和人工可用性仍 pending。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：复杂解释与官方资料适用性 v1 预推理冻结（2026-10-19）
+
+- 新增 `agent-reviewed-knowledge-corpus-0.1` schema、严格加载器和仅回环的只读 fixture service。文档、chunk、Vector 官方 HTTPS 定位、版本、取得时间、摘要和 corpus 边界都有哈希绑定；内容篡改在服务启动前拒绝。
+- 冻结两段 Vector DaVinci Configurator Classic User Manual 6.4 官方来源：BSW Package identity 不一致/read-only 行为，以及 `dvcfg-b project validate` 范围。policy `b2a213da…90fdb7b8`，corpus `87471de4…ab46e85`。`automotive-workbench-source-curation` 仅表示来源允许列表/摘要冻结，不冒充独立答案审阅。
+- 四题冻结 cohort 使用既有 P30 模型 cohort 未使用的 `ambiguous` 报告；覆盖复杂项目边界、官方校验边界、package mismatch 因果适用性和只读排查建议。四个 gold 事实在复验后唯一匹配；manifest ID `c99acf880ff7085ffb0f5821e8b0867415d91506df3a4aa8efb422ed13b95286`。
+- 目标模型未运行。本地全量 510 tests 通过（2 项环境跳过）；85 schemas / 79 schema-bound / 25 syntax-only、Ruff、相关 mypy、compileall、pip check、CI topology、回环资料全链和冻结 manifest 身份回归通过。隔离无依赖 wheel 外加载语料通过，确认导入来自临时 site-packages；wheel SHA-256 `06ea0a37151bcbdbb3f5e4b860ab242de4eeff0ddcf2928fd10e9cdea17e2872`。当前 local-accepted，不冒充 remote acceptance。
+- 下一步：提交、推送并跟踪冻结实现的实际远端七 job。只在 head 一致且全部 success 后执行唯一一次 qwen3.5:2b cohort，随后停服离线复评分并生成 pending 独立人工审阅包。不修改或重跑已看到结果的 cohort；动作权限边界不变。

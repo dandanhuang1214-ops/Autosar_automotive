@@ -1,0 +1,39 @@
+{
+  "corpus_id": "87471de46243344588dc091344e804a17bb96c7f720e99ab2d10bc14cab46e85",
+  "schema_version": "agent-reviewed-knowledge-corpus-0.1",
+  "documents": [
+    {
+      "document_id": 101,
+      "document_sha256": "0219b78b1ef525da51d5ea4529a45b17f708aa1eafde9f53124b3f2981c06a36",
+      "authority": "official",
+      "release": "DaVinci Configurator Classic User Manual 6.4",
+      "title": "Vector DaVinci Configurator Classic: Why Your Project Opens Read-Only",
+      "source_url": "https://help.vector.com/davinci-configurator-classic/en/latest/user-manual/bsw-update/update-bsw-package-behind-the-scenes.html",
+      "retrieved_at": "2026-10-18T00:00:00Z",
+      "chunks": [
+        {
+          "chunk_id": 10101,
+          "page": null,
+          "content": "Official-source summary: a DaVinci Project records the identity and delivery version of its BSW Package. DaVinci Configurator Classic 6 stops and opens the project read-only when the installed package identity differs, because package module definitions determine available parameters, permitted values, and generator output. The mismatch dialog exposes both identities and the installed package path. Source: https://help.vector.com/davinci-configurator-classic/en/latest/user-manual/bsw-update/update-bsw-package-behind-the-scenes.html"
+        }
+      ]
+    },
+    {
+      "document_id": 102,
+      "document_sha256": "a96338107d85bb853d5591f128bac61e3fd2abd4f96f647026b86d01429f6589",
+      "authority": "official",
+      "release": "DaVinci Configurator Classic User Manual 6.4",
+      "title": "Vector DaVinci Configurator Classic CLI: dvcfg-b project validate",
+      "source_url": "https://help.vector.com/davinci-configurator-classic/en/latest/user-manual/references/cli/dvcfg-b/project-validate.html",
+      "retrieved_at": "2026-10-18T00:00:00Z",
+      "chunks": [
+        {
+          "chunk_id": 10201,
+          "page": null,
+          "content": "Official-source summary: dvcfg-b project validate checks an ECU configuration for consistency, completeness, and MICROSAR rule compliance. The command requires an explicit DaVinci project and BSW package; module and external-step scope can be selected, and --fail-on controls the severity threshold for a non-zero exit. This scope does not by itself prove that an unrelated Workbench report came from a real DaVinci validation run. Source: https://help.vector.com/davinci-configurator-classic/en/latest/user-manual/references/cli/dvcfg-b/project-validate.html"
+        }
+      ]
+    }
+  ],
+  "boundary": "Short maintainer-curated summaries of official Vector pages for a frozen evaluation. URLs and retrieval time are recorded. These excerpts do not prove local installation, license, SIP compatibility, command execution, or applicability to a specific ECU project. Independent human applicability review remains required."
+}
