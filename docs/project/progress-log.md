@@ -1879,3 +1879,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 四题冻结 cohort 使用既有 P30 模型 cohort 未使用的 `ambiguous` 报告；覆盖复杂项目边界、官方校验边界、package mismatch 因果适用性和只读排查建议。四个 gold 事实在复验后唯一匹配；manifest ID `c99acf880ff7085ffb0f5821e8b0867415d91506df3a4aa8efb422ed13b95286`。
 - 目标模型未运行。本地全量 510 tests 通过（2 项环境跳过）；85 schemas / 79 schema-bound / 25 syntax-only、Ruff、相关 mypy、compileall、pip check、CI topology、回环资料全链和冻结 manifest 身份回归通过。隔离无依赖 wheel 外加载语料通过，确认导入来自临时 site-packages；wheel SHA-256 `06ea0a37151bcbdbb3f5e4b860ab242de4eeff0ddcf2928fd10e9cdea17e2872`。当前 local-accepted，不冒充 remote acceptance。
 - 下一步：提交、推送并跟踪冻结实现的实际远端七 job。只在 head 一致且全部 success 后执行唯一一次 qwen3.5:2b cohort，随后停服离线复评分并生成 pending 独立人工审阅包。不修改或重跑已看到结果的 cohort；动作权限边界不变。
+
+### P30：复杂解释与官方资料适用性 v1 远端验收及真实结果（2026-10-19）
+
+- 冻结实现 `c904bd913703890e33d46c709d3efeb0b8ff533b` / [run `39192046821`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39192046821) completed/success，head 完全一致。七 job 均 success：runtime-currency `117866780441`；core-contracts Windows `117866780327`、Ubuntu `117866780586`；controlled-rejections Ubuntu `117868942709`、Windows `117868942802`；runtime-evidence Ubuntu `117868942704`、Windows `117868942722`。本轮评测实现 remote-accepted；后续状态文档不替代该实现 run。
+- 远端成功后复用既有 Ollama 0.31.1，预检确认 qwen3.5:2b digest `324d162b…20df` 与 manifest 一致。固定四题只运行一次，没有下载模型、重建服务或发布 11434。真实结果 0/4 failed，result ID `dd91e3e751cefd6fec475a30785d316779ea6a217b68c6993ca23040b5874c36`。
+- status/tool selection/parameters/citation/cost 分别通过 2/4、2/4、2/4、0/4、4/4。两道混合题都先取 4/4 gold 项目事实并检索到文档 101/102，但最终没有完整引用两个 observation；项目-only 题误选 `project_verify_report`，资料-only 题产生非法 finish action，因果题在两个成功 observation 后未形成有效完成响应。四题合计 9 次模型调用、5 次工具调用、8609 tokens；逐题成本均在冻结上限内。
+- Ollama 停止后离线 verifier 返回 `status=passed` / `evaluation_status=failed` 和相同 result ID，证明 artifact/评分可重放而不改变模型失败结论。由唯一结果生成的 review pack ID 为 `761361aa9e8d1b63db6adc5766d2e2cf2fc0d094930fddec0bc756be753fab8c`；离线验签通过，4 个 item 保持 `pending_human_review`，其中两题有未认证回答、两题无可审正文。
+- 本 cohort 不修改、不重跑。下一步由独立审阅者填写 `output/p30-agent-explanation-human-review-v1/review-template.json` 并完成 finalize/verify；随后只用新版本与新 cohort 处理工具选择、finish action、observation 引用和回答完整性。完成 assessment 前，一般复杂解释、真实资料适用性与人工可用性继续 pending；配置写入、SocketCAN、硬件和认证 operator 仍关闭。

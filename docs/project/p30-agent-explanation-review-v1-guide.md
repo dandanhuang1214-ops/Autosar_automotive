@@ -1,6 +1,6 @@
 # P30 复杂解释与官方资料适用性评测 v1
 
-状态：预推理冻结已本地验收（2026-10-19），待本实现提交的远端 CI 成功后，再且仅再运行一次固定 `qwen3.5:2b` cohort。当前没有模型结果，也没有完成的独立人工 assessment。
+状态：冻结实现已远端验收，固定 `qwen3.5:2b` cohort 已且仅已运行一次（2026-10-19）。机器结果为 0/4 failed，停服离线复验通过；独立人工 assessment 仍待完成。
 
 ## 冻结内容
 
@@ -73,4 +73,10 @@ python -m automotive_workbench.cli prepare-agent-human-review \
 
 本地全量 510 tests 通过（2 项环境跳过）；新增的官方语料加载、内容篡改拒绝、回环 HTTP 检索链和冻结 manifest 身份回归通过。85 schemas / 79 schema-bound examples / 25 syntax-only examples、Ruff、相关 mypy、compileall、pip check 和 CI topology 通过。隔离无依赖 wheel 外加载语料通过，确认 `automotive_workbench` 来自临时 site-packages；wheel SHA-256 为 `06ea0a37151bcbdbb3f5e4b860ab242de4eeff0ddcf2928fd10e9cdea17e2872`。
 
-下一步是提交、推送并跟踪本冻结实现的远端 CI。远端成功前禁止目标模型调用；完成的独立人工 assessment 前，P30 的一般复杂解释、真实资料适用性和人工可用性仍为 pending。配置写入、SocketCAN、硬件和认证 operator 仍关闭。
+冻结实现提交为 `c904bd913703890e33d46c709d3efeb0b8ff533b`，[run `39192046821`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39192046821) 与该 head 完全一致且 completed/success。七个实际 job 均为 success：runtime-currency `117866780441`；core-contracts Windows `117866780327`、Ubuntu `117866780586`；controlled-rejections Ubuntu `117868942709`、Windows `117868942802`；runtime-evidence Ubuntu `117868942704`、Windows `117868942722`。因此评测实现 remote-accepted；后续状态文档不替代该 run。
+
+远端通过后复用既有 Ollama 0.31.1，并在调用前核对 `qwen3.5:2b` digest 完全一致。固定四题只运行一次，得到 failed result `dd91e3e751cefd6fec475a30785d316779ea6a217b68c6993ca23040b5874c36`：0/4 题通过；status/tool selection/parameters/citation/cost 分别为 2/4、2/4、2/4、0/4、4/4。两道混合题都选择了项目事实和资料工具，4/4 gold 事实进入结果且检索到文档 101/102；但最终引用均不完整。一道项目题错误选择概览验证工具，一道资料题产生非法 finish action；因果题取得两个 observation 后未形成有效完成响应。四题合计 9 次模型调用、5 次工具调用、8609 tokens；逐题成本门均通过。
+
+Ollama 停止后，离线 verifier 返回 `status=passed` / `evaluation_status=failed` 和相同 result ID。这只证明 artifact 与评分可重放，不改变模型失败结论。由该唯一结果生成的 review pack `761361aa9e8d1b63db6adc5766d2e2cf2fc0d094930fddec0bc756be753fab8c` 已离线验签，4 个 item 的状态为 `pending_human_review`；两题有未认证回答，两题无可审正文。
+
+下一步由独立审阅者填写 `output/p30-agent-explanation-human-review-v1/review-template.json`，再使用既有 finalize/verify 流程固化 assessment。本 cohort 不修改、不重跑；在独立 assessment 完成前，P30 的一般复杂解释、真实资料适用性和人工可用性仍为 pending。后续开发只能在新版本和新 cohort 中处理本次暴露的工具选择、finish action 与 observation 引用问题。配置写入、SocketCAN、硬件和认证 operator 仍关闭。

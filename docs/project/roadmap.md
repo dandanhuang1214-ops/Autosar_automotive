@@ -1,6 +1,6 @@
 # Automotive Workbench 长期升级路线 v3
 
-更新：2026-10-15。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
+更新：2026-10-19。本文是当前升级顺序；[进度账本](progress-log.md)是实际状态源。[v2 历史路线](roadmap-v2-history.md)仅保留决策背景，不再作为下一步指令。
 
 ## 长期产品目标
 
@@ -105,7 +105,7 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 2026-10-18 续进：[Agent 独立人工审阅包](p30-agent-human-review-guide.md)已 remote-accepted：它从通过离线复验的评测生成不暴露 frozen gold、类别或自动逐题分数的 review pack，并把完整人工判断固化成哈希绑定、可重算的 assessment。实现 `4005c32482d908510a969c4dfa1038a613c00892` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) head 一致且七 job 全部 success；本地 506 tests（2 项环境跳过）、84 schemas、源码合成全链和隔离 wheel 均通过。合成 reviewer 全部为 `not_assessable`，不冒充真实人工结论。下一门冻结新的复杂解释/可信资料 cohort；冻结实现远端通过后再执行一次真实 qwen3.5:2b 并交付独立审阅。P30 保持 implementing，动作权限边界不变。
 
-2026-10-19 续进：[复杂解释与官方资料适用性评测 v1](p30-agent-explanation-review-v1-guide.md)已预推理冻结并 local-accepted。四题使用未进入既有 P30 cohort 的 `ambiguous` 项目报告，绑定 `impact` / `policy.TASK_REF` 四个事实、两段 Vector DaVinci Configurator Classic User Manual 6.4 官方摘要、资料来源/策略哈希、模型 digest 和预算；manifest `c99acf88…b95286`。官方摘要不证明本机 license/SIP、命令执行或项目适用，Workbench 原因也不得改写为 DaVinci package mismatch。下一门先完成本冻结提交的远端七 job；成功后才且仅运行一次固定 qwen3.5:2b，停服离线复验并产生 pending 人工审阅包。完成的独立 assessment 前，一般复杂解释、资料适用性和人工可用性仍 pending；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+2026-10-19 续进：[复杂解释与官方资料适用性评测 v1](p30-agent-explanation-review-v1-guide.md)已按预推理冻结顺序完成。冻结实现 `c904bd913703890e33d46c709d3efeb0b8ff533b` / [run `39192046821`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39192046821) head 一致且七 job 全部 success；随后固定 qwen3.5:2b 四题只运行一次，真实机器结果 0/4 failed。两道混合题取得 4/4 项目事实和两份 Vector 官方资料，但四题引用门均失败；result `dd91e3e7…4c36` 已停服离线复验。review pack `761361aa…ab8c` 已验签并保持 `pending_human_review`。官方资料仍不证明本机 license/SIP、命令执行或项目适用；不修改、不重跑本 cohort。下一门是完成独立 assessment，再只在新版本/新 cohort 处理工具选择、finish action 和引用缺口。P30 保持 implementing；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
