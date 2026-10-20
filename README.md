@@ -26,7 +26,7 @@ P30 续进：提示 0.22 实现 `78e8808` / [run `38066909019`](https://github.c
 
 [Agent 独立人工审阅包](docs/project/p30-agent-human-review-guide.md)已 remote-accepted：实现 `4005c32` / [run `39137376642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39137376642) 七 job 全部 success。其后的[复杂解释与官方资料适用性评测 v1](docs/project/p30-agent-explanation-review-v1-guide.md)也已按冻结顺序完成：实现 `c904bd9` / [run `39192046821`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39192046821) 七 job success 后，固定 qwen3.5:2b 四题只运行一次。真实机器结果 0/4 failed，result `dd91e3e…c36` 在 Ollama 停止后离线复验通过；两道混合题取得 4/4 项目事实和两份官方资料，但四题均未通过完整引用门。review pack `761361aa…ab8c` 已验签，状态为 `pending_human_review`。不重跑本 cohort；一般复杂解释、资料适用性和人工可用性仍待独立 assessment，配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
-按用户提出的 Codex/Qwen 对比方式，Codex 已对同一 pack 完成非盲诊断，四题均判为 `not_usable`；它不是独立人工验收。新的[控制面证据计划](docs/project/p30-agent-evidence-plan-guide.md)已本地验收：scope 在推理前确定 read-tool 顺序，模型只生成一次摘要，引用由控制面完整附加，从协议上移除旧结果中的工具选择、finish 和漏引问题。当前等待本实现自己的远端 CI；通过后才冻结新的 Codex-reference/Qwen 对比 cohort，旧 v1 不修改、不重跑。
+按用户提出的 Codex/Qwen 对比方式，Codex 已对同一 pack 完成非盲诊断，四题均判为 `not_usable`；它不是独立人工验收。新的[控制面证据计划](docs/project/p30-agent-evidence-plan-guide.md)已 remote-accepted：实现 `a794f37` / [run `39350190343`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39350190343) 七 job success。scope 在推理前确定 read-tool 顺序，模型只生成一次摘要，引用由控制面完整附加，从协议上移除旧结果中的工具选择、finish 和漏引问题。下一步冻结新的 Codex-reference/Qwen 对比 cohort，旧 v1 不修改、不重跑。
 
 日常项目验收从 `run-project` 开始：
 

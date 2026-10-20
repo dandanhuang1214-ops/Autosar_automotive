@@ -1,6 +1,6 @@
 # P30 控制面证据计划
 
-状态：**local-accepted**（2026-10-20）；实现已完成本地与隔离安装验证，远端 CI 待本轮实现提交后记录。
+状态：**remote-accepted**（2026-10-20）；实现 `a794f3712beab427f2ded465217f89a3b835b351` 的远端七 job 已全部成功。
 
 ## 为什么增加这条路径
 
@@ -58,4 +58,6 @@ python -m automotive_workbench.cli verify-agent-evidence-plan-result \
 
 ## 下一步
 
-先提交、推送并取得本实现 head 自己的远端七 job 结论。远端成功后，再冻结一个全新复杂解释 cohort：Codex 参考答案必须先于任何目标模型输出固定，并清楚标注为 agent-authored reference；随后固定 `qwen3.5:2b` 只运行一次并进行逐项对比。旧 v1 的 0/4 与 pending 独立人工门保持不变。
+实现 `a794f3712beab427f2ded465217f89a3b835b351` 的 [run `39350190343`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39350190343) 与 head 一致且 completed/success。七个实际 job 均为 success：runtime-currency `118392302629`；core-contracts Ubuntu `118392302289`、Windows `118392302643`；controlled-rejections Ubuntu `118395098149`、Windows `118395098218`；runtime-evidence Ubuntu `118395098204`、Windows `118395098241`。因此本门 remote-accepted；本条后续文档回填不替代该实现 run。
+
+下一步冻结一个全新复杂解释 cohort：Codex 参考答案必须先于任何目标模型输出固定，并清楚标注为 agent-authored reference；冻结实现自己的远端门通过后，固定 `qwen3.5:2b` 只运行一次并进行逐项对比。旧 v1 的 0/4 与 pending 独立人工门保持不变。

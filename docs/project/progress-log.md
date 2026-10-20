@@ -1888,11 +1888,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - Ollama 停止后离线 verifier 返回 `status=passed` / `evaluation_status=failed` 和相同 result ID，证明 artifact/评分可重放而不改变模型失败结论。由唯一结果生成的 review pack ID 为 `761361aa9e8d1b63db6adc5766d2e2cf2fc0d094930fddec0bc756be753fab8c`；离线验签通过，4 个 item 保持 `pending_human_review`，其中两题有未认证回答、两题无可审正文。
 - 本 cohort 不修改、不重跑。下一步由独立审阅者填写 `output/p30-agent-explanation-human-review-v1/review-template.json` 并完成 finalize/verify；随后只用新版本与新 cohort 处理工具选择、finish action、observation 引用和回答完整性。完成 assessment 前，一般复杂解释、真实资料适用性与人工可用性继续 pending；配置写入、SocketCAN、硬件和认证 operator 仍关闭。
 
-### P30：Codex 对照与控制面证据计划（本地验收，2026-10-20）
+### P30：Codex 对照与控制面证据计划（远端验收，2026-10-20）
 
 - 按用户建议，以 Codex 对同一 v1 review pack 作回答对照。assessment `0b93c834e393ed78e624d0c0a42a765e1bcf41f7d352d3b7421ef62fdb739330` 离线复验通过，4/4 为 `not_usable`。审阅者明确标注为 user-authorized、non-blind、not an independent human；该结果只用于诊断，不完成独立人工门，也不改写或重跑 qwen v1 0/4。
 - 新增 `agent-evidence-plan-0.1` / result 与四个 CLI。scope 确定固定的项目事实、已审核资料或二者顺序；控制面直接调用已绑定 read tools，模型只执行一次 structured summary。模型不能增删/改序/参数化工具，不能决定 finish，不能生成引用；成功 observation 由控制面全部附加。
 - plan/result/兼容 trace 全部哈希绑定并可离线复验；顶层状态必须与 trace 一致。缺工具、预算不足、资料策略拒绝、服务/身份漂移、非法摘要和 artifact 篡改均 fail closed；输出不得覆盖。没有配置写入、SocketCAN、硬件、approval、claim 或 execution 权限。
 - 完整回归 514 tests 通过（2 项环境跳过）；87 schemas / 79 schema-bound / 25 syntax-only、Ruff、scoped mypy、CI topology 和 diff check 通过。源码合成 HTTP 场景为 2 个计划工具调用、1 个模型调用、2 个完整引用，停服离线复验通过。
 - 隔离无依赖 wheel 从 checkout 外完成两工程与完整模型协议，SHA-256 `3f2c5bc9cb2440c267e38707d4b12e18419177a79baa0744ea2f70eb47733af4`；计划 `1e8ebcd8…b42d`、result `3684f112…e826`，`model_selected_tools=false`。
-- 当前 local-accepted，尚未提交、推送或取得本实现自己的远端 CI。下一步先完成实现提交的七 job；成功后预推理冻结全新 Codex-reference/Qwen 对比 cohort，先固定 agent-authored 参考答案再运行 qwen 一次。一般复杂解释、真实资料适用性与独立人工可用性仍 pending。
+- 实现 `a794f3712beab427f2ded465217f89a3b835b351` / [run `39350190343`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39350190343) completed/success，head 完全一致。七个实际 job 均 success：runtime-currency `118392302629`；core-contracts Ubuntu `118392302289`、Windows `118392302643`；controlled-rejections Ubuntu `118395098149`、Windows `118395098218`；runtime-evidence Ubuntu `118395098204`、Windows `118395098241`。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
+- 下一步预推理冻结全新 Codex-reference/Qwen 对比 cohort，先固定 agent-authored 参考答案再运行 qwen 一次。一般复杂解释、真实资料适用性与独立人工可用性仍 pending。
