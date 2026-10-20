@@ -352,3 +352,11 @@ Ollama 停止后离线重评分返回 `status=passed` / `evaluation_status=faile
 五题都选择 `project_query_facts`、命中全部冻结 fact 并在一次工具调用后暂停。application 与 task-binding 的精确候选由控制面进入 `approval_required`；mode-rules、硬件越界与 impact 证据不足分别确定性拒绝。模型没有选择 action 或决定准入；没有 decision、claim 或 execution artifact。停止 Ollama 后离线 verifier 返回 `status=passed` / `evaluation_status=passed` 和相同 result ID。
 
 本 cohort 不修改、不重跑。通过只覆盖 agent-authored structural gold 上的一次只读证据准备和确定性准入分工，不覆盖 prose、一般复杂解释、真实资料适用性、独立人工可用性或跨项目泛化。P30 保持 implementing；下一门冻结新的复杂解释/可信资料 cohort 并生成独立人工审阅包，不扩大动作权限。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+## 控制面证据计划（本地验收，2026-10-20）
+
+用户授权 Codex 对 v1 review pack 作非盲回答对照；assessment `0b93c834…9330` 的四题均为 `not_usable`。这不是独立人工判断，不关闭原 pending 门。基于机器评分与对照诊断，新增 `agent-evidence-plan-0.1` / result：调用者先声明项目、资料或混合 scope，控制面固定并执行准确的 read-tool 序列，模型只做一次结构化摘要，全部成功 observation 由控制面自动引用。
+
+完整回归 514 tests 通过（2 项环境跳过）；87 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、CI topology 和 diff check 通过。源码合成 HTTP 全链为 2 个固定工具调用、1 个模型调用、2 个完整引用，停服离线复验通过。隔离无依赖 wheel 完成两工程与完整协议，SHA-256 `3f2c5bc9cb2440c267e38707d4b12e18419177a79baa0744ea2f70eb47733af4`。
+
+当前为 local-accepted，尚无本实现提交或远端 CI，不能写成 remote-accepted。下一步先完成实现提交的七 job；成功后再预推理冻结全新 Codex-reference/Qwen 对比 cohort。旧 v1 0/4 与独立人工 pending 状态不变，动作权限不扩大。

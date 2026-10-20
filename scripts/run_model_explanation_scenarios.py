@@ -54,6 +54,8 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     cases = []
     agent_retrieval = None
     agent_trace = None
+    agent_evidence_plan = None
+    agent_evidence_result = None
     agent_checkpoint = None
     agent_resume = None
     agent_approval_request = None
@@ -128,6 +130,55 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or agent_trace["usage"]["tool_calls"] != 3
         ):
             raise ValueError("Read-only Agent fixture did not complete its bounded loop")
+        evidence_plan_path = output / "agent-evidence-plan.json"
+        agent_evidence_plan = cli(
+            "agent-evidence-plan-create",
+            [
+                "create-agent-evidence-plan",
+                "--goal",
+                "解释项目阻断原因并说明已审核资料的适用边界",
+                "--scope",
+                "project_and_reviewed_knowledge",
+                "--output",
+                evidence_plan_path,
+            ],
+            0,
+        )
+        cli(
+            "agent-evidence-plan-verify",
+            ["verify-agent-evidence-plan", evidence_plan_path],
+            0,
+        )
+        server.mode, server.tags_count = "agent_planned", 0
+        evidence_result_path = output / "agent-evidence-plan-result.json"
+        agent_evidence_result = cli(
+            "agent-evidence-plan-run",
+            [
+                "run-agent-evidence-plan",
+                report,
+                evidence_plan_path,
+                "--model",
+                "fixture:1",
+                "--output",
+                evidence_result_path,
+                "--ollama-url",
+                origin,
+                "--knowledge-url",
+                origin,
+                "--knowledge-policy",
+                ROOT / "examples/knowledge/agent-read-policy.json",
+                "--timeout",
+                "5",
+            ],
+            0,
+        )
+        if (
+            agent_evidence_result["trace"]["status"] != "passed"
+            or agent_evidence_result["trace"]["usage"]["model_calls"] != 1
+            or agent_evidence_result["trace"]["usage"]["tool_calls"] != 2
+            or len(agent_evidence_result["trace"]["final"]["evidence_ids"]) != 2
+        ):
+            raise ValueError("Agent evidence plan did not bind reads and citations")
         server.mode, server.tags_count = "agent", 0
         checkpoint_path = output / "readonly-agent-checkpoint.json"
         agent_checkpoint = cli(
@@ -669,6 +720,15 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ["verify-readonly-agent-trace", output / "readonly-agent-trace.json"],
         0,
     )
+    evidence_result_verification = cli(
+        "agent-evidence-plan-result-services-stopped",
+        [
+            "verify-agent-evidence-plan-result",
+            output / "agent-evidence-plan.json",
+            output / "agent-evidence-plan-result.json",
+        ],
+        0,
+    )
     checkpoint_verification = cli(
         "readonly-agent-checkpoint-services-stopped",
         ["verify-readonly-agent-checkpoint", output / "readonly-agent-checkpoint.json"],
@@ -898,6 +958,16 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "model_calls": agent_trace["usage"]["model_calls"],
                    "tool_calls": agent_trace["usage"]["tool_calls"],
                    "offline_verification": agent_verification["status"],
+               },
+               "agent_evidence_plan": {
+                   "plan_id": agent_evidence_plan["plan_id"],
+                   "result_id": agent_evidence_result["result_id"],
+                   "agent_status": agent_evidence_result["trace"]["status"],
+                   "planned_tool_calls": agent_evidence_result["trace"]["usage"]["tool_calls"],
+                   "model_calls": agent_evidence_result["trace"]["usage"]["model_calls"],
+                   "cited_observations": len(agent_evidence_result["trace"]["final"]["evidence_ids"]),
+                   "offline_verification": evidence_result_verification["status"],
+                   "model_selected_tools": False,
                },
                "readonly_agent_resume": {
                    "checkpoint_status": agent_checkpoint["status"],

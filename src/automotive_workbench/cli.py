@@ -209,6 +209,58 @@ def build_parser() -> argparse.ArgumentParser:
         help="Verify a saved read-only Agent trace without model or knowledge services",
     )
     readonly_agent_verify.add_argument("trace", type=Path)
+    evidence_plan_create = commands.add_parser(
+        "create-agent-evidence-plan",
+        help="Seal a deterministic read-tool sequence before model summarization",
+    )
+    evidence_plan_create.add_argument("--goal", required=True)
+    evidence_plan_create.add_argument(
+        "--scope",
+        choices=[
+            "project_detail",
+            "reviewed_knowledge",
+            "project_and_reviewed_knowledge",
+        ],
+        required=True,
+    )
+    evidence_plan_create.add_argument("--output", type=Path, required=True)
+    evidence_plan_verify = commands.add_parser(
+        "verify-agent-evidence-plan",
+        help="Verify a deterministic Agent evidence plan offline",
+    )
+    evidence_plan_verify.add_argument("plan", type=Path)
+    evidence_plan_run = commands.add_parser(
+        "run-agent-evidence-plan",
+        help="Run planned read tools and one evidence-bound structured summary",
+    )
+    evidence_plan_run.add_argument("report", type=Path)
+    evidence_plan_run.add_argument("plan", type=Path)
+    evidence_plan_run.add_argument("--model", required=True)
+    evidence_plan_run.add_argument("--output", type=Path, required=True)
+    evidence_plan_run.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    evidence_plan_run.add_argument("--knowledge-url")
+    evidence_plan_run.add_argument("--knowledge-policy", type=Path)
+    evidence_plan_run.add_argument("--timeout", type=float, default=30)
+    evidence_plan_run.add_argument("--max-steps", type=int, default=3)
+    evidence_plan_run.add_argument("--max-model-calls", type=int, default=1)
+    evidence_plan_run.add_argument("--max-tool-calls", type=int, default=2)
+    evidence_plan_run.add_argument("--max-total-tokens", type=int, default=4096)
+    evidence_plan_run.add_argument(
+        "--max-output-tokens-per-call", type=int, default=512
+    )
+    evidence_plan_run.add_argument("--context-window", type=int, default=8192)
+    evidence_plan_run.add_argument("--max-seconds", type=float, default=120)
+    evidence_plan_run.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    evidence_result_verify = commands.add_parser(
+        "verify-agent-evidence-plan-result",
+        help="Verify a plan-bound Agent explanation result without services",
+    )
+    evidence_result_verify.add_argument("plan", type=Path)
+    evidence_result_verify.add_argument("result", type=Path)
     agent_checkpoint_verify = commands.add_parser(
         "verify-readonly-agent-checkpoint",
         help="Verify a paused read-only Agent checkpoint without services",
@@ -1106,6 +1158,87 @@ def main() -> int:
             from automotive_workbench.project_explanation import read
 
             result = verify_agent_trace(read(args.trace))
+        elif args.command == "create-agent-evidence-plan":
+            from automotive_workbench.agent_evidence_plan import (
+                build_agent_evidence_plan,
+                save_agent_evidence_plan,
+            )
+
+            result = save_agent_evidence_plan(
+                build_agent_evidence_plan(args.goal, args.scope), args.output
+            )
+        elif args.command == "verify-agent-evidence-plan":
+            from automotive_workbench.agent_evidence_plan import (
+                load_agent_evidence_plan,
+                verify_agent_evidence_plan,
+            )
+
+            result = verify_agent_evidence_plan(
+                load_agent_evidence_plan(args.plan)
+            )
+        elif args.command == "run-agent-evidence-plan":
+            from automotive_workbench.agent_evidence_plan import (
+                load_agent_evidence_plan,
+                run_agent_evidence_plan,
+                save_agent_evidence_plan_result,
+            )
+            from automotive_workbench.agent_runtime import (
+                AgentBudget,
+                build_readonly_registry,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.knowledge_policy import (
+                load_agent_knowledge_policy,
+            )
+            from automotive_workbench.model_client import OllamaModelClient
+
+            if (args.knowledge_url is None) != (args.knowledge_policy is None):
+                raise ValueError(
+                    "--knowledge-url and --knowledge-policy must be supplied together"
+                )
+            plan = load_agent_evidence_plan(args.plan)
+            registry = build_readonly_registry(
+                args.report,
+                knowledge_endpoint=(
+                    Endpoint(args.knowledge_url, args.timeout)
+                    if args.knowledge_url is not None
+                    else None
+                ),
+                knowledge_policy=(
+                    load_agent_knowledge_policy(args.knowledge_policy)
+                    if args.knowledge_policy is not None
+                    else None
+                ),
+            )
+            planned = run_agent_evidence_plan(
+                plan,
+                registry,
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                args.model,
+                AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+            )
+            result = save_agent_evidence_plan_result(
+                plan, planned, args.output
+            )
+        elif args.command == "verify-agent-evidence-plan-result":
+            from automotive_workbench.agent_evidence_plan import (
+                load_agent_evidence_plan,
+                verify_agent_evidence_plan_result,
+            )
+            from automotive_workbench.project_explanation import read
+
+            result = verify_agent_evidence_plan_result(
+                load_agent_evidence_plan(args.plan), read(args.result)
+            )
         elif args.command == "verify-readonly-agent-checkpoint":
             from automotive_workbench.agent_runtime import verify_agent_checkpoint
             from automotive_workbench.project_explanation import read

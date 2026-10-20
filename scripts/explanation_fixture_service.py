@@ -91,6 +91,26 @@ def fixture_service():
                         "prompt_eval_count": 80,
                         "total_duration": 1000000,
                     }
+                elif mode == "agent_planned":
+                    value = {
+                        "model": "fixture:1",
+                        "done": True,
+                        "done_reason": "stop",
+                        "message": {
+                            "role": "assistant",
+                            "content": json.dumps(
+                                {
+                                    "summary": (
+                                        "控制面已取得项目事实与已审核资料；"
+                                        "这些读取不证明外部工具已经执行。"
+                                    )
+                                }
+                            ),
+                        },
+                        "eval_count": 24,
+                        "prompt_eval_count": 120,
+                        "total_duration": 1000000,
+                    }
                 elif mode == "agent":
                     observations = context["observations"]
                     if len(observations) == 0:

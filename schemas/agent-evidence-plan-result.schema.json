@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-plan-result.schema.json",
+  "title": "Agent Evidence Plan Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "status", "plan_id", "trace_id", "trace", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-plan-result"},
+    "schema_version": {"const": "agent-evidence-plan-result-0.1"},
+    "status": {"enum": ["passed", "refused", "blocked"]},
+    "plan_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trace_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trace": {
+      "$ref": "https://automotive-workbench.local/schemas/readonly-agent-trace.schema.json"
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  }
+}

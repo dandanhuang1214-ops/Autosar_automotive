@@ -1,6 +1,6 @@
 # P30 复杂解释与官方资料适用性评测 v1
 
-状态：冻结实现已远端验收，固定 `qwen3.5:2b` cohort 已且仅已运行一次（2026-10-19）。机器结果为 0/4 failed，停服离线复验通过；独立人工 assessment 仍待完成。
+状态：冻结实现已远端验收，固定 `qwen3.5:2b` cohort 已且仅已运行一次（2026-10-19）。机器结果为 0/4 failed，停服离线复验通过；Codex 对照审阅已完成，但独立人工 assessment 仍待完成。
 
 ## 冻结内容
 
@@ -80,3 +80,9 @@ python -m automotive_workbench.cli prepare-agent-human-review \
 Ollama 停止后，离线 verifier 返回 `status=passed` / `evaluation_status=failed` 和相同 result ID。这只证明 artifact 与评分可重放，不改变模型失败结论。由该唯一结果生成的 review pack `761361aa9e8d1b63db6adc5766d2e2cf2fc0d094930fddec0bc756be753fab8c` 已离线验签，4 个 item 的状态为 `pending_human_review`；两题有未认证回答，两题无可审正文。
 
 下一步由独立审阅者填写 `output/p30-agent-explanation-human-review-v1/review-template.json`，再使用既有 finalize/verify 流程固化 assessment。本 cohort 不修改、不重跑；在独立 assessment 完成前，P30 的一般复杂解释、真实资料适用性和人工可用性仍为 pending。后续开发只能在新版本和新 cohort 中处理本次暴露的工具选择、finish action 与 observation 引用问题。配置写入、SocketCAN、硬件和认证 operator 仍关闭。
+
+## Codex 回答对照（2026-10-20）
+
+用户授权使用 Codex 先回答同一批问题，再与既有 Qwen 输出对照。审阅者身份明确记录为 `OpenAI Codex comparative reviewer (user-authorized, non-blind, not an independent human)`；assessment ID 为 `0b93c834e393ed78e624d0c0a42a765e1bcf41f7d352d3b7421ef62fdb739330`，离线复验通过。四题均判定 `not_usable`：第一题工具/推断不完整，第二、三题没有可审正文，第四题缺影响解释、排查顺序和资料引用。
+
+该对照在 Qwen 结果已可见后完成，因此不是盲评，也不是独立人工 assessment，不满足原质量门。它只作为新版本的开发诊断：将 scope 到 read-tool 顺序、finish 和 observation 引用移回控制面；详见[控制面证据计划](p30-agent-evidence-plan-guide.md)。旧 result、pack 和 template 均不修改、不重跑。
