@@ -1897,3 +1897,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 隔离无依赖 wheel 从 checkout 外完成两工程与完整模型协议，SHA-256 `3f2c5bc9cb2440c267e38707d4b12e18419177a79baa0744ea2f70eb47733af4`；计划 `1e8ebcd8…b42d`、result `3684f112…e826`，`model_selected_tools=false`。
 - 实现 `a794f3712beab427f2ded465217f89a3b835b351` / [run `39350190343`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39350190343) completed/success，head 完全一致。七个实际 job 均 success：runtime-currency `118392302629`；core-contracts Ubuntu `118392302289`、Windows `118392302643`；controlled-rejections Ubuntu `118395098149`、Windows `118395098218`；runtime-evidence Ubuntu `118395098204`、Windows `118395098241`。本门 remote-accepted；随后纯文档状态提交不替代该实现 run。
 - 下一步预推理冻结全新 Codex-reference/Qwen 对比 cohort，先固定 agent-authored 参考答案再运行 qwen 一次。一般复杂解释、真实资料适用性与独立人工可用性仍 pending。
+
+### P30：Codex-reference / Qwen 证据解释对比 v1 预推理冻结（2026-10-20）
+
+- 新增 `agent-evidence-comparison-manifest-0.1` / result、freeze/verify CLI 和真实 Ollama runner。四个新问题分别覆盖项目交接、官方 validate 边界、混合因果和有依赖的只读排查工单。
+- Codex reference answer 与逐项 criteria 在任何目标推理前写入 spec；manifest 同时绑定每题 evidence plan、报告/bundle、资料 policy/corpus、qwen3.5:2b 完整 digest、预算和实现摘要。reference/criteria 不进入目标模型消息，自动评分不判断文字优劣。
+- manifest ID `67d556349f3d60bd751081c70ef181993888b0247796b4790d8109a7e3f82cab`；implementation SHA-256 `cf95fe36956c0149f014bac7c49c64680c46cbc03c45a7fd00bae8d2acfd9671`。reference 明确为 agent-authored，不是独立人工 gold。
+- 完整回归 518 tests 通过（2 项环境跳过）；89 schemas / 79 schema-bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。隔离无依赖 wheel 从 checkout 外复验冻结 manifest，SHA-256 `737f726bb04f2fa624786a0579a660a48b261f76d44293981bda018e13863673`。
+- 当前 pre-inference frozen / local-accepted，尚未提交、推送或取得冻结实现自己的远端 CI，也没有在本 cohort 调用 Qwen。下一步先完成实际七 job；成功后只运行一次并停服离线复验，再按预写 criteria 做 Codex/Qwen 差异记录。旧 v1 0/4 与独立人工 pending 状态不变。

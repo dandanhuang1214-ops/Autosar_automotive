@@ -48,6 +48,25 @@ def check(output: Path) -> dict:
                                         str(output / "model-evidence/normal")], cwd=isolated, env=env))
         if model_replay["status"] != "passed":
             raise ValueError("Installed model archive replay failed")
+        comparison_manifest_replay = json.loads(
+            _run(
+                [
+                    str(python),
+                    "-I",
+                    "-m",
+                    "automotive_workbench.cli",
+                    "verify-agent-evidence-comparison-manifest",
+                    str(
+                        ROOT
+                        / "docs/research/p30-agent-evidence-comparison-v1-manifest.json"
+                    ),
+                ],
+                cwd=isolated,
+                env=env,
+            )
+        )
+        if comparison_manifest_replay["status"] != "passed":
+            raise ValueError("Installed evidence comparison manifest replay failed")
         replays = []
         for name in ("integration", "transmitter"):
             evidence = output / "evidence"
@@ -58,7 +77,9 @@ def check(output: Path) -> dict:
                 raise ValueError("Archived explanation replay failed")
             replays.append(replay)
     summary = {"status": "passed", "wheel_sha256": _sha256_file(wheel), "workflow": result,
-               "model_workflow": model_result, "model_replay": model_replay, "archived_replays": replays, "installation": "offline-no-deps-checkout-excluded"}
+               "model_workflow": model_result, "model_replay": model_replay,
+               "comparison_manifest_replay": comparison_manifest_replay,
+               "archived_replays": replays, "installation": "offline-no-deps-checkout-excluded"}
     (output / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return summary
 

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-comparison-manifest.schema.json",
+  "title": "Agent Evidence Comparison Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_id", "artifact_type", "schema_version", "comparison_id", "formation",
+    "reference_author", "reference_boundary", "spec_sha256", "implementation_sha256",
+    "model", "knowledge_policy", "knowledge_corpus", "budget", "cases", "boundary"
+  ],
+  "properties": {
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-comparison-manifest"},
+    "schema_version": {"const": "agent-evidence-comparison-manifest-0.1"},
+    "comparison_id": {"type": "string", "minLength": 1},
+    "formation": {"type": "string", "minLength": 1},
+    "reference_author": {"type": "string", "minLength": 1},
+    "reference_boundary": {"type": "string", "minLength": 1},
+    "spec_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "implementation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model": {"$ref": "#/$defs/modelBinding"},
+    "knowledge_policy": {"$ref": "#/$defs/policyBinding"},
+    "knowledge_corpus": {"$ref": "#/$defs/corpusBinding"},
+    "budget": {"$ref": "https://automotive-workbench.local/schemas/readonly-agent-trace.schema.json#/properties/budget"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "modelBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "policyBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "policy_id"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "policy_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "corpusBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "corpus_id"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "corpus_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criterion_id", "description"],
+      "properties": {
+        "criterion_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id", "category", "report", "report_sha256", "bundle_sha256", "plan",
+        "reference_answer", "criteria"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+        "category": {"type": "string", "minLength": 1},
+        "report": {"type": "string", "minLength": 1},
+        "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bundle_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "plan": {"$ref": "https://automotive-workbench.local/schemas/agent-evidence-plan.schema.json"},
+        "reference_answer": {"type": "string", "minLength": 1, "maxLength": 4000},
+        "criteria": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/criterion"}}
+      }
+    }
+  }
+}

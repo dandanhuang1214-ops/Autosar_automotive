@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-comparison-result.schema.json",
+  "title": "Agent Evidence Comparison Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "status", "comparison_id",
+    "manifest_id", "model", "reference_author", "reference_boundary", "semantic_status",
+    "summary", "cases", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-comparison-result"},
+    "schema_version": {"const": "agent-evidence-comparison-result-0.1"},
+    "status": {"enum": ["passed", "failed"]},
+    "comparison_id": {"type": "string", "minLength": 1},
+    "manifest_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "digest"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "reference_author": {"type": "string", "minLength": 1},
+    "reference_boundary": {"type": "string", "minLength": 1},
+    "semantic_status": {"const": "pending_comparative_review"},
+    "summary": {"type": "object"},
+    "cases": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "boundary": {"type": "string", "minLength": 1}
+  }
+}

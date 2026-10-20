@@ -1,0 +1,60 @@
+{
+  "comparison_id": "p30-agent-evidence-comparison-v1",
+  "formation": "Four new comparison prompts and their Codex reference answers were written after evidence-plan 0.1 was remote-accepted and before any qwen3.5:2b inference on this cohort. The underlying public ambiguous report and curated Vector summaries are reused to isolate answer completeness from tool-routing failures.",
+  "reference_author": "OpenAI Codex agent-authored pre-inference reference",
+  "reference_boundary": "These references are user-authorized, agent-authored expectations, not independent human gold. They may guide a transparent Codex/Qwen comparison but cannot close the independent-human usability or real-project applicability gates.",
+  "cases": [
+    {
+      "case_id": "blocked-checks-handoff",
+      "category": "project-only-handoff",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "给接手该项目的工程师写一段简短交接：分别说明 impact 与 policy.TASK_REF 当前记录的状态和原因，这些记录足以得出什么结论、还不能得出什么结论。只用项目证据，不检索外部资料。",
+      "scope": "project_detail",
+      "reference_answer": "项目报告把 impact 记为 blocked，原因为 snapshots_not_comparable：现有两侧快照不具备可比较条件，因此不能从本次结果推出配置变更的影响范围。policy.TASK_REF 也为 blocked，原因为 ambiguous_target：当前引用不能唯一解析到目标，因此依赖该目标的检查不能继续。它们能证明的是 Workbench 在这两个明确边界处停止，并记录了上述状态/原因；不能证明具体根因、真实 ECU 行为、DaVinci 已运行，或某个 BSW package mismatch 已发生。下一步应先补齐唯一引用目标和可比较快照，再重新执行相应静态检查。",
+      "criteria": [
+        {"criterion_id": "both-status-reasons", "description": "分别准确写出 impact=blocked/snapshots_not_comparable 与 policy.TASK_REF=blocked/ambiguous_target。"},
+        {"criterion_id": "evidence-limit", "description": "只把状态和原因归于 Workbench 报告，不推断 DaVinci、硬件或具体根因。"},
+        {"criterion_id": "bounded-next-step", "description": "后续动作限定为补齐唯一目标和可比较快照后重跑检查。"}
+      ]
+    },
+    {
+      "case_id": "official-validation-explainer",
+      "category": "official-only-explainer",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "向同事解释 dvcfg-b project validate 的官方资料范围：它检查什么、运行需要哪些输入、什么会影响非零退出；在没有真实命令和输出时应如何表述结论。只用已审核资料，不查询项目事实。",
+      "scope": "reviewed_knowledge",
+      "reference_answer": "已审核的 Vector 手册摘要说明，dvcfg-b project validate 用于检查 ECU 配置的一致性、完整性和 MICROSAR 规则符合性；运行时需要显式指定 DaVinci project 与 BSW package，可选择 module/external-step 范围，并由 --fail-on 设置触发非零退出的严重度阈值。若没有实际 project/package、完整参数、工具版本和命令输出，只能说明该命令的文档能力与所需条件，不能声称某个项目已经通过、失败，或该 Workbench 报告来自一次真实 DaVinci 校验。资料也不证明本机安装、许可或 SIP 兼容性。",
+      "criteria": [
+        {"criterion_id": "validation-scope", "description": "包含一致性、完整性与 MICROSAR 规则符合性。"},
+        {"criterion_id": "inputs-and-exit", "description": "包含显式 project/BSW package、可选范围和 --fail-on 阈值。"},
+        {"criterion_id": "no-run-claim", "description": "缺少真实命令与输出时不声称项目通过或失败，并保留安装/许可边界。"}
+      ]
+    },
+    {
+      "case_id": "causal-separation-note",
+      "category": "mixed-causal-separation",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "写一段因果判断：当前证据能否把两个 blocked 检查归因于 DaVinci BSW Package identity mismatch？同时列出支持或否定该归因所缺的最小证据，严格区分项目记录与官方资料。",
+      "scope": "project_and_reviewed_knowledge",
+      "reference_answer": "不能据当前证据把两个 blocked 检查归因于 DaVinci BSW Package identity mismatch。项目记录给出的直接原因分别是 impact 的 snapshots_not_comparable 和 policy.TASK_REF 的 ambiguous_target；它没有记录 DaVinci package identity、delivery version、mismatch 对话框、installed package path 或真实命令输出。官方资料只说明：若 DaVinci project 记录的 BSW package identity 与已安装 package 不同，Configurator Classic 6 会停止并以只读方式打开项目；这提供一个条件性诊断假设，不是本项目根因证据。要支持该归因，至少需保存两侧 package identity/version、安装路径和 mismatch 提示；要判断 validate 结果，还需实际 project/package、命令参数、工具版本、退出码及输出。在这些证据出现前，应保持“未证实”。",
+      "criteria": [
+        {"criterion_id": "reject-causal-leap", "description": "明确拒绝把现有两个 Workbench reason 直接等同于 package mismatch。"},
+        {"criterion_id": "source-separation", "description": "把项目记录与官方条件性行为分开表述。"},
+        {"criterion_id": "minimal-evidence", "description": "列出 package identity/version/path/dialog 与实际 validate 参数、版本、退出码和输出。"}
+      ]
+    },
+    {
+      "case_id": "readonly-triage-ticket",
+      "category": "mixed-readonly-triage",
+      "report": "output/p28-validation/installed-final/evidence/delivery/projects/ambiguous/bundle/project-report.json",
+      "goal": "把现有证据整理成只读排查工单，给出有先后依赖的步骤，以区分 ambiguous_target、snapshots_not_comparable 和可能的 DaVinci package mismatch；每一步注明完成条件，不能把建议写成已验证事实。",
+      "scope": "project_and_reviewed_knowledge",
+      "reference_answer": "建议按依赖顺序处理，并把以下内容视为待执行步骤而非既成事实。1）先处理 policy.TASK_REF：定位所有候选引用目标，建立唯一映射；完成条件是引用解析不再返回 ambiguous_target。2）再处理 impact：固定 baseline/candidate 的来源、版本和对象身份，使两侧快照满足同一比较契约；完成条件是比较入口不再返回 snapshots_not_comparable。3）只有在 DaVinci 实际出现只读或 mismatch 提示时，才核对 project 记录与 installed BSW package 的 identity、delivery version 和安装路径；完成条件是保存可审计的两侧身份与提示证据。4）若要验证 ECU 配置，再用显式 project/package 和固定 module/external-step、--fail-on 参数运行 dvcfg-b project validate，保存工具版本、命令、退出码和输出。前两项是当前 Workbench 已记录的阻断，后两项只是官方资料支持的条件性排查路径；现有证据不能证明它们已经发生或执行。",
+      "criteria": [
+        {"criterion_id": "dependency-order", "description": "顺序先唯一化 TASK_REF，再建立可比较快照，之后才核对 package mismatch 和运行 validate。"},
+        {"criterion_id": "completion-conditions", "description": "每一步都有可审计的完成条件或保存项。"},
+        {"criterion_id": "recommendation-boundary", "description": "明确区分已记录阻断与尚未执行的条件性建议。"}
+      ]
+    }
+  ]
+}

@@ -360,3 +360,11 @@ Ollama 停止后离线重评分返回 `status=passed` / `evaluation_status=faile
 完整回归 514 tests 通过（2 项环境跳过）；87 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、CI topology 和 diff check 通过。源码合成 HTTP 全链为 2 个固定工具调用、1 个模型调用、2 个完整引用，停服离线复验通过。隔离无依赖 wheel 完成两工程与完整协议，SHA-256 `3f2c5bc9cb2440c267e38707d4b12e18419177a79baa0744ea2f70eb47733af4`。
 
 实现 `a794f3712beab427f2ded465217f89a3b835b351` / [run `39350190343`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39350190343) completed/success 且 head 一致；七 job 均 success。本门 remote-accepted，后续状态文档不替代该实现 run。下一步预推理冻结全新 Codex-reference/Qwen 对比 cohort；旧 v1 0/4 与独立人工 pending 状态不变，动作权限不扩大。
+
+## Codex-reference / Qwen 对比 v1 预推理冻结（本地验收，2026-10-20）
+
+新增 `agent-evidence-comparison-manifest/result-0.1`、三个 CLI 和真实 Ollama runner。四道新题及 Codex reference answer、criteria、确定性 plan、报告/bundle、资料 policy/corpus、模型 identity、预算与实现摘要均在目标推理前冻结；reference 和 criteria 不进入模型消息。manifest `67d55634…2cab`，implementation `cf95fe36…9671`。
+
+自动结果只判断固定工具、完整引用、单次模型调用、identity 与成本，把两侧文本并列但保持 `pending_comparative_review`。Codex reference 明确不是独立人工 gold。完整回归 518 tests 通过（2 项环境跳过）；89 schemas / 79 bound / 25 syntax-only、Ruff、mypy、topology 和隔离 wheel 通过；wheel SHA-256 `737f726b…3673`。
+
+当前 pre-inference frozen / local-accepted，尚未提交推送或取得本冻结实现自己的远端 CI，目标 Qwen 未运行。下一步先完成七 job；只有 head 一致且全部 success 后才运行固定 cohort 一次，随后停服离线复验并按冻结 criteria 对比。动作权限不扩大。

@@ -261,6 +261,53 @@ def build_parser() -> argparse.ArgumentParser:
     )
     evidence_result_verify.add_argument("plan", type=Path)
     evidence_result_verify.add_argument("result", type=Path)
+    evidence_comparison_freeze = commands.add_parser(
+        "freeze-agent-evidence-comparison",
+        help="Freeze pre-inference reference answers and evidence plans",
+    )
+    evidence_comparison_freeze.add_argument("spec", type=Path)
+    evidence_comparison_freeze.add_argument("--root", type=Path, required=True)
+    evidence_comparison_freeze.add_argument(
+        "--implementation-root", type=Path, required=True
+    )
+    evidence_comparison_freeze.add_argument("--model", required=True)
+    evidence_comparison_freeze.add_argument("--model-digest", required=True)
+    evidence_comparison_freeze.add_argument("--knowledge-policy", required=True)
+    evidence_comparison_freeze.add_argument("--knowledge-corpus", required=True)
+    evidence_comparison_freeze.add_argument("--output", type=Path, required=True)
+    evidence_comparison_freeze.add_argument("--max-steps", type=int, default=3)
+    evidence_comparison_freeze.add_argument(
+        "--max-model-calls", type=int, default=1
+    )
+    evidence_comparison_freeze.add_argument(
+        "--max-tool-calls", type=int, default=2
+    )
+    evidence_comparison_freeze.add_argument(
+        "--max-total-tokens", type=int, default=4096
+    )
+    evidence_comparison_freeze.add_argument(
+        "--max-output-tokens-per-call", type=int, default=512
+    )
+    evidence_comparison_freeze.add_argument(
+        "--context-window", type=int, default=8192
+    )
+    evidence_comparison_freeze.add_argument(
+        "--max-seconds", type=float, default=120
+    )
+    evidence_comparison_freeze.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    evidence_comparison_manifest_verify = commands.add_parser(
+        "verify-agent-evidence-comparison-manifest",
+        help="Verify a frozen pre-inference evidence comparison manifest",
+    )
+    evidence_comparison_manifest_verify.add_argument("manifest", type=Path)
+    evidence_comparison_verify = commands.add_parser(
+        "verify-agent-evidence-comparison",
+        help="Replay a completed evidence comparison without services",
+    )
+    evidence_comparison_verify.add_argument("manifest", type=Path)
+    evidence_comparison_verify.add_argument("directory", type=Path)
     agent_checkpoint_verify = commands.add_parser(
         "verify-readonly-agent-checkpoint",
         help="Verify a paused read-only Agent checkpoint without services",
@@ -1238,6 +1285,49 @@ def main() -> int:
 
             result = verify_agent_evidence_plan_result(
                 load_agent_evidence_plan(args.plan), read(args.result)
+            )
+        elif args.command == "freeze-agent-evidence-comparison":
+            from automotive_workbench.agent_evidence_comparison import (
+                freeze_agent_evidence_comparison,
+            )
+            from automotive_workbench.agent_runtime import AgentBudget
+
+            result = freeze_agent_evidence_comparison(
+                args.root,
+                args.implementation_root,
+                args.spec,
+                args.output,
+                model=args.model,
+                model_digest=args.model_digest,
+                budget=AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+                knowledge_policy_path=args.knowledge_policy,
+                knowledge_corpus_path=args.knowledge_corpus,
+            )
+        elif args.command == "verify-agent-evidence-comparison-manifest":
+            from automotive_workbench.agent_evidence_comparison import (
+                load_agent_evidence_comparison_manifest,
+                verify_agent_evidence_comparison_manifest,
+            )
+
+            result = verify_agent_evidence_comparison_manifest(
+                load_agent_evidence_comparison_manifest(args.manifest)
+            )
+        elif args.command == "verify-agent-evidence-comparison":
+            from automotive_workbench.agent_evidence_comparison import (
+                verify_agent_evidence_comparison,
+            )
+
+            result = verify_agent_evidence_comparison(
+                args.manifest, args.directory
             )
         elif args.command == "verify-readonly-agent-checkpoint":
             from automotive_workbench.agent_runtime import verify_agent_checkpoint
