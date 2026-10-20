@@ -368,3 +368,13 @@ Ollama 停止后离线重评分返回 `status=passed` / `evaluation_status=faile
 自动结果只判断固定工具、完整引用、单次模型调用、identity 与成本，把两侧文本并列但保持 `pending_comparative_review`。Codex reference 明确不是独立人工 gold。完整回归 518 tests 通过（2 项环境跳过）；89 schemas / 79 bound / 25 syntax-only、Ruff、mypy、topology 和隔离 wheel 通过；wheel SHA-256 `737f726b…3673`。
 
 当前 pre-inference frozen / local-accepted，尚未提交推送或取得本冻结实现自己的远端 CI，目标 Qwen 未运行。下一步先完成七 job；只有 head 一致且全部 success 后才运行固定 cohort 一次，随后停服离线复验并按冻结 criteria 对比。动作权限不扩大。
+
+## Codex-reference / Qwen 对比 v1（远端验收与固定失败结果，2026-10-20）
+
+冻结实现 `452a55d4f0cf80c8b96e276a2d6b4bc9d1d60350` / [run `39366567431`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39366567431) completed/success 且 head 一致。七个实际 job 均 success：runtime-currency `118444660067`；core-contracts Windows `118444660262`、Ubuntu `118444660295`；runtime-evidence Ubuntu `118446893667`、Windows `118446893785`；controlled-rejections Ubuntu `118446893731`、Windows `118446893774`。评测基础设施 remote-accepted。
+
+远端门通过后才核对 Ollama `0.31.1` 与 qwen3.5:2b 完整 digest，并以仓库只读、仅 `output/` 可写的一次性容器运行固定 cohort 一次。结果 **0/4 failed**，result ID `8990c7ce1e9b98c43e10d38d93017ff3613895e17e3cf0cdd492032bf76037ee`；4 次模型调用、6 次固定 read tool、3160 tokens。计划工具均正确执行，但两题返回错误结构、一题非法 JSON、一题无有效响应，故四题都没有通过完整引用门的最终答案。
+
+Ollama 停止后离线 verifier 返回 `status=passed` / `comparison_status=failed`。Codex 按预推理 criteria 对 raw response 的非盲诊断为 4 pass / 2 partial / 6 fail；本地诊断文件 SHA-256 `c7f3a1362ae3e5ff8867a3515ebc6785e9ddf4b88a57ba58e1e307d507a6e7c7`。该诊断不是独立人工 gold，不能关闭一般复杂解释、真实资料适用性或人工可用性门。
+
+本 cohort 已封存且不得修改或重跑。P30 保持 implementing；下一门只使用新协议版本和新 cohort 比较更小摘要接口或更强文本模型，同时等待原 review pack 的独立 assessment。配置写入、SocketCAN、硬件和认证 operator 继续关闭。

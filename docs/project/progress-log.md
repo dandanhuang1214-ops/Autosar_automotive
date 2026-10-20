@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-18）
+## 当前总览（2026-10-20）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、[受限 virtual CAN 执行](p30-agent-virtual-execution-guide.md)、[模型提案与控制面执行边界](p30-agent-action-proposal-guide.md)、proposal evidence 0.2、[控制面动作候选](p30-agent-action-candidate-guide.md)和[控制面 typed action intent 与确定性准入](p30-agent-action-admission-guide.md)均已远端验收。[动作提案 v2](p30-agent-proposal-evaluation-v2-guide.md)真实 0/5 failed，[candidate-selection v1](p30-agent-candidate-evaluation-v1-guide.md)真实 1/5 failed，均保持历史结论。新的 [deterministic admission 后只读模型评测 v1](p30-agent-admission-evaluation-v1-guide.md)在冻结实现 `5bca6c4` / run `39001106717` 七 job 成功后只运行一次，真实结果 5/5 passed，result `57d9e802…7bf8` 已在 Ollama 停止后离线重评分；模型只负责一次只读证据准备，action、条件和准入均由控制面确定。下一门冻结复杂解释/可信资料新 cohort 并形成独立人工审阅包，不继续扩大动作权限。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、受限 virtual CAN、typed intent/admission、独立审阅协议和控制面证据计划均已远端验收；deterministic admission 后只读评测保持 5/5 passed。复杂解释 v1 保持 0/4 failed 和 `pending_human_review`。新的 [Codex-reference / Qwen 对比 v1](p30-agent-evidence-comparison-v1-guide.md)已由实现 `452a55d` / run `39366567431` 七 job 远端验收后只运行一次：固定工具计划全部执行，但 qwen3.5:2b 因错误结构、非法 JSON 或无响应取得 0/4，result `8990c7ce…37ee` 已在 Ollama 停止后离线复验。Codex 按预写标准的非独立对照为 4 pass / 2 partial / 6 fail，不能关闭人工门。下一门仅在新版本/新 cohort 上研究更小摘要接口或更强文本模型；旧 cohort 不修改、不重跑。受限执行仍默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放；一般复杂解释、真实资料适用性、P25 人工演示/真实反馈及物理 ECU 仍待验收。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1905,3 +1905,11 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - manifest ID `67d556349f3d60bd751081c70ef181993888b0247796b4790d8109a7e3f82cab`；implementation SHA-256 `cf95fe36956c0149f014bac7c49c64680c46cbc03c45a7fd00bae8d2acfd9671`。reference 明确为 agent-authored，不是独立人工 gold。
 - 完整回归 518 tests 通过（2 项环境跳过）；89 schemas / 79 schema-bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。隔离无依赖 wheel 从 checkout 外复验冻结 manifest，SHA-256 `737f726bb04f2fa624786a0579a660a48b261f76d44293981bda018e13863673`。
 - 当前 pre-inference frozen / local-accepted，尚未提交、推送或取得冻结实现自己的远端 CI，也没有在本 cohort 调用 Qwen。下一步先完成实际七 job；成功后只运行一次并停服离线复验，再按预写 criteria 做 Codex/Qwen 差异记录。旧 v1 0/4 与独立人工 pending 状态不变。
+
+### P30：Codex-reference / Qwen 证据解释对比 v1 远端验收与唯一结果（2026-10-20）
+
+- 冻结实现 `452a55d4f0cf80c8b96e276a2d6b4bc9d1d60350` / [run `39366567431`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39366567431) completed/success，head 一致。七 job 均 success：runtime-currency `118444660067`；core-contracts Windows `118444660262`、Ubuntu `118444660295`；runtime-evidence Ubuntu `118446893667`、Windows `118446893785`；controlled-rejections Ubuntu `118446893731`、Windows `118446893774`。评测实现 remote-accepted；本条文档回填不替代实现 run。
+- 远端通过后启动既有 Ollama，预检服务 `0.31.1` 与 qwen3.5:2b 完整 digest `324d162b…20df`。仓库只读、仅 `output/` 可写，固定四题只运行一次；真实结果 **0/4 failed**，result ID `8990c7ce1e9b98c43e10d38d93017ff3613895e17e3cf0cdd492032bf76037ee`。共 4 次模型调用、6 次固定 read tool、3160 tokens。
+- 四题工具计划全部正确；失败发生在模型摘要边界：项目交接和因果题返回未接受的对象形状，官方说明题返回非法 JSON，只读工单题没有有效响应。因此 4 题均没有通过结构/完整引用门的 `target_answer`，不是“有答案但评分器漏判”。
+- 停止 Ollama 后离线 verifier 返回 `status=passed` / `comparison_status=failed` 和同一 result ID。Codex 按预写 criteria 对保留 raw response 作非盲诊断：12 条中 4 pass、2 partial、6 fail；报告 SHA-256 `c7f3a1362ae3e5ff8867a3515ebc6785e9ddf4b88a57ba58e1e307d507a6e7c7`。它不是独立人工 assessment。
+- 本 cohort 不修改、不重跑。控制面证据计划已经消除了工具路由/引用选择自由度，但当前小模型的结构遵循和复杂因果边界仍不足。下一门只在新协议版本与新 cohort 上评估更小摘要接口或更强文本模型；原 review pack 的独立人工门继续 pending，动作权限不扩大。
