@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-20）
+## 当前总览（2026-10-21）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、受限 virtual CAN、typed intent/admission、独立审阅协议和控制面证据计划均已远端验收；deterministic admission 后只读评测保持 5/5 passed。复杂解释 v1 与 Codex-reference/Qwen v1 均保持真实 0/4 failed，旧结果不修改、不重跑。新的[控制面证据纯文本摘要 0.2](p30-agent-evidence-summary-v2-guide.md)已 local-accepted：它复用不可变 0.1 plan，把模型阶段缩成一次无 JSON schema/无 tools 的有界纯文本调用，控制面继续封装状态和全部引用；实际 request/response 与可重推导 trace/result 一起绑定。完整回归 521 tests（2 项环境跳过）、源码合成停服复验和隔离 wheel 通过，旧 frozen manifest 仍可复验；尚未提交或取得远端 CI，也未调用真实模型。下一步先完成本实现七 job，再在新开发题上调用一次 Qwen，最后另冻新 cohort 和更强文本基线；独立人工门仍 pending。受限执行默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、受限 virtual CAN、typed intent/admission、独立审阅协议和控制面证据计划均已远端验收；deterministic admission 后只读评测保持 5/5 passed。复杂解释 v1 与 Codex-reference/Qwen v1 均保持真实 0/4 failed，旧结果不修改、不重跑。新的[控制面证据纯文本摘要 0.2](p30-agent-evidence-summary-v2-guide.md)也已 remote-accepted：它复用不可变 0.1 plan，把模型阶段缩成一次无 JSON schema/无 tools 的有界纯文本调用，控制面继续封装状态和全部引用；实现 `fc56a68a6ef57f08b1af5c943599e08d8c348387` / run `39543371725` 七 job 全部 success。完整回归 521 tests（2 项环境跳过）、源码合成停服复验和隔离 wheel 通过，旧 frozen manifest 仍可复验。下一步只在一条全新开发题上调用一次 Qwen，随后另冻新 cohort 和更强文本基线；独立人工门仍 pending。受限执行默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1914,11 +1914,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 停止 Ollama 后离线 verifier 返回 `status=passed` / `comparison_status=failed` 和同一 result ID。Codex 按预写 criteria 对保留 raw response 作非盲诊断：12 条中 4 pass、2 partial、6 fail；报告 SHA-256 `c7f3a1362ae3e5ff8867a3515ebc6785e9ddf4b88a57ba58e1e307d507a6e7c7`。它不是独立人工 assessment。
 - 本 cohort 不修改、不重跑。控制面证据计划已经消除了工具路由/引用选择自由度，但当前小模型的结构遵循和复杂因果边界仍不足。下一门只在新协议版本与新 cohort 上评估更小摘要接口或更强文本模型；原 review pack 的独立人工门继续 pending，动作权限不扩大。
 
-### P30：控制面证据纯文本摘要 0.2（本地验收，2026-10-21）
+### P30：控制面证据纯文本摘要 0.2（远端验收，2026-10-21）
 
 - 新增 `agent-evidence-summary-result-0.2`、run/verify CLI 与独立实现模块；复用不可变 `agent-evidence-plan-0.1`，不修改旧 plan/result、model client 或 frozen comparison 实现摘要。实际安装环境已再次复验 manifest `67d55634…2cab`。
 - 模型请求不再含 `format` 或 `tools`，只允许一次固定预算的纯文本响应。控制面执行计划 read tool、附加所有成功 observation、封装状态与 `semantic_status=unassessed`；模型不能选择工具、引用或工程状态。
 - 工件保存实际 request/response 和兼容 trace。离线 verifier 从 plan、tool projection、预算及模型 identity 重建完整请求，并核对原始响应、usage、规范化 summary、引用和哈希链；截断、空文本、控制字符、身份漂移、预算/工具失败与一致性篡改均 fail closed。
 - 完整回归 521 tests 通过（2 项环境跳过）；首次沙箱内全量仅因禁止回环 bind 出现 1 个 fixture error，允许 `127.0.0.1` 后同一套件通过。90 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、topology、compileall、pip/diff check 通过。
 - 源码合成全链为 2 个计划 read tool、1 次纯文本调用、2 个控制面引用，停服离线复验通过。隔离无依赖 wheel SHA-256 `50e69ce8e86eb3886f6abd1f4fcb7841d7411c67a465c82fb248dacb11f77f6e`，安装后 0.2 result `5b4def5f…6e99c6` 和旧 manifest 复验均通过。
-- 当前 local-accepted，尚未提交/推送或取得本实现自己的远端七 job，也没有真实模型调用。下一步先完成远端门；成功后只在新开发题上测试一次 qwen3.5:2b，再另冻新 held-out cohort 比较 Qwen 与可审计的更强文本模型。旧两个 0/4 cohort 不修改、不重跑，独立人工门继续 pending。
+- 实现提交 `fc56a68a6ef57f08b1af5c943599e08d8c348387` 对应 [run `39543371725`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39543371725)，head 一致且 completed/success。七个实际 job 均 success：core-contracts Windows `119035959876`、Ubuntu `119035960195`；runtime-currency `119035960097`；runtime-evidence Ubuntu `119038400800`、Windows `119038400871`；controlled-rejections Windows `119038400809`、Ubuntu `119038400814`。
+- 当前 remote-accepted，尚未运行真实模型。下一步只在新开发题上测试一次 qwen3.5:2b，再另冻新 held-out cohort 比较 Qwen 与可审计的更强文本模型。旧两个 0/4 cohort 不修改、不重跑，独立人工门继续 pending。

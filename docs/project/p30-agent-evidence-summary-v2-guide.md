@@ -1,6 +1,6 @@
 # P30 控制面证据纯文本摘要 0.2
 
-状态：**local-accepted**（2026-10-21）。本门解决模型输出协议可靠性，不声称自然语言质量已经通过，也不修改任何已见 cohort。
+状态：**remote-accepted**（2026-10-21）。本门解决模型输出协议可靠性，不声称自然语言质量已经通过，也不修改任何已见 cohort。
 
 ## 为什么单独版本化
 
@@ -53,6 +53,17 @@ python -m automotive_workbench.cli verify-agent-evidence-summary-result \
 - 90 schemas / 79 schema-bound examples / 25 syntax-only examples、Ruff、scoped mypy、CI topology、compileall、pip 与 diff check 通过。
 - 隔离无依赖 wheel 从 checkout 外运行两工程与完整模型协议，0.2 result `5b4def5f…6e99c6` 停服复验通过；wheel SHA-256 `50e69ce8e86eb3886f6abd1f4fcb7841d7411c67a465c82fb248dacb11f77f6e`。安装环境再次复验旧 comparison manifest `67d55634…2cab`，证明历史实现摘要未漂移。
 
+## 远端验收
+
+实现提交 `fc56a68a6ef57f08b1af5c943599e08d8c348387` 对应 [GitHub Actions run `39543371725`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39543371725)，head 一致且 completed/success。七个实际 job 全部 success：
+
+- core-contracts Windows `119035959876`、Ubuntu `119035960195`
+- runtime-currency `119035960097`
+- runtime-evidence Ubuntu `119038400800`、Windows `119038400871`
+- controlled-rejections Windows `119038400809`、Ubuntu `119038400814`
+
+因此 0.2 实现 remote-accepted；这仍只验收协议、可移植性与回归，不提升模型自然语言质量结论。
+
 ## 下一门
 
-先提交并完成本实现自己的远端七 job。只有 head 一致且全部 success 后，才在尚未冻结的新开发问题上调用一次 qwen3.5:2b，观察 0.2 是否消除结构失败；开发结果不能提升模型质量结论。随后固定新 reference/criteria 与全新 held-out cohort，再比较 qwen 和可审计的更强文本模型，并生成独立人工审阅包。旧复杂解释 v1 和 Codex-reference/Qwen v1 均不修改、不重跑。
+在尚未冻结的新开发问题上只调用一次 qwen3.5:2b，观察 0.2 是否消除结构失败；开发结果不能提升模型质量结论。随后固定新 reference/criteria 与全新 held-out cohort，再比较 qwen 和可审计的更强文本模型，并生成独立人工审阅包。旧复杂解释 v1 和 Codex-reference/Qwen v1 均不修改、不重跑。
