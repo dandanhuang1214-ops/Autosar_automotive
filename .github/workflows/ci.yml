@@ -97,7 +97,7 @@ jobs:
       - name: Run trusted knowledge fixture type gate
         run: mypy --ignore-missing-imports scripts/trusted_knowledge_fixture_service.py
       - name: Run deterministic Agent evidence-plan type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/agent_evidence_plan.py src/automotive_workbench/agent_evidence_comparison.py scripts/run_agent_evidence_comparison.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/agent_evidence_plan.py src/automotive_workbench/agent_evidence_summary.py src/automotive_workbench/agent_evidence_comparison.py scripts/run_agent_evidence_comparison.py
 
   runtime-evidence:
     needs: core-contracts
@@ -578,7 +578,7 @@ jobs:
       - name: Run trusted knowledge fixture type gate
         run: mypy --ignore-missing-imports scripts/trusted_knowledge_fixture_service.py
       - name: Run deterministic Agent evidence-plan type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/agent_evidence_plan.py src/automotive_workbench/agent_evidence_comparison.py scripts/run_agent_evidence_comparison.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/agent_evidence_plan.py src/automotive_workbench/agent_evidence_summary.py src/automotive_workbench/agent_evidence_comparison.py scripts/run_agent_evidence_comparison.py
       - name: Upload Python 3.14 runtime currency evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

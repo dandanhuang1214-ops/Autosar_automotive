@@ -56,6 +56,7 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_trace = None
     agent_evidence_plan = None
     agent_evidence_result = None
+    agent_evidence_summary = None
     agent_checkpoint = None
     agent_resume = None
     agent_approval_request = None
@@ -179,6 +180,60 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or len(agent_evidence_result["trace"]["final"]["evidence_ids"]) != 2
         ):
             raise ValueError("Agent evidence plan did not bind reads and citations")
+        server.mode, server.tags_count = "agent_plain_summary", 0
+        evidence_summary_path = output / "agent-evidence-summary-result.json"
+        agent_evidence_summary = cli(
+            "agent-evidence-summary-run",
+            [
+                "run-agent-evidence-summary",
+                report,
+                evidence_plan_path,
+                "--model",
+                "fixture:1",
+                "--output",
+                evidence_summary_path,
+                "--ollama-url",
+                origin,
+                "--knowledge-url",
+                origin,
+                "--knowledge-policy",
+                ROOT / "examples/knowledge/agent-read-policy.json",
+                "--timeout",
+                "5",
+            ],
+            0,
+        )
+        summary_schema = json.loads(
+            (
+                ROOT / "schemas/agent-evidence-summary-result.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        summary_registry = Registry().with_resources(
+            (
+                schema["$id"],
+                Resource.from_contents(schema),
+            )
+            for schema in (
+                json.loads(
+                    (ROOT / "schemas/readonly-agent-trace.schema.json").read_text(
+                        encoding="utf-8"
+                    )
+                ),
+                summary_schema,
+            )
+        )
+        Draft202012Validator(
+            summary_schema, registry=summary_registry
+        ).validate(agent_evidence_summary)
+        if (
+            agent_evidence_summary["status"] != "passed"
+            or agent_evidence_summary["semantic_status"] != "unassessed"
+            or agent_evidence_summary["trace"]["usage"]["model_calls"] != 1
+            or agent_evidence_summary["trace"]["usage"]["tool_calls"] != 2
+            or len(agent_evidence_summary["evidence_ids"]) != 2
+            or "format" in agent_evidence_summary["model_exchange"]["request"]
+        ):
+            raise ValueError("Plain-text evidence summary contract failed")
         server.mode, server.tags_count = "agent", 0
         checkpoint_path = output / "readonly-agent-checkpoint.json"
         agent_checkpoint = cli(
@@ -729,6 +784,15 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    evidence_summary_verification = cli(
+        "agent-evidence-summary-services-stopped",
+        [
+            "verify-agent-evidence-summary-result",
+            output / "agent-evidence-plan.json",
+            output / "agent-evidence-summary-result.json",
+        ],
+        0,
+    )
     checkpoint_verification = cli(
         "readonly-agent-checkpoint-services-stopped",
         ["verify-readonly-agent-checkpoint", output / "readonly-agent-checkpoint.json"],
@@ -967,6 +1031,17 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "model_calls": agent_evidence_result["trace"]["usage"]["model_calls"],
                    "cited_observations": len(agent_evidence_result["trace"]["final"]["evidence_ids"]),
                    "offline_verification": evidence_result_verification["status"],
+                   "model_selected_tools": False,
+               },
+               "agent_evidence_summary": {
+                   "result_id": agent_evidence_summary["result_id"],
+                   "agent_status": agent_evidence_summary["status"],
+                   "model_interface": agent_evidence_summary["model_interface"],
+                   "planned_tool_calls": agent_evidence_summary["trace"]["usage"]["tool_calls"],
+                   "model_calls": agent_evidence_summary["trace"]["usage"]["model_calls"],
+                   "cited_observations": len(agent_evidence_summary["evidence_ids"]),
+                   "offline_verification": evidence_summary_verification["status"],
+                   "semantic_status": agent_evidence_summary["semantic_status"],
                    "model_selected_tools": False,
                },
                "readonly_agent_resume": {

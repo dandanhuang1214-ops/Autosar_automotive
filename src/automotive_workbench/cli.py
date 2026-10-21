@@ -261,6 +261,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     evidence_result_verify.add_argument("plan", type=Path)
     evidence_result_verify.add_argument("result", type=Path)
+    evidence_summary_run = commands.add_parser(
+        "run-agent-evidence-summary",
+        help="Run a fixed evidence plan and one bounded plain-text summary",
+    )
+    evidence_summary_run.add_argument("report", type=Path)
+    evidence_summary_run.add_argument("plan", type=Path)
+    evidence_summary_run.add_argument("--model", required=True)
+    evidence_summary_run.add_argument("--output", type=Path, required=True)
+    evidence_summary_run.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    evidence_summary_run.add_argument("--knowledge-url")
+    evidence_summary_run.add_argument("--knowledge-policy", type=Path)
+    evidence_summary_run.add_argument("--timeout", type=float, default=30)
+    evidence_summary_run.add_argument("--max-steps", type=int, default=3)
+    evidence_summary_run.add_argument("--max-model-calls", type=int, default=1)
+    evidence_summary_run.add_argument("--max-tool-calls", type=int, default=2)
+    evidence_summary_run.add_argument("--max-total-tokens", type=int, default=4096)
+    evidence_summary_run.add_argument(
+        "--max-output-tokens-per-call", type=int, default=512
+    )
+    evidence_summary_run.add_argument("--context-window", type=int, default=8192)
+    evidence_summary_run.add_argument("--max-seconds", type=float, default=120)
+    evidence_summary_run.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    evidence_summary_verify = commands.add_parser(
+        "verify-agent-evidence-summary-result",
+        help="Verify a plain-text evidence summary without model or knowledge services",
+    )
+    evidence_summary_verify.add_argument("plan", type=Path)
+    evidence_summary_verify.add_argument("result", type=Path)
     evidence_comparison_freeze = commands.add_parser(
         "freeze-agent-evidence-comparison",
         help="Freeze pre-inference reference answers and evidence plans",
@@ -1285,6 +1317,74 @@ def main() -> int:
 
             result = verify_agent_evidence_plan_result(
                 load_agent_evidence_plan(args.plan), read(args.result)
+            )
+        elif args.command == "run-agent-evidence-summary":
+            from automotive_workbench.agent_evidence_plan import (
+                load_agent_evidence_plan,
+            )
+            from automotive_workbench.agent_evidence_summary import (
+                run_agent_evidence_summary,
+                save_agent_evidence_summary_result,
+            )
+            from automotive_workbench.agent_runtime import (
+                AgentBudget,
+                build_readonly_registry,
+            )
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.knowledge_policy import (
+                load_agent_knowledge_policy,
+            )
+            from automotive_workbench.model_client import OllamaModelClient
+
+            if (args.knowledge_url is None) != (args.knowledge_policy is None):
+                raise ValueError(
+                    "--knowledge-url and --knowledge-policy must be supplied together"
+                )
+            plan = load_agent_evidence_plan(args.plan)
+            registry = build_readonly_registry(
+                args.report,
+                knowledge_endpoint=(
+                    Endpoint(args.knowledge_url, args.timeout)
+                    if args.knowledge_url is not None
+                    else None
+                ),
+                knowledge_policy=(
+                    load_agent_knowledge_policy(args.knowledge_policy)
+                    if args.knowledge_policy is not None
+                    else None
+                ),
+            )
+            summarized = run_agent_evidence_summary(
+                plan,
+                registry,
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                args.model,
+                AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+            )
+            result = save_agent_evidence_summary_result(
+                plan, summarized, args.output
+            )
+        elif args.command == "verify-agent-evidence-summary-result":
+            from automotive_workbench.agent_evidence_plan import (
+                load_agent_evidence_plan,
+            )
+            from automotive_workbench.agent_evidence_summary import (
+                load_agent_evidence_summary_result,
+                verify_agent_evidence_summary_result,
+            )
+
+            result = verify_agent_evidence_summary_result(
+                load_agent_evidence_plan(args.plan),
+                load_agent_evidence_summary_result(args.result),
             )
         elif args.command == "freeze-agent-evidence-comparison":
             from automotive_workbench.agent_evidence_comparison import (

@@ -378,3 +378,11 @@ Ollama 停止后离线重评分返回 `status=passed` / `evaluation_status=faile
 Ollama 停止后离线 verifier 返回 `status=passed` / `comparison_status=failed`。Codex 按预推理 criteria 对 raw response 的非盲诊断为 4 pass / 2 partial / 6 fail；本地诊断文件 SHA-256 `c7f3a1362ae3e5ff8867a3515ebc6785e9ddf4b88a57ba58e1e307d507a6e7c7`。该诊断不是独立人工 gold，不能关闭一般复杂解释、真实资料适用性或人工可用性门。
 
 本 cohort 已封存且不得修改或重跑。P30 保持 implementing；下一门只使用新协议版本和新 cohort 比较更小摘要接口或更强文本模型，同时等待原 review pack 的独立 assessment。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+## 控制面证据纯文本摘要 0.2（本地验收，2026-10-21）
+
+新增独立 `agent-evidence-summary-result-0.2` 和 run/verify CLI，复用既有不可变 evidence plan。模型阶段不再携带 JSON schema 或 tools，只接受一次 1–1000 字符纯文本；固定 read tools、工程状态、全部 observation 引用、artifact 封装和离线复验仍由控制面负责。纯文本成功只代表协议完成，语义固定 `unassessed`。
+
+完整回归 521 tests 通过（2 项环境跳过）；90 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、pip/diff check 通过。源码合成 HTTP 与服务停止后复验通过；隔离 wheel SHA-256 `50e69ce8e86eb3886f6abd1f4fcb7841d7411c67a465c82fb248dacb11f77f6e`，安装后 0.2 result `5b4def5f…6e99c6` 及旧 comparison manifest `67d55634…2cab` 均复验通过。
+
+当前 local-accepted，尚无实现提交或远端 CI，也没有真实模型推理。远端七 job 全部成功前不得运行 Qwen；其后只允许新开发题，最终质量提升必须由新冻结 cohort 和独立人工审阅证明。旧两个 0/4 cohort 保持不变，动作权限不扩大。

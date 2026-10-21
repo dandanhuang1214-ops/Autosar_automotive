@@ -100,3 +100,4 @@
 - [P30 控制面动作候选与 ID-only 模型选择](project/p30-agent-action-candidate-guide.md)
 - [P30 Agent candidate-selection v1 真实基线](project/p30-agent-candidate-evaluation-v1-guide.md)
 - [P30 typed action intent 与确定性准入门](project/p30-agent-action-admission-guide.md)
+- [P30 控制面证据纯文本摘要 0.2](project/p30-agent-evidence-summary-v2-guide.md)

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-summary-result.schema.json",
+  "title": "Agent Evidence Plain-Text Summary Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "model_interface", "status",
+    "semantic_status", "plan_id", "trace_id", "summary", "evidence_ids",
+    "model_exchange", "trace", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-summary-result"},
+    "schema_version": {"const": "agent-evidence-summary-result-0.2"},
+    "model_interface": {"const": "ollama-plain-text-summary-0.2"},
+    "status": {"enum": ["passed", "refused", "blocked"]},
+    "semantic_status": {"const": "unassessed"},
+    "plan_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trace_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "summary": {"type": ["string", "null"], "minLength": 1, "maxLength": 1000},
+    "evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "model_exchange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request", "response"],
+      "properties": {
+        "request": {"type": ["object", "null"]},
+        "response": {"type": ["object", "null"]}
+      }
+    },
+    "trace": {
+      "$ref": "https://automotive-workbench.local/schemas/readonly-agent-trace.schema.json"
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  }
+}
