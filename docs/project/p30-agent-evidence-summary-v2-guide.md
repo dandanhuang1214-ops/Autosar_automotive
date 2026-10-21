@@ -64,6 +64,14 @@ python -m automotive_workbench.cli verify-agent-evidence-summary-result \
 
 因此 0.2 实现 remote-accepted；这仍只验收协议、可移植性与回归，不提升模型自然语言质量结论。
 
+## Qwen 单次开发观察
+
+远端门完成后，使用一个全新、未冻结的 development-only 问题。报告、plan `e5dbda4d…5b13c`、qwen3.5:2b digest `324d162b…20df` 和预算在推理前固定。非法 transport timeout 与不兼容的旧 0.1 project report 都在模型调用前被拒绝并保留工件，二者 `model_calls=0`；随后使用新生成的 `project-acceptance-0.6` integration 报告，真实模型只调用一次。
+
+result `46f65aaf377b035eb569d6f22996a97a6c45041d09c7a7236db17d1aba799570` 为协议 `passed`：1 个固定 read、1 个模型调用、617 prompt / 82 output / 699 total tokens、1 个控制面 citation。result SHA-256 `a6c95577136dc28af2ec10d837589bd60291d63d55203a15d593cc1f4498b907`；Ollama 停止后离线 verifier 返回同一 result ID。
+
+但语义不通过。top-6 事实只包含 APPLICATION、COMMUNICATION、IMPACT 的 status/reason，遗漏问题明确要求的 TASK-BINDINGS 与 MODE-RULES；Qwen 仍声称五项均 passed，并把 `linked_in_scope` / `explicit_dependencies_assessed` 合并为未逐项绑定的 alternatives。Codex 透明事后诊断为 `not_usable`，review SHA-256 `caad468e6f8acce9b0ab8e9be85e8bc0144f2a3d35f97709cae4bebf96461691`。该诊断不是预登记 gold 或独立人工审阅。
+
 ## 下一门
 
-在尚未冻结的新开发问题上只调用一次 qwen3.5:2b，观察 0.2 是否消除结构失败；开发结果不能提升模型质量结论。随后固定新 reference/criteria 与全新 held-out cohort，再比较 qwen 和可审计的更强文本模型，并生成独立人工审阅包。旧复杂解释 v1 和 Codex-reference/Qwen v1 均不修改、不重跑。
+0.2 已消除本题的 JSON 结构失败，但暴露了控制面证据选择不完整时模型补写缺失事实的问题。下一门先用新协议版本实现成对字段完整选择与缺项显式拒绝，保留 0.2、旧 result 和 frozen manifest 不变；新的开发题通过后，再固定 reference/criteria 与全新 held-out cohort，比较 Qwen 和可审计的更强文本模型并生成独立人工审阅包。旧复杂解释 v1 和 Codex-reference/Qwen v1 均不修改、不重跑。

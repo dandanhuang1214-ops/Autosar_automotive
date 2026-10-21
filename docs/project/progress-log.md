@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-21）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、受限 virtual CAN、typed intent/admission、独立审阅协议和控制面证据计划均已远端验收；deterministic admission 后只读评测保持 5/5 passed。复杂解释 v1 与 Codex-reference/Qwen v1 均保持真实 0/4 failed，旧结果不修改、不重跑。新的[控制面证据纯文本摘要 0.2](p30-agent-evidence-summary-v2-guide.md)也已 remote-accepted：它复用不可变 0.1 plan，把模型阶段缩成一次无 JSON schema/无 tools 的有界纯文本调用，控制面继续封装状态和全部引用；实现 `fc56a68a6ef57f08b1af5c943599e08d8c348387` / run `39543371725` 七 job 全部 success。完整回归 521 tests（2 项环境跳过）、源码合成停服复验和隔离 wheel 通过，旧 frozen manifest 仍可复验。下一步只在一条全新开发题上调用一次 Qwen，随后另冻新 cohort 和更强文本基线；独立人工门仍 pending。受限执行默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放。
+当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、受限 virtual CAN、typed intent/admission、独立审阅协议和控制面证据计划均已远端验收；deterministic admission 后只读评测保持 5/5 passed。复杂解释 v1 与 Codex-reference/Qwen v1 均保持真实 0/4 failed，旧结果不修改、不重跑。新的[控制面证据纯文本摘要 0.2](p30-agent-evidence-summary-v2-guide.md)也已 remote-accepted：实现 `fc56a68a6ef57f08b1af5c943599e08d8c348387` / run `39543371725` 七 job 全部 success。其后全新开发题对 qwen3.5:2b 只调用一次：纯文本协议与停服复验通过，但固定 top-6 事实只覆盖 3/5 个指定检查，模型仍概括全部五项，Codex 非独立诊断为 `not_usable`。这证明结构故障已消除，却暴露控制面证据选择完整性缺口；下一步新增版本化的成对字段完整选择，不改 0.2 或旧 cohort，通过后才冻结新 cohort 和更强文本基线。独立人工门仍 pending；受限执行默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1922,4 +1922,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 完整回归 521 tests 通过（2 项环境跳过）；首次沙箱内全量仅因禁止回环 bind 出现 1 个 fixture error，允许 `127.0.0.1` 后同一套件通过。90 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、topology、compileall、pip/diff check 通过。
 - 源码合成全链为 2 个计划 read tool、1 次纯文本调用、2 个控制面引用，停服离线复验通过。隔离无依赖 wheel SHA-256 `50e69ce8e86eb3886f6abd1f4fcb7841d7411c67a465c82fb248dacb11f77f6e`，安装后 0.2 result `5b4def5f…6e99c6` 和旧 manifest 复验均通过。
 - 实现提交 `fc56a68a6ef57f08b1af5c943599e08d8c348387` 对应 [run `39543371725`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39543371725)，head 一致且 completed/success。七个实际 job 均 success：core-contracts Windows `119035959876`、Ubuntu `119035960195`；runtime-currency `119035960097`；runtime-evidence Ubuntu `119038400800`、Windows `119038400871`；controlled-rejections Windows `119038400809`、Ubuntu `119038400814`。
-- 当前 remote-accepted，尚未运行真实模型。下一步只在新开发题上测试一次 qwen3.5:2b，再另冻新 held-out cohort 比较 Qwen 与可审计的更强文本模型。旧两个 0/4 cohort 不修改、不重跑，独立人工门继续 pending。
+- 当前 remote-accepted；真实模型开发观察见下一条。旧两个 0/4 cohort 不修改、不重跑，独立人工门继续 pending。
+
+### P30：纯文本摘要 0.2 / Qwen 单次开发观察（2026-10-21）
+
+- 新问题、报告、plan、模型 digest 与预算均在推理前固定；使用新生成的 `project-acceptance-0.6` integration 报告和 plan `e5dbda4d…5b13c`，未复用旧四题。一次非法 transport timeout 在 Endpoint 构造时拒绝，随后旧 0.1 报告在 read-tool 复验时拒绝（result `4e955c01…32224`）；两者都明确记录 `model_calls=0`，不是模型重试。
+- Ollama `0.31.1` / qwen3.5:2b digest `324d162b…20df` 核对一致。仓库只读、仅本地忽略的指定 output 可写；兼容报告上只进行一次真实调用。0.2 result `46f65aaf377b035eb569d6f22996a97a6c45041d09c7a7236db17d1aba799570` 为 protocol `passed`：1 个固定 read tool、1 个模型调用、617 prompt + 82 output = 699 tokens、1 个控制面引用；result SHA-256 `a6c95577136dc28af2ec10d837589bd60291d63d55203a15d593cc1f4498b907`。
+- 停止 Ollama 后离线 verifier 返回 `status=passed` 与同一 result ID。该状态只证明纯文本传输、预算、identity、trace 与引用契约通过，`semantic_status` 仍为 `unassessed`。
+- Codex 对保留 response 的透明、非独立事后诊断为 `not_usable`：top-6 事实只包含 APPLICATION、COMMUNICATION、IMPACT 的 status/reason，遗漏 TASK-BINDINGS 和 MODE-RULES；Qwen 仍声称五项均 passed，并把两个 reason 合并为未逐项绑定的 alternatives。边界声明正确，但缺失证据上的补全不可接受。review SHA-256 `caad468e6f8acce9b0ab8e9be85e8bc0144f2a3d35f97709cae4bebf96461691`。
+- 不重试、不修改该结果，也不据此提升质量结论。下一门先以新版本实现控制面成对字段完整选择和缺项显式拒绝，保留 0.2 与旧 manifest 可复验；通过开发题后才冻结全新 held-out cohort，并比较 Qwen 与可审计的更强文本模型。
