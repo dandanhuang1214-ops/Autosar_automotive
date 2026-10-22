@@ -293,6 +293,51 @@ def build_parser() -> argparse.ArgumentParser:
     )
     evidence_summary_verify.add_argument("plan", type=Path)
     evidence_summary_verify.add_argument("result", type=Path)
+    evidence_pair_plan_create = commands.add_parser(
+        "create-agent-evidence-pair-plan",
+        help="Seal named checks that each require a complete status/reason pair",
+    )
+    evidence_pair_plan_create.add_argument("--goal", required=True)
+    evidence_pair_plan_create.add_argument(
+        "--check-id", action="append", required=True, dest="check_ids"
+    )
+    evidence_pair_plan_create.add_argument("--output", type=Path, required=True)
+    evidence_pair_plan_verify = commands.add_parser(
+        "verify-agent-evidence-pair-plan",
+        help="Verify a complete evidence-pair plan offline",
+    )
+    evidence_pair_plan_verify.add_argument("plan", type=Path)
+    evidence_pair_summary_run = commands.add_parser(
+        "run-agent-evidence-pair-summary",
+        help="Refuse incomplete pairs or run one bounded plain-text summary",
+    )
+    evidence_pair_summary_run.add_argument("report", type=Path)
+    evidence_pair_summary_run.add_argument("plan", type=Path)
+    evidence_pair_summary_run.add_argument("--model", required=True)
+    evidence_pair_summary_run.add_argument("--output", type=Path, required=True)
+    evidence_pair_summary_run.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    evidence_pair_summary_run.add_argument("--timeout", type=float, default=30)
+    evidence_pair_summary_run.add_argument("--max-steps", type=int, default=2)
+    evidence_pair_summary_run.add_argument("--max-model-calls", type=int, default=1)
+    evidence_pair_summary_run.add_argument("--max-tool-calls", type=int, default=1)
+    evidence_pair_summary_run.add_argument("--max-total-tokens", type=int, default=4096)
+    evidence_pair_summary_run.add_argument(
+        "--max-output-tokens-per-call", type=int, default=512
+    )
+    evidence_pair_summary_run.add_argument("--context-window", type=int, default=8192)
+    evidence_pair_summary_run.add_argument("--max-seconds", type=float, default=120)
+    evidence_pair_summary_run.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    evidence_pair_summary_verify = commands.add_parser(
+        "verify-agent-evidence-pair-summary-result",
+        help="Verify a complete evidence-pair summary without model services",
+    )
+    evidence_pair_summary_verify.add_argument("report", type=Path)
+    evidence_pair_summary_verify.add_argument("plan", type=Path)
+    evidence_pair_summary_verify.add_argument("result", type=Path)
     evidence_comparison_freeze = commands.add_parser(
         "freeze-agent-evidence-comparison",
         help="Freeze pre-inference reference answers and evidence plans",
@@ -1386,6 +1431,67 @@ def main() -> int:
                 load_agent_evidence_plan(args.plan),
                 load_agent_evidence_summary_result(args.result),
             )
+        elif args.command == "create-agent-evidence-pair-plan":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                build_agent_evidence_pair_plan,
+                save_agent_evidence_pair_plan,
+            )
+
+            result = save_agent_evidence_pair_plan(
+                build_agent_evidence_pair_plan(args.goal, args.check_ids),
+                args.output,
+            )
+        elif args.command == "verify-agent-evidence-pair-plan":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+                verify_agent_evidence_pair_plan,
+            )
+
+            result = verify_agent_evidence_pair_plan(
+                load_agent_evidence_pair_plan(args.plan)
+            )
+        elif args.command == "run-agent-evidence-pair-summary":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+                run_agent_evidence_pair_summary,
+                save_agent_evidence_pair_summary_result,
+            )
+            from automotive_workbench.agent_runtime import AgentBudget
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.model_client import OllamaModelClient
+
+            plan = load_agent_evidence_pair_plan(args.plan)
+            summarized = run_agent_evidence_pair_summary(
+                args.report,
+                plan,
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                args.model,
+                AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+            )
+            result = save_agent_evidence_pair_summary_result(
+                args.report, plan, summarized, args.output
+            )
+        elif args.command == "verify-agent-evidence-pair-summary-result":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+                load_agent_evidence_pair_summary_result,
+                verify_agent_evidence_pair_summary_result,
+            )
+
+            result = verify_agent_evidence_pair_summary_result(
+                args.report,
+                load_agent_evidence_pair_plan(args.plan),
+                load_agent_evidence_pair_summary_result(args.result),
+            )
         elif args.command == "freeze-agent-evidence-comparison":
             from automotive_workbench.agent_evidence_comparison import (
                 freeze_agent_evidence_comparison,
@@ -2187,9 +2293,10 @@ def main() -> int:
         _print_json({"status": "error", "message": str(exc)})
         return 1
     _print_json(result)
-    if result.get("status") in {"attention-required", "no-paths"}:
+    exit_status = result.get("status", result.get("protocol_status"))
+    if exit_status in {"attention-required", "no-paths"}:
         return 2
-    if result.get("status") in {
+    if exit_status in {
         "failed",
         "partial",
         "unassessed",
@@ -2199,7 +2306,7 @@ def main() -> int:
         "not-comparable",
     }:
         return 2
-    if result.get("status") == "blocked":
+    if exit_status == "blocked":
         return 3
     return 0
 

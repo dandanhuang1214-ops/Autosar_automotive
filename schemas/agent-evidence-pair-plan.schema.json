@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-pair-plan.schema.json",
+  "title": "Agent Complete Evidence Pair Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id", "artifact_type", "schema_version", "goal", "check_ids",
+    "required_fields", "boundary"
+  ],
+  "properties": {
+    "plan_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-pair-plan"},
+    "schema_version": {"const": "agent-evidence-pair-plan-0.3"},
+    "goal": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "check_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,128}$"}
+    },
+    "required_fields": {
+      "const": ["status", "reason"]
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  }
+}

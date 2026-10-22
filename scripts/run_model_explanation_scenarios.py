@@ -57,6 +57,9 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
     agent_evidence_plan = None
     agent_evidence_result = None
     agent_evidence_summary = None
+    agent_evidence_pair_plan = None
+    agent_evidence_pair_summary = None
+    agent_evidence_pair_refusal = None
     agent_checkpoint = None
     agent_resume = None
     agent_approval_request = None
@@ -234,6 +237,131 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
             or "format" in agent_evidence_summary["model_exchange"]["request"]
         ):
             raise ValueError("Plain-text evidence summary contract failed")
+        evidence_pair_plan_path = output / "agent-evidence-pair-plan.json"
+        agent_evidence_pair_plan = cli(
+            "agent-evidence-pair-plan-create",
+            [
+                "create-agent-evidence-pair-plan",
+                "--goal",
+                "给出 COMMUNICATION、APPLICATION、TASK-BINDINGS、MODE-RULES、IMPACT 各自状态和原因。",
+                "--check-id",
+                "COMMUNICATION",
+                "--check-id",
+                "APPLICATION",
+                "--check-id",
+                "TASK-BINDINGS",
+                "--check-id",
+                "MODE-RULES",
+                "--check-id",
+                "IMPACT",
+                "--output",
+                evidence_pair_plan_path,
+            ],
+            0,
+        )
+        cli(
+            "agent-evidence-pair-plan-verify",
+            ["verify-agent-evidence-pair-plan", evidence_pair_plan_path],
+            0,
+        )
+        server.mode, server.tags_count = "agent_plain_summary", 0
+        evidence_pair_summary_path = output / "agent-evidence-pair-summary-result.json"
+        agent_evidence_pair_summary = cli(
+            "agent-evidence-pair-summary-run",
+            [
+                "run-agent-evidence-pair-summary",
+                report,
+                evidence_pair_plan_path,
+                "--model",
+                "fixture:1",
+                "--output",
+                evidence_pair_summary_path,
+                "--ollama-url",
+                origin,
+                "--timeout",
+                "5",
+            ],
+            0,
+        )
+        pair_summary_schema = json.loads(
+            (
+                ROOT / "schemas/agent-evidence-pair-summary-result.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        pair_registry = Registry().with_resources(
+            (
+                schema["$id"],
+                Resource.from_contents(schema),
+            )
+            for schema in (
+                json.loads(
+                    (ROOT / "schemas/readonly-agent-trace.schema.json").read_text(
+                        encoding="utf-8"
+                    )
+                ),
+                pair_summary_schema,
+            )
+        )
+        Draft202012Validator(
+            pair_summary_schema, registry=pair_registry
+        ).validate(agent_evidence_pair_summary)
+        if (
+            agent_evidence_pair_summary["protocol_status"] != "passed"
+            or agent_evidence_pair_summary["evidence_completeness"]["status"]
+            != "complete"
+            or agent_evidence_pair_summary["evidence_completeness"][
+                "complete_pair_count"
+            ]
+            != 5
+            or agent_evidence_pair_summary["semantic_assessment"] != "unassessed"
+            or agent_evidence_pair_summary["trace"]["usage"]["model_calls"] != 1
+            or agent_evidence_pair_summary["trace"]["usage"]["tool_calls"] != 1
+            or "format" in agent_evidence_pair_summary["model_exchange"]["request"]
+            or "tools" in agent_evidence_pair_summary["model_exchange"]["request"]
+        ):
+            raise ValueError("Complete evidence-pair summary contract failed")
+        missing_pair_plan_path = output / "agent-evidence-pair-missing-plan.json"
+        cli(
+            "agent-evidence-pair-missing-plan-create",
+            [
+                "create-agent-evidence-pair-plan",
+                "--goal",
+                "给出不存在检查的状态和原因。",
+                "--check-id",
+                "NOT-IN-REPORT",
+                "--output",
+                missing_pair_plan_path,
+            ],
+            0,
+        )
+        tags_before_refusal = server.tags_count
+        agent_evidence_pair_refusal = cli(
+            "agent-evidence-pair-pre-model-refusal",
+            [
+                "run-agent-evidence-pair-summary",
+                report,
+                missing_pair_plan_path,
+                "--model",
+                "fixture:1",
+                "--output",
+                output / "agent-evidence-pair-refusal-result.json",
+                "--ollama-url",
+                origin,
+                "--timeout",
+                "5",
+            ],
+            2,
+        )
+        if (
+            agent_evidence_pair_refusal["protocol_status"] != "refused"
+            or agent_evidence_pair_refusal["evidence_completeness"]["status"]
+            != "incomplete"
+            or agent_evidence_pair_refusal["trace"]["usage"]["model_calls"] != 0
+            or agent_evidence_pair_refusal["model_exchange"]
+            != {"request": None, "response": None}
+            or server.tags_count != tags_before_refusal
+        ):
+            raise ValueError("Incomplete evidence pairs reached the model service")
         server.mode, server.tags_count = "agent", 0
         checkpoint_path = output / "readonly-agent-checkpoint.json"
         agent_checkpoint = cli(
@@ -793,6 +921,26 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
         ],
         0,
     )
+    evidence_pair_summary_verification = cli(
+        "agent-evidence-pair-summary-services-stopped",
+        [
+            "verify-agent-evidence-pair-summary-result",
+            report,
+            output / "agent-evidence-pair-plan.json",
+            output / "agent-evidence-pair-summary-result.json",
+        ],
+        0,
+    )
+    evidence_pair_refusal_verification = cli(
+        "agent-evidence-pair-refusal-services-stopped",
+        [
+            "verify-agent-evidence-pair-summary-result",
+            report,
+            output / "agent-evidence-pair-missing-plan.json",
+            output / "agent-evidence-pair-refusal-result.json",
+        ],
+        0,
+    )
     checkpoint_verification = cli(
         "readonly-agent-checkpoint-services-stopped",
         ["verify-readonly-agent-checkpoint", output / "readonly-agent-checkpoint.json"],
@@ -1042,6 +1190,32 @@ def run(output: Path, cli_python: Path | None = None) -> dict:
                    "cited_observations": len(agent_evidence_summary["evidence_ids"]),
                    "offline_verification": evidence_summary_verification["status"],
                    "semantic_status": agent_evidence_summary["semantic_status"],
+                   "model_selected_tools": False,
+               },
+               "agent_evidence_pair_summary": {
+                   "plan_id": agent_evidence_pair_plan["plan_id"],
+                   "result_id": agent_evidence_pair_summary["result_id"],
+                   "protocol_status": agent_evidence_pair_summary["protocol_status"],
+                   "evidence_completeness": agent_evidence_pair_summary[
+                       "evidence_completeness"
+                   ]["status"],
+                   "complete_pair_count": agent_evidence_pair_summary[
+                       "evidence_completeness"
+                   ]["complete_pair_count"],
+                   "model_calls": agent_evidence_pair_summary["trace"]["usage"][
+                       "model_calls"
+                   ],
+                   "offline_verification": evidence_pair_summary_verification["status"],
+                   "refusal_status": agent_evidence_pair_refusal["protocol_status"],
+                   "refusal_model_calls": agent_evidence_pair_refusal["trace"]["usage"][
+                       "model_calls"
+                   ],
+                   "refusal_offline_verification": evidence_pair_refusal_verification[
+                       "status"
+                   ],
+                   "semantic_assessment": agent_evidence_pair_summary[
+                       "semantic_assessment"
+                   ],
                    "model_selected_tools": False,
                },
                "readonly_agent_resume": {
