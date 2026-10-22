@@ -65,4 +65,4 @@ python -m automotive_workbench.cli verify-agent-evidence-pair-plan \
 
 0.3 只覆盖项目 acceptance report 中显式 requirement 的直接 `status/reason` 对，不声称已解决任意自然语言到任意 JSON 字段的自动规划。它不写配置、不调用商业工具、不访问 SocketCAN 或硬件，也不生成 approval、claim 或 execution。
 
-远端验收后，用全新 development-only 问题对固定 Qwen 运行一次，确认模型面对完整 pair 时不再补写缺失证据；不得修改或重跑 0.2 的既有结果。开发通过后才冻结新的 held-out cohort，并比较 Qwen 与可审计的更强文本模型。一般复杂解释和独立人工可用性仍为 pending。
+0.3 实现已 remote-accepted。后续全新 development-only probe 已冻结 `project-acceptance-0.8` transmitter report、五项 pair plan、Qwen digest、预算和 Codex transcription reference；pair selection 为 complete，但 Ollama 容器仅在内部 Docker network 且没有宿主机端口映射，Workbench 服务预检不可达。结果 `05167df0…5b2a3` 离线复验通过、`model_calls=0`，故模型语义未评估。下一步需先获得一个 Workbench 可达且 digest 可核对的本地 Ollama endpoint；容器重建/loopback 端口映射前需授权。入口恢复后只运行这道冻结开发题一次；不得修改或重跑 0.2/旧 cohort。一般复杂解释和独立人工可用性仍为 pending。
