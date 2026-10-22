@@ -16,9 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-21）
+## 当前总览（2026-10-22）
 
-当前主阶段 P30 implementing。只读 Agent、耐久/审批/事务、受限 virtual CAN、typed intent/admission、独立审阅协议和控制面证据计划均已远端验收；deterministic admission 后只读评测保持 5/5 passed。复杂解释 v1 与 Codex-reference/Qwen v1 均保持真实 0/4 failed，旧结果不修改、不重跑。新的[控制面证据纯文本摘要 0.2](p30-agent-evidence-summary-v2-guide.md)也已 remote-accepted：实现 `fc56a68a6ef57f08b1af5c943599e08d8c348387` / run `39543371725` 七 job 全部 success。其后全新开发题对 qwen3.5:2b 只调用一次：纯文本协议与停服复验通过，但固定 top-6 事实只覆盖 3/5 个指定检查，模型仍概括全部五项，Codex 非独立诊断为 `not_usable`。这证明结构故障已消除，却暴露控制面证据选择完整性缺口；下一步新增版本化的成对字段完整选择，不改 0.2 或旧 cohort，通过后才冻结新 cohort 和更强文本基线。独立人工门仍 pending；受限执行默认关闭，配置写入、SocketCAN、硬件和认证 operator 未开放。
+当前主阶段 P30 implementing。[控制面完整证据对摘要 0.3](p30-agent-evidence-pair-summary-guide.md)实现已 remote-accepted：`56a522a1b6b347748821885f8830ae6085f74eb9` / [run `39719942007`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39719942007)，head 一致且七 job 全部 success（Windows/Ubuntu 核心合同、runtime-currency、Windows/Ubuntu controlled-rejections、Windows/Ubuntu runtime-evidence）。计划固定显式检查 ID，控制面重建完整 `status/reason` 对，缺项在访问模型服务前拒绝；离线结果复验会根据原始报告重放选择。完整/缺项合成路径、哈希篡改、错报告拒绝、隔离安装均通过。协议与证据完整性门已验收，0.3 真实模型语义仍 `unassessed`。此前 0.2 和旧 cohort 结果保持不变；复杂解释 v1 与 Codex-reference/Qwen v1 仍为真实 0/4 failed，独立人工 assessment pending。下一步用全新 development-only 题和完整 pair 对 Qwen 只运行一次并停服离线复验；开发观察后再决定是否冻结 held-out cohort、比较更强文本模型。配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
 总体结论：静态分析、故障套件、虚拟 CAN、日志回放和 backend 抽象已经形成；WSL2 已确认具备 CAN/VCAN 内核能力，`vcan0` 可通过脚本恢复并通过 can-utils 原始帧收发与 Workbench SocketCAN backend lab。Linux 探测、环境准备、实验和报告已固化为可重复入口；Windows 原生回归已由用户复验通过。R3 已完成首次 OpenBSW POSIX spike：Docker daemon 当前可用，但官方 development 镜像下载 ARM/Rust/Bazel 等完整工具链，首轮被分类为镜像依赖下载过重；Ubuntu 24.04 原生 `posix-freertos` configure/build 通过，referenceApp 在 `vcan0` 上完成 CAN 发送 smoke。
 
@@ -1931,3 +1931,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 停止 Ollama 后离线 verifier 返回 `status=passed` 与同一 result ID。该状态只证明纯文本传输、预算、identity、trace 与引用契约通过，`semantic_status` 仍为 `unassessed`。
 - Codex 对保留 response 的透明、非独立事后诊断为 `not_usable`：top-6 事实只包含 APPLICATION、COMMUNICATION、IMPACT 的 status/reason，遗漏 TASK-BINDINGS 和 MODE-RULES；Qwen 仍声称五项均 passed，并把两个 reason 合并为未逐项绑定的 alternatives。边界声明正确，但缺失证据上的补全不可接受。review SHA-256 `caad468e6f8acce9b0ab8e9be85e8bc0144f2a3d35f97709cae4bebf96461691`。
 - 不重试、不修改该结果，也不据此提升质量结论。下一门先以新版本实现控制面成对字段完整选择和缺项显式拒绝，保留 0.2 与旧 manifest 可复验；通过开发题后才冻结全新 held-out cohort，并比较 Qwen 与可审计的更强文本模型。
+
+### P30：控制面完整证据对摘要 0.3（远端验收，2026-10-22）
+
+- 新增版本化 `agent-evidence-pair-plan-0.3` 与 `agent-evidence-pair-summary-result-0.3`。用户显式列出 1–16 个检查 ID；控制面从可复验报告完整重建每一项的 `status/reason` 双字段及来源，模型仅在全部 pair 完整后收到一次有界纯文本请求。缺检查、重复 ID、悬空指针、缺字段或预算不足均在目标推理前拒绝；离线 verifier 接收原始报告并重放 selection，阻止把另一份有效报告代入。
+- 结果分离 `protocol_status`、`evidence_completeness` 与 `semantic_assessment=unassessed`。保存 selection/projection、请求/原始响应、模型身份、usage、事件及哈希链；不产生配置写入、商业工具调用、SocketCAN/硬件访问、approval、claim 或 execution。
+- 新增完整 5 pair 一次调用、缺项零服务访问、预算门、哈希篡改与错误报告代入测试；模型场景脚本涵盖完整合成摘要、缺项 refusal 与停服离线复验。全量 524 tests 通过（2 项环境跳过）；92 schemas / 79 schema-bound / 25 syntax-only、全仓 Ruff、目标 mypy、compileall、pip check、CI topology、diff check 通过。
+- 隔离无依赖 wheel 排除 checkout 导入并完整执行协议场景，wheel SHA-256 `bd6979683e8d9dac8a33a0dc3280336341612edcfd4b9e11dbce51dade3f5bd4`。成功合成 case 5/5 pair complete、1 次模型 fixture 调用、离线验签通过；missing-ID case 为 incomplete/refused、0 次模型调用、离线验签通过。均为 synthetic HTTP fixture，不是实际模型推理。
+- 实现提交 `56a522a1b6b347748821885f8830ae6085f74eb9` / [run `39719942007`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39719942007) completed/success，head 完全一致。七个实际 job 均 success：core-contracts Ubuntu `119630841347`、Windows `119630841577`；runtime-currency `119630841508`；controlled-rejections Windows `119633967701`、Ubuntu `119633967791`；runtime-evidence Windows `119633967738`、Ubuntu `119633967764`。CI 中列出的预期非零退出是 controlled-rejections 测试路径，两个 job 的最终结论均 success。实现门 remote-accepted；后续文档状态提交不替代该 run。
+- 下一步：准备一个全新 development-only 报告/问题和显式 pair 计划，核对 Ollama `0.31.1` 与 qwen3.5:2b digest 后只运行一次；保存并停服后离线复验。预先声明的评价重点是五项状态/原因逐项对应、不得补写未提供事实、预算与边界，而不是协议 passed。观察结果将单独判定 `usable/not_usable`；仅观察支持时才冻结新 held-out cohort。0.2 及旧 cohort 不修改、不重跑；独立人工 assessment 继续 pending，配置写入、SocketCAN、硬件和认证 operator 继续关闭。

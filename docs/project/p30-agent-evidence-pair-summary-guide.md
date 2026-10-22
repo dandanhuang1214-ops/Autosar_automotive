@@ -1,6 +1,6 @@
 # P30 控制面完整证据对摘要 0.3
 
-状态：local-accepted，等待本实现提交与远端 CI。日期：2026-10-22。
+状态：remote-accepted。实现 `56a522a1b6b347748821885f8830ae6085f74eb9` / [run `39719942007`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39719942007)，head 一致，七个 job 全部 success。日期：2026-10-22。
 
 ## 为什么新增版本
 
@@ -59,7 +59,7 @@ python -m automotive_workbench.cli verify-agent-evidence-pair-plan \
 - 完整合成 HTTP 场景通过：5/5 pair complete、1 次 read、1 次 model、离线复验 passed；缺项场景为 incomplete/refused、0 次 model，停服离线复验 passed。
 - 0.2 合成场景和既有 P30 审批、事务、受限 virtual CAN、评测与人工审阅协议在同次脚本中继续通过。
 
-当前结论仅为 local-accepted。合成 fixture 不是实际模型推理，`semantic_assessment` 仍为 unassessed；必须等待实现提交自己的远端七 job 后，才能称该版本 remote-accepted。
+协议、证据完整性与跨平台实现门已 remote-accepted。合成 fixture 不是实际模型推理，`semantic_assessment` 仍为 unassessed；不得据此宣称真实模型文字可用。
 
 ## 边界与下一步
 
