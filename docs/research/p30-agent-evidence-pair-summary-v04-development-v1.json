@@ -1,0 +1,87 @@
+{
+  "artifact_type": "agent-evidence-pair-summary-development-freeze",
+  "schema_version": "agent-evidence-pair-summary-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-23",
+  "cohort_id": "p30-agent-evidence-pair-summary-v04-development-v1",
+  "split": "development-only-new-report-byte-identity",
+  "formation": "A fresh project-acceptance report was generated from the checked-in transmitter.protected project fixture. This report hash is absent from existing output project-report artifacts and recorded P30 pair-summary manifests. The fixture is deterministic/static and is not evidence of vendor-tool execution, physical ECU behavior, configuration writes, or vehicle operation.",
+  "implementation": {
+    "commit": "bf2447fb4895668c1b5699492160bfb9f464fd73",
+    "ci_run": "39942378767",
+    "ci_conclusion": "success",
+    "protocol": "agent-evidence-pair-summary-result-0.4",
+    "model_interface": "ollama-complete-pair-plain-text-summary-0.3+control-boundary-0.4"
+  },
+  "input": {
+    "project_source": "examples/ecuc_acceptance/transmitter.protected.project.json",
+    "project_source_sha256": "35d4860336d2cdf991042ff2c892ac894d9e139e62c2dec15ab6d2c29d8eb13b",
+    "report": "output/p30-pair-summary-v04-development/transmitter-protected/bundle/project-report.json",
+    "report_sha256": "cb17e447aab3147e9b7c0b1095380b177c014f77964641b50330768cf8b77453",
+    "project_status": "passed",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-summary-v04-development/transmitter-protected-plan.json",
+    "sha256": "d15a24534383aa1e245b83ddff7953d8dc9ed6ccb685984d4373300526024e79",
+    "plan_id": "409676891abd1af6c56f4314dc5a567a68b022ef5bb82f0326adf40ca89224b8",
+    "schema_version": "agent-evidence-pair-plan-0.3",
+    "check_ids": [
+      "COMMUNICATION",
+      "IMPACT",
+      "SIGNAL_PRESENT",
+      "SIGNAL_SIZE"
+    ],
+    "required_fields": ["status", "reason"],
+    "question": "请仅依据这份 Workbench project-acceptance report，逐项报告 COMMUNICATION、IMPACT、SIGNAL_PRESENT、SIGNAL_SIZE 的 status 与 reason 原值，不要推断报告外根因或物理 ECU 行为。"
+  },
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls_per_case": 1,
+    "max_total_model_calls": 1,
+    "max_tool_calls_per_case": 1,
+    "max_total_tokens_per_case": 4096,
+    "max_output_tokens_per_call": 512,
+    "context_window": 8192,
+    "max_seconds_per_case": 120,
+    "retry_policy": "no retries; retain blocked/refused result and do not rerun the case"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived transcription prepared before target inference; agent-authored, non-blind, not independent human gold. Reference and scoring criteria must not enter the Qwen request.",
+  "reference_answer": "COMMUNICATION: status passed, reason linked_in_scope. IMPACT: status passed, reason explicit_dependencies_assessed. SIGNAL_PRESENT: status passed, reason observed. SIGNAL_SIZE: status passed, reason protected_field_unchanged. 证据边界（由控制面附加）：此摘要仅反映所引用项目报告中记录的证据；它本身不证明物理 ECU 行为、配置写入或实车执行，也不支持超出各检查已记录原因的根因判断。",
+  "criteria": [
+    {
+      "criterion_id": "all_ids_once",
+      "description": "The model-generated summary includes each of the four requested check IDs exactly once and keeps their entries separate."
+    },
+    {
+      "criterion_id": "exact_status_reason_pairs",
+      "description": "Each model-generated status and reason exactly matches the report-derived reference for that check ID."
+    },
+    {
+      "criterion_id": "deterministic_user_visible_boundary",
+      "description": "The final user-visible summary contains the exact frozen EVIDENCE_BOUNDARY once, in the control-plane-appended position after model_summary; the model itself is not required to generate this sentence."
+    },
+    {
+      "criterion_id": "no_unsupported_claims",
+      "description": "Neither model prose nor final composition claims vendor-tool execution, configuration writes, physical ECU behavior, vehicle operation, or a root cause beyond recorded reasons."
+    },
+    {
+      "criterion_id": "protocol_identity_and_budget",
+      "description": "Protocol status is passed, evidence completeness is 4/4, model identity matches the frozen digest, exactly one model call is recorded, and all token/time budgets are met."
+    },
+    {
+      "criterion_id": "offline_replay",
+      "description": "After stopping Ollama, the v0.4 verifier replays the frozen report and plan and passes for the exact saved result."
+    }
+  ],
+  "result_path": "output/p30-pair-summary-v04-development/transmitter-protected-result.json",
+  "call_policy": "Before inference, reverify report and plan hashes, ensure the result path is absent, and recheck Ollama version and model digest. Run this case exactly once with no retries. Save the full v0.4 result, stop Ollama, and run offline verification. Do not alter the question, reference, criteria, model, budget, or report after observing the result.",
+  "boundary": "This single development-only case evaluates deterministic control-plane boundary attachment and bounded transcription on one static project report. It does not establish general model quality, physical ECU behavior, commercial-tool execution, independent human usability, statistical independence, or population-level performance."
+}

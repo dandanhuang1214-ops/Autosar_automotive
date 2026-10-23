@@ -117,6 +117,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 状态回填（2026-10-23）：0.4 修复提交 `bf2447fb4895668c1b5699492160bfb9f464fd73` 对应 [run `39942378767`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39942378767)，head 一致、七个实际 job 全部 success（Windows core `120376688704`、Ubuntu core `120376688891`、runtime-currency `120376688960`、controlled-rejections Ubuntu `120380021668` / Windows `120380021688`、runtime-evidence Windows `120380021773` / Ubuntu `120380022000`）。此前 run `39931330099` 的 cp1252 失败已保留为兼容性修复证据，不用于接受结论。P30 当前仍 implementing；0.4 remote-accepted，但新 Qwen development case 未开始。下一步冻结新 report/question/Codex reference/边界 criteria，再在冻结包自身 CI 通过后只运行一次 Qwen，随后离线复验；新开发题达标后才冻新 held-out，旧 held-out `failed_for_the_requested_task` 不修改、不重跑，独立人工 assessment pending。
 
+下一步状态（2026-10-23）：0.4 implementation 已 remote-accepted；全新的 [development v1](../research/p30-agent-evidence-pair-summary-v04-development-v1.json) 已在本地 pre-inference freeze（SHA-256 `2d9332e322689d77e0c67d0716902d83ac7b6b199f61f5d69683c51186f539f7`）。报告 SHA `cb17e447…8b77453`、4-pair plan ID `40967689…9224b8`、Codex direct-transcription reference、物理 ECU/写入/实车边界 criterion、模型 digest 和一次调用预算均已固定，report/plan verifier passed，未调用 Qwen。下一步提交冻结文件并等自身 head 一致的七 job CI 成功，随后重验模型 digest、只调用一次、停服后离线复验；目标结果不理想时不重跑，独立人工 review 仍 pending。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。
