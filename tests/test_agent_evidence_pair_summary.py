@@ -16,6 +16,11 @@ from automotive_workbench.agent_evidence_pair_summary import (
     verify_agent_evidence_pair_plan,
     verify_agent_evidence_pair_summary_result,
 )
+from automotive_workbench.agent_evidence_pair_summary_v04 import (
+    EVIDENCE_BOUNDARY,
+    run_agent_evidence_pair_summary_v04,
+    verify_agent_evidence_pair_summary_result_v04,
+)
 from automotive_workbench.agent_runtime import AgentBudget
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.model_client import ModelCapabilities
@@ -235,6 +240,63 @@ class AgentEvidencePairSummaryTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "fact|trace|projection|observation"):
             verify_agent_evidence_pair_summary_result(self.report, plan, changed)
+
+    def test_v04_appends_replayable_boundary_without_rewriting_model_transcript(self) -> None:
+        plan = self.plan(["COMMUNICATION"])
+        client = PairSummaryClient()
+        result = run_agent_evidence_pair_summary_v04(
+            self.report, plan, client, "fixture:1"
+        )
+
+        self.assertEqual(result["schema_version"], "agent-evidence-pair-summary-result-0.4")
+        self.assertEqual(result["protocol_status"], "passed")
+        self.assertEqual(result["model_summary"], result["base_result"]["summary"])
+        self.assertIn(EVIDENCE_BOUNDARY, result["summary"])
+        self.assertNotIn(EVIDENCE_BOUNDARY, result["base_result"]["summary"])
+        self.assertEqual(
+            result["base_result"]["trace"]["final"]["summary"], result["model_summary"]
+        )
+        self.assertEqual(client.calls, 1)
+        verified = verify_agent_evidence_pair_summary_result_v04(
+            self.report, plan, result
+        )
+        self.assertEqual(verified["evidence_boundary"], "control_plane_appended")
+
+        schemas = [
+            json.loads((ROOT / "schemas" / name).read_text(encoding="utf-8"))
+            for name in (
+                "readonly-agent-trace.schema.json",
+                "agent-evidence-pair-summary-result.schema.json",
+                "agent-evidence-pair-summary-result-v0.4.schema.json",
+            )
+        ]
+        registry = Registry().with_resources(
+            (schema["$id"], Resource.from_contents(schema)) for schema in schemas
+        )
+        Draft202012Validator(schemas[2], registry=registry).validate(result)
+
+        tampered = copy.deepcopy(result)
+        tampered["summary"] = tampered["model_summary"]
+        tampered["result_id"] = digest(
+            {name: tampered[name] for name in tampered if name != "result_id"}
+        )
+        with self.assertRaisesRegex(ValueError, "deterministically|differs"):
+            verify_agent_evidence_pair_summary_result_v04(self.report, plan, tampered)
+
+    def test_v04_preserves_pre_model_refusal_without_publishing_summary(self) -> None:
+        plan = self.plan(["NOT-IN-REPORT"])
+        client = PairSummaryClient()
+        result = run_agent_evidence_pair_summary_v04(
+            self.report, plan, client, "fixture:1"
+        )
+
+        self.assertEqual(result["protocol_status"], "refused")
+        self.assertIsNone(result["model_summary"])
+        self.assertIsNone(result["summary"])
+        self.assertEqual(result["evidence_ids"], [])
+        self.assertEqual(client.service_calls, 0)
+        self.assertEqual(client.calls, 0)
+        verify_agent_evidence_pair_summary_result_v04(self.report, plan, result)
 
 
 if __name__ == "__main__":

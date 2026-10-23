@@ -113,6 +113,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 2026-10-19 续进：[复杂解释与官方资料适用性评测 v1](p30-agent-explanation-review-v1-guide.md)已按预推理冻结顺序完成。冻结实现 `c904bd913703890e33d46c709d3efeb0b8ff533b` / [run `39192046821`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39192046821) head 一致且七 job 全部 success；随后固定 qwen3.5:2b 四题只运行一次，真实机器结果 0/4 failed。两道混合题取得 4/4 项目事实和两份 Vector 官方资料，但四题引用门均失败；result `dd91e3e7…4c36` 已停服离线复验。review pack `761361aa…ab8c` 已验签并保持 `pending_human_review`。官方资料仍不证明本机 license/SIP、命令执行或项目适用；不修改、不重跑本 cohort。下一门是完成独立 assessment，再只在新版本/新 cohort 处理工具选择、finish action 和引用缺口。P30 保持 implementing；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
 
+2026-10-23 续进：[证据对摘要 0.4](p30-agent-evidence-pair-summary-v04-guide.md)已在本地实现：外层 envelope 复用不可变 0.3 plan/runner，确定性附加 physical-ECU/配置写入/实车执行边界，同时保留可复验的 0.3 base result 和原始模型 trace；新增 schema/CLI，0.3 合同不变。全量既有 525 tests 通过（2 项环境跳过），随后新增 refusal regression 单独通过；93 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、CI topology、compileall、diff check 均通过。远端 CI 与新 Qwen development inference 尚未执行。下一项：冻结全新 development-only 报告、问题、Codex reference 和边界 criteria；提交并等待该实现 head 一致的七 job CI 全绿后，才对 Qwen 恰运行一次并停服离线复验。确认开发门后再冻结新 held-out；旧 v1 保持真实失败、不修改、不重跑，独立人工 assessment pending。写配置、SocketCAN、硬件和认证 operator 仍关闭。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。

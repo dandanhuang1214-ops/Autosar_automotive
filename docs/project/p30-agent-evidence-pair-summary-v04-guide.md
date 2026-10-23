@@ -1,0 +1,31 @@
+# P30 控制面证据对摘要 0.4
+
+状态：本地实现，待提交、远端 CI 与新 development cohort。日期：2026-10-23。
+
+## 动机与兼容性
+
+0.3 held-out v1 的 18/18 个状态/原因均精确匹配冻结参考，但 physical-ECU 证据边界硬门为 0/3。因此 0.4 不再要求模型自行重复固定的边界句：控制面在面向用户的最终摘要中确定性附加它。
+
+0.4 不改既有 0.3 plan、request、response、trace、result schema 或 verifier。新结果包含完整 `base_result`（原 0.3 结果）、原文 `model_summary` 与最终 `summary`；`summary` 被精确规定为原文、空行、固定声明。固定文本标注“由控制面附加”，说明摘要仅反映被引用项目报告，不证明物理 ECU 行为、配置写入或实车执行，也不支持超出各检查已记录原因的根因判断。
+
+```bash
+python -m automotive_workbench.cli run-agent-evidence-pair-summary-v04 \
+  path/to/project-report.json output/agent-evidence-pair-plan.json \
+  --model qwen3.5:2b \
+  --output output/agent-evidence-pair-summary-result-v04.json
+
+python -m automotive_workbench.cli verify-agent-evidence-pair-summary-result-v04 \
+  path/to/project-report.json \
+  output/agent-evidence-pair-plan.json \
+  output/agent-evidence-pair-summary-result-v04.json
+```
+
+Verifier 先将 `base_result` 交给完整 0.3 verifier，以原始报告重建 facts 并核对模型 exchange、预算、身份和 trace；随后检查 0.4 envelope 的 status/ID 对应关系，并精确重建最终摘要。拒绝或阻断时不发布摘要；固定声明仍作为 protocol metadata 留在结果中。`semantic_assessment` 始终为 `unassessed`：确定性边界文案不能证明模型对 status/reason 的语义理解正确。
+
+## 本地验证与限制
+
+针对性协议与 schema 测试通过；全量 525 个既有用例通过（2 项环境跳过），新增 refusal regression 随后单独通过，所以当前 526 个用例均已执行/覆盖，但最后一次全量运行尚未包含新增用例。93 schemas、79 schema-bound examples、25 syntax-only examples、Ruff、Agent evidence scoped mypy、CI topology、compileall、diff check 均通过。全量测试先在默认沙箱因缺少 venv setuptools 及禁止 loopback bind 出现 3 个环境错误；补齐构建工具并在授权 loopback 权限下完整重跑后 525 tests 全绿。
+
+0.4 当前尚未提交/推送，也没有对应远端 CI；没有运行真实模型。下一步先冻结全新 development-only 报告、问题、Codex transcription reference、边界检查 criteria、模型 digest 与预算。实现提交取得 head 一致且七 job 全绿后，才运行 Qwen 一次并停服后离线复验。新开发题达标后再冻结新 held-out cohort。旧 held-out v1 保持 `failed_for_the_requested_task`，不改写或重跑；独立人工 assessment 仍 pending。
+
+该实现不增加写配置、商业工具、SocketCAN、硬件、approval、claim 或 execution 权限。

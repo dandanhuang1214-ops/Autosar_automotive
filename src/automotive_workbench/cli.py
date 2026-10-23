@@ -338,6 +338,37 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_pair_summary_verify.add_argument("report", type=Path)
     evidence_pair_summary_verify.add_argument("plan", type=Path)
     evidence_pair_summary_verify.add_argument("result", type=Path)
+    evidence_pair_summary_v04_run = commands.add_parser(
+        "run-agent-evidence-pair-summary-v04",
+        help="Run pair summary v0.4 with a control-plane-appended evidence boundary",
+    )
+    evidence_pair_summary_v04_run.add_argument("report", type=Path)
+    evidence_pair_summary_v04_run.add_argument("plan", type=Path)
+    evidence_pair_summary_v04_run.add_argument("--model", required=True)
+    evidence_pair_summary_v04_run.add_argument("--output", type=Path, required=True)
+    evidence_pair_summary_v04_run.add_argument(
+        "--ollama-url", default="http://127.0.0.1:11434"
+    )
+    evidence_pair_summary_v04_run.add_argument("--timeout", type=float, default=30)
+    evidence_pair_summary_v04_run.add_argument("--max-steps", type=int, default=2)
+    evidence_pair_summary_v04_run.add_argument("--max-model-calls", type=int, default=1)
+    evidence_pair_summary_v04_run.add_argument("--max-tool-calls", type=int, default=1)
+    evidence_pair_summary_v04_run.add_argument("--max-total-tokens", type=int, default=4096)
+    evidence_pair_summary_v04_run.add_argument(
+        "--max-output-tokens-per-call", type=int, default=512
+    )
+    evidence_pair_summary_v04_run.add_argument("--context-window", type=int, default=8192)
+    evidence_pair_summary_v04_run.add_argument("--max-seconds", type=float, default=120)
+    evidence_pair_summary_v04_run.add_argument(
+        "--max-observation-chars", type=int, default=20_000
+    )
+    evidence_pair_summary_v04_verify = commands.add_parser(
+        "verify-agent-evidence-pair-summary-result-v04",
+        help="Verify a pair summary v0.4 and its deterministic evidence boundary",
+    )
+    evidence_pair_summary_v04_verify.add_argument("report", type=Path)
+    evidence_pair_summary_v04_verify.add_argument("plan", type=Path)
+    evidence_pair_summary_v04_verify.add_argument("result", type=Path)
     evidence_comparison_freeze = commands.add_parser(
         "freeze-agent-evidence-comparison",
         help="Freeze pre-inference reference answers and evidence plans",
@@ -1491,6 +1522,52 @@ def main() -> int:
                 args.report,
                 load_agent_evidence_pair_plan(args.plan),
                 load_agent_evidence_pair_summary_result(args.result),
+            )
+        elif args.command == "run-agent-evidence-pair-summary-v04":
+            from automotive_workbench.agent_evidence_pair_summary_v04 import (
+                run_agent_evidence_pair_summary_v04,
+                save_agent_evidence_pair_summary_result_v04,
+            )
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+            )
+            from automotive_workbench.agent_runtime import AgentBudget
+            from automotive_workbench.explanation_services import Endpoint
+            from automotive_workbench.model_client import OllamaModelClient
+
+            plan = load_agent_evidence_pair_plan(args.plan)
+            summarized = run_agent_evidence_pair_summary_v04(
+                args.report,
+                plan,
+                OllamaModelClient(Endpoint(args.ollama_url, args.timeout)),
+                args.model,
+                AgentBudget(
+                    max_steps=args.max_steps,
+                    max_model_calls=args.max_model_calls,
+                    max_tool_calls=args.max_tool_calls,
+                    max_total_tokens=args.max_total_tokens,
+                    max_output_tokens_per_call=args.max_output_tokens_per_call,
+                    context_window=args.context_window,
+                    max_seconds=args.max_seconds,
+                    max_observation_chars=args.max_observation_chars,
+                ),
+            )
+            result = save_agent_evidence_pair_summary_result_v04(
+                args.report, plan, summarized, args.output
+            )
+        elif args.command == "verify-agent-evidence-pair-summary-result-v04":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+            )
+            from automotive_workbench.agent_evidence_pair_summary_v04 import (
+                load_agent_evidence_pair_summary_result_v04,
+                verify_agent_evidence_pair_summary_result_v04,
+            )
+
+            result = verify_agent_evidence_pair_summary_result_v04(
+                args.report,
+                load_agent_evidence_pair_plan(args.plan),
+                load_agent_evidence_pair_summary_result_v04(args.result),
             )
         elif args.command == "freeze-agent-evidence-comparison":
             from automotive_workbench.agent_evidence_comparison import (
