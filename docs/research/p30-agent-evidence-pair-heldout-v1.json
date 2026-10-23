@@ -1,0 +1,112 @@
+{
+  "artifact_type": "agent-evidence-pair-summary-heldout-freeze",
+  "schema_version": "agent-evidence-pair-summary-heldout-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-23",
+  "comparison_id": "p30-evidence-pair-heldout-v1",
+  "split": "held-out-from-recorded-project-model-inference-cohorts",
+  "formation": "Three distinct P29 virtual-runtime acceptance reports with contrasting runtime outcomes. This is a project-level held-out split relative to the recorded P30 inference cohorts; the scenario family has prior engineering validation, so this is not a claim of statistical independence, model-pretraining novelty, or external benchmark independence.",
+  "implementation": {
+    "commit": "56a522a1b6b347748821885f8830ae6085f74eb9",
+    "ci_run": "39719942007",
+    "protocol": "agent-evidence-pair-summary-result-0.3"
+  },
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "digest_must_be_rechecked_before_inference": true
+  },
+  "plan": {
+    "path": "output/p30-agent-evidence-pair-heldout-v1-plan.json",
+    "plan_id": "1c34e33b778a1837ecc9ddf59c67d6c906b33a89505db301336984328b103c7d",
+    "sha256": "80480598d160f029c5f51296bbd4b58e06b0902fbc5cf97c09a1b019dd0408d2",
+    "check_ids": [
+      "COMMUNICATION",
+      "SIGNAL_PRESENT",
+      "SIGNAL_SIZE",
+      "RUNTIME",
+      "RX_PRESENT",
+      "RX_RUNTIME"
+    ],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据这份 Workbench project-acceptance report，逐项写出 COMMUNICATION、SIGNAL_PRESENT、SIGNAL_SIZE、RUNTIME、RX_PRESENT、RX_RUNTIME 的 status 与 reason 原值。说明这是 virtual CAN 报告，不证明物理 ECU 状态；对 RUNTIME/RX_RUNTIME 只复述所记录的 reason，不推出更具体根因。不要补充报告以外的工程事实。"
+  },
+  "budget": {
+    "case_count": 3,
+    "max_model_calls_per_case": 1,
+    "max_total_model_calls": 3,
+    "max_tool_calls_per_case": 1,
+    "max_total_tokens_per_case": 4096,
+    "max_total_tokens_cohort": 12288,
+    "max_output_tokens_per_call": 256,
+    "context_window": 8192,
+    "max_seconds_per_case": 120,
+    "retry_policy": "no retries; preserve any blocked/refused result without rerunning the case"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct transcription and bounded interpretation of the frozen project report; not independent human gold. Reference answers and criteria are frozen before target-model inference and must not be sent to Qwen.",
+  "shared_criteria": [
+    {
+      "criterion_id": "all_ids_once",
+      "description": "Every requested check_id appears exactly once and remains separate."
+    },
+    {
+      "criterion_id": "exact_pairs",
+      "description": "Each status and reason exactly matches the corresponding report-derived reference."
+    },
+    {
+      "criterion_id": "virtual_evidence_boundary",
+      "description": "Explicitly state that virtual-CAN report evidence does not establish physical ECU behavior."
+    },
+    {
+      "criterion_id": "no_causal_overclaim",
+      "description": "Do not infer a root cause beyond the recorded reason, especially from receive_timeout, declared_runtime_identity_mismatch, or frame_identity_mismatch."
+    },
+    {
+      "criterion_id": "no_unsupported_facts",
+      "description": "Do not claim vendor-tool execution, configuration writes, hardware access, or facts outside the selected pairs and frozen boundary."
+    },
+    {
+      "criterion_id": "budget_and_identity",
+      "description": "Use exactly one call per case, keep the frozen model digest, and remain within the per-case/cohort budget."
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "virtual-runtime-timeout",
+      "report": "output/p29-validation/scenarios-release/relocated/projects/timeout/bundle/project-report.json",
+      "report_sha256": "6417246e997b410e03380973419f45ec421e6637946a278ed24eb333a27e4d75",
+      "runtime_link": "output/p29-validation/scenarios-release/relocated/projects/timeout/bundle/runtime-link.json",
+      "runtime_link_sha256": "69f85d048d13b3ee1c81dc93c8acd90f562b59e2880ca630f703d8ef254dcacc",
+      "runtime_interface": "virtual",
+      "project_status": "failed",
+      "reference_answer": "COMMUNICATION: status passed, reason linked_in_scope. SIGNAL_PRESENT: status passed, reason observed. SIGNAL_SIZE: status passed, reason protected_field_unchanged. RUNTIME: status failed, reason receive_timeout. RX_PRESENT: status passed, reason observed. RX_RUNTIME: status passed, reason same_run_observed. These are records from a virtual-CAN Workbench run; they do not establish physical ECU behavior. The receive_timeout reason does not identify a more specific root cause.",
+      "result_path": "output/p30-agent-evidence-pair-heldout-v1/virtual-runtime-timeout-result.json"
+    },
+    {
+      "case_id": "runtime-identity-unassessed",
+      "report": "output/p29-validation/scenarios-release/relocated/projects/wrong-mapping/bundle/project-report.json",
+      "report_sha256": "d76e93a53d12db929ea53d0567331db885a02a179bba66552b263a2c217972bb",
+      "runtime_link": "output/p29-validation/scenarios-release/relocated/projects/wrong-mapping/bundle/runtime-link.json",
+      "runtime_link_sha256": "825a5ea6e5e6d001907cefab750dd9c08e095acc1aef0ff9015f5435113ed6e7",
+      "runtime_interface": "virtual",
+      "project_status": "unassessed",
+      "reference_answer": "COMMUNICATION: status passed, reason linked_in_scope. SIGNAL_PRESENT: status passed, reason observed. SIGNAL_SIZE: status passed, reason protected_field_unchanged. RUNTIME: status unassessed, reason declared_runtime_identity_mismatch. RX_PRESENT: status passed, reason observed. RX_RUNTIME: status unassessed, reason another_binding_rejected. These are records from a virtual-CAN Workbench run; they do not establish physical ECU behavior. The reasons do not identify an external ECU or vendor-tool root cause.",
+      "result_path": "output/p30-agent-evidence-pair-heldout-v1/runtime-identity-unassessed-result.json"
+    },
+    {
+      "case_id": "runtime-frame-identity-mismatch",
+      "report": "output/p29-validation/scenarios-release/relocated/projects/wrong-id/bundle/project-report.json",
+      "report_sha256": "6c0ce1be3b00430e6389a2469bfd650582fc282f9490f6d8f37d3f94a6e7ba93",
+      "runtime_link": "output/p29-validation/scenarios-release/relocated/projects/wrong-id/bundle/runtime-link.json",
+      "runtime_link_sha256": "234f011c171d216e589e60ffc31fd7445ce047bee215688b17a4812dcdf066aa",
+      "runtime_interface": "virtual",
+      "project_status": "failed",
+      "reference_answer": "COMMUNICATION: status passed, reason linked_in_scope. SIGNAL_PRESENT: status passed, reason observed. SIGNAL_SIZE: status passed, reason protected_field_unchanged. RUNTIME: status failed, reason frame_identity_mismatch. RX_PRESENT: status passed, reason observed. RX_RUNTIME: status passed, reason same_run_observed. These are records from a virtual-CAN Workbench run; they do not establish physical ECU behavior. The frame_identity_mismatch reason does not by itself identify a more specific root cause.",
+      "result_path": "output/p30-agent-evidence-pair-heldout-v1/runtime-frame-identity-mismatch-result.json"
+    }
+  ],
+  "call_policy": "Run each case exactly once against qwen3.5:2b after verifying this freeze, report hashes, plan hash, and model digest. Do not alter prompt, references, criteria, or input report after observing any result. Stop Ollama after the third case or any terminal block, then verify all saved results offline.",
+  "boundary": "This cohort evaluates only bounded summaries of three virtual project reports. It cannot establish physical ECU behavior, vendor-tool execution, general explanation quality, independent human usability, or population-level model performance. The Codex references are not independent human gold."
+}
