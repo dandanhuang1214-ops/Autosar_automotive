@@ -1,6 +1,6 @@
 # P30 控制面证据对摘要 0.4
 
-状态：本地实现，待提交、远端 CI 与新 development cohort。日期：2026-10-23。
+状态：remote-accepted。实现提交 `bf2447fb4895668c1b5699492160bfb9f464fd73` / [run `39942378767`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39942378767)，head 一致、七个实际 job 全部 success。日期：2026-10-23。
 
 ## 动机与兼容性
 
@@ -27,5 +27,7 @@ Verifier 先将 `base_result` 交给完整 0.3 verifier，以原始报告重建 
 针对性协议与 schema 测试通过；全量 525 个既有用例通过（2 项环境跳过），新增 refusal regression 随后单独通过，所以当前 526 个用例均已执行/覆盖，但最后一次全量运行尚未包含新增用例。93 schemas、79 schema-bound examples、25 syntax-only examples、Ruff、Agent evidence scoped mypy、CI topology、compileall、diff check 均通过。全量测试先在默认沙箱因缺少 venv setuptools 及禁止 loopback bind 出现 3 个环境错误；补齐构建工具并在授权 loopback 权限下完整重跑后 525 tests 全绿。
 
 0.4 实现提交 `d66e54c` 已推送，但对应 run `39931330099` 的 Windows 核心测试因新 schema 中中文常量被旧测试以 cp1252 默认编码读取而失败（12 个 subtests 共享同一 `UnicodeDecodeError`）；runtime-currency 与 Ubuntu core-contracts success，downstream jobs skipped，故仍未 remote-accepted。已将 schema 字符串替换为等价 JSON `\u` 转义，并通过 PairSummary + 通信图回归 18/18、93 schemas、Ruff、scoped mypy、CI topology 与 diff check；该修复尚未提交/推送。没有运行真实模型。修复提交取得 head 一致且七 job 全绿后，才冻结全新 development-only 报告、问题、Codex transcription reference、边界检查 criteria、模型 digest 与预算并运行 Qwen 一次，停服后离线复验。新开发题达标后再冻结新 held-out cohort。旧 held-out v1 保持 `failed_for_the_requested_task`，不改写或重跑；独立人工 assessment 仍 pending。
+
+状态回填（2026-10-23）：上一段“尚未提交/推送、未获远端 CI”记录的是首次 CI 失败后的状态，已被修复并 superseded。提交 `bf2447fb4895668c1b5699492160bfb9f464fd73` 将 schema 固定文案改为语义等价的 ASCII JSON Unicode escapes；[run `39942378767`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39942378767) head 一致，七个实际 job 全部 success：Windows core `120376688704`、Ubuntu core `120376688891`、runtime-currency `120376688960`、controlled-rejections Ubuntu `120380021668` / Windows `120380021688`、runtime-evidence Windows `120380021773` / Ubuntu `120380022000`。因此 0.4 已 remote-accepted。新 Qwen development case 尚未冻结或运行；按流程先冻结新报告/问题/reference/边界标准并让冻结实现自身 CI 通过，再恰运行一次并停服离线复验。
 
 该实现不增加写配置、商业工具、SocketCAN、硬件、approval、claim 或 execution 权限。
