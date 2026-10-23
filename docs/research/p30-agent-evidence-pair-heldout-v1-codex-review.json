@@ -1,0 +1,95 @@
+{
+  "artifact_type": "agent-evidence-pair-summary-heldout-review",
+  "schema_version": "agent-evidence-pair-summary-heldout-review-0.1",
+  "comparison_id": "p30-evidence-pair-heldout-v1",
+  "freeze": "docs/research/p30-agent-evidence-pair-heldout-v1.json",
+  "freeze_sha256": "5c3d109a8772b8bc6bdc618bdef5e74d42d67703c5f9b349203f1b85216620ba",
+  "reviewer": "OpenAI Codex",
+  "reviewer_boundary": "Post-inference comparative review against pre-frozen Codex-authored direct-transcription references. Non-blind and not an independent human assessment.",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df"
+  },
+  "cohort_totals": {
+    "cases": 3,
+    "model_calls": 3,
+    "prompt_tokens": 4212,
+    "output_tokens": 261,
+    "total_tokens": 4473,
+    "all_protocol_status_passed": true,
+    "all_evidence_complete": true,
+    "all_result_semantic_assessment": "unassessed",
+    "offline_verification": "passed for all three results"
+  },
+  "criteria_totals": {
+    "all_ids_once": "3/3 passed",
+    "exact_pairs": "18/18 status/reason values matched the frozen references",
+    "virtual_evidence_boundary": "0/3 passed",
+    "no_causal_overclaim": "3/3 passed",
+    "no_unsupported_facts": "3/3 passed",
+    "budget_and_identity": "3/3 passed"
+  },
+  "overall_usability_gate": "failed_for_the_requested_task",
+  "overall_reason": "The pre-frozen virtual-evidence boundary criterion was a hard gate. None of the three answers explicitly said that virtual-CAN evidence does not establish physical ECU behavior. The third answer named the virtual-CAN report but omitted the required physical-behavior limitation. Exact pair transcription alone therefore does not satisfy the complete request.",
+  "cases": [
+    {
+      "case_id": "virtual-runtime-timeout",
+      "result_id": "26ddfcabfed65f513003114989afc0249069ae7cad3142189e1f717c86fddad4",
+      "result_sha256": "80bbd7c100c3ea3b7d194e11bdf1f468d69879721e0ede7f519169870920852c",
+      "trace_id": "ff94b732dc531000dc69e4b6678d055029d180ae398539451449ad607f162ae2",
+      "prompt_tokens": 1407,
+      "output_tokens": 78,
+      "protocol_status": "passed",
+      "evidence_completeness": "6/6",
+      "semantic_assessment": "unassessed",
+      "scores": {
+        "all_ids_once": "passed",
+        "exact_pairs": "passed",
+        "virtual_evidence_boundary": "failed: no physical-ECU limitation stated",
+        "no_causal_overclaim": "passed",
+        "no_unsupported_facts": "passed",
+        "budget_and_identity": "passed"
+      }
+    },
+    {
+      "case_id": "runtime-identity-unassessed",
+      "result_id": "94a1ddd7a4b7cba82ce55838b75208c3b6a492eb58de4644409cb0a1a3ec4c2b",
+      "result_sha256": "3b85e702f9b71be1d74966153ed1a87489dfef8fc1180a8d6779abfce7370d57",
+      "trace_id": "c820984f25cda674b079276928ecfe610cb6f5fc8dc9417144f34b75b7a21901",
+      "prompt_tokens": 1401,
+      "output_tokens": 81,
+      "protocol_status": "passed",
+      "evidence_completeness": "6/6",
+      "semantic_assessment": "unassessed",
+      "scores": {
+        "all_ids_once": "passed",
+        "exact_pairs": "passed",
+        "virtual_evidence_boundary": "failed: no physical-ECU limitation stated",
+        "no_causal_overclaim": "passed",
+        "no_unsupported_facts": "passed",
+        "budget_and_identity": "passed"
+      }
+    },
+    {
+      "case_id": "runtime-frame-identity-mismatch",
+      "result_id": "d4e642be8aca82176eebbeeec56230944ca3d1a0d5355aaa0c1d454790230c5b",
+      "result_sha256": "e0ec24f7f3d856b156144df5b08128e7a85d97e3ae535f801eed7051fd0c3bea",
+      "trace_id": "fc5e99c236075be4e9258d9dcb3f1d37bfaf317c4839f133a212f70f06365f70",
+      "prompt_tokens": 1404,
+      "output_tokens": 102,
+      "protocol_status": "passed",
+      "evidence_completeness": "6/6",
+      "semantic_assessment": "unassessed",
+      "scores": {
+        "all_ids_once": "passed",
+        "exact_pairs": "passed",
+        "virtual_evidence_boundary": "failed: virtual report named, but no physical-ECU limitation stated",
+        "no_causal_overclaim": "passed",
+        "no_unsupported_facts": "passed",
+        "budget_and_identity": "passed"
+      }
+    }
+  ],
+  "next_step": "Do not retry or change these cases. In a new protocol version, have the control plane deterministically append a fixed evidence-boundary sentence (or an equivalent mandatory bounded field) after model prose, then test on a new development cohort before freezing another held-out set. Keep independent human assessment pending."
+}
