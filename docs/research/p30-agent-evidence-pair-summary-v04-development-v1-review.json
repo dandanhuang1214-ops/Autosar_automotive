@@ -1,0 +1,68 @@
+{
+  "artifact_type": "agent-evidence-pair-summary-development-review",
+  "schema_version": "agent-evidence-pair-summary-development-review-0.1",
+  "cohort_id": "p30-agent-evidence-pair-summary-v04-development-v1",
+  "freeze_manifest": "p30-agent-evidence-pair-summary-v04-development-v1.json",
+  "freeze_sha256": "2d9332e322689d77e0c67d0716902d83ac7b6b199f61f5d69683c51186f539f7",
+  "result": {
+    "path": "output/p30-pair-summary-v04-development/transmitter-protected-result.json",
+    "result_id": "4e83a8b9930154dc6c77e6f1adf149b6bd9fd541b4a93c3d9d6d7d45a26fc730",
+    "sha256": "64e1f44e2d4ea581e9f9ec8fdd53397e184e27427e3cac7ba22a2fefc0f47ec4",
+    "plan_id": "409676891abd1af6c56f4314dc5a567a68b022ef5bb82f0326adf40ca89224b8",
+    "protocol_status": "blocked",
+    "semantic_assessment": "unassessed",
+    "trace_status": "blocked",
+    "trace_reason": "service_unavailable:URLError",
+    "model_calls_recorded": 0,
+    "request_recorded": false,
+    "response_recorded": false,
+    "model_summary": null,
+    "final_summary": null
+  },
+  "runtime": {
+    "ollama_version": "0.31.1",
+    "model": "qwen3.5:2b",
+    "model_digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "port_binding": "127.0.0.1:11434",
+    "container_stopped_after_attempt": true,
+    "invocation_attempts": 1,
+    "retry_performed": false
+  },
+  "criteria_review": [
+    {
+      "criterion_id": "all_ids_once",
+      "status": "not_evaluable",
+      "reason": "No model summary was returned."
+    },
+    {
+      "criterion_id": "exact_status_reason_pairs",
+      "status": "not_evaluable",
+      "reason": "No model summary was returned for comparison with the frozen reference."
+    },
+    {
+      "criterion_id": "deterministic_user_visible_boundary",
+      "status": "not_evaluable",
+      "reason": "The result is blocked and has no final summary; the verifier confirms control-plane metadata but no user-visible composed summary."
+    },
+    {
+      "criterion_id": "no_unsupported_claims",
+      "status": "not_evaluable",
+      "reason": "There is no model prose to inspect."
+    },
+    {
+      "criterion_id": "protocol_identity_and_budget",
+      "status": "blocked",
+      "reason": "The endpoint request failed before a model identity, request/response, or recorded model call was available. Frozen limits were recorded in the trace; no retry was made."
+    },
+    {
+      "criterion_id": "offline_replay",
+      "status": "passed",
+      "reason": "The v0.4 verifier replayed the frozen report and plan against the exact saved result after Ollama was stopped."
+    }
+  ],
+  "overall_assessment": "blocked_environment",
+  "interpretation": "This is an endpoint/service access failure, not evidence that Qwen passed or failed the frozen content criteria. The frozen case is consumed and must not be rerun. The Codex reference is not independent human gold; semantic assessment remains unassessed.",
+  "recovery": "Diagnose endpoint routing and proxy bypass using a non-inference health check before freezing another distinct development case. If reachability is confirmed, freeze a new report/question/reference/criteria package and run that new case once; do not reuse or alter this frozen case or the prior held-out cohorts.",
+  "review_author": "OpenAI Codex",
+  "independent_human_review": "pending"
+}

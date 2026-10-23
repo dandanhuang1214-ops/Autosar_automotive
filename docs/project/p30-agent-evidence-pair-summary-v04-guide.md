@@ -30,4 +30,12 @@ Verifier 先将 `base_result` 交给完整 0.3 verifier，以原始报告重建 
 
 状态回填（2026-10-23）：上一段“尚未提交/推送、未获远端 CI”记录的是首次 CI 失败后的临时状态，已被修复并 superseded。提交 `bf2447fb4895668c1b5699492160bfb9f464fd73` 将 schema 固定文案改为语义等价的 ASCII JSON Unicode escapes；[run `39942378767`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39942378767) head 一致，七个实际 job 全部 success：Windows core `120376688704`、Ubuntu core `120376688891`、runtime-currency `120376688960`、controlled-rejections Ubuntu `120380021668` / Windows `120380021688`、runtime-evidence Windows `120380021773` / Ubuntu `120380022000`。因此 0.4 已 remote-accepted。此后已本地推理前冻结[development v1](../research/p30-agent-evidence-pair-summary-v04-development-v1.json)，freeze SHA-256 `2d9332e322689d77e0c67d0716902d83ac7b6b199f61f5d69683c51186f539f7`：全新 report SHA `cb17e447…8b77453`、4-pair plan `40967689…9224b8`、Codex transcription reference/边界 criteria、qwen3.5:2b digest 与 1 call/4096 token budget；report、plan 均离线验证通过，result 路径不存在，尚未调用 Qwen。下一步先推送冻结包并取得该冻结提交自身 CI success，再重验 Ollama/model digest、恰运行一次并停服后离线验证。旧 held-out v1 保持真实 `failed_for_the_requested_task`，不改写或重跑，独立人工 assessment 仍 pending。
 
+### Development v1 运行结果（2026-10-23）
+
+冻结包提交 `aae053fe689bb95c51f855e710e67f442a638984` 的 [run `39944788642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39944788642) head 一致，七个实际 job 全部 success（core Ubuntu `120384663967`、runtime-currency `120384664152`、core Windows `120384664263`、controlled-rejections Ubuntu `120388342228` / Windows `120388342489`、runtime-evidence Ubuntu `120388342286` / Windows `120388342415`）。冻结清单、报告、plan 的 SHA-256 均与登记值一致；Ollama `0.31.1` 和 qwen3.5:2b digest 亦匹配，服务仅绑定 `127.0.0.1:11434`。
+
+按预算发起一次运行后，runner 返回 `service_unavailable:URLError`。保存结果为 `blocked`，没有 request/response、model summary 或记录的模型调用（`model_calls=0`）；Ollama 随后停止。v0.4 离线 verifier 对该确切结果返回 `passed`，这只证明冻结 report/plan/result 结构与 trace 可重放，不表示模型内容门通过。此次 invocation 已消耗冻结题的唯一运行机会，不重试该题。详细逐项审查见[development v1 结果审查](../research/p30-agent-evidence-pair-summary-v04-development-v1-review.json)：总体为 `blocked_environment`，Qwen 内容 criteria 不可评估，`semantic_assessment` 保持 `unassessed`，不是模型能力通过或失败结论。
+
+下一步先用非推理 health check 查清本机 endpoint 路由和 proxy bypass；在未确认从 Workbench Python 客户端稳定可达前不冻结模型调用。恢复可达性后只冻结一份全新且唯一的 development v2 case，并按新冻结包的 CI/模型/digest/一次调用门执行；development v1 与旧 held-out v1 均不修改、不重跑。独立人工 assessment 仍 pending。
+
 该实现不增加写配置、商业工具、SocketCAN、硬件、approval、claim 或 execution 权限。
