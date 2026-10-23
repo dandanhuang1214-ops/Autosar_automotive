@@ -109,7 +109,7 @@ python -m automotive_workbench.cli verify-project-comparison \
 37. 使用 `read-uds-did` 向独立运行的 ECU 发送一次 `0x22` 请求，校验 DID 数据并记录 ISO-TP 帧、原始日志和来源 SHA-256；OpenBSW 操作说明见 [`examples/openbsw/README.md`](examples/openbsw/README.md)。
 38. 比较两次项目验收报告的阶段、验收项与 finding 差异，以双侧哈希和 JSON Pointer 证据区分稳定、回归、改善、其他变化及不可比较。
 
-当前不生成ECUC、不替代供应商BSW generator，也不需要Docker、GPU、Qdrant或LLM。
+当前不生成ECUC、不替代供应商BSW generator。核心静态与证据工作流不依赖 Docker、GPU、Qdrant 或 LLM；P30 的可选本地模型评测使用现有 Ollama 服务。
 
 直接查看回归演示：运行 `python scripts/run_project_comparison_scenarios.py --output output/project-demo`，然后打开 `output/project-demo/index.html`。包含稳定、配置回归、上游生成失败和恢复四例，可展开来源证据；详见 [离线回归报告](docs/project-workflow.md#离线回归报告与演示)。
 

@@ -119,6 +119,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 下一步状态更新（2026-10-23）：0.4 implementation 和 development v1 冻结提交均 remote-accepted；冻结提交 `aae053fe689bb95c51f855e710e67f442a638984` / [run `39944788642`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39944788642) head 一致、七 job success。随后对唯一冻结题发起一次运行，Ollama 请求以 `service_unavailable:URLError` 阻断，无 request/response/model summary，记录模型调用为 0；结果停服后离线 verifier passed，含义仅为结构/trace 可重放，不能算模型验收。按冻结策略未重试，development v1 整体状态为 `blocked_environment`，内容标准不可评估，独立人工 review pending。下一步先用不调用模型的 health check 诊断 Workbench 到 Ollama 的 endpoint 路由及 proxy bypass；确认可达后再冻结 byte-distinct development v2，取得其自身 CI 后运行一次。旧 held-out v1 仍 failed、不改不重跑，P30 保持 implementing。
 
+2026-10-24 续进：Docker Desktop Linux engine 已恢复，既有 Ollama 容器保留原卷且仅监听 `127.0.0.1:11434`；WSL `curl` 和 Python `urllib` 非推理版本探测均返回 `0.31.1`，模型 digest 与旧冻结值一致。新的 [0.4 development v2 冻结包](../research/p30-agent-evidence-pair-summary-v04-development-v2.json)绑定 byte-distinct integration protected 报告与五项应用/任务 pair，报告和 plan 已离线复验；当前 `pre_inference_frozen`，目标模型尚未调用。下一步是该冻结提交自身 CI 全绿后恰运行一次、停服复验和按预置判据审查，再决定新 held-out；独立人工审阅仍 pending。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。
