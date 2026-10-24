@@ -1,0 +1,71 @@
+{
+  "artifact_type": "agent-evidence-pair-projection-development-freeze",
+  "schema_version": "agent-evidence-pair-projection-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-25",
+  "cohort_id": "p30-agent-evidence-pair-projection-v06-development-v1",
+  "split": "development-only-distinct-timeout-outcome",
+  "formation": "The public P29 timeout report has a different byte hash and failed runtime outcome from v0.5 development v1 wrong-address, v2 backend-blocked and v3 second-run. It comes from the same synthetic scenario suite and is not statistically independent external evidence. Prior cohorts remain unchanged.",
+  "implementation": {
+    "commit": "9553d8b5d13ca78d56781a307b01266d168b6f09",
+    "ci_run": "40119433138",
+    "ci_conclusion_required_before_inference": "success",
+    "source_protocol": "agent-evidence-pair-summary-result-0.6",
+    "presentation_protocol": "agent-evidence-pair-presentation-0.6"
+  },
+  "input": {
+    "producer_command": ".venv/bin/python scripts/run_ecuc_runtime_scenarios.py --output output/p30-pair-presentation-v05-development-v1/scenarios",
+    "case": "timeout",
+    "project_snapshot": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/timeout/bundle/inputs/project.json",
+    "project_snapshot_sha256": "2de53f5b0e0e6af3c7ef2971d258f7503a484e7404dd71568f6582673c472cbd",
+    "report": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/timeout/bundle/project-report.json",
+    "report_sha256": "d3d835fe5e50aa6b1ed185db1f48c8691fd8578f7423f2faec1f36eb697f4d53",
+    "project_status": "failed",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-projection-v06-development-v1/timeout-plan.json",
+    "sha256": "f5d24b7341cc45f5062a60477e13b870a050c4a49462dbccfd9a5a31162509f7",
+    "plan_id": "cfec6967a5b3961644ca28f09a511fcd47e0087907f2d8fced319e0ee4b8ab24",
+    "check_ids": ["COMMUNICATION", "RX_PRESENT", "RUNTIME", "RX_RUNTIME"],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据此项目报告，逐项列出 COMMUNICATION、RX_PRESENT、RUNTIME、RX_RUNTIME 的原始 status/reason，并解释静态通信和接收存在检查为何不能覆盖同次运行的超时失败。只说验收原文和原因直接支持的关系；不能补造信号含义、超时根因、物理 ECU 或实车执行。"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived, non-blind reference frozen before target inference; it is not independent human gold and is not included in the model request.",
+  "reference_pairs": {
+    "COMMUNICATION": {"requirement_text": "Require communication structural evidence", "status": "passed", "reason": "linked_in_scope"},
+    "RX_PRESENT": {"requirement_text": "Protect grouped receive signal structure", "status": "passed", "reason": "observed"},
+    "RUNTIME": {"requirement_text": "Protected candidate has same-run CAN observation", "status": "failed", "reason": "receive_timeout"},
+    "RX_RUNTIME": {"requirement_text": "Candidate receive path has same-run observation", "status": "passed", "reason": "same_run_observed"}
+  },
+  "reference_explanation": "COMMUNICATION 的 passed/linked_in_scope 与 RX_PRESENT 的 passed/observed 只记录对应结构和存在检查；RX_RUNTIME 的 passed/same_run_observed 是单独的接收路径同次运行观察。RUNTIME 的 failed/receive_timeout 明确使该项目报告验收失败，前述通过项不能覆盖或推断该失败项已通过。报告记录超时原因码，但这四项不确定硬件、网络或配置层的根因，也不证明物理 ECU 或实车执行。",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "version_and_digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls": 1,
+    "max_tool_calls": 1,
+    "max_total_tokens": 4096,
+    "max_output_tokens": 512,
+    "context_window": 8192,
+    "max_seconds": 120,
+    "retry_policy": "no retries; retain blocked/refused/failed content and do not rerun this case"
+  },
+  "criteria": [
+    {"criterion_id": "exact_pairs", "description": "Model prose names all four check IDs and each literal status/reason without omission or merging."},
+    {"criterion_id": "supported_relationship", "description": "Model explains that the passed structure/existence and RX_RUNTIME observations cannot override RUNTIME failed/receive_timeout or the failed project acceptance."},
+    {"criterion_id": "no_semantic_invention", "description": "Model does not equate grouped receive signal structure with radio presence, claim receive/send value equality, assert a root cause of timeout, or claim physical ECU, configuration writing or real-vehicle execution."},
+    {"criterion_id": "protocol_identity_and_budget", "description": "v0.6 result has 4/4 bound requirement text and pairs, one model call, fixed version/digest and budget, and offline verifier passes."},
+    {"criterion_id": "deterministic_presentation", "description": "v0.6 user-visible summary contains only four verified pairs and fixed boundary; model prose stays separate and unassessed."},
+    {"criterion_id": "offline_replay", "description": "With Ollama stopped, exact saved v0.6 source and presentation verify against the frozen report and plan."}
+  ],
+  "source_result_path": "output/p30-pair-projection-v06-development-v1/timeout-result-v06.json",
+  "presentation_path": "output/p30-pair-projection-v06-development-v1/timeout-presentation-v06.json",
+  "call_policy": "Before inference require this freeze commit's head-matching seven-job CI success, exact report/plan/project hashes, absent result paths, and Ollama 0.31.1 with frozen qwen3.5:2b digest. Run read-only Endpoint /api/version and /api/tags preflight in the same authorized network environment as the unique v0.6 CLI model call. Then render v0.6 without another model call, stop Ollama and verify both outputs offline. Any block/refusal/content failure is retained without retry.",
+  "boundary": "Development-only test of whether bound requirement text reduces unsupported explanation beyond deterministic facts; no claim of model prose acceptance, held-out generalization, or independent human review."
+}
