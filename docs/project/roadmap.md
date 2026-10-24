@@ -121,6 +121,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 2026-10-24 续进：Docker Desktop Linux engine 已恢复，既有 Ollama 容器保留原卷且仅监听 `127.0.0.1:11434`；WSL `curl` 和 Python `urllib` 非推理版本探测均返回 `0.31.1`，模型 digest 与旧冻结值一致。新的 [0.4 development v2 冻结包](../research/p30-agent-evidence-pair-summary-v04-development-v2.json)绑定 byte-distinct integration protected 报告与五项应用/任务 pair，报告和 plan 已离线复验；当前 `pre_inference_frozen`，目标模型尚未调用。下一步是该冻结提交自身 CI 全绿后恰运行一次、停服复验和按预置判据审查，再决定新 held-out；独立人工审阅仍 pending。
 
+状态回填（2026-10-24）：冻结提交 `9416e1285092bbc30aec15ef0c368c17ff62b644` / [run `39986811298`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39986811298) head 一致、七 job 全部 success；其后 v2 唯一 Qwen 调用和停服离线复验均完成。协议与 5/5 输入 pair 完整、控制面证据边界通过，但模型将五项 status/reason 合并描述，未给逐项 reason 原值；按预冻结内容标准，开发题 `failed_for_the_requested_task`，原结果 `semantic_assessment=unassessed`。详见[逐项审阅](../research/p30-agent-evidence-pair-summary-v04-development-v2-review.json)。下一门是新版本的确定性逐项呈现与模型原文分离，或另一文本模型的新冻结开发比较；不据此冻结 held-out v2。P30 仍 implementing，独立人工 assessment 继续 pending。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。

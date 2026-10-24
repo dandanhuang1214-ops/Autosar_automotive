@@ -1,0 +1,44 @@
+{
+  "artifact_type": "agent-evidence-pair-summary-development-review",
+  "schema_version": "agent-evidence-pair-summary-development-review-0.1",
+  "cohort_id": "p30-agent-evidence-pair-summary-v04-development-v2",
+  "freeze_manifest": "p30-agent-evidence-pair-summary-v04-development-v2.json",
+  "freeze_manifest_sha256": "0d20cc79914c0e38f8444deff88a22f9677c60361e59e55e7e06a06c1b0fd061",
+  "freeze_commit": "9416e1285092bbc30aec15ef0c368c17ff62b644",
+  "freeze_ci_run": "39986811298",
+  "freeze_ci_conclusion": "success",
+  "result": {
+    "path": "output/p30-pair-summary-v04-development-v2/integration-protected-result.json",
+    "sha256": "2107c350016fa206a0b0323ac94af7df84b7b6d18dd666324174c29abc66e610",
+    "result_id": "f8a00c87e1f5db67102b3ede2f2eb38ee24ff24ddd0a26e4895a5d00f1382722",
+    "protocol_status": "passed",
+    "semantic_assessment": "unassessed",
+    "complete_pairs": "5/5",
+    "model_calls": 1,
+    "tool_calls": 1,
+    "prompt_tokens": 1188,
+    "output_tokens": 88,
+    "total_tokens": 1276,
+    "offline_verification": "passed"
+  },
+  "reference_pairs": {
+    "APPLICATION": {"status": "passed", "reason": "linked_in_scope"},
+    "TASK-BINDINGS": {"status": "passed", "reason": "linked_in_scope"},
+    "MODE-RULES": {"status": "passed", "reason": "linked_in_scope"},
+    "TASK_REF": {"status": "passed", "reason": "protected_field_unchanged"},
+    "TASK_PRESENT": {"status": "passed", "reason": "observed"}
+  },
+  "criteria": [
+    {"criterion_id": "all_ids_once", "status": "failed", "reason": "All five IDs appear once in one list, but there are no separate per-check entries."},
+    {"criterion_id": "exact_status_reason_pairs", "status": "failed", "reason": "The model says all statuses are passed but omits each literal reason and merges them into a generic phrase."},
+    {"criterion_id": "deterministic_user_visible_boundary", "status": "passed", "reason": "The v0.4 summary appends the exact frozen control-plane boundary once after the raw model summary."},
+    {"criterion_id": "no_unsupported_claims", "status": "passed", "reason": "The response does not claim vendor execution, writes, physical ECU behavior, vehicle operation, or a specific root cause. It does make a generic control-plane refusal claim outside the requested pairs, which is a focus defect but not one of the frozen prohibited claims."},
+    {"criterion_id": "protocol_identity_and_budget", "status": "passed", "reason": "Five pairs were selected, the frozen model identity matched, and one model call used 1276 total tokens within limits."},
+    {"criterion_id": "offline_replay", "status": "passed", "reason": "After stopping Ollama, the v0.4 verifier returned passed for the exact report, plan, and saved result."}
+  ],
+  "overall": "failed_for_the_requested_task",
+  "reviewer": "OpenAI Codex",
+  "review_boundary": "This is a transparent, non-blind post-inference comparison against a Codex-authored frozen transcription, not independent human assessment. The raw protocol semantic_assessment remains unassessed.",
+  "interpretation": "The control plane ensured complete source pairs and a fixed evidence boundary, but the model did not transcribe the requested per-check reasons. Protocol passed does not establish content usability. This case is consumed and must not be rerun.",
+  "next_gate": "Design a new version that deterministically presents exact status/reason pairs in the user-visible output and keeps unassessed model prose separate, or evaluate a different text model under a new frozen cohort. Validate any new interface with a fresh development case before held-out testing. Keep the independent human assessment pending."
+}

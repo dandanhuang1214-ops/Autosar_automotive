@@ -39,3 +39,7 @@ Verifier 先将 `base_result` 交给完整 0.3 verifier，以原始报告重建 
 下一步先用非推理 health check 查清本机 endpoint 路由和 proxy bypass；在未确认从 Workbench Python 客户端稳定可达前不冻结模型调用。恢复可达性后只冻结一份全新且唯一的 development v2 case，并按新冻结包的 CI/模型/digest/一次调用门执行；development v1 与旧 held-out v1 均不修改、不重跑。独立人工 assessment 仍 pending。
 
 该实现不增加写配置、商业工具、SocketCAN、硬件、approval、claim 或 execution 权限。
+
+### Development v2 唯一结果（2026-10-24）
+
+冻结提交 `9416e12` / [run `39986811298`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/39986811298) head 一致、七 job success 后，按[新冻结包](../research/p30-agent-evidence-pair-summary-v04-development-v2.json)对 integration protected 报告运行 Qwen 一次。此前以 `curl` 和 Python `urllib` 非推理探测确认 loopback 端点可达，模型版本及 digest 与冻结值一致。实际 result `f8a00c87…82722` 协议 passed、5/5 pair 完整、1 model call、1276 tokens；Ollama 停止后的离线 verifier passed。模型只笼统描述五项均通过，遗漏每项 reason 原值，按[冻结判据审阅](../research/p30-agent-evidence-pair-summary-v04-development-v2-review.json)为 `failed_for_the_requested_task`。控制面固定边界正确附加，不能补救模型对逐项事实的省略。v2 不重跑；下一门需在新版本或新模型开发题中解决用户可见逐项准确性，再考虑 held-out。独立人工 assessment 继续 pending。
