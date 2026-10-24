@@ -1,6 +1,7 @@
 """Version 0.4: append a deterministic evidence-boundary note to pair summaries."""
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -41,8 +42,9 @@ def run_agent_evidence_pair_summary_v04(
     *,
     clock: Callable[[], float] | None = None,
 ) -> dict[str, Any]:
-    kwargs = {} if clock is None else {"clock": clock}
-    base = run_agent_evidence_pair_summary(report, plan, client, model, budget, **kwargs)
+    base = run_agent_evidence_pair_summary(
+        report, plan, client, model, budget, clock=clock or time.perf_counter
+    )
     model_summary = base["summary"]
     summary = (
         f"{model_summary}\n\n{EVIDENCE_BOUNDARY}"
