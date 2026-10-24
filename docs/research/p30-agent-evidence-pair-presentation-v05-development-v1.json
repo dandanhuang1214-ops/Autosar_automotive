@@ -1,0 +1,72 @@
+{
+  "artifact_type": "agent-evidence-pair-presentation-development-freeze",
+  "schema_version": "agent-evidence-pair-presentation-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-24",
+  "cohort_id": "p30-agent-evidence-pair-presentation-v05-development-v1",
+  "split": "development-only-distinct-runtime-outcome",
+  "formation": "Generated the public P29 ECUC runtime scenario suite in a new output directory and selected the wrong-address case. The scenario changes a synthetic ECUC frame ID and uses virtual CAN; it is not independent or physical ECU evidence. The report byte hash differs from recorded P30 pair-summary report hashes and was not used in earlier P30 model calls. This is a new question on a previously validated engineering scenario, not a statistically independent external benchmark.",
+  "implementation": {
+    "commit": "fe9777cf14974ed386cc6cdce7913f22491c92a3",
+    "ci_run": "40055697502",
+    "ci_conclusion": "success",
+    "source_protocol": "agent-evidence-pair-summary-result-0.4",
+    "presentation_protocol": "agent-evidence-pair-presentation-0.5"
+  },
+  "input": {
+    "producer_command": ".venv/bin/python scripts/run_ecuc_runtime_scenarios.py --output output/p30-pair-presentation-v05-development-v1/scenarios",
+    "case": "wrong-address",
+    "project_snapshot": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/wrong-address/bundle/inputs/project.json",
+    "project_snapshot_sha256": "3053dea38b05bdd7fd7881a28e537f0462d453609c7358a5dd05a0b64f41c5c7",
+    "report": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/wrong-address/bundle/project-report.json",
+    "report_sha256": "2531516c6343752ddac9d940891390e4abb7789faf7f03745fd62cbc11920b3d",
+    "runtime_link_sha256": "057648534eb3e11dbc735005af843c38bac3cbe136d6f9012f0d5e5f6a528723",
+    "project_status": "unassessed",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-presentation-v05-development-v1/wrong-address-plan.json",
+    "sha256": "97b288a301d3bbe5869ceb2360be77768f81218609b03539ad19d3d6adef9980",
+    "plan_id": "352975c8ce2a9846e0018c793a92a0e18ff7177230676afa3e9120584782f88c",
+    "check_ids": ["COMMUNICATION", "RX_PRESENT", "RUNTIME", "RX_RUNTIME"],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据这份项目验收报告的 COMMUNICATION、RX_PRESENT、RUNTIME、RX_RUNTIME 四项 status/reason，简要解释为什么静态通信与接收存在检查通过仍不足以把运行关联判为通过。逐项保留原因原值；只说明证据直接支持的关系，不推断具体总线、配置工具或物理 ECU 根因。"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived reference frozen before target inference; agent-authored and non-blind, not independent human gold. Do not send this reference or criteria to the target model.",
+  "reference_pairs": {
+    "COMMUNICATION": {"status": "passed", "reason": "linked_in_scope"},
+    "RX_PRESENT": {"status": "passed", "reason": "observed"},
+    "RUNTIME": {"status": "unassessed", "reason": "ecuc_frame_id_mismatch"},
+    "RX_RUNTIME": {"status": "unassessed", "reason": "another_binding_rejected"}
+  },
+  "reference_explanation": "COMMUNICATION 的 passed/linked_in_scope 和 RX_PRESENT 的 passed/observed 只说明各自静态及接收存在检查已有记录。RUNTIME 的 unassessed/ecuc_frame_id_mismatch 与 RX_RUNTIME 的 unassessed/another_binding_rejected 表明指定的运行关联未获通过；因此不能用前两项 passed 代替后两项验收。报告没有给出更具体的总线、供应商配置或物理 ECU 根因。用户可见事实表及证据边界由 0.5 控制面单独生成。",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls": 1,
+    "max_tool_calls": 1,
+    "max_total_tokens": 4096,
+    "max_output_tokens": 512,
+    "context_window": 8192,
+    "max_seconds": 120,
+    "retry_policy": "no retries; retain blocked/refused/failed content and do not rerun this case"
+  },
+  "criteria": [
+    {"criterion_id": "complete_exact_pairs", "description": "The model prose names all four check IDs in separate entries or unambiguous clauses, with each literal status and reason attached to the correct ID; omission or merged reasons fail."},
+    {"criterion_id": "supported_relationship", "description": "The model prose clearly explains that the two passed checks do not override the two unassessed runtime checks; it must not claim the runtime link or overall project passed."},
+    {"criterion_id": "no_root_cause_invention", "description": "The model prose does not infer a concrete bus, vendor-tool, configuration-write, wiring, or physical-ECU root cause beyond the recorded reason strings."},
+    {"criterion_id": "deterministic_presentation", "description": "The v0.5 user-visible summary contains the four exact verified pairs and the fixed evidence boundary, while retaining raw model prose separately as unassessed."},
+    {"criterion_id": "protocol_identity_and_budget", "description": "The v0.4 source protocol passes with complete 4/4 pairs, one model call, matching frozen model digest and limits; the v0.5 presentation verifier passes."},
+    {"criterion_id": "offline_replay", "description": "After stopping Ollama, both exact saved v0.4 and v0.5 artifacts verify against the frozen report and plan."}
+  ],
+  "source_result_path": "output/p30-pair-presentation-v05-development-v1/wrong-address-result-v04.json",
+  "presentation_path": "output/p30-pair-presentation-v05-development-v1/wrong-address-presentation-v05.json",
+  "call_policy": "Before inference, verify the frozen report/plan hashes and identities, ensure both result paths are absent, recheck Ollama version and model digest, and require this freeze commit's head-matching seven-job CI success. Then run the v0.4 source exactly once, render v0.5 without further model calls, stop Ollama, verify both offline, and compare against these criteria. Never alter or rerun this cohort after observing its result.",
+  "boundary": "This development-only case tests whether model prose adds a precise, supported relationship beyond a deterministic fact table. The v0.5 fact table remains the user-visible baseline. A Codex comparison is not independent human review or proof of general explanation quality."
+}

@@ -127,6 +127,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 状态回填（2026-10-24）：0.5 实现 `fe9777cf14974ed386cc6cdce7913f22491c92a3` / [run `40055697502`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40055697502) head 一致、七个实际 job 全部 success，现为 remote-accepted。下一任务改为冻结全新开发题，衡量模型原文在确定性事实表之外是否提供准确、有证据支持的解释；冻结提交远端通过后只调用一次。新开发门未通过前不冻结 held-out v2，独立人工审阅继续 pending；0.4 旧失败不回调。
 
+2026-10-24 续进：[0.5 附加解释 development v1 冻结包](../research/p30-agent-evidence-pair-presentation-v05-development-v1.json)已在目标推理前固定：全新 `wrong-address` 项目报告与四项 status/reason pair、静态通过和运行未验收的关系参考、禁止补造具体根因、模型 digest 和单次预算。report/plan 均离线复验，两个结果路径不存在；当前 `pre_inference_frozen`，没有模型调用。下一步必须先取得冻结提交自身 head 一致的七 job CI 全绿，再唯一调用 Qwen、生成 0.5 确定性呈现并停服审查；结果不回调，人工独立审阅仍 pending。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。

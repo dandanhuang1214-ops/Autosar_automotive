@@ -30,3 +30,5 @@
 ## 下一门
 
 这一步解决**指定事实逐项可见**，未解决一般因果解释或官方资料的适用性。下一门预推理冻结全新开发题，检查模型文本是否提供有证据支持、可保留的附加解释；只有开发题通过，才冻结新 held-out。独立人工审阅继续待完成。配置写入、SocketCAN、硬件和认证 operator 权限不扩大。
+
+新 [development v1 冻结包](../research/p30-agent-evidence-pair-presentation-v05-development-v1.json)已生成：`wrong-address` 报告四项 pair 的直接关系和内容判据均在推理前固定，目标模型尚未调用。冻结提交自己的远端 CI 成功后，才进行唯一一次模型调用、0.5 呈现及停服离线审查。

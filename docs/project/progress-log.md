@@ -2017,3 +2017,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 实现 `fe9777cf14974ed386cc6cdce7913f22491c92a3` / [run `40055697502`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40055697502) head 一致、completed/success。七 job 均 success：core-contracts Windows `120758077152`、Ubuntu `120758077241`；runtime-currency `120758077263`；runtime-evidence Windows `120759513619`、Ubuntu `120759513667`；controlled-rejections Windows `120759513672`、Ubuntu `120759513722`。0.5 实现门 remote-accepted；本条纯文档回填不替代该实现 run。
 - 下一门是全新、预推理冻结的开发题：绑定新报告、问题、精确 pair 与可审阅的附加解释判据，确定性事实表始终作为用户可见基线，模型原文继续独立保留且标记 unassessed。冻结提交自身 CI 成功后才做一次模型调用；开发题通过后再设计 held-out v2 和独立人工审阅。此前 0.4 development v2 的内容失败及旧 held-out v1 失败不改写、不重跑。P30 仍 implementing；P25 人工演示记录和外部反馈仍待实际取得。
+
+### P30：0.5 附加解释 development v1 推理前冻结（2026-10-24）
+
+- [冻结包](../research/p30-agent-evidence-pair-presentation-v05-development-v1.json) SHA-256 `82fd6b059957f69e84c4f48d8cacb8ae9dce3e3b92c833c0052822db01dc3729`。新运行公开 P29 ECUC runtime 场景，选用 `wrong-address` 虚拟 CAN 报告，project status `unassessed`；report SHA-256 `2531516c6343752ddac9d940891390e4abb7789faf7f03745fd62cbc11920b3d`，`verify-ecuc-project` passed。该字节身份未见于既有 P30 pair cohort manifest；场景本身有历史工程验证，不声称外部统计独立。
+- 四项 plan `COMMUNICATION/RX_PRESENT/RUNTIME/RX_RUNTIME` ID `352975c8ce2a9846e0018c793a92a0e18ff7177230676afa3e9120584782f88c`、SHA-256 `97b288a301d3bbe5869ceb2360be77768f81218609b03539ad19d3d6adef9980`，离线复验 passed。预先固定 Codex 直接报告参考、精确 pair、静态通过不覆盖运行未验收的关系判据、无根因补造、0.5 确定性呈现、预算与停服复验；参考和评分条件不进入模型请求。模型仍固定 qwen3.5:2b / Ollama `0.31.1` 与原 digest，调用前复核。
+- 目标 v0.4 与 v0.5 输出路径均不存在；当前 `pre_inference_frozen`，没有本题模型调用。下一步先提交推送冻结包并取得该提交 head 一致的七 job success，再各项预检、唯一一次模型调用、0.5 无模型呈现、停服离线复验和逐项审阅。任何内容失败或服务阻断不重试本题。旧 cohort 不改不重跑；独立人工 assessment pending。
