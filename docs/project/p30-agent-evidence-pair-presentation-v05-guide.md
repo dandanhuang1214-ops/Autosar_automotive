@@ -1,6 +1,6 @@
 # P30 证据对确定性呈现 0.5
 
-状态：implementing，待本实现提交自己的远端 CI。日期：2026-10-24。
+状态：remote-accepted。实现 `fe9777cf14974ed386cc6cdce7913f22491c92a3` / [run `40055697502`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40055697502) head 一致、七 job 全部 success。日期：2026-10-24。
 
 ## 用户路径
 
@@ -25,8 +25,8 @@
 
 对原 development v1 的环境阻断结果 `4e83a8b9…c730` 只读重放，0.5 result `2ade309c…27fdf04` / SHA-256 `22f41cfa505907d541cdd132bf6058f48b64d506955aff7f9af4167c84227ba7`：4/4 报告 pair 可呈现，但 `source_protocol_status=blocked`、`model_summary_status=unavailable`，停服 verifier passed。不能把事实表当作一次成功的模型推理。
 
-当前输出保存在 `output/p30-pair-summary-v05-development-v2.json` 和 `output/p30-pair-summary-v05-blocked-v1.json`，属于本机忽略的离线证据；输入报告、plan、0.4 result 的身份仍由外层完整保存并由 verifier 重算。0.5 schema、正例/缺项/篡改/错报告代入测试和 CLI 已本地通过；远端结果须在实现提交后补记。
+当前输出保存在 `output/p30-pair-summary-v05-development-v2.json` 和 `output/p30-pair-summary-v05-blocked-v1.json`，属于本机忽略的离线证据；输入报告、plan、0.4 result 的身份仍由外层完整保存并由 verifier 重算。0.5 schema、正例/缺项/篡改/错报告代入测试和 CLI 已本地通过。实现 run `40055697502` 的七个实际 job 全部 success：core-contracts Windows `120758077152`、Ubuntu `120758077241`；runtime-currency `120758077263`；runtime-evidence Windows `120759513619`、Ubuntu `120759513667`；controlled-rejections Windows `120759513672`、Ubuntu `120759513722`。后续纯文档状态提交不替代该实现 run。
 
 ## 下一门
 
-这一步解决**指定事实逐项可见**，未解决一般因果解释或官方资料的适用性。先把本实现远端验收，并用新版本的独立开发题检查模型文本是否有可保留的附加价值；只有开发题通过，才冻结新 held-out。独立人工审阅继续待完成。配置写入、SocketCAN、硬件和认证 operator 权限不扩大。
+这一步解决**指定事实逐项可见**，未解决一般因果解释或官方资料的适用性。下一门预推理冻结全新开发题，检查模型文本是否提供有证据支持、可保留的附加解释；只有开发题通过，才冻结新 held-out。独立人工审阅继续待完成。配置写入、SocketCAN、硬件和认证 operator 权限不扩大。

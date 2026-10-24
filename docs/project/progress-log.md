@@ -2012,3 +2012,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 对旧 development v2 的真实结果离线呈现 5/5 精确 pair，result `2195dcd4…7ab6acb` / SHA-256 `c33e4fa2…ad0f`；原 Qwen 省略 reason 的失败结论不变。对旧 development v1 的环境阻断结果呈现 4/4 报告事实，result `2ade309c…27fdf04` / SHA-256 `22f41cfa…16c84227ba7`，源模型状态仍 blocked。两例停服 verifier 均 passed；详见[操作指南](p30-agent-evidence-pair-presentation-v05-guide.md)。
 - 定向 7 tests 通过；首次全量 528 tests 有 1 个旧 schema 数量断言（93→94）及 1 个沙箱 loopback bind 环境错误。修正计数后，在允许本地回环 fixture 的环境中同一全量 528 tests 通过（2 项环境跳过）。94 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy、CI topology、diff check 通过。隔离无依赖 wheel 从 `/tmp` 工作目录以 `-I` 对真实 v2 0.5 result 离线复验 passed；wheel SHA-256 `a3c15a4a8e6b83d8001dcbfa30380aa84b05fe4a181c0eb12ef1a0e728ed9138`。
 - 当前 local-accepted；实现尚未提交、推送或取得自身远端 CI。下一步完成实现提交与七 job 远端跟踪，然后冻结新的开发题或可审计文本模型对照，检验模型原文有无可保留价值；开发门不过则不冻结新 held-out。P30 保持 implementing，独立人工 assessment pending；配置写入、SocketCAN、硬件和认证 operator 继续关闭。
+
+### P30：证据对确定性呈现 0.5 远端验收（2026-10-24）
+
+- 实现 `fe9777cf14974ed386cc6cdce7913f22491c92a3` / [run `40055697502`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40055697502) head 一致、completed/success。七 job 均 success：core-contracts Windows `120758077152`、Ubuntu `120758077241`；runtime-currency `120758077263`；runtime-evidence Windows `120759513619`、Ubuntu `120759513667`；controlled-rejections Windows `120759513672`、Ubuntu `120759513722`。0.5 实现门 remote-accepted；本条纯文档回填不替代该实现 run。
+- 下一门是全新、预推理冻结的开发题：绑定新报告、问题、精确 pair 与可审阅的附加解释判据，确定性事实表始终作为用户可见基线，模型原文继续独立保留且标记 unassessed。冻结提交自身 CI 成功后才做一次模型调用；开发题通过后再设计 held-out v2 和独立人工审阅。此前 0.4 development v2 的内容失败及旧 held-out v1 失败不改写、不重跑。P30 仍 implementing；P25 人工演示记录和外部反馈仍待实际取得。
