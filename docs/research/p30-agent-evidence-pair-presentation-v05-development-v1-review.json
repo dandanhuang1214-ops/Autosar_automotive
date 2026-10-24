@@ -1,0 +1,44 @@
+{
+  "artifact_type": "agent-evidence-pair-presentation-development-review",
+  "schema_version": "agent-evidence-pair-presentation-development-review-0.1",
+  "reviewed_at": "2026-10-24",
+  "cohort_id": "p30-agent-evidence-pair-presentation-v05-development-v1",
+  "freeze_sha256": "82fd6b059957f69e84c4f48d8cacb8ae9dce3e3b92c833c0052822db01dc3729",
+  "freeze_commit": "5eab6b2c63ac286961fb0fc78d2dbbba2ab6e977",
+  "freeze_ci_run": "40067728218",
+  "freeze_ci_conclusion": "success; head matched; seven jobs succeeded",
+  "source_result": {
+    "path": "output/p30-pair-presentation-v05-development-v1/wrong-address-result-v04.json",
+    "sha256": "e64e07be864c5cc6ce0c1569d9d68166dc6e145b97905e768e3c7b4d92815a88",
+    "result_id": "cc573407d7c7a1189ac78f333a5bc8fbbe9b9c68e1af3f3ae18468ffaf2f90ac",
+    "protocol_status": "blocked",
+    "trace_reason": "service_unavailable:URLError",
+    "evidence_completeness": "complete; 4/4 pairs",
+    "model_calls": 0,
+    "tool_calls": 1,
+    "total_tokens": 0,
+    "semantic_assessment": "unassessed",
+    "offline_verification": "passed after stopping Ollama"
+  },
+  "presentation": {
+    "path": "output/p30-pair-presentation-v05-development-v1/wrong-address-presentation-v05.json",
+    "sha256": "d5b62c7f35ddc1208505efa41d63dac78d46dfe8cad3e2a225ddead52592432a",
+    "result_id": "3050618ebb050536c943cdf0fd54e31441a8623d9fbb57ccf9165ae43187a1eb",
+    "presentation_status": "presented",
+    "source_protocol_status": "blocked",
+    "pair_count": 4,
+    "model_summary": null,
+    "offline_verification": "passed after stopping Ollama"
+  },
+  "frozen_criteria": [
+    {"criterion_id": "complete_exact_pairs", "outcome": "not_evaluable", "reason": "No model prose was produced."},
+    {"criterion_id": "supported_relationship", "outcome": "not_evaluable", "reason": "No model prose was produced."},
+    {"criterion_id": "no_root_cause_invention", "outcome": "not_evaluable", "reason": "No model prose was produced."},
+    {"criterion_id": "deterministic_presentation", "outcome": "passed", "reason": "Four exact verified pairs and fixed evidence boundary are visible; model prose is unavailable."},
+    {"criterion_id": "protocol_identity_and_budget", "outcome": "failed", "reason": "Source protocol is blocked and recorded zero model calls; the one-call success requirement was not met."},
+    {"criterion_id": "offline_replay", "outcome": "passed", "reason": "Both saved artifacts verified against the frozen report and plan with Ollama stopped."}
+  ],
+  "overall": "blocked_environment",
+  "assessment_boundary": "Codex post-run review of frozen criteria; non-blind and not independent human assessment. This cohort contains no target-model output and cannot establish model quality.",
+  "recovery": "Do not rerun this frozen case. Before freezing a byte-distinct development v2, exercise the same Python Endpoint /api/version and /api/tags calls, including the model digest, from the exact runner environment immediately before inference. Preserve any new result if the service fails again."
+}
