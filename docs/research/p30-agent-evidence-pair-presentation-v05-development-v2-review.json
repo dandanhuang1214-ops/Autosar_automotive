@@ -1,0 +1,45 @@
+{
+  "artifact_type": "agent-evidence-pair-presentation-development-review",
+  "schema_version": "agent-evidence-pair-presentation-development-review-0.1",
+  "reviewed_at": "2026-10-24",
+  "cohort_id": "p30-agent-evidence-pair-presentation-v05-development-v2",
+  "freeze_sha256": "c1427ca1afea8d9fdaaa64ff246c7f36df390918523623b090d11e20098b2027",
+  "freeze_commit": "f4361aa71ade1f26b3a4956846392ad22c5fc616",
+  "freeze_ci_run": "40071744818",
+  "freeze_ci_conclusion": "success; head matched; seven jobs succeeded",
+  "source_result": {
+    "path": "output/p30-pair-presentation-v05-development-v2/backend-blocked-result-v04.json",
+    "sha256": "f5ca0f9ada7301aa7ba13e8cce23abf6d0cfe2e64b37650b06f88a357ce17c38",
+    "result_id": "668e8ac8e7e8d91226a348bdf530dfe648c18ca6d064390f3e2f98338bee38ef",
+    "protocol_status": "blocked",
+    "trace_reason": "service_unavailable:URLError",
+    "evidence_completeness": "complete; 4/4 pairs",
+    "model_calls": 0,
+    "tool_calls": 1,
+    "total_tokens": 0,
+    "semantic_assessment": "unassessed",
+    "offline_verification": "passed after stopping Ollama"
+  },
+  "presentation": {
+    "path": "output/p30-pair-presentation-v05-development-v2/backend-blocked-presentation-v05.json",
+    "sha256": "1d0480886921a2359f821056c36da23c64181622fa1e4ef14f5c94e00c73c800",
+    "result_id": "25e4ee94f2594ae75ebc96af1968129f4f7cda5b7cc10690b914e7ffafa12df8",
+    "presentation_status": "presented",
+    "source_protocol_status": "blocked",
+    "pair_count": 4,
+    "model_summary": null,
+    "offline_verification": "passed after stopping Ollama"
+  },
+  "frozen_criteria": [
+    {"criterion_id": "complete_exact_pairs", "outcome": "not_evaluable", "reason": "No model prose was produced."},
+    {"criterion_id": "supported_relationship", "outcome": "not_evaluable", "reason": "No model prose was produced."},
+    {"criterion_id": "no_root_cause_invention", "outcome": "not_evaluable", "reason": "No model prose was produced."},
+    {"criterion_id": "deterministic_presentation", "outcome": "passed", "reason": "Four exact verified pairs and the fixed boundary were presented, while the source remained blocked."},
+    {"criterion_id": "protocol_identity_and_budget", "outcome": "failed", "reason": "Source protocol blocked before a model call; the one-call success requirement was not met."},
+    {"criterion_id": "offline_replay", "outcome": "passed", "reason": "Both saved artifacts verified against the frozen report and plan with Ollama stopped."}
+  ],
+  "overall": "blocked_environment",
+  "environment_diagnosis": "A read-only Python Endpoint script called /api/version and /api/tags. In the default sandbox it failed with the same service_unavailable:URLError; with require_escalated execution it returned Ollama 0.31.1 and the frozen qwen3.5:2b digest. The preflight python -c command used an already approved execution prefix, whereas the inference CLI ran under default sandbox permissions. This establishes a permission-path mismatch for the endpoint; it does not assert a model-quality result.",
+  "recovery": "Do not rerun v1 or v2. For a new byte-distinct development cohort, run both the read-only preflight and single inference through the same approved elevated network path, after its own head-matching seven-job CI success.",
+  "assessment_boundary": "Codex post-run review of frozen criteria; non-blind and not independent human assessment. This cohort contains no target-model output."
+}

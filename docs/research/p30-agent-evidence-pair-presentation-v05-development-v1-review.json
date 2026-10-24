@@ -40,5 +40,5 @@
   ],
   "overall": "blocked_environment",
   "assessment_boundary": "Codex post-run review of frozen criteria; non-blind and not independent human assessment. This cohort contains no target-model output and cannot establish model quality.",
-  "recovery": "Do not rerun this frozen case. Before freezing a byte-distinct development v2, exercise the same Python Endpoint /api/version and /api/tags calls, including the model digest, from the exact runner environment immediately before inference. Preserve any new result if the service fails again."
+  "recovery": "Do not rerun this frozen case. Subsequent development v2 reproduced the block; a read-only Endpoint script failed with the same URLError in the default sandbox and succeeded with the frozen version/digest under require_escalated execution. The earlier python -c preflight used an approved execution prefix while the inference CLI did not. Use the same approved elevated network path for both preflight and the single inference of a new byte-distinct cohort."
 }

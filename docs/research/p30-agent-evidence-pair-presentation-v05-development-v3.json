@@ -1,0 +1,72 @@
+{
+  "artifact_type": "agent-evidence-pair-presentation-development-freeze",
+  "schema_version": "agent-evidence-pair-presentation-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-24",
+  "cohort_id": "p30-agent-evidence-pair-presentation-v05-development-v3",
+  "split": "development-only-distinct-passed-runtime-outcome",
+  "formation": "Selected second-run from the same generated public P29 ECUC scenario suite. Its report hash and all-passed runtime relation differ from the v1 wrong-address and v2 backend-blocked reports. The scenario is synthetic and historically engineering-validated, not an independent external benchmark. Neither v1 nor v2 produced target-model content because the default sandbox could not reach the loopback service.",
+  "implementation": {
+    "commit": "fe9777cf14974ed386cc6cdce7913f22491c92a3",
+    "ci_run": "40055697502",
+    "ci_conclusion": "success",
+    "source_protocol": "agent-evidence-pair-summary-result-0.4",
+    "presentation_protocol": "agent-evidence-pair-presentation-0.5"
+  },
+  "input": {
+    "producer_command": ".venv/bin/python scripts/run_ecuc_runtime_scenarios.py --output output/p30-pair-presentation-v05-development-v1/scenarios",
+    "case": "second-run",
+    "project_snapshot": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/second-run/bundle/inputs/project.json",
+    "project_snapshot_sha256": "aaf39b4a199a271163206049d7e3e1f8ecdaaf2af1cbd77f6dcbc650b340df6b",
+    "report": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/second-run/bundle/project-report.json",
+    "report_sha256": "3ae530d125916887216451404501c1f2adde666fae4419ee23a39ea83ccb197b",
+    "runtime_link_sha256": "88124748709b13db3d45a4d98453cd3c7fcc8e76dacb184ee2dbfd63590434e2",
+    "project_status": "passed",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-presentation-v05-development-v3/second-run-plan.json",
+    "sha256": "4968c0536540b08d8ff124ecfdc2000112f0a67560545d52c98ff93f3627889f",
+    "plan_id": "d9f26d1252363399f904a5b4dfc2058066cf94ee03cfd39c12b1fb674480cb8d",
+    "check_ids": ["COMMUNICATION", "RX_PRESENT", "RUNTIME", "RX_RUNTIME"],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据这份项目验收报告的 COMMUNICATION、RX_PRESENT、RUNTIME、RX_RUNTIME 四项 status/reason，简要解释静态通信与接收存在检查如何与同次运行观察共同支持当前项目验收。逐项保留 status 和 reason 原值；只陈述报告直接支持的关系，不推断物理 ECU、配置写入或实车执行已经验证。"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived reference frozen before target inference; agent-authored and non-blind, not independent human gold. Do not send this reference or criteria to the target model.",
+  "reference_pairs": {
+    "COMMUNICATION": {"status": "passed", "reason": "linked_in_scope"},
+    "RX_PRESENT": {"status": "passed", "reason": "observed"},
+    "RUNTIME": {"status": "passed", "reason": "same_run_observed"},
+    "RX_RUNTIME": {"status": "passed", "reason": "same_run_observed"}
+  },
+  "reference_explanation": "COMMUNICATION 的 passed/linked_in_scope 与 RX_PRESENT 的 passed/observed 记录通信关联和接收存在检查通过；RUNTIME 与 RX_RUNTIME 的 passed/same_run_observed 则分别记录同次运行观察。四项共同支持此项目报告范围内的 passed 验收，后两项不是从前两项推断出来。报告不证明物理 ECU 行为、配置写入或实车执行。用户可见事实表及固定边界由 0.5 控制面单独生成。",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls": 1,
+    "max_tool_calls": 1,
+    "max_total_tokens": 4096,
+    "max_output_tokens": 512,
+    "context_window": 8192,
+    "max_seconds": 120,
+    "retry_policy": "no retries; retain blocked/refused/failed content and do not rerun this case"
+  },
+  "criteria": [
+    {"criterion_id": "complete_exact_pairs", "description": "The model prose names all four check IDs with the correct literal status and reason separately or in unambiguous clauses; no omission or merged reason."},
+    {"criterion_id": "supported_relationship", "description": "The model prose explains that the two static/existence checks and two separately observed same-run checks jointly support only this report's passed project acceptance. It must not imply runtime success was inferred from static checks alone."},
+    {"criterion_id": "no_scope_expansion", "description": "The model prose does not claim physical ECU behavior, configuration writing, real-vehicle execution, vendor-tool results, or causes outside this report."},
+    {"criterion_id": "deterministic_presentation", "description": "The v0.5 user-visible summary contains the four exact verified pairs and fixed evidence boundary, while retaining raw model prose separately as unassessed."},
+    {"criterion_id": "protocol_identity_and_budget", "description": "The v0.4 source protocol passes with complete 4/4 pairs, one model call, matching frozen model digest and limits; the v0.5 presentation verifier passes."},
+    {"criterion_id": "offline_replay", "description": "After stopping Ollama, both exact saved v0.4 and v0.5 artifacts verify against the frozen report and plan."}
+  ],
+  "source_result_path": "output/p30-pair-presentation-v05-development-v3/second-run-result-v04.json",
+  "presentation_path": "output/p30-pair-presentation-v05-development-v3/second-run-presentation-v05.json",
+  "call_policy": "Before inference, verify frozen report/plan hashes and identities, both result paths absent, and this freeze commit's head-matching seven-job CI success. Start the existing Ollama container, run the Python Endpoint /api/version and /api/tags read-only script under require_escalated network execution, require frozen digest, then run the v0.4 CLI exactly once under the same require_escalated execution path. Render v0.5 without a model call, stop Ollama and verify both offline. Never alter or rerun this cohort after observing its result.",
+  "boundary": "This development-only case tests whether model prose adds a supported relationship beyond the deterministic fact table. The table remains the user-visible baseline. Codex comparison is not independent human review or proof of general explanation quality."
+}

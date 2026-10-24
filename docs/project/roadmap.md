@@ -133,6 +133,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 同日续进：[development v2 冻结包](../research/p30-agent-evidence-pair-presentation-v05-development-v2.json)已改用 byte-distinct 的 `backend-blocked` 报告：两项静态/存在检查 passed，两项运行关联 blocked/interface_missing。报告和四项 plan 离线复验通过，结果路径为空；Codex 直接参考、关系判据、禁止根因补造及单次预算均在模型调用前固定。下一步先获得冻结提交自身七 job success，再在同一 Python runner 环境核对 Ollama version/tags/digest 并紧接唯一模型调用。开发内容通过后才进入 held-out；当前 P30 implementing。
 
+同日状态更新：v2 冻结提交 `f4361aa71ade1f26b3a4956846392ad22c5fc616` / [run `40071744818`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40071744818) head 一致、七 job success，但唯一 runner 再次在首个服务请求因 `URLError` 阻断，0 model calls；0.5 事实呈现和停服离线复验均通过，模型内容不可评。[逐项审阅](../research/p30-agent-evidence-pair-presentation-v05-development-v2-review.json)记录环境原因：相同只读 Endpoint 脚本在默认沙箱重现 `URLError`，授权网络执行则返回正确版本/digest。先前已批准的 `python -c` 预检与默认沙箱 CLI runner 权限不同。v1/v2 不重试。新的 [development v3 冻结包](../research/p30-agent-evidence-pair-presentation-v05-development-v3.json)绑定不同的 `second-run` passed 报告和关系判据；先取得其冻结提交七 job success，再以同一授权网络执行只读预检与唯一模型调用，停服审阅后才决定是否进入 held-out。P30 仍 implementing。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。
