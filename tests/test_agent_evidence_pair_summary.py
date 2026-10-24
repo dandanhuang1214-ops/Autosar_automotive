@@ -21,6 +21,10 @@ from automotive_workbench.agent_evidence_pair_summary_v04 import (
     run_agent_evidence_pair_summary_v04,
     verify_agent_evidence_pair_summary_result_v04,
 )
+from automotive_workbench.agent_evidence_pair_presentation_v05 import (
+    build_agent_evidence_pair_presentation_v05,
+    verify_agent_evidence_pair_presentation_v05,
+)
 from automotive_workbench.agent_runtime import AgentBudget
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.model_client import ModelCapabilities
@@ -297,6 +301,77 @@ class AgentEvidencePairSummaryTests(unittest.TestCase):
         self.assertEqual(client.service_calls, 0)
         self.assertEqual(client.calls, 0)
         verify_agent_evidence_pair_summary_result_v04(self.report, plan, result)
+
+    def test_v05_presents_exact_pairs_without_publishing_model_prose(self) -> None:
+        plan = self.plan()
+        source = run_agent_evidence_pair_summary_v04(
+            self.report, plan, PairSummaryClient(), "fixture:1"
+        )
+        rendered = build_agent_evidence_pair_presentation_v05(
+            self.report, plan, source
+        )
+        self.assertEqual(rendered["presentation_status"], "presented")
+        self.assertEqual(rendered["source_protocol_status"], "passed")
+        self.assertEqual(
+            [(p["check_id"], p["status"], p["reason"]) for p in rendered["pairs"]],
+            [
+                ("COMMUNICATION", "passed", "linked_in_scope"),
+                ("APPLICATION", "passed", "linked_in_scope"),
+                ("TASK-BINDINGS", "passed", "linked_in_scope"),
+                ("MODE-RULES", "passed", "linked_in_scope"),
+                ("IMPACT", "passed", "explicit_dependencies_assessed"),
+            ],
+        )
+        self.assertEqual(rendered["summary"].count(EVIDENCE_BOUNDARY), 1)
+        self.assertNotIn("这些静态记录", rendered["summary"])
+        self.assertIn("这些静态记录", rendered["model_summary"])
+        self.assertEqual(rendered["model_summary_status"], "unassessed")
+        self.assertEqual(
+            verify_agent_evidence_pair_presentation_v05(self.report, plan, rendered)["pair_count"],
+            5,
+        )
+        schemas = [
+            json.loads((ROOT / "schemas" / name).read_text(encoding="utf-8"))
+            for name in (
+                "readonly-agent-trace.schema.json",
+                "agent-evidence-pair-summary-result.schema.json",
+                "agent-evidence-pair-summary-result-v0.4.schema.json",
+                "agent-evidence-pair-presentation-v0.5.schema.json",
+            )
+        ]
+        registry = Registry().with_resources(
+            (schema["$id"], Resource.from_contents(schema)) for schema in schemas
+        )
+        Draft202012Validator(schemas[3], registry=registry).validate(rendered)
+
+        tampered = copy.deepcopy(rendered)
+        tampered["pairs"][0]["reason"] = "invented_reason"
+        tampered["summary"] = tampered["summary"].replace("linked_in_scope", "invented_reason", 1)
+        tampered["result_id"] = digest(
+            {name: tampered[name] for name in tampered if name != "result_id"}
+        )
+        with self.assertRaisesRegex(ValueError, "differs"):
+            verify_agent_evidence_pair_presentation_v05(self.report, plan, tampered)
+        with self.assertRaises(ValueError):
+            verify_agent_evidence_pair_presentation_v05(
+                self.transmitter_report, plan, rendered
+            )
+
+    def test_v05_refusal_does_not_publish_pairs(self) -> None:
+        plan = self.plan(["NOT-IN-REPORT"])
+        source = run_agent_evidence_pair_summary_v04(
+            self.report, plan, PairSummaryClient(), "fixture:1"
+        )
+        rendered = build_agent_evidence_pair_presentation_v05(self.report, plan, source)
+        self.assertEqual(rendered["presentation_status"], "unavailable")
+        self.assertEqual(rendered["source_protocol_status"], "refused")
+        self.assertEqual(rendered["pairs"], [])
+        self.assertIsNone(rendered["summary"])
+        self.assertIsNone(rendered["model_summary"])
+        self.assertEqual(
+            verify_agent_evidence_pair_presentation_v05(self.report, plan, rendered)["status"],
+            "passed",
+        )
 
 
 if __name__ == "__main__":

@@ -97,7 +97,7 @@ jobs:
       - name: Run trusted knowledge fixture type gate
         run: mypy --ignore-missing-imports scripts/trusted_knowledge_fixture_service.py
       - name: Run deterministic Agent evidence-plan type gate
-        run: mypy --ignore-missing-imports src/automotive_workbench/agent_evidence_plan.py src/automotive_workbench/agent_evidence_summary.py src/automotive_workbench/agent_evidence_pair_summary.py src/automotive_workbench/agent_evidence_pair_summary_v04.py src/automotive_workbench/agent_evidence_comparison.py scripts/run_agent_evidence_comparison.py
+        run: mypy --ignore-missing-imports src/automotive_workbench/agent_evidence_plan.py src/automotive_workbench/agent_evidence_summary.py src/automotive_workbench/agent_evidence_pair_summary.py src/automotive_workbench/agent_evidence_pair_summary_v04.py src/automotive_workbench/agent_evidence_pair_presentation_v05.py src/automotive_workbench/agent_evidence_comparison.py scripts/run_agent_evidence_comparison.py
 
   runtime-evidence:
     needs: core-contracts

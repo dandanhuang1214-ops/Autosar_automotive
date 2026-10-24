@@ -369,6 +369,21 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_pair_summary_v04_verify.add_argument("report", type=Path)
     evidence_pair_summary_v04_verify.add_argument("plan", type=Path)
     evidence_pair_summary_v04_verify.add_argument("result", type=Path)
+    evidence_pair_presentation_v05 = commands.add_parser(
+        "render-agent-evidence-pairs-v05",
+        help="Render exact verified status/reason pairs; keep model prose separate",
+    )
+    evidence_pair_presentation_v05.add_argument("report", type=Path)
+    evidence_pair_presentation_v05.add_argument("plan", type=Path)
+    evidence_pair_presentation_v05.add_argument("source_result", type=Path)
+    evidence_pair_presentation_v05.add_argument("--output", type=Path, required=True)
+    evidence_pair_presentation_v05_verify = commands.add_parser(
+        "verify-agent-evidence-pairs-v05",
+        help="Verify a v0.5 presentation against the original report and v0.4 result",
+    )
+    evidence_pair_presentation_v05_verify.add_argument("report", type=Path)
+    evidence_pair_presentation_v05_verify.add_argument("plan", type=Path)
+    evidence_pair_presentation_v05_verify.add_argument("result", type=Path)
     evidence_comparison_freeze = commands.add_parser(
         "freeze-agent-evidence-comparison",
         help="Freeze pre-inference reference answers and evidence plans",
@@ -1568,6 +1583,41 @@ def main() -> int:
                 args.report,
                 load_agent_evidence_pair_plan(args.plan),
                 load_agent_evidence_pair_summary_result_v04(args.result),
+            )
+        elif args.command == "render-agent-evidence-pairs-v05":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+            )
+            from automotive_workbench.agent_evidence_pair_summary_v04 import (
+                load_agent_evidence_pair_summary_result_v04,
+            )
+            from automotive_workbench.agent_evidence_pair_presentation_v05 import (
+                build_agent_evidence_pair_presentation_v05,
+                save_agent_evidence_pair_presentation_v05,
+            )
+
+            plan = load_agent_evidence_pair_plan(args.plan)
+            rendered = build_agent_evidence_pair_presentation_v05(
+                args.report,
+                plan,
+                load_agent_evidence_pair_summary_result_v04(args.source_result),
+            )
+            result = save_agent_evidence_pair_presentation_v05(
+                args.report, plan, rendered, args.output
+            )
+        elif args.command == "verify-agent-evidence-pairs-v05":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+            )
+            from automotive_workbench.agent_evidence_pair_presentation_v05 import (
+                load_agent_evidence_pair_presentation_v05,
+                verify_agent_evidence_pair_presentation_v05,
+            )
+
+            result = verify_agent_evidence_pair_presentation_v05(
+                args.report,
+                load_agent_evidence_pair_plan(args.plan),
+                load_agent_evidence_pair_presentation_v05(args.result),
             )
         elif args.command == "freeze-agent-evidence-comparison":
             from automotive_workbench.agent_evidence_comparison import (
