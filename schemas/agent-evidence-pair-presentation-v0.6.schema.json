@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-pair-presentation-v0.6.schema.json",
+  "title": "Agent Evidence Pair Presentation v0.6",
+  "description": "Deterministic user-visible status/reason pairs from a replay-verified v0.6 result; unassessed model prose is separate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "presentation_status",
+    "source_protocol_status", "semantic_assessment", "plan_id", "source_result",
+    "pairs", "summary", "model_summary", "model_summary_status", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-pair-presentation"},
+    "schema_version": {"const": "agent-evidence-pair-presentation-0.6"},
+    "presentation_status": {"enum": ["presented", "unavailable"]},
+    "source_protocol_status": {"enum": ["passed", "refused", "blocked"]},
+    "semantic_assessment": {"const": "unassessed"},
+    "plan_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_result": {"$ref": "https://automotive-workbench.local/schemas/agent-evidence-pair-summary-result-v0.6.schema.json"},
+    "pairs": {
+      "type": "array", "maxItems": 16,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["check_id", "status", "reason", "status_fact_id", "reason_fact_id", "status_pointer", "reason_pointer"],
+        "properties": {
+          "check_id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,128}$"},
+          "status": {"enum": ["passed", "failed", "unassessed", "blocked"]},
+          "reason": {"type": "string", "minLength": 1},
+          "status_fact_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "reason_fact_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "status_pointer": {"type": "string", "pattern": "^/checks/[A-Za-z0-9_.-]+/status$"},
+          "reason_pointer": {"type": "string", "pattern": "^/checks/[A-Za-z0-9_.-]+/reason$"}
+        }
+      }
+    },
+    "summary": {"type": ["string", "null"], "minLength": 1},
+    "model_summary": {"type": ["string", "null"], "minLength": 1, "maxLength": 1000},
+    "model_summary_status": {"enum": ["unassessed", "unavailable"]},
+    "boundary": {"const": "The user-visible summary is built only from replay-verified status/reason facts. Model prose is retained separately as unassessed source material and cannot change any displayed pair or engineering status."}
+  }
+}

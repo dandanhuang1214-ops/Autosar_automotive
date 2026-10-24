@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-pair-summary-result-v0.6.schema.json",
+  "title": "Agent Complete Evidence Pair Plain-Text Summary Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result_id", "artifact_type", "schema_version", "model_interface",
+    "protocol_status", "evidence_completeness", "semantic_assessment",
+    "plan_id", "trace_id", "summary", "evidence_ids", "model_exchange",
+    "trace", "boundary"
+  ],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-pair-summary-result"},
+    "schema_version": {"const": "agent-evidence-pair-summary-result-0.6"},
+    "model_interface": {"const": "ollama-complete-pair-requirement-text-summary-0.6"},
+    "protocol_status": {"enum": ["passed", "refused", "blocked"]},
+    "evidence_completeness": {"$ref": "#/$defs/completeness"},
+    "semantic_assessment": {"const": "unassessed"},
+    "plan_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trace_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "summary": {"type": ["string", "null"], "minLength": 1, "maxLength": 1000},
+    "evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "model_exchange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request", "response"],
+      "properties": {
+        "request": {"type": ["object", "null"]},
+        "response": {"type": ["object", "null"]}
+      }
+    },
+    "trace": {
+      "$ref": "https://automotive-workbench.local/schemas/readonly-agent-trace.schema.json"
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "required_pair_count", "complete_pair_count", "checks", "error"
+      ],
+      "properties": {
+        "status": {"enum": ["complete", "incomplete", "unavailable"]},
+        "required_pair_count": {"type": "integer", "minimum": 1, "maximum": 16},
+        "complete_pair_count": {"type": "integer", "minimum": 0, "maximum": 16},
+        "checks": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check_id", "stage", "check_key", "missing_fields", "issue"
+            ],
+            "properties": {
+              "check_id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,128}$"},
+              "stage": {"type": ["string", "null"]},
+              "check_key": {"type": ["string", "null"]},
+              "missing_fields": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {"enum": ["status", "reason"]}
+              },
+              "issue": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "error": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

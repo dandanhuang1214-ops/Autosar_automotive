@@ -331,6 +331,31 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_pair_summary_run.add_argument(
         "--max-observation-chars", type=int, default=20_000
     )
+    evidence_pair_summary_v06_run = commands.add_parser(
+        "run-agent-evidence-pair-summary-v06",
+        help="Bind each selected pair to its exact report requirement text before model inference",
+    )
+    evidence_pair_summary_v06_run.add_argument("report", type=Path)
+    evidence_pair_summary_v06_run.add_argument("plan", type=Path)
+    evidence_pair_summary_v06_run.add_argument("--model", required=True)
+    evidence_pair_summary_v06_run.add_argument("--output", type=Path, required=True)
+    evidence_pair_summary_v06_run.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    evidence_pair_summary_v06_run.add_argument("--timeout", type=float, default=30)
+    evidence_pair_summary_v06_run.add_argument("--max-steps", type=int, default=2)
+    evidence_pair_summary_v06_run.add_argument("--max-model-calls", type=int, default=1)
+    evidence_pair_summary_v06_run.add_argument("--max-tool-calls", type=int, default=1)
+    evidence_pair_summary_v06_run.add_argument("--max-total-tokens", type=int, default=4096)
+    evidence_pair_summary_v06_run.add_argument("--max-output-tokens-per-call", type=int, default=512)
+    evidence_pair_summary_v06_run.add_argument("--context-window", type=int, default=8192)
+    evidence_pair_summary_v06_run.add_argument("--max-seconds", type=float, default=120)
+    evidence_pair_summary_v06_run.add_argument("--max-observation-chars", type=int, default=20_000)
+    evidence_pair_summary_v06_verify = commands.add_parser(
+        "verify-agent-evidence-pair-summary-result-v06",
+        help="Verify report-bound requirement text, model request, and trace offline",
+    )
+    evidence_pair_summary_v06_verify.add_argument("report", type=Path)
+    evidence_pair_summary_v06_verify.add_argument("plan", type=Path)
+    evidence_pair_summary_v06_verify.add_argument("result", type=Path)
     evidence_pair_summary_verify = commands.add_parser(
         "verify-agent-evidence-pair-summary-result",
         help="Verify a complete evidence-pair summary without model services",
@@ -384,6 +409,21 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_pair_presentation_v05_verify.add_argument("report", type=Path)
     evidence_pair_presentation_v05_verify.add_argument("plan", type=Path)
     evidence_pair_presentation_v05_verify.add_argument("result", type=Path)
+    evidence_pair_presentation_v06 = commands.add_parser(
+        "render-agent-evidence-pairs-v06",
+        help="Render verified pairs from a requirement-text v0.6 result",
+    )
+    evidence_pair_presentation_v06.add_argument("report", type=Path)
+    evidence_pair_presentation_v06.add_argument("plan", type=Path)
+    evidence_pair_presentation_v06.add_argument("source_result", type=Path)
+    evidence_pair_presentation_v06.add_argument("--output", type=Path, required=True)
+    evidence_pair_presentation_v06_verify = commands.add_parser(
+        "verify-agent-evidence-pairs-v06",
+        help="Verify deterministic v0.6 presentation offline",
+    )
+    evidence_pair_presentation_v06_verify.add_argument("report", type=Path)
+    evidence_pair_presentation_v06_verify.add_argument("plan", type=Path)
+    evidence_pair_presentation_v06_verify.add_argument("result", type=Path)
     evidence_comparison_freeze = commands.add_parser(
         "freeze-agent-evidence-comparison",
         help="Freeze pre-inference reference answers and evidence plans",
@@ -1496,7 +1536,7 @@ def main() -> int:
             result = verify_agent_evidence_pair_plan(
                 load_agent_evidence_pair_plan(args.plan)
             )
-        elif args.command == "run-agent-evidence-pair-summary":
+        elif args.command in {"run-agent-evidence-pair-summary", "run-agent-evidence-pair-summary-v06"}:
             from automotive_workbench.agent_evidence_pair_summary import (
                 load_agent_evidence_pair_plan,
                 run_agent_evidence_pair_summary,
@@ -1522,21 +1562,25 @@ def main() -> int:
                     max_seconds=args.max_seconds,
                     max_observation_chars=args.max_observation_chars,
                 ),
+                requirement_text_projection=args.command.endswith("-v06"),
             )
             result = save_agent_evidence_pair_summary_result(
                 args.report, plan, summarized, args.output
             )
-        elif args.command == "verify-agent-evidence-pair-summary-result":
+        elif args.command in {"verify-agent-evidence-pair-summary-result", "verify-agent-evidence-pair-summary-result-v06"}:
             from automotive_workbench.agent_evidence_pair_summary import (
                 load_agent_evidence_pair_plan,
                 load_agent_evidence_pair_summary_result,
                 verify_agent_evidence_pair_summary_result,
             )
 
+            saved_result = load_agent_evidence_pair_summary_result(args.result)
+            if args.command.endswith("-v06") and saved_result.get("schema_version") != "agent-evidence-pair-summary-result-0.6":
+                raise ValueError("Expected Agent evidence-pair summary v0.6 result")
             result = verify_agent_evidence_pair_summary_result(
                 args.report,
                 load_agent_evidence_pair_plan(args.plan),
-                load_agent_evidence_pair_summary_result(args.result),
+                saved_result,
             )
         elif args.command == "run-agent-evidence-pair-summary-v04":
             from automotive_workbench.agent_evidence_pair_summary_v04 import (
@@ -1618,6 +1662,34 @@ def main() -> int:
                 args.report,
                 load_agent_evidence_pair_plan(args.plan),
                 load_agent_evidence_pair_presentation_v05(args.result),
+            )
+        elif args.command == "render-agent-evidence-pairs-v06":
+            from automotive_workbench.agent_evidence_pair_summary import (
+                load_agent_evidence_pair_plan,
+                load_agent_evidence_pair_summary_result,
+            )
+            from automotive_workbench.agent_evidence_pair_presentation_v06 import (
+                build_agent_evidence_pair_presentation_v06,
+                save_agent_evidence_pair_presentation_v06,
+            )
+
+            plan = load_agent_evidence_pair_plan(args.plan)
+            rendered = build_agent_evidence_pair_presentation_v06(
+                args.report, plan, load_agent_evidence_pair_summary_result(args.source_result)
+            )
+            result = save_agent_evidence_pair_presentation_v06(
+                args.report, plan, rendered, args.output
+            )
+        elif args.command == "verify-agent-evidence-pairs-v06":
+            from automotive_workbench.agent_evidence_pair_summary import load_agent_evidence_pair_plan
+            from automotive_workbench.agent_evidence_pair_presentation_v06 import (
+                load_agent_evidence_pair_presentation_v06,
+                verify_agent_evidence_pair_presentation_v06,
+            )
+
+            result = verify_agent_evidence_pair_presentation_v06(
+                args.report, load_agent_evidence_pair_plan(args.plan),
+                load_agent_evidence_pair_presentation_v06(args.result),
             )
         elif args.command == "freeze-agent-evidence-comparison":
             from automotive_workbench.agent_evidence_comparison import (

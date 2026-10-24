@@ -25,6 +25,10 @@ from automotive_workbench.agent_evidence_pair_presentation_v05 import (
     build_agent_evidence_pair_presentation_v05,
     verify_agent_evidence_pair_presentation_v05,
 )
+from automotive_workbench.agent_evidence_pair_presentation_v06 import (
+    build_agent_evidence_pair_presentation_v06,
+    verify_agent_evidence_pair_presentation_v06,
+)
 from automotive_workbench.agent_runtime import AgentBudget
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.model_client import ModelCapabilities
@@ -160,6 +164,75 @@ class AgentEvidencePairSummaryTests(unittest.TestCase):
         )
         Draft202012Validator(schemas[1], registry=registry).validate(plan)
         Draft202012Validator(schemas[2], registry=registry).validate(result)
+
+    def test_v06_binds_requirement_text_to_each_pair_and_replays(self) -> None:
+        plan = self.plan(["COMMUNICATION", "APPLICATION"])
+        client = PairSummaryClient()
+        result = run_agent_evidence_pair_summary(
+            self.report, plan, client, "fixture:1",
+            requirement_text_projection=True,
+        )
+        self.assertEqual(result["schema_version"], "agent-evidence-pair-summary-result-0.6")
+        self.assertEqual(result["protocol_status"], "passed")
+        self.assertEqual(client.calls, 1)
+        context = json.loads(client.payloads[0]["messages"][1]["content"])
+        requirements = {item["id"]: item["text"] for item in
+                        json.loads(self.report.read_text(encoding="utf-8"))["requirements"]}
+        self.assertEqual(
+            [item["requirement_text"] for item in context["evidence_pairs"]],
+            [requirements[item] for item in plan["check_ids"]],
+        )
+        projection = result["trace"]["events"][0]["model_projection"]
+        self.assertEqual(projection["pairs"][0]["requirement_text"],
+                         requirements["COMMUNICATION"])
+        verify_agent_evidence_pair_summary_result(self.report, plan, result)
+        schemas = [json.loads((ROOT / "schemas" / name).read_text(encoding="utf-8"))
+                   for name in ("readonly-agent-trace.schema.json",
+                                "agent-evidence-pair-summary-result-v0.6.schema.json")]
+        registry = Registry().with_resources(
+            (schema["$id"], Resource.from_contents(schema)) for schema in schemas
+        )
+        Draft202012Validator(schemas[1], registry=registry).validate(result)
+
+        rendered = build_agent_evidence_pair_presentation_v06(self.report, plan, result)
+        self.assertEqual(rendered["presentation_status"], "presented")
+        self.assertEqual(rendered["model_summary_status"], "unassessed")
+        self.assertNotIn("这些静态记录", rendered["summary"])
+        self.assertIn("这些静态记录", rendered["model_summary"])
+        self.assertEqual(
+            verify_agent_evidence_pair_presentation_v06(self.report, plan, rendered)["pair_count"], 2
+        )
+        presentation_schema = json.loads(
+            (ROOT / "schemas/agent-evidence-pair-presentation-v0.6.schema.json").read_text(encoding="utf-8")
+        )
+        registry = registry.with_resource(
+            presentation_schema["$id"], Resource.from_contents(presentation_schema)
+        )
+        Draft202012Validator(presentation_schema, registry=registry).validate(rendered)
+
+        changed_report = self.root / "changed-requirement-report.json"
+        changed = json.loads(self.report.read_text(encoding="utf-8"))
+        changed["requirements"][0]["text"] += " invented runtime observation"
+        changed_report.write_text(json.dumps(changed), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            verify_agent_evidence_pair_summary_result(changed_report, plan, result)
+
+    def test_v06_missing_requirement_text_blocks_before_model(self) -> None:
+        plan = self.plan(["COMMUNICATION"])
+        changed_report = self.root / "missing-requirement-text-report.json"
+        changed = json.loads(self.report.read_text(encoding="utf-8"))
+        next(item for item in changed["requirements"]
+             if item["id"] == "COMMUNICATION")["text"] = ""
+        changed_report.write_text(json.dumps(changed), encoding="utf-8")
+        client = PairSummaryClient()
+        result = run_agent_evidence_pair_summary(
+            changed_report, plan, client, "fixture:1",
+            requirement_text_projection=True,
+        )
+        self.assertEqual(result["protocol_status"], "blocked")
+        self.assertEqual(client.calls, 0)
+        self.assertEqual(result["trace"]["usage"]["model_calls"], 0)
+        verify_agent_evidence_pair_summary_result(changed_report, plan, result)
 
     def test_missing_check_refuses_before_any_model_service_contact(self) -> None:
         plan = self.plan(["COMMUNICATION", "NOT-IN-REPORT"])
