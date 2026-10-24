@@ -1,0 +1,72 @@
+{
+  "artifact_type": "agent-evidence-pair-presentation-development-freeze",
+  "schema_version": "agent-evidence-pair-presentation-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-24",
+  "cohort_id": "p30-agent-evidence-pair-presentation-v05-development-v2",
+  "split": "development-only-distinct-blocked-runtime-outcome",
+  "formation": "Selected the backend-blocked case from the public P29 ECUC runtime scenario suite generated before development v1 inference. This report has a different byte hash, project status, runtime reason and question from development v1; its byte hash was not found in earlier P30 pair cohort manifests. The scenario is synthetic and previously validated as an engineering case, not a statistically independent external benchmark.",
+  "implementation": {
+    "commit": "fe9777cf14974ed386cc6cdce7913f22491c92a3",
+    "ci_run": "40055697502",
+    "ci_conclusion": "success",
+    "source_protocol": "agent-evidence-pair-summary-result-0.4",
+    "presentation_protocol": "agent-evidence-pair-presentation-0.5"
+  },
+  "input": {
+    "producer_command": ".venv/bin/python scripts/run_ecuc_runtime_scenarios.py --output output/p30-pair-presentation-v05-development-v1/scenarios",
+    "case": "backend-blocked",
+    "project_snapshot": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/backend-blocked/bundle/inputs/project.json",
+    "project_snapshot_sha256": "28d0aa1fde082215ca6c8483c34d51f7b482289ff1c809faef70e9b6f3a75a80",
+    "report": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/backend-blocked/bundle/project-report.json",
+    "report_sha256": "0ac66083d5b4088cc3445a9481f15946365882d96c1bfca03b3e203f8f956c8d",
+    "runtime_link_sha256": "6488f48d1cb53e9371883a9362b3f75f0ecc8d0c118c4941a22a577c979f1894",
+    "project_status": "blocked",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-presentation-v05-development-v2/backend-blocked-plan-v2.json",
+    "sha256": "24f2ca78826d952e4e407805356b0fadf956e153872631dabd158306971d1475",
+    "plan_id": "f24c3080200b5872bff83bc484f56b1f0a663a105886b11620f63d0f1cc496ca",
+    "check_ids": ["COMMUNICATION", "RX_PRESENT", "RUNTIME", "RX_RUNTIME"],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据这份项目验收报告的 COMMUNICATION、RX_PRESENT、RUNTIME、RX_RUNTIME 四项 status/reason，简要解释为什么静态通信与接收存在检查通过仍不能把运行关联判为通过。逐项保留 status 和 reason 原值；将 RUNTIME 与 RX_RUNTIME 的 blocked 保持为 blocked，不推断接口缺失的系统、工具或物理 ECU 根因。"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived reference frozen before target inference; agent-authored and non-blind, not independent human gold. Do not send this reference or criteria to the target model.",
+  "reference_pairs": {
+    "COMMUNICATION": {"status": "passed", "reason": "linked_in_scope"},
+    "RX_PRESENT": {"status": "passed", "reason": "observed"},
+    "RUNTIME": {"status": "blocked", "reason": "interface_missing"},
+    "RX_RUNTIME": {"status": "blocked", "reason": "interface_missing"}
+  },
+  "reference_explanation": "COMMUNICATION 的 passed/linked_in_scope 和 RX_PRESENT 的 passed/observed 只说明各自检查通过。RUNTIME 与 RX_RUNTIME 均为 blocked/interface_missing，指定的运行关联没有通过；前两项 passed 不能替代后两项。报告没有证明接口缺失发生在哪个系统、工具或物理 ECU，也没有把两个 blocked 判为 failed 或 unassessed。用户可见事实表及证据边界由 0.5 控制面单独生成。",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls": 1,
+    "max_tool_calls": 1,
+    "max_total_tokens": 4096,
+    "max_output_tokens": 512,
+    "context_window": 8192,
+    "max_seconds": 120,
+    "retry_policy": "no retries; retain blocked/refused/failed content and do not rerun this case"
+  },
+  "criteria": [
+    {"criterion_id": "complete_exact_pairs", "description": "Model prose gives each of four IDs its literal status and reason, with no omission, reassignment, or collapsed reason."},
+    {"criterion_id": "supported_relationship", "description": "Model prose explains that the two passed checks do not make the two blocked runtime checks passed; it retains blocked and does not claim overall project passed."},
+    {"criterion_id": "no_root_cause_invention", "description": "Model prose does not infer which system, vendor tool, configuration write, wiring, or physical ECU caused interface_missing."},
+    {"criterion_id": "deterministic_presentation", "description": "The v0.5 user-visible summary contains four exact verified pairs and the fixed evidence boundary, retaining raw model prose separately as unassessed."},
+    {"criterion_id": "protocol_identity_and_budget", "description": "The v0.4 source protocol passes with complete 4/4 pairs, one model call, matching frozen model digest and limits; the v0.5 presentation verifier passes."},
+    {"criterion_id": "offline_replay", "description": "After stopping Ollama, both exact saved v0.4 and v0.5 artifacts verify against the frozen report and plan."}
+  ],
+  "source_result_path": "output/p30-pair-presentation-v05-development-v2/backend-blocked-result-v04.json",
+  "presentation_path": "output/p30-pair-presentation-v05-development-v2/backend-blocked-presentation-v05.json",
+  "call_policy": "Before inference, verify frozen report/plan hashes and identities, both result paths absent, this freeze commit's head-matching seven-job CI success, then from the exact Python runner environment call the same Endpoint /api/version and /api/tags read-only and require the frozen model digest. Run the v0.4 source exactly once immediately after this preflight, render v0.5 without a model call, stop Ollama and verify both offline. Never alter or rerun this cohort after observing its result.",
+  "boundary": "This development-only case tests model explanation of a blocked runtime condition beyond a deterministic fact table. The v0.5 table remains the user-visible baseline. Codex comparison is not independent human review or proof of general explanation quality."
+}
