@@ -135,6 +135,8 @@ P30 的只读事实门、模型适配、冻结评测器和提示 0.5–0.22 均�
 
 同日状态更新：v2 冻结提交 `f4361aa71ade1f26b3a4956846392ad22c5fc616` / [run `40071744818`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40071744818) head 一致、七 job success，但唯一 runner 再次在首个服务请求因 `URLError` 阻断，0 model calls；0.5 事实呈现和停服离线复验均通过，模型内容不可评。[逐项审阅](../research/p30-agent-evidence-pair-presentation-v05-development-v2-review.json)记录环境原因：相同只读 Endpoint 脚本在默认沙箱重现 `URLError`，授权网络执行则返回正确版本/digest。先前已批准的 `python -c` 预检与默认沙箱 CLI runner 权限不同。v1/v2 不重试。新的 [development v3 冻结包](../research/p30-agent-evidence-pair-presentation-v05-development-v3.json)绑定不同的 `second-run` passed 报告和关系判据；先取得其冻结提交七 job success，再以同一授权网络执行只读预检与唯一模型调用，停服审阅后才决定是否进入 held-out。P30 仍 implementing。
 
+同日结论：v3 冻结提交 `a57c0584b9a1cfab9693860b9041f7e4123ab923` / [run `40074217607`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40074217607) head 一致、七 job success；授权网络路径中的唯一 Qwen 调用 protocol passed、4/4 status/reason 准确、停服双 verifier passed。按[预注册判据审阅](../research/p30-agent-evidence-pair-presentation-v05-development-v3-review.json)，模型原文错误地称 `RX_PRESENT` 为运行中观察到 radio presence，并声称接收数据匹配发送数据；仅选取的 pair 和验收项文本均不支持这些细节。开发内容整体 `failed_for_the_requested_task`，原结果仍 `semantic_assessment=unassessed`，不重跑、不冻结 held-out。下一主实现门是版本化模型证据投影，把验收项原文与 status/reason 同源绑定并重新冻结开发题，保留 0.5 确定性用户可见基线和旧契约；独立人工评估仍 pending，P30 implementing。
+
 ## P30 事实选择与模型适用性进展（2026-10-08）
 
 提示 0.5 的实现、418 项回归、隔离安装与远端七 job 已通过（`c60d8af` / run `37646726266`）。qwen3.5 冻结结果为 11 次截断拒绝、1 次超时、0 次结构化通过；qwen3-vl 已复验 11 份服务失败归档，末份及汇总损坏；未形成有效模型答复。阶段质量门尚未通过。下一步完成独立人工语义/资料适用性验证，并在客户端时限内补足模型对照，再确定用途和是否需要更强基线或训练。XML 沿用文本解析与对象图；多模态是后续图像证据入口，不能替代 XML 校验。见[模型适用性评估](p30-model-suitability.md)。

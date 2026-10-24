@@ -1,0 +1,47 @@
+{
+  "artifact_type": "agent-evidence-pair-presentation-development-review",
+  "schema_version": "agent-evidence-pair-presentation-development-review-0.1",
+  "reviewed_at": "2026-10-24",
+  "cohort_id": "p30-agent-evidence-pair-presentation-v05-development-v3",
+  "freeze_sha256": "41b5d4ebc42aa399f5e9d6a26e288892c160225e316a359c6b3070046e20463b",
+  "freeze_commit": "a57c0584b9a1cfab9693860b9041f7e4123ab923",
+  "freeze_ci_run": "40074217607",
+  "freeze_ci_conclusion": "success; head matched; seven jobs succeeded",
+  "source_result": {
+    "path": "output/p30-pair-presentation-v05-development-v3/second-run-result-v04.json",
+    "sha256": "409064cb931464447688b2195202a401717bad987f79b93ada7b55ccc3351db8",
+    "result_id": "6e7a06256408918da128ff2ce159e2692dfe758a910afcf6ce4d61cfde7ec771",
+    "protocol_status": "passed",
+    "evidence_completeness": "complete; 4/4 pairs",
+    "model_calls": 1,
+    "tool_calls": 1,
+    "prompt_tokens": 1031,
+    "output_tokens": 115,
+    "total_tokens": 1146,
+    "model_digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "ollama_version": "0.31.1",
+    "semantic_assessment": "unassessed",
+    "offline_verification": "passed after stopping Ollama"
+  },
+  "presentation": {
+    "path": "output/p30-pair-presentation-v05-development-v3/second-run-presentation-v05.json",
+    "sha256": "131db89c36d1b5f5bbb5e45eee68c7e2da73c03523ec60c65f95727b9fe74bf5",
+    "result_id": "73783b2766ebfd2bf484b46d7dd1cb1f0da605f06121a1ac9f89085e917d1db8",
+    "presentation_status": "presented",
+    "source_protocol_status": "passed",
+    "pair_count": 4,
+    "model_summary_status": "unassessed",
+    "offline_verification": "passed after stopping Ollama"
+  },
+  "frozen_criteria": [
+    {"criterion_id": "complete_exact_pairs", "outcome": "passed", "reason": "All four IDs are each paired with the literal status and reason values in the frozen reference."},
+    {"criterion_id": "supported_relationship", "outcome": "failed", "reason": "The prose broadly says four checks support acceptance, but recasts RX_PRESENT as radio presence observed during execution; its report requirement is grouped receive signal structure, separate from the two same-run checks."},
+    {"criterion_id": "no_scope_expansion", "outcome": "failed", "reason": "The prose claims signal reception matched transmitted data for the same run. The cited RX_RUNTIME requirement records same-run observation, not equality of received and transmitted data. 'Radio presence' is also absent from the report."},
+    {"criterion_id": "deterministic_presentation", "outcome": "passed", "reason": "The user-visible summary has four exact verified pairs and the fixed boundary; model prose is separate and unassessed."},
+    {"criterion_id": "protocol_identity_and_budget", "outcome": "passed", "reason": "The source and presentation protocols passed, with one model call, 4/4 pairs, frozen digest and all limits respected."},
+    {"criterion_id": "offline_replay", "outcome": "passed", "reason": "The saved 0.4 and 0.5 artifacts both verified against the frozen report and plan after Ollama stopped."}
+  ],
+  "overall": "failed_for_the_requested_task",
+  "assessment_boundary": "Codex post-inference review of frozen criteria is non-blind and not independent human assessment. The raw result's semantic_assessment remains unassessed; no retrospective edit or retry of this cohort.",
+  "next_gate": "Keep v0.5 deterministic facts as the user-visible baseline. Before another held-out cohort, version the model evidence projection to include exact requirement text or use a separately auditable stronger text model, then freeze a new development question with a criterion against unsupported semantic expansions. Preserve v0.3/v0.4/v0.5 and previous cohorts."
+}
