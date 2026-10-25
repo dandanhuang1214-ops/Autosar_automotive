@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-25 最新交接：0.5 附加解释 development v3 的唯一模型调用虽复验通过，但模型原文补造报告外语义，内容门失败；旧结果不重跑。[验收项原文绑定证据输入 0.6](p30-agent-evidence-pair-projection-v06-guide.md)实现 `9553d8b` / [run `40119433138`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40119433138) 七 job 全部 success，工程门 remote-accepted；原始验收描述与完整 status/reason 对同源绑定，模型原文仍 unassessed。全新 `timeout` development v1 已准备预推理冻结；下一步先取得冻结提交自己的七 job 成功，再唯一一次调用并审阅。内容门通过前不冻结 held-out v2。独立人工适用性与 P25 人工演示仍需实际审阅，P30 不宣称整阶段完成。
+2026-10-25 最新交接：0.5 development v3 的模型原文补造报告外语义，内容门失败；旧结果不重跑。[验收项原文绑定证据输入 0.6](p30-agent-evidence-pair-projection-v06-guide.md)实现 `9553d8b` / [run `40119433138`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40119433138) 七 job 全部 success，工程门 remote-accepted。新 `timeout` development v1 冻结提交 `ec03dfc` / [run `40120771981`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40120771981) 七 job success 后，唯一模型请求在冷装载期间超时；确定性事实复验通过，没有模型内容可评，不重跑。下一步先让字节不同的 `wrong-mapping` development v2 冻结提交取得自身七 job CI，随后按 100 秒服务/120 秒总预算调用一次。内容门通过前不冻结 held-out v2；独立人工适用性与 P25 人工演示仍需实际审阅，P30 不宣称整阶段完成。
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。

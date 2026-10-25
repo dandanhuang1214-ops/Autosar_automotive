@@ -1,0 +1,46 @@
+{
+  "artifact_type": "agent-evidence-pair-projection-development-review",
+  "schema_version": "agent-evidence-pair-projection-development-review-0.1",
+  "cohort_id": "p30-agent-evidence-pair-projection-v06-development-v1",
+  "freeze_commit": "ec03dfce2af0937b0680b151ca99b6327e62ea1f",
+  "freeze_ci_run": "40120771981",
+  "freeze_ci_conclusion": "success",
+  "freeze_file_sha256": "aa232fd9f70e5d7f1ecb0587ca080fb7c818651c6fefcb99ec97c073a5b970e1",
+  "source_result": {
+    "path": "output/p30-pair-projection-v06-development-v1/timeout-result-v06.json",
+    "sha256": "6de8b63eb6f443afe906c98fad4cb9badae2cef75a516d447d86bc986a2cba32",
+    "result_id": "835051ec6b1a387cb3ebbe436884a83a91a1c4b3fdc4c3bb3cc95f3e89d87106",
+    "protocol_status": "blocked",
+    "reason": "service_unavailable:TimeoutError",
+    "complete_pair_count": 4,
+    "model_calls": 1,
+    "tool_calls": 1,
+    "prompt_tokens": 0,
+    "output_tokens": 0,
+    "model_response_present": false,
+    "offline_verification": "passed"
+  },
+  "presentation": {
+    "path": "output/p30-pair-projection-v06-development-v1/timeout-presentation-v06.json",
+    "sha256": "6ed2e40238ac0de29588d3dbdaeca4142b103de2310783d20a10e2be0b08a715",
+    "result_id": "6846caa74e23be339bca948468812fc53c4ddd03715d1b8d8186f8600fdef81e",
+    "presentation_status": "presented",
+    "source_protocol_status": "blocked",
+    "pair_count": 4,
+    "model_summary_status": "unavailable",
+    "offline_verification": "passed"
+  },
+  "preflight": "In the authorized network environment immediately before the unique runner, /api/version returned Ollama 0.31.1 and /api/tags returned the frozen qwen3.5:2b digest.",
+  "environment_observation": "The stopped container's read-only log shows POST /api/chat reached Ollama and returned HTTP 499 after 30.520291323 seconds; it also records client connection closed during model loading and load cancellation. This supports a client timeout during cold model loading, but no model output or semantic result was obtained.",
+  "criteria": [
+    {"criterion_id": "exact_pairs", "status": "unassessable", "reason": "No model response was recorded."},
+    {"criterion_id": "supported_relationship", "status": "unassessable", "reason": "No model response was recorded."},
+    {"criterion_id": "no_semantic_invention", "status": "unassessable", "reason": "No model response was recorded."},
+    {"criterion_id": "protocol_identity_and_budget", "status": "blocked", "reason": "Identity and 4/4 source pairs matched; one request timed out before response, so protocol_status=blocked and no token usage was returned."},
+    {"criterion_id": "deterministic_presentation", "status": "passed", "reason": "Four verified status/reason pairs and the fixed boundary were rendered separately from unavailable model prose."},
+    {"criterion_id": "offline_replay", "status": "passed", "reason": "Source and presentation verifiers passed after Ollama was stopped."}
+  ],
+  "overall": "blocked_environment",
+  "semantic_assessment": "unassessed",
+  "retry_policy_applied": "This frozen development v1 was run once and will not be rerun."
+}

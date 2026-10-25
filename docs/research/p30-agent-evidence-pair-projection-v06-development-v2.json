@@ -1,0 +1,72 @@
+{
+  "artifact_type": "agent-evidence-pair-projection-development-freeze",
+  "schema_version": "agent-evidence-pair-projection-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-25",
+  "cohort_id": "p30-agent-evidence-pair-projection-v06-development-v2",
+  "split": "development-only-distinct-unassessed-outcome",
+  "formation": "The public P29 wrong-mapping report has a different byte hash and unassessed runtime outcome from v0.6 development v1 timeout and the earlier v0.5 development cases. It comes from the same synthetic scenario suite and is not independent external evidence. The v1 frozen request timed out during cold model loading and will not be retried.",
+  "implementation": {
+    "commit": "9553d8b5d13ca78d56781a307b01266d168b6f09",
+    "ci_run": "40119433138",
+    "ci_conclusion": "success",
+    "source_protocol": "agent-evidence-pair-summary-result-0.6",
+    "presentation_protocol": "agent-evidence-pair-presentation-0.6"
+  },
+  "input": {
+    "producer_command": ".venv/bin/python scripts/run_ecuc_runtime_scenarios.py --output output/p30-pair-presentation-v05-development-v1/scenarios",
+    "case": "wrong-mapping",
+    "project_snapshot": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/wrong-mapping/bundle/inputs/project.json",
+    "project_snapshot_sha256": "d461862674580356af5f9e56458a52bee506bcba39922586380b4b3f60630454",
+    "report": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/wrong-mapping/bundle/project-report.json",
+    "report_sha256": "54887dd823d27216376e86d890e1061d1ff4f3e03a4edb22c0c5d8f1531b7e1e",
+    "project_status": "unassessed",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-projection-v06-development-v2/wrong-mapping-plan.json",
+    "sha256": "9e98c6e59d34e4f48ee4b86514df87ef0e59a3e918def4cf103732ab3427af36",
+    "plan_id": "13be2f7fa9b5e7dc57113dd91741710b6b59e64770cf9fbe5ffea9aba289be5b",
+    "check_ids": ["COMMUNICATION", "RX_PRESENT", "RUNTIME", "RX_RUNTIME"],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据此项目报告，逐项列出 COMMUNICATION、RX_PRESENT、RUNTIME、RX_RUNTIME 的原始 status/reason，并解释前两项通过为何不能将后两项 unassessed 说成已通过或已失败。只陈述验收原文和原因直接支持的关系；不要补造运行超时、帧内容匹配、根因、物理 ECU 或实车执行。"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived, non-blind reference frozen before target inference; it is not independent human gold and is not included in the model request.",
+  "reference_pairs": {
+    "COMMUNICATION": {"requirement_text": "Require communication structural evidence", "status": "passed", "reason": "linked_in_scope"},
+    "RX_PRESENT": {"requirement_text": "Protect grouped receive signal structure", "status": "passed", "reason": "observed"},
+    "RUNTIME": {"requirement_text": "Protected candidate has same-run CAN observation", "status": "unassessed", "reason": "declared_runtime_identity_mismatch"},
+    "RX_RUNTIME": {"requirement_text": "Candidate receive path has same-run observation", "status": "unassessed", "reason": "another_binding_rejected"}
+  },
+  "reference_explanation": "COMMUNICATION 的 passed/linked_in_scope 和 RX_PRESENT 的 passed/observed 仅记录各自结构/存在检查。RUNTIME 为 unassessed/declared_runtime_identity_mismatch，RX_RUNTIME 为 unassessed/another_binding_rejected；它们没有被本报告认定为运行通过或运行失败，项目整体也是 unassessed。前两项通过不能把未评估运行项补写为实际观察成功，也不能从 reason 推出超时、帧内容一致或根因。",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "version_and_digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls": 1,
+    "max_tool_calls": 1,
+    "service_timeout_seconds": 100,
+    "max_total_tokens": 4096,
+    "max_output_tokens": 512,
+    "context_window": 8192,
+    "max_seconds": 120,
+    "retry_policy": "no retries; retain blocked/refused/failed content and do not rerun this case"
+  },
+  "criteria": [
+    {"criterion_id": "exact_pairs", "description": "Model prose names all four check IDs and each literal status/reason without omission or merged reasons."},
+    {"criterion_id": "unassessed_relationship", "description": "Model explains that static/existence passed checks cannot convert RUNTIME and RX_RUNTIME unassessed to passed or failed, and project acceptance remains unassessed."},
+    {"criterion_id": "no_semantic_invention", "description": "Model does not claim radio presence, a measured timeout, frame value equality, root cause, physical ECU, configuration writing or real-vehicle execution."},
+    {"criterion_id": "protocol_identity_and_budget", "description": "v0.6 source has 4/4 bound requirement text and pairs, one model call, fixed model version/digest, <=100-second service timeout and <=120-second total budget; protocol passes and offline verifier passes."},
+    {"criterion_id": "deterministic_presentation", "description": "v0.6 user-visible summary contains only four verified pairs and fixed boundary; model prose stays separate and unassessed."},
+    {"criterion_id": "offline_replay", "description": "With Ollama stopped, the exact saved v0.6 source and presentation verify against the frozen report and plan."}
+  ],
+  "source_result_path": "output/p30-pair-projection-v06-development-v2/wrong-mapping-result-v06.json",
+  "presentation_path": "output/p30-pair-projection-v06-development-v2/wrong-mapping-presentation-v06.json",
+  "call_policy": "Before inference require this freeze commit's head-matching seven-job CI success, exact report/plan/project hashes, absent result paths, and Ollama 0.31.1 with frozen qwen3.5:2b digest. Run read-only Endpoint /api/version and /api/tags preflight in the same authorized network environment as the unique v0.6 CLI call. Use --timeout 100 and --max-seconds 120 to allow cold model loading, still with one model call. Then render v0.6 without another model call, stop Ollama and verify both outputs offline. Any block/refusal/content failure is retained without retry.",
+  "boundary": "Development-only test of whether bound requirement text limits unsupported explanation beyond deterministic facts; no claim of held-out generalization or independent human review."
+}
