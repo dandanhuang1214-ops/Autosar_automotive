@@ -29,6 +29,10 @@ from automotive_workbench.agent_evidence_pair_presentation_v06 import (
     build_agent_evidence_pair_presentation_v06,
     verify_agent_evidence_pair_presentation_v06,
 )
+from automotive_workbench.agent_evidence_pair_coverage_v07 import (
+    assess_agent_evidence_pair_model_v07,
+    verify_agent_evidence_pair_model_coverage_v07,
+)
 from automotive_workbench.agent_runtime import AgentBudget
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.model_client import ModelCapabilities
@@ -41,11 +45,12 @@ ROOT = Path(__file__).resolve().parents[1]
 class PairSummaryClient:
     capabilities = ModelCapabilities(False, False, False, True, True)
 
-    def __init__(self) -> None:
+    def __init__(self, content: str | None = None) -> None:
         self.service_calls = 0
         self.identity_calls = 0
         self.calls = 0
         self.payloads: list[dict] = []
+        self.content = content
 
     def service_version(self) -> str:
         self.service_calls += 1
@@ -64,7 +69,7 @@ class PairSummaryClient:
             "done_reason": "stop",
             "message": {
                 "role": "assistant",
-                "content": (
+                "content": self.content if self.content is not None else (
                     "COMMUNICATION、APPLICATION、TASK-BINDINGS、MODE-RULES 均为 "
                     "passed（linked_in_scope）；IMPACT 为 passed"
                     "（explicit_dependencies_assessed）。这些静态记录不证明配置写入或实车执行。"
@@ -233,6 +238,47 @@ class AgentEvidencePairSummaryTests(unittest.TestCase):
         self.assertEqual(client.calls, 0)
         self.assertEqual(result["trace"]["usage"]["model_calls"], 0)
         verify_agent_evidence_pair_summary_result(changed_report, plan, result)
+
+    def test_v07_coverage_replays_exact_lines_and_detects_omission(self) -> None:
+        plan = self.plan(["COMMUNICATION", "APPLICATION"])
+        lines = [
+            'COMMUNICATION: status="passed"; reason="linked_in_scope"',
+            'APPLICATION: status="passed"; reason="linked_in_scope"',
+        ]
+        for label, content, expected in (
+            ("complete", "\n".join(lines), "complete"),
+            ("omitted", lines[0], "incomplete"),
+            ("duplicate", "\n".join([*lines, lines[0]]), "incomplete"),
+        ):
+            with self.subTest(label=label):
+                source = run_agent_evidence_pair_summary(
+                    self.report, plan, PairSummaryClient(content), "fixture:1",
+                    requirement_text_projection=True,
+                )
+                presentation = build_agent_evidence_pair_presentation_v06(
+                    self.report, plan, source
+                )
+                path = self.root / f"coverage-{label}.json"
+                path.write_text(json.dumps(presentation), encoding="utf-8")
+                result = assess_agent_evidence_pair_model_v07(self.report, plan, path)
+                self.assertEqual(result["coverage_status"], expected)
+                self.assertEqual(result["semantic_assessment"], "unassessed")
+                self.assertEqual(
+                    verify_agent_evidence_pair_model_coverage_v07(
+                        self.report, plan, path, result
+                    )["coverage_status"], expected,
+                )
+                schema = json.loads(
+                    (ROOT / "schemas/agent-evidence-pair-model-coverage-v0.7.schema.json")
+                    .read_text(encoding="utf-8")
+                )
+                Draft202012Validator(schema).validate(result)
+                corrupted = copy.deepcopy(result)
+                corrupted["checks"][0]["occurrences"] += 1
+                with self.assertRaises(ValueError):
+                    verify_agent_evidence_pair_model_coverage_v07(
+                        self.report, plan, path, corrupted
+                    )
 
     def test_missing_check_refuses_before_any_model_service_contact(self) -> None:
         plan = self.plan(["COMMUNICATION", "NOT-IN-REPORT"])

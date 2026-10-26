@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://automotive-workbench.local/schemas/agent-evidence-pair-model-coverage-v0.7.schema.json",
+  "title": "Agent Evidence Pair Model Coverage v0.7",
+  "description": "Replayable literal-line coverage of separate, semantically unassessed model prose.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result_id", "artifact_type", "schema_version", "presentation_id", "presentation_sha256", "coverage_status", "checks", "semantic_assessment", "boundary"],
+  "properties": {
+    "result_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact_type": {"const": "agent-evidence-pair-model-coverage"},
+    "schema_version": {"const": "agent-evidence-pair-model-coverage-0.7"},
+    "presentation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "presentation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "coverage_status": {"enum": ["complete", "incomplete", "unavailable"]},
+    "checks": {
+      "type": "array", "maxItems": 16,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["check_id", "expected_line", "occurrences"],
+        "properties": {
+          "check_id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,128}$"},
+          "expected_line": {"type": "string", "minLength": 1},
+          "occurrences": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "semantic_assessment": {"const": "unassessed"},
+    "boundary": {"const": "Exact line coverage detects omitted or duplicated literal pairs only. It does not establish that model relationships or other claims are supported."}
+  }
+}

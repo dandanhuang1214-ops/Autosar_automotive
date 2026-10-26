@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-26）：P30 的[验收项原文绑定证据输入 0.6](p30-agent-evidence-pair-projection-v06-guide.md)工程实现 `9553d8b` / [run `40119433138`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40119433138) 七 job success。字节不同的 `wrong-mapping` development v2 冻结提交 `0c25b9d` / [run `40159165690`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40159165690) 七 job success 后只调用 Qwen 一次：协议通过、4/4 pair 完整，停服双离线复验通过；模型原文遗漏三项具体 reason 和项目整体 unassessed，按预注册内容门 `failed_for_the_requested_task`。确定性呈现仍准确，模型原文仍单列 unassessed。本题不修改、不重跑；下一项实现版本化、可离线复验的模型原文精确 pair 覆盖门，并在新开发题验证，不能把该门等同于语义或人工适用性。旧 0.3/0.4/0.5/0.6 结果保持，P30 implementing；held-out v2 与独立人工审阅仍待完成。
+最新补充（2026-10-26）：P30 的 0.6 `wrong-mapping` development v2 冻结提交 `0c25b9d` / [run `40159165690`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40159165690) 七 job success 后只调用 Qwen 一次：协议通过、4/4 pair 完整，停服双离线复验通过；模型原文遗漏具体 reason 和项目整体 unassessed，按预注册内容门 `failed_for_the_requested_task`。旧题不重跑。[模型原文字面覆盖门 0.7](p30-agent-evidence-pair-model-coverage-v07-guide.md)已本地实现，旧结果离线得 `incomplete`，确定性呈现保持 4/4；0.7 远端 CI 待验收。下一项取得本实现七 job，再冻结新的规范行开发题；字面覆盖不等于语义或人工适用性。P30 implementing；held-out v2 与独立人工审阅仍待完成。
 
 最新状态（2026-10-24）：P30 的 0.5 实现已 remote-accepted（`fe9777cf` / run `40055697502`）。附加解释 development v1/v2 的唯一运行因默认沙箱网络阻断，0 次模型调用；权限对照已定位，旧题不重试。不同报告的 development v3 冻结提交 `a57c0584` / [run `40074217607`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40074217607) head 一致、七 job success；授权网络环境中唯一 Qwen 调用与 0.4/0.5 停服离线复验通过，4/4 pair 精确，但原文扩张为报告不支持的“radio presence”和“接收数据匹配发送数据”，内容门 `failed_for_the_requested_task`。0.5 用户可见事实表仍准确，模型原文单列 unassessed。下一主实现门版本化模型证据投影，把验收项原文与 pair 同源绑定，再冻结新开发题；held-out 与独立人工 assessment 仍 pending，P30 implementing。下文较早的“当前总览”是历史快照，以本段和末尾记录为准。
 
@@ -2081,3 +2081,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 唯一 0.6 调用返回 `protocol_status=passed`，4/4 验收原文与证据对完整，1 次只读工具、1 次模型调用，1094 prompt + 102 output = 1196 tokens。源 result `b812a900…c35a1c02` / SHA-256 `5695fc07…2c0`；确定性呈现 `c1369a41…e917d1db8` / SHA-256 `9a8f75cf…e778a`，显示四项精确原值和固定边界，模型原文单列 `unassessed`。Ollama 停止后，两个确切结果对报告/plan 的离线 verifier 均 passed。
 - 按[预冻结判据审阅](../research/p30-agent-evidence-pair-projection-v06-development-v2-review.json)，模型原文遗漏 `RX_PRESENT` 的 `observed`、两项 runtime reason 和项目整体 `unassessed`；虽未补造具体运行或根因，`exact_pairs` 和 `unassessed_relationship` 失败，整体 `failed_for_the_requested_task`。原 result 的 `semantic_assessment=unassessed` 不被事后审阅改写；Codex 对照非盲且非独立人工。本题不修改、不重跑，不冻结 held-out v2。
 - 下一项：在 0.6 之外增加版本化模型原文精确 pair 覆盖门，缺漏时标记模型文本不可用于任务，同时保留确定性事实呈现与原始 trace；用新 report 和预冻结开发题验证。该覆盖门只能识别字面缺漏，不能证明关系解释正确。独立人工适用性审阅、P25 人工演示/反馈仍待实际完成，P30 implementing。
+
+### P30：模型原文字面覆盖门 0.7（2026-10-26，本地验证）
+
+- 新增独立 0.7 coverage 产物、schema 和 assess/verify CLI。读取并复验 0.6 呈现，按 plan 顺序检查模型原文是否对每项恰好输出一行精确 `check_id/status/reason`；缺漏、重复和无模型原文分别标记 `incomplete`/`unavailable`，结果绑定呈现文件 SHA-256，可停服离线复验。旧请求、结果和确定性用户摘要不变；字面 complete 不标记语义通过。
+- 真实旧 development v2 的 0.6 呈现经 0.7 评估为 `incomplete`，0/4 条规范行；result `ef6d8001…95f3c21`，离线 verify passed。它是严格格式门，不改写旧人工逐项审阅的内容结论。正向完整、漏项、重复与篡改拒绝的 0.7 定向测试通过；13 项 PairSummary/contract 定向测试通过，97 schemas / 79 bound / 25 syntax-only、Ruff、scoped mypy 和 diff check 通过。
+- 首次默认沙箱全量 531 tests 中 1 项 fixture 因禁止绑定 `127.0.0.1` 报 `PermissionError`、2 项环境跳过；在具备本地回环权限的环境重跑同一全量命令，531 tests 通过（2 项环境跳过）。当前 local-accepted；本实现提交、推送、七 job CI 待完成。下一步完成远端工程门，再以新报告冻结规范行与关系判据，按一次调用预算验证模型内容。held-out v2 和独立人工审阅仍 pending；P25 人工演示/外部反馈未被代理测试代替。

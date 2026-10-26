@@ -424,6 +424,22 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_pair_presentation_v06_verify.add_argument("report", type=Path)
     evidence_pair_presentation_v06_verify.add_argument("plan", type=Path)
     evidence_pair_presentation_v06_verify.add_argument("result", type=Path)
+    evidence_pair_coverage_v07 = commands.add_parser(
+        "assess-agent-evidence-pair-model-v07",
+        help="Check literal pair coverage in separate v0.6 model prose",
+    )
+    evidence_pair_coverage_v07.add_argument("report", type=Path)
+    evidence_pair_coverage_v07.add_argument("plan", type=Path)
+    evidence_pair_coverage_v07.add_argument("presentation", type=Path)
+    evidence_pair_coverage_v07.add_argument("--output", type=Path, required=True)
+    evidence_pair_coverage_v07_verify = commands.add_parser(
+        "verify-agent-evidence-pair-model-v07",
+        help="Replay a literal model coverage result offline",
+    )
+    evidence_pair_coverage_v07_verify.add_argument("report", type=Path)
+    evidence_pair_coverage_v07_verify.add_argument("plan", type=Path)
+    evidence_pair_coverage_v07_verify.add_argument("presentation", type=Path)
+    evidence_pair_coverage_v07_verify.add_argument("result", type=Path)
     evidence_comparison_freeze = commands.add_parser(
         "freeze-agent-evidence-comparison",
         help="Freeze pre-inference reference answers and evidence plans",
@@ -1690,6 +1706,31 @@ def main() -> int:
             result = verify_agent_evidence_pair_presentation_v06(
                 args.report, load_agent_evidence_pair_plan(args.plan),
                 load_agent_evidence_pair_presentation_v06(args.result),
+            )
+        elif args.command == "assess-agent-evidence-pair-model-v07":
+            from automotive_workbench.agent_evidence_pair_summary import load_agent_evidence_pair_plan
+            from automotive_workbench.agent_evidence_pair_coverage_v07 import (
+                assess_agent_evidence_pair_model_v07,
+                save_agent_evidence_pair_model_coverage_v07,
+            )
+
+            plan = load_agent_evidence_pair_plan(args.plan)
+            assessed = assess_agent_evidence_pair_model_v07(
+                args.report, plan, args.presentation
+            )
+            result = save_agent_evidence_pair_model_coverage_v07(
+                args.report, plan, args.presentation, assessed, args.output
+            )
+        elif args.command == "verify-agent-evidence-pair-model-v07":
+            from automotive_workbench.agent_evidence_pair_summary import load_agent_evidence_pair_plan
+            from automotive_workbench.agent_evidence_pair_coverage_v07 import (
+                load_agent_evidence_pair_model_coverage_v07,
+                verify_agent_evidence_pair_model_coverage_v07,
+            )
+
+            result = verify_agent_evidence_pair_model_coverage_v07(
+                args.report, load_agent_evidence_pair_plan(args.plan),
+                args.presentation, load_agent_evidence_pair_model_coverage_v07(args.result),
             )
         elif args.command == "freeze-agent-evidence-comparison":
             from automotive_workbench.agent_evidence_comparison import (
