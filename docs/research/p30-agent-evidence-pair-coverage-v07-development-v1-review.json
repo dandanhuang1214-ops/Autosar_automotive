@@ -1,0 +1,54 @@
+{
+  "artifact_type": "agent-evidence-pair-coverage-development-review",
+  "schema_version": "agent-evidence-pair-coverage-development-review-0.1",
+  "cohort_id": "p30-agent-evidence-pair-coverage-v07-development-v1",
+  "freeze_commit": "bab78b0238784aabe7cb0d7da4b7611760c3d248",
+  "freeze_ci_run": "40261653302",
+  "freeze_ci_conclusion": "success",
+  "freeze_file_sha256": "e1a694dd9428964a0da0f28e668a6f29dda4efdafa163af5d1143c5a792bc1a9",
+  "source_result": {
+    "path": "output/p30-pair-coverage-v07-development-v1/static-rejection-result-v06.json",
+    "sha256": "9e66bb83621ac8f76391ee23b6b80957c1d7c341c50ce5275488c8c6e7a1edfe",
+    "result_id": "1a666fa2bea5e026817d2d351539a5014221d0dc570a24c267d01a2dba91cfbb",
+    "protocol_status": "passed",
+    "complete_pair_count": 4,
+    "model_calls": 1,
+    "tool_calls": 1,
+    "prompt_tokens": 1128,
+    "output_tokens": 90,
+    "elapsed_ms": 69018.61,
+    "offline_verification": "passed"
+  },
+  "presentation": {
+    "path": "output/p30-pair-coverage-v07-development-v1/static-rejection-presentation-v06.json",
+    "sha256": "fd42bd208ed122aff383d26ab5525ab0112af4ddee77756b8892249857e59742",
+    "result_id": "15d92c81bc8161781541ae9383736801466b9976811e60d1f69a0c8edd194fee",
+    "presentation_status": "presented",
+    "source_protocol_status": "passed",
+    "pair_count": 4,
+    "model_summary_status": "unassessed",
+    "offline_verification": "passed"
+  },
+  "coverage": {
+    "path": "output/p30-pair-coverage-v07-development-v1/static-rejection-coverage-v07.json",
+    "sha256": "aed533402aabe9e38542ca9f079aae2a2e0b1dbb373b1af1cb70a2e94890eebe",
+    "result_id": "9fe6cf0b71bfd6208bee708b2862e9392e50f26e79e27a9590ec52ffcb579dd1",
+    "coverage_status": "incomplete",
+    "covered_count": 0,
+    "required_count": 4,
+    "offline_verification": "passed"
+  },
+  "preflight": "The freeze commit's head-matching seven CI jobs succeeded; freeze, report, project snapshot and plan hashes matched; all three outputs were absent; Ollama 0.31.1 and frozen qwen3.5:2b digest matched in the authorized network environment before the unique request.",
+  "criteria": [
+    {"criterion_id": "literal_pair_coverage", "status": "failed", "reason": "The response contained no exact canonical check/status/reason line; v0.7 reported 0/4 and incomplete."},
+    {"criterion_id": "supported_relationship", "status": "failed", "reason": "The response mentioned static rejection and project failed, but described the size failure and both runtime blocks as sharing one root cause and as non-independent events; those causal and event-identity claims are not established by the selected report pairs."},
+    {"criterion_id": "no_semantic_invention", "status": "failed", "reason": "The shared-root-cause and non-independent-event assertions exceed the recorded reasons. No measured timeout, frame equality, physical ECU, configuration-writing or real-vehicle assertion was made."},
+    {"criterion_id": "protocol_identity_and_budget", "status": "passed", "reason": "Four requirement texts and pairs were bound; one model call and one read tool call used 1128 prompt and 90 output tokens, with 69018.61 ms elapsed. Protocol and offline verifier passed within frozen budgets."},
+    {"criterion_id": "deterministic_presentation", "status": "passed", "reason": "The visible summary contains all four verified literal pairs and the fixed boundary; model prose remains separate and unassessed."},
+    {"criterion_id": "offline_replay", "status": "passed", "reason": "Source, presentation and coverage verifiers passed after Ollama was stopped."}
+  ],
+  "overall": "failed_for_the_requested_task",
+  "semantic_assessment": "unassessed",
+  "review_boundary": "Non-blind Codex comparison against a pre-frozen reference, not independent human gold. Protocol success and deterministic coverage scoring do not certify model-content usability.",
+  "retry_policy_applied": "The frozen development case was run once; neither question nor result will be changed or rerun."
+}
