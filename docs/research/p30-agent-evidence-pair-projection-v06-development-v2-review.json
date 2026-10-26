@@ -1,0 +1,44 @@
+{
+  "artifact_type": "agent-evidence-pair-projection-development-review",
+  "schema_version": "agent-evidence-pair-projection-development-review-0.1",
+  "cohort_id": "p30-agent-evidence-pair-projection-v06-development-v2",
+  "freeze_commit": "0c25b9db2bb7bab43e96f5d741b4b8915bfa45c4",
+  "freeze_ci_run": "40159165690",
+  "freeze_ci_conclusion": "success",
+  "freeze_file_sha256": "3b7702c0834a0c27da444b0d023e67ddfc9bc37cb4448c015cbbbcf8f1e8367a",
+  "source_result": {
+    "path": "output/p30-pair-projection-v06-development-v2/wrong-mapping-result-v06.json",
+    "sha256": "5695fc076dc3e484d4f763c6a882fe661b1575d293968784b96a08035f4625c0",
+    "result_id": "b812a900741d22e4c38634b8c35b982404974721c748755f220e8e91c35a1c02",
+    "protocol_status": "passed",
+    "complete_pair_count": 4,
+    "model_calls": 1,
+    "tool_calls": 1,
+    "prompt_tokens": 1094,
+    "output_tokens": 102,
+    "offline_verification": "passed"
+  },
+  "presentation": {
+    "path": "output/p30-pair-projection-v06-development-v2/wrong-mapping-presentation-v06.json",
+    "sha256": "9a8f75cfd52c1a0373557cb2b8ed6328fddd21ded0aafc6ffa83fba3cc1e778a",
+    "result_id": "c1369a414d273853e6dabb21b668ff5fc1a34b1536b2da6a1e7af060f6fe85c5",
+    "presentation_status": "presented",
+    "source_protocol_status": "passed",
+    "pair_count": 4,
+    "model_summary_status": "unassessed",
+    "offline_verification": "passed"
+  },
+  "preflight": "The freeze commit's seven CI jobs succeeded. Input and plan hashes matched, both result paths were absent, and the same authorized network environment returned Ollama 0.31.1 and the frozen qwen3.5:2b digest immediately before the unique run.",
+  "criteria": [
+    {"criterion_id": "exact_pairs", "status": "failed", "reason": "The model omitted RX_PRESENT reason=observed and both runtime reasons; it described the runtime statuses only collectively."},
+    {"criterion_id": "unassessed_relationship", "status": "failed", "reason": "The model said the two passed checks do not justify treating the runtime checks as passed or failed, but omitted the recorded runtime reasons and the project's overall unassessed acceptance status."},
+    {"criterion_id": "no_semantic_invention", "status": "passed", "reason": "The answer did not assert a timeout, frame equality, root cause, physical ECU behavior, configuration writing, or real-vehicle execution."},
+    {"criterion_id": "protocol_identity_and_budget", "status": "passed", "reason": "Four requirement texts and pairs were bound; one model call and one read tool call used 1094 prompt and 102 output tokens. Protocol and offline verifier passed within the frozen service and total budgets."},
+    {"criterion_id": "deterministic_presentation", "status": "passed", "reason": "The visible summary contains all four verified literal pairs and the fixed boundary; model prose remains separate and unassessed."},
+    {"criterion_id": "offline_replay", "status": "passed", "reason": "Source and presentation verifiers passed after Ollama was stopped."}
+  ],
+  "overall": "failed_for_the_requested_task",
+  "semantic_assessment": "unassessed",
+  "review_boundary": "This is a non-blind Codex comparison against the frozen reference, not an independent human assessment. Protocol success and deterministic presentation do not establish model-content usability.",
+  "retry_policy_applied": "This frozen development v2 was run once and will not be rerun."
+}
