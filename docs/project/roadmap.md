@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-26 最新交接：0.6 `wrong-mapping` development v2 冻结 `0c25b9d` / [run `40159165690`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40159165690) 七 job success；唯一 Qwen 请求与停服双复验通过，但模型原文漏掉具体 reason 和项目整体 unassessed，[内容审阅](../research/p30-agent-evidence-pair-projection-v06-development-v2-review.json)为 `failed_for_the_requested_task`，旧题不重跑。[模型原文字面覆盖门 0.7](p30-agent-evidence-pair-model-coverage-v07-guide.md)已本地实现并在该旧结果上离线检出 `incomplete`；下一项先取得 0.7 自身七 job CI，再以新报告冻结规范行与关系判据并做单次模型开发验证。字面覆盖不等于语义正确；内容开发门通过前不冻结 held-out v2。独立人工适用性与 P25 人工演示仍待实际审阅，P30 不宣称整阶段完成。
+2026-10-26 最新交接：0.6 `wrong-mapping` development v2 冻结 `0c25b9d` / [run `40159165690`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40159165690) 七 job success；唯一 Qwen 请求与停服双复验通过，但模型原文漏掉具体 reason 和项目整体 unassessed，[内容审阅](../research/p30-agent-evidence-pair-projection-v06-development-v2-review.json)为 `failed_for_the_requested_task`，旧题不重跑。[模型原文字面覆盖门 0.7](p30-agent-evidence-pair-model-coverage-v07-guide.md)实现 `0cb238b` / [run `40252739257`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40252739257) 七 job success，工程门 remote-accepted；旧结果离线检出 `incomplete`。下一项以新报告冻结规范行与关系判据并做单次模型开发验证。字面覆盖不等于语义正确；内容开发门通过前不冻结 held-out v2。独立人工适用性与 P25 人工演示仍待实际审阅，P30 不宣称整阶段完成。
 
 1. P20 最终实现 `31ca4ef` / run `35979820300` 的七 job 与两项目本机 SocketCAN 全流程验收保持，见 [P20 验收表](p20-acceptance.md)。
 2. P21 已 remote-accepted：实现提交 `79d1f3b`、[run `36022099415`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/36022099415) 七 job 全部 success；两平台对象图/规则/影响/迁移复验场景及上传均通过，见 [P21 验收表](p21-acceptance.md)。
