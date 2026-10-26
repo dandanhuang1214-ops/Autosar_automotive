@@ -1,0 +1,73 @@
+{
+  "artifact_type": "agent-evidence-pair-coverage-development-freeze",
+  "schema_version": "agent-evidence-pair-coverage-development-freeze-0.1",
+  "status": "pre_inference_frozen",
+  "frozen_at": "2026-10-26",
+  "cohort_id": "p30-agent-evidence-pair-coverage-v07-development-v1",
+  "split": "development-only-static-rejection",
+  "formation": "The public P29 static-rejection report is byte-distinct from the v0.6 timeout and wrong-mapping development reports. The same synthetic scenario family has appeared in earlier platform evaluations, so this is not an independent external or statistically unseen case. Earlier frozen cases and their results will not be changed or rerun.",
+  "implementation": {
+    "coverage_commit": "0cb238b253b79240b73453887c8a62d454ce0967",
+    "coverage_ci_run": "40252739257",
+    "coverage_ci_conclusion": "success",
+    "source_protocol": "agent-evidence-pair-summary-result-0.6",
+    "presentation_protocol": "agent-evidence-pair-presentation-0.6",
+    "coverage_protocol": "agent-evidence-pair-model-coverage-0.7"
+  },
+  "input": {
+    "case": "static-rejection",
+    "project_snapshot": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/static-rejection/bundle/inputs/project.json",
+    "project_snapshot_sha256": "795999c79aaaac6698e35cd08d38bb809ec9c7630036c92c4ff854b3bfe5b6b7",
+    "report": "output/p30-pair-presentation-v05-development-v1/scenarios/relocated/projects/static-rejection/bundle/project-report.json",
+    "report_sha256": "46c6602b10cc67c13a45696c604df6367b56297efd2bd74054d5a74dcce5aaad",
+    "project_status": "failed",
+    "report_verification": "passed"
+  },
+  "plan": {
+    "path": "output/p30-pair-coverage-v07-development-v1/static-rejection-plan.json",
+    "sha256": "2e7b576230ff65963001fa2e8bb61bfa31ba2ab84b464f6bbf9aca584bd980b1",
+    "plan_id": "b2da3c55bad3d23c528dd1858cdcb960e6a7a41fbdd7fdc0bcfbd3f62a5cc9bc",
+    "check_ids": ["COMMUNICATION", "SIGNAL_SIZE", "RUNTIME", "RX_RUNTIME"],
+    "required_fields": ["status", "reason"],
+    "question": "仅依据本报告，先按计划顺序对 COMMUNICATION、SIGNAL_SIZE、RUNTIME、RX_RUNTIME 各输出一整行，格式必须精确为 CHECK_ID: status=\"原始值\"; reason=\"原始值\"。随后用一句话解释 SIGNAL_SIZE 的静态失败与两项 runtime blocked/static_acceptance_rejected 的关系，并注明项目整体 failed。blocked 不是同次 CAN 观测失败或成功；不得补造超时、帧内容、根因、物理 ECU、配置写入或实车执行。"
+  },
+  "reference_author": "OpenAI Codex",
+  "reference_boundary": "Direct report-derived, non-blind reference frozen before target inference; not independent human gold and not sent in the model request.",
+  "reference_pairs": {
+    "COMMUNICATION": {"requirement_text": "Require communication structural evidence", "status": "passed", "reason": "linked_in_scope"},
+    "SIGNAL_SIZE": {"requirement_text": "Protect SIGNAL_SIZE", "status": "failed", "reason": "protected_field_changed"},
+    "RUNTIME": {"requirement_text": "Protected candidate has same-run CAN observation", "status": "blocked", "reason": "static_acceptance_rejected"},
+    "RX_RUNTIME": {"requirement_text": "Candidate receive path has same-run observation", "status": "blocked", "reason": "static_acceptance_rejected"}
+  },
+  "reference_explanation": "COMMUNICATION: status=\"passed\"; reason=\"linked_in_scope\"\nSIGNAL_SIZE: status=\"failed\"; reason=\"protected_field_changed\"\nRUNTIME: status=\"blocked\"; reason=\"static_acceptance_rejected\"\nRX_RUNTIME: status=\"blocked\"; reason=\"static_acceptance_rejected\"\nSIGNAL_SIZE 的静态保护字段发生变化，项目验收 failed；两项运行检查因静态验收拒绝而 blocked，本报告没有同次 CAN 观测结论。",
+  "model": {
+    "name": "qwen3.5:2b",
+    "ollama_version": "0.31.1",
+    "digest": "324d162be6ca5629ae4517c8710434d0bd2d665bc94dbad46e9af8fbf8a2f0df",
+    "version_and_digest_must_be_rechecked_before_inference": true
+  },
+  "budget": {
+    "case_count": 1,
+    "max_model_calls": 1,
+    "max_tool_calls": 1,
+    "service_timeout_seconds": 100,
+    "max_total_tokens": 4096,
+    "max_output_tokens": 512,
+    "context_window": 8192,
+    "max_seconds": 120,
+    "retry_policy": "no retries; retain blocked/refused/incomplete/failed content and do not rerun this case"
+  },
+  "criteria": [
+    {"criterion_id": "literal_pair_coverage", "description": "The v0.7 verifier reports complete: each of the four exact canonical lines appears once in model prose."},
+    {"criterion_id": "supported_relationship", "description": "The model states that SIGNAL_SIZE failed/protected_field_changed and the two runtime checks are blocked/static_acceptance_rejected; it does not present blocked as a same-run CAN success or failure and identifies overall project status failed."},
+    {"criterion_id": "no_semantic_invention", "description": "No measured timeout, frame-value equality, specific root cause, physical ECU behavior, configuration writing or real-vehicle execution is asserted."},
+    {"criterion_id": "protocol_identity_and_budget", "description": "The v0.6 source has 4/4 bound requirement text and pairs, one model call, frozen model identity and budget, protocol passed, and offline verification passed."},
+    {"criterion_id": "deterministic_presentation", "description": "The v0.6 visible summary has the four verified literal pairs and fixed boundary; model prose is separate and unassessed."},
+    {"criterion_id": "offline_replay", "description": "With Ollama stopped, the exact source, presentation and v0.7 coverage result verify against frozen report and plan."}
+  ],
+  "source_result_path": "output/p30-pair-coverage-v07-development-v1/static-rejection-result-v06.json",
+  "presentation_path": "output/p30-pair-coverage-v07-development-v1/static-rejection-presentation-v06.json",
+  "coverage_path": "output/p30-pair-coverage-v07-development-v1/static-rejection-coverage-v07.json",
+  "call_policy": "First require this freeze commit's head-matching seven-job CI success, exact report/plan/project hashes and absent result paths. Check Ollama 0.31.1 and the frozen qwen3.5:2b digest with read-only /api/version and /api/tags in the same authorized network environment as the unique v0.6 CLI call. Use --timeout 100 and --max-seconds 120; then render and assess without another model call, stop Ollama and verify all three outputs offline. Any block/refusal/coverage or content failure is retained without retry.",
+  "boundary": "Development-only test of a question-level canonical-line instruction plus deterministic literal coverage; no claim of semantic correctness from coverage alone, held-out generalization, or independent human review."
+}
