@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-28）：在隔离本地工程副本执行 DaVinci Developer 只读 ECUProject XML 导出和 CFG 原生校验；前者成功，后者报告 0 fatal、25 errors、59 warnings、641 improvements。新增[显式信号映射只读接入](davinci-mapping-bridge.md)，实际导出与接口 ARXML 的两条 Rx/Tx 引用均解析，合成正负例通过；本地实现证据与远端 CI 结论见末尾续记。P30 主门仍为 0.7 development v1 独立人工审阅，内容门失败和 P25 人工演示待办保持。
+最新补充（2026-10-28）：在隔离本地工程副本执行 DaVinci Developer 只读 ECUProject XML 导出和 CFG 原生校验；前者成功，后者报告 0 fatal、25 errors、59 warnings、641 improvements。新增[显式信号映射只读接入](davinci-mapping-bridge.md)，实际导出与接口 ARXML 的两条 Rx/Tx 引用均解析，合成正负例通过。实现 `c32f486` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、七 job success；具体结论见末尾续记。P30 主门仍为 0.7 development v1 独立人工审阅，内容门失败和 P25 人工演示待办保持。
 
 最新补充（2026-10-26）：P30 的[模型原文字面覆盖门 0.7](p30-agent-evidence-pair-model-coverage-v07-guide.md)实现 `0cb238b` / [run `40252739257`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40252739257) 七 job success，工程门 remote-accepted。新 `static-rejection` development v1 冻结 `bab78b0` / [run `40261653302`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40261653302) 七 job success 后唯一 Qwen 请求协议通过、4/4 证据对完整，停服三份离线复验通过；模型原文 0/4 规范行，并补造“共享同一根因”，内容门 `failed_for_the_requested_task`。旧题不修改或重跑，确定性呈现仍正确。[独立审阅工作表](../research/p30-agent-evidence-pair-coverage-v07-development-v1-human-review.md)已备妥；本机仅有 qwen3.5:2b、qwen3-vl:2b 两个生成模型及检索嵌入模型，没有已安装的更强文本基线。下一项先取得独立审阅，再根据实际可用性决定是否在新 cohort 对照 qwen3-vl；不继续在已见题上调 qwen3.5:2b。P30 implementing；held-out v2、资料适用性与 P25 人工演示仍待完成。
 
@@ -2103,4 +2103,4 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 用隔离本地工程副本调用实际 DaVinci Developer Import Export 2.8.4，ECUProject XML 导出成功；原生 CFG 5.18.37 SP1 校验返回 0 fatal、25 errors、59 warnings、641 improvements。错误主要为缺参数、ISR 配置、多重性、未映射 runnable、无目标引用与波特率配置。两类工具证据留在忽略的本地 `output/`，不上传商业输入。
 - 新增 `audit-signal-mappings` 只读 CLI，记录输入哈希，沿完整 AUTOSAR 引用核对端口、数据元素、SystemSignal，区分 Rx/Tx 并列出未解析项；无映射或未解析返回 attention-required。真实导出与接口 ARXML：2 条映射，2 条引用解析；这不代表 CFG 生成、BSW 路由或总线通过。
 - 合成正例、悬空信号、端口方向冲突 3/3 通过；Ruff、单模块 mypy、diff check 通过。全量回归在默认沙箱 533 项中只有一项因本地回环监听权限报错、2 项环境跳过；授权回环环境同一全量命令 533 项通过（2 项跳过）。新增第三个定向测试在全量启动后写入，另行 3/3 通过。
-- 当前仅为本地实现验证，远端 CI 结论待取得；不将商业工程或个人学习完成情况作为公开平台验收。P30 主门仍为独立人工审阅 0.7 development v1；P25 人工演示待完成。
+- 实现提交 `c32f48607a9651b0733f7722edf8d233b534b3b7` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、completed/success；实际七 job 全部 success：runtime-currency `122874910210`，core-contracts Windows `122874909672` / Ubuntu `122874910313`，controlled-rejections Windows `122880118947` / Ubuntu `122880119648`，runtime-evidence Windows `122880118974` / Ubuntu `122880118969`。本段远端状态在实现提交之后补录，不将本次文档状态提交充作实现验收。不将商业工程或个人学习完成情况作为公开平台验收。P30 主门仍为独立人工审阅 0.7 development v1；P25 人工演示待完成。

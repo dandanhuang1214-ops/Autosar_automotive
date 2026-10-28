@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-28 配套工作：七周实操计划与已有 P20–P29 通信/ECUC 能力相接，[DaVinci 显式映射只读桥](davinci-mapping-bridge.md)已经在隔离的本地工程副本上验证 Developer XML 导出及两条 Rx/Tx 引用；CFG 原生校验仍有错误，故不宣称生成或总线通过。此项是 P30 阶段的配置证据补充，不改变当前主门。下一主任务仍为取得 0.7 development v1 的独立人工审阅，之后决定新 cohort 的模型对照；held-out v2 与 P25 人工演示仍待完成。
+2026-10-28 配套工作：七周实操计划与已有 P20–P29 通信/ECUC 能力相接，[DaVinci 显式映射只读桥](davinci-mapping-bridge.md)实现 `c32f486` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、七 job success。隔离的本地工程副本验证了 Developer XML 导出及两条 Rx/Tx 引用；CFG 原生校验仍有错误，故不宣称生成或总线通过。此项是 P30 阶段的配置证据补充，不改变当前主门。下一主任务仍为取得 0.7 development v1 的独立人工审阅，之后决定新 cohort 的模型对照；held-out v2 与 P25 人工演示仍待完成。
 
 2026-10-26 最新交接：[模型原文字面覆盖门 0.7](p30-agent-evidence-pair-model-coverage-v07-guide.md)实现 `0cb238b` / [run `40252739257`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40252739257) 七 job success，工程门 remote-accepted。新 `static-rejection` development v1 冻结 `bab78b0` / [run `40261653302`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40261653302) 七 job success；唯一 Qwen 请求与停服三份复验通过，但原文 0/4 规范行，又将静态拒绝和运行阻断补造成“共享同一根因”，[内容审阅](../research/p30-agent-evidence-pair-coverage-v07-development-v1-review.json)为 `failed_for_the_requested_task`。旧题不重跑，0.6 确定性事实表仍准确。[独立审阅工作表](../research/p30-agent-evidence-pair-coverage-v07-development-v1-human-review.md)已准备；本机已安装的另一生成模型仅 qwen3-vl:2b，不能预称更强基线。下一项先取得独立审阅，再决定是否在全新 cohort 对照另一模型；停止在已见题上反复调 qwen3.5:2b。内容开发门通过前不冻结 held-out v2；P25 人工演示仍待实际审阅，P30 不宣称整阶段完成。
 
