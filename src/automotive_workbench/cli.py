@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from automotive_workbench.ecuc_project import run_inspection, verify_inspection
+from automotive_workbench.davinci_mapping import audit_mappings
 from automotive_workbench.ecuc_communication import run_communication, verify_communication
 from automotive_workbench.ecuc_review import run_review as run_ecuc_review, verify_review as verify_ecuc_review
 from automotive_workbench.ecuc_impact import compare_reviews as compare_ecuc_reviews, verify_impact as verify_ecuc_impact
@@ -80,6 +81,10 @@ def _utc_now_at_or_after(recorded: str) -> datetime:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="workbench")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    mapping = commands.add_parser("audit-signal-mappings", help="Audit explicit ARXML data-element to system-signal mappings")
+    mapping.add_argument("--source", type=Path, action="append", required=True)
+    mapping.add_argument("--output", type=Path, required=True)
 
     ecuc = commands.add_parser("inspect-ecuc-project", help="Inspect selected DPA/ECUC structure without invoking vendor tools")
     ecuc.add_argument("project", type=Path)
@@ -1219,7 +1224,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
-        if args.command == "inspect-ecuc-project":
+        if args.command == "audit-signal-mappings":
+            result = audit_mappings(args.source, args.output)
+        elif args.command == "inspect-ecuc-project":
             result = run_inspection(args.project, args.output)
         elif args.command == "verify-ecuc-inspection":
             result = verify_inspection(args.report)
