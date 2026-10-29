@@ -9,6 +9,7 @@ from typing import Any
 
 from automotive_workbench.cross_tool_trace import verify_impact, verify_trace
 from automotive_workbench.project_review import load_project_report
+from automotive_workbench.project_ecuc import verify as verify_ecuc_project
 
 VERSION = "cross-tool-acceptance-impact-0.1"
 
@@ -53,7 +54,28 @@ def _evidence(requirement: dict[str, Any], report_path: Path) -> dict[str, Any]:
     return {"path": evidence["path"], "sha256": evidence["sha256"], "pointer": evidence["pointer"]}
 
 
-def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: Path) -> dict[str, Any]:
+def _same_ecuc_source(project_path: Path, project_report: dict[str, Any], before: dict[str, Any], after: dict[str, Any]) -> dict[str, str]:
+    verification = verify_ecuc_project(project_path)
+    if verification["status"] != "passed":
+        raise ValueError("Project acceptance bundle did not replay")
+    artifacts = project_report.get("source_artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("Project acceptance lacks source artifacts")
+    matched: dict[str, str] = {}
+    for side, trace in (("before", before), ("after", after)):
+        hashes = [item.get("sha256") for item in artifacts
+                  if isinstance(item, dict) and isinstance(item.get("source"), str)
+                  and f"/ecuc/{side}/snapshot/" in "/" + item["source"]
+                  and item["source"].endswith(".dpa")]
+        actual = trace["inputs"]["project"]["sha256"]
+        if len(hashes) != 1 or hashes[0] != actual:
+            raise ValueError(f"{side} ECUC DPA differs from project acceptance snapshot")
+        matched[side] = actual
+    return matched
+
+
+def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: Path,
+                         strict_source: bool = False) -> dict[str, Any]:
     verify_impact(impact_path)
     impact, impact_sha = _read(impact_path)
     bindings, bindings_sha = _read(bindings_path)
@@ -70,6 +92,7 @@ def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: P
     verify_trace(after_path)
     before = json.loads(before_path.read_text(encoding="utf-8"))
     after = json.loads(after_path.read_text(encoding="utf-8"))
+    source_provenance = _same_ecuc_source(project_path, report, before, after) if strict_source else None
     traces = [*before["links"], *after["links"]]
     allowed: dict[tuple[str, str], set[str]] = {}
     for row in traces:
@@ -108,17 +131,21 @@ def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: P
                            "rerun_required": True})
         affected.append({"port": key[0], "data_element": key[1],
                          "change_fields": change["fields"], "acceptance": checks})
-    return {"contract_version": VERSION,
+    result: dict[str, Any] = {"contract_version": "cross-tool-acceptance-impact-0.2" if strict_source else VERSION,
             "status": "attention-required" if unbound else "rerun-required" if affected else "unchanged",
             "inputs": {"impact": {"path": str(impact_path.resolve()), "sha256": impact_sha},
                        "bindings": {"path": str(bindings_path.resolve()), "sha256": bindings_sha},
                        "project_report": {"path": str(project_path.resolve()), "sha256": report_sha}},
             "affected": affected, "unbound": unbound,
             "scope": "Explicitly declared candidate reruns; previous evidence does not prove post-change behavior"}
+    if source_provenance is not None:
+        result["ecuc_source_sha256"] = source_provenance
+    return result
 
 
-def assess_acceptance(impact: Path, bindings: Path, project_report: Path, output: Path) -> dict[str, Any]:
-    result = summarize_acceptance(impact, bindings, project_report)
+def assess_acceptance(impact: Path, bindings: Path, project_report: Path, output: Path,
+                      strict_source: bool = False) -> dict[str, Any]:
+    result = summarize_acceptance(impact, bindings, project_report, strict_source)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return result
@@ -130,9 +157,15 @@ def verify_acceptance(report: Path) -> dict[str, str]:
     if not isinstance(inputs, dict):
         raise ValueError("Invalid acceptance impact inputs")
     try:
-        paths = [Path(inputs[key]["path"]) for key in ("impact", "bindings", "project_report")]
+        impact_path = Path(inputs["impact"]["path"])
+        bindings_path = Path(inputs["bindings"]["path"])
+        project_path = Path(inputs["project_report"]["path"])
     except (KeyError, TypeError) as exc:
         raise ValueError("Invalid acceptance impact paths") from exc
-    if stored != summarize_acceptance(*paths):
+    version = stored.get("contract_version")
+    if version not in {VERSION, "cross-tool-acceptance-impact-0.2"}:
+        raise ValueError("Unsupported acceptance impact contract")
+    if stored != summarize_acceptance(impact_path, bindings_path, project_path,
+                                     strict_source=version == "cross-tool-acceptance-impact-0.2"):
         raise ValueError("Acceptance impact does not match sources")
     return {"status": "passed", "verified": str(report)}

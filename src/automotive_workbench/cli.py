@@ -114,6 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     acceptance_impact.add_argument("--impact", type=Path, required=True)
     acceptance_impact.add_argument("--bindings", type=Path, required=True)
     acceptance_impact.add_argument("--project-report", type=Path, required=True)
+    acceptance_impact.add_argument("--require-project-provenance", action="store_true")
     acceptance_impact.add_argument("--output", type=Path, required=True)
     acceptance_verify = commands.add_parser("verify-cross-tool-acceptance", help="Recheck source-bound acceptance rerun candidates")
     acceptance_verify.add_argument("report", type=Path)
@@ -1263,7 +1264,8 @@ def main() -> int:
     args = build_parser().parse_args()
     try:
         if args.command == "assess-cross-tool-acceptance":
-            result = assess_acceptance(args.impact, args.bindings, args.project_report, args.output)
+            result = assess_acceptance(args.impact, args.bindings, args.project_report, args.output,
+                                       args.require_project_provenance)
         elif args.command == "verify-cross-tool-acceptance":
             result = verify_acceptance(args.report)
         elif args.command == "trace-cross-tool":

@@ -58,7 +58,17 @@ workbench assess-cross-tool-acceptance --impact cross-tool-impact.json \
 workbench verify-cross-tool-acceptance acceptance-impact.json
 ```
 
-这项能力已用公开合成项目的真实跨工具变更和项目验收证据做正负例。当前隔离商业工程尚无与之同源的 Workbench 项目验收报告，因此不能填入示例绑定；先建立项目验收基线，才能把本地跨工具变化挂到具体测试结果。
+这项能力已用公开合成项目的真实跨工具变更和项目验收证据做正负例。隔离商业工程的同源 Workbench 项目验收基线在随后建立；公开示例绑定只用于说明契约，不指代该商业工程。
+
+严格来源门可选用 `--require-project-provenance`。它保留旧 0.1 调用，输出新 `cross-tool-acceptance-impact-0.2`，先重放完整 ECUC 项目验收包，再要求跨工具前/后追踪的 DPA SHA-256 分别等于项目包前/后 DPA 快照。它验证的是 **ECUC DPA 同源**；Developer 导出 ARXML 的语义一致性仍需单独检查。严格结果的离线 verifier 会重复这些核验。
+
+```sh
+workbench assess-cross-tool-acceptance --impact cross-tool-impact.json \
+  --bindings bindings.json --project-report bundle/project-report.json \
+  --require-project-provenance --output acceptance-impact.json
+```
+
+隔离商业工程现已建立只要求通信结构的 Workbench 静态项目基线：项目报告 `passed`，项目包重放 `passed`。额外声明的影响覆盖检查为 `unassessed`，所以它没有被计入这个窄范围基线。受控演练仅在忽略目录复制 Developer 导出并改变一条映射；跨工具差异为 `changed`，严格来源门给出 `COMMUNICATION` 前次 `passed`、本次 `rerun_required=true`，结果离线复验通过。该演练不是新的实际 CFG 配置，也不是 CAN 总线运行。
 
 本地能力复核：Developer 导出的两条显式映射均解析；现有 ECUC 通信 trace 形成 73 条范围内路径且离线复验通过；现有工程审查离线复验通过，但审查状态为 `attention-required`。CFG 原生 XML 摘要则明确为 25 errors、59 warnings、生成阶段 `ERROR`（6 个 generator failed）。这些是不同层次的结论：引用闭合只覆盖输入文件内的结构，原生配置错误仍要在 CFG 中处理；CAN 总线收发和物理 ECU 尚无本工程实测。
 

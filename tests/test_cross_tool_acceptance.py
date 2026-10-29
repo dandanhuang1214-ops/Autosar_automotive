@@ -29,8 +29,12 @@ def scenario(root: Path) -> tuple[Path, Path, Path, Path, str]:
     stage = project_dir / "communication.json"
     stage.write_text(json.dumps({"status": "passed"}), encoding="utf-8")
     report = project_dir / "project-report.json"
+    before_hash = old["inputs"]["project"]["sha256"]
+    after_hash = json.loads((after / "trace.json").read_text(encoding="utf-8"))["inputs"]["project"]["sha256"]
     report.write_text(json.dumps({"artifact_type": "project-acceptance", "schema_version": "project-acceptance-0.3",
                                   "name": "Demo acceptance", "status": "passed", "stages": {"communication": "communication.json"},
+                                  "source_artifacts": [{"source": "bundle/ecuc/before/snapshot/demo.dpa", "sha256": before_hash},
+                                                       {"source": "bundle/ecuc/after/snapshot/demo.dpa", "sha256": after_hash}],
                                   "requirements": [{"id": "TX_VECTOR", "status": "passed", "actual": "passed",
                                                     "evidence": {"path": "communication.json", "sha256": hashlib.sha256(stage.read_bytes()).hexdigest(),
                                                                  "pointer": "/status"}}]}), encoding="utf-8")
@@ -42,6 +46,22 @@ def scenario(root: Path) -> tuple[Path, Path, Path, Path, str]:
 
 
 class CrossToolAcceptanceTests(unittest.TestCase):
+    def test_strict_project_source_provenance(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            impact, bindings, report, _, _ = scenario(root)
+            output = root / "strict.json"
+            with patch("automotive_workbench.cross_tool_acceptance.verify_ecuc_project", return_value={"status": "passed"}):
+                result = assess_acceptance(impact, bindings, report, output, strict_source=True)
+                self.assertEqual(result["contract_version"], "cross-tool-acceptance-impact-0.2")
+                self.assertEqual(result["ecuc_source_sha256"]["before"], result["ecuc_source_sha256"]["after"])
+                self.assertEqual(verify_acceptance(output)["status"], "passed")
+                raw = json.loads(report.read_text(encoding="utf-8"))
+                raw["source_artifacts"][1]["sha256"] = "0" * 64
+                report.write_text(json.dumps(raw), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "after ECUC DPA differs"):
+                    assess_acceptance(impact, bindings, report, root / "wrong.json", strict_source=True)
+
     def test_cli_returns_attention_exit_for_required_rerun(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
