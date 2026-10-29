@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-29）：按用户确认的分支流程，在项目集成分支下建立 `work/cross-tool-references`，新增跨工具完整引用关联与差异检查。隔离实际工程 1 Rx/1 Tx 均可关联到 COM/PduR/CanIf 范围内路径；实现 `cf5d1b2` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) 七 job success。这是结构证据，CFG 原生错误和 CAN 实测边界继续保留。待合入项目集成分支；P30 人工内容审阅仍待独立完成。
+最新补充（2026-10-29）：按用户确认的分支流程，在项目集成分支下建立 `work/cross-tool-references`，新增跨工具完整引用关联与差异检查。隔离实际工程 1 Rx/1 Tx 均可关联到 COM/PduR/CanIf 范围内路径；实现 `cf5d1b2` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) 七 job success，已 fast-forward 合入并推送项目集成分支。这是结构证据，CFG 原生错误和 CAN 实测边界继续保留；`main` 未合并，P30 人工内容审阅仍待独立完成。
 
 最新补充（2026-10-29）：围绕工具适配复核现有能力；CFG 原生 XML 摘要实现 `60125a4` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) 七 job success。真实报告为 25 errors、59 warnings、生成 `ERROR`，Developer 映射 2/2 解析，ECUC 通信 73 条范围内路径。统一能力评估在独立分支实现 `e766e0e` / [run `40800045375`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40800045375) 七 job success；按用户要求确认后才合并。P30 独立人工内容审阅仍是主门。
 
@@ -2126,4 +2126,4 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - `work/cross-tool-references` 从项目集成分支建立；实现受限精确关联：Developer SystemSignal → System ARXML I-Signal/PDU mapping → ECUC ComSignal 外部引用 → 现有 COM/PduR/CanIf 结构路径。要求候选唯一、方向一致，缺引用/多候选/方向冲突及局部 ECUC 路径保留具体状态；两版按端口和数据元素身份比较变更字段。追踪与差异结果均绑定并重算来源。
 - 隔离本地工程 1 Rx/1 Tx 链均 `resolved-in-scope`，trace 离线复验 passed；CFG 的 25 errors、generation ERROR 和 CAN 未实测边界不变。两个结构不同的公开合成 ECUC 项目用于正常链和 SystemSignal 变化，另有断引用、方向冲突负例；定向 3/3 通过。
 - 授权回环环境全量 541 tests 通过（2 项环境跳过），Ruff、单模块 mypy、diff check 通过；两公开项目变更报告 `changed`、相同输入 `unchanged`，差异离线复验通过。
-- 子分支实现 `cf5d1b22ff43134df6f3a0ddd9d6bae37e8a5c80` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) head 一致、completed/success，七 job success：runtime-currency `123227247774`，core-contracts Windows `123227247672` / Ubuntu `123227247748`，controlled-rejections Windows `123229723506` / Ubuntu `123229723562`，runtime-evidence Windows `123229723525` / Ubuntu `123229723610`。本次纯文档状态提交不充作实现验收。待合入项目集成分支；P30 独立人工审阅仍待完成，不能用结构链路替代内容质量门。
+- 子分支实现 `cf5d1b22ff43134df6f3a0ddd9d6bae37e8a5c80` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) head 一致、completed/success，七 job success：runtime-currency `123227247774`，core-contracts Windows `123227247672` / Ubuntu `123227247748`，controlled-rejections Windows `123229723506` / Ubuntu `123229723562`，runtime-evidence Windows `123229723525` / Ubuntu `123229723610`。随后纯文档状态提交 `1ed2958` 不充作实现验收；已将子分支 fast-forward 合入并推送项目集成分支（head `1ed2958`），`main` 仍为 `60125a4`。P30 独立人工审阅仍待完成，不能用结构链路替代内容质量门。

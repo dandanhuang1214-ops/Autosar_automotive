@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-29 子分支配套工作：`work/cross-tool-references` 从本次项目集成分支建立，受限实现 Developer SystemSignal → System I-Signal/PDU 映射 → ECUC ComSignal → 既有通信路径的精确引用关联与两版差异检查；实现 `cf5d1b2` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) head 一致、七 job success。本地真实工程两条 Rx/Tx 链已解析，CFG 原生错误仍独立保留。子分支验收后合入项目集成分支；项目整体验收前不合入 `main`。P30 独立人工审阅仍是主门，见[桥接说明](davinci-mapping-bridge.md)。
+2026-10-29 子分支配套工作：`work/cross-tool-references` 从本次项目集成分支建立，受限实现 Developer SystemSignal → System I-Signal/PDU 映射 → ECUC ComSignal → 既有通信路径的精确引用关联与两版差异检查；实现 `cf5d1b2` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) head 一致、七 job success。本地真实工程两条 Rx/Tx 链已解析，CFG 原生错误仍独立保留。子分支已 fast-forward 合入项目集成分支；项目整体验收前不合入 `main`。P30 独立人工审阅仍是主门，见[桥接说明](davinci-mapping-bridge.md)。
 
 2026-10-29 配套能力核验：现有 ECUC 通信 trace 和工程审查已在隔离商业工程副本离线复验；CFG 原生 XML 摘要实现 `60125a4` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) 七 job success。统一能力评估在独立分支 `feature/davinci-workflow-assessment` 实现 `e766e0e` / [run `40800045375`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40800045375) head 一致、七 job success；确认后才合并主分支，见[桥接说明](davinci-mapping-bridge.md)。此工作验证工具适配边界，不替代 P30 内容质量主门。下一主任务仍是获得 0.7 development v1 的独立人工审阅，再决定新 cohort 的模型对照；P25 演示和实际 CAN 总线实验仍待证据。
 
