@@ -10,6 +10,7 @@ from automotive_workbench.ecuc_project import run_inspection, verify_inspection
 from automotive_workbench.davinci_mapping import audit_mappings, verify_mapping_audit
 from automotive_workbench.cfg_validation import inspect_cfg_report, verify_cfg_report
 from automotive_workbench.davinci_workflow import assess_workflow, verify_workflow
+from automotive_workbench.cross_tool_trace import trace_cross_tool, verify_trace, compare_traces, verify_impact as verify_cross_tool_impact
 from automotive_workbench.ecuc_communication import run_communication, verify_communication
 from automotive_workbench.ecuc_review import run_review as run_ecuc_review, verify_review as verify_ecuc_review
 from automotive_workbench.ecuc_impact import compare_reviews as compare_ecuc_reviews, verify_impact as verify_ecuc_impact
@@ -95,6 +96,19 @@ def build_parser() -> argparse.ArgumentParser:
     workflow.add_argument("--output", type=Path, required=True)
     workflow_verify = commands.add_parser("verify-davinci-workflow", help="Recheck a source-bound DaVinci assessment")
     workflow_verify.add_argument("report", type=Path)
+    cross_tool = commands.add_parser("trace-cross-tool", help="Trace exact Developer SystemSignal references into ECUC communication")
+    cross_tool.add_argument("--mapping", type=Path, required=True)
+    cross_tool.add_argument("--system", type=Path, required=True)
+    cross_tool.add_argument("--project", type=Path, required=True)
+    cross_tool.add_argument("--output", type=Path, required=True)
+    cross_verify = commands.add_parser("verify-cross-tool", help="Rebuild a source-bound cross-tool trace")
+    cross_verify.add_argument("report", type=Path)
+    cross_compare = commands.add_parser("compare-cross-tool", help="Compare exact Developer data-element identities across traces")
+    cross_compare.add_argument("before", type=Path)
+    cross_compare.add_argument("after", type=Path)
+    cross_compare.add_argument("--output", type=Path, required=True)
+    cross_impact_verify = commands.add_parser("verify-cross-tool-impact", help="Rebuild a source-bound cross-tool comparison")
+    cross_impact_verify.add_argument("report", type=Path)
 
     mapping = commands.add_parser("audit-signal-mappings", help="Audit explicit ARXML data-element to system-signal mappings")
     mapping.add_argument("--source", type=Path, action="append", required=True)
@@ -1240,7 +1254,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
-        if args.command == "assess-davinci-workflow":
+        if args.command == "trace-cross-tool":
+            result = trace_cross_tool(args.mapping, args.system, args.project, args.output)
+        elif args.command == "verify-cross-tool":
+            result = verify_trace(args.report)
+        elif args.command == "compare-cross-tool":
+            result = compare_traces(args.before, args.after, args.output)
+        elif args.command == "verify-cross-tool-impact":
+            result = verify_cross_tool_impact(args.report)
+        elif args.command == "assess-davinci-workflow":
             result = assess_workflow(args.mapping, args.cfg, args.communication, args.review, args.output)
         elif args.command == "verify-davinci-workflow":
             result = verify_workflow(args.report)

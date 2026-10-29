@@ -33,6 +33,18 @@ workbench verify-davinci-workflow workflow-assessment.json
 | CFG 原生校验 | 严重度计数与 generation 状态 | 25 errors，generation ERROR |
 | CAN 总线/ECU | 实际收发和运行效果 | unassessed |
 
+跨工具追踪使用 Developer 已核对的 SystemSignal 映射、System ARXML 的 `I-SIGNAL` 与 `I-SIGNAL-TO-I-PDU-MAPPING`、ECUC `ComSystemTemplateSystemSignalRef` 的完整引用，再接现有 COM/PduR/CanIf 路径。候选必须唯一且方向一致才标记 `resolved`；缺引用、多候选、方向冲突和 ECUC 局部路径分别保留原因。它不会按短名或字串相似度配对。两版追踪按端口与数据元素身份比较，报告 SystemSignal、COM、路由和 CanIf 的实际字段变化；追踪与比较都可从原输入重算复验。
+
+```sh
+workbench trace-cross-tool --mapping mapping-audit.json --system communication.arxml \
+  --project project.dpa --output cross-tool-trace.json
+workbench verify-cross-tool cross-tool-trace.json
+workbench compare-cross-tool before.json after.json --output cross-tool-impact.json
+workbench verify-cross-tool-impact cross-tool-impact.json
+```
+
+本地隔离工程的 1 条 Rx、1 条 Tx 跨工具链均为 `resolved-in-scope`，只证明这些显式引用与方向在输入范围内闭合。CFG 原生校验仍有 25 个错误，生成与 CAN 实测未通过本项证明。公开回归从两个结构不同的合成 ECUC 项目构造 Developer/System 输入，覆盖正常链、断引用、方向冲突和 SystemSignal 变化。
+
 本地能力复核：Developer 导出的两条显式映射均解析；现有 ECUC 通信 trace 形成 73 条范围内路径且离线复验通过；现有工程审查离线复验通过，但审查状态为 `attention-required`。CFG 原生 XML 摘要则明确为 25 errors、59 warnings、生成阶段 `ERROR`（6 个 generator failed）。这些是不同层次的结论：引用闭合只覆盖输入文件内的结构，原生配置错误仍要在 CFG 中处理；CAN 总线收发和物理 ECU 尚无本工程实测。
 
 七周实操计划与平台的接点：先用 Developer 导出验证现有 Rx/Tx data mapping；随后在 CFG 配置 COM/PduR/CanIf 时使用既有 ECUC 审查和通信 trace；Week 6 的候选建议只能引用本审计的已解析映射，Week 7 的写回仍需在隔离工程执行并由 CFG 重新校验。当前基础设施不把学习练习完成情况当成配置链已验收。计划标称每周 18 小时，若连续两周执行则为 36 小时，超过路线图原每两周总计 20–30 小时预算；应在实际排期中明确新预算或减少并行平台工作。计划中的测试 DBC 是经典 CAN 8 字节帧，CAN FD 仍需另备样本与配置证据。
