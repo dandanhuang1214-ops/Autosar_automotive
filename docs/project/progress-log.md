@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-29）：围绕工具适配复核现有能力；CFG 原生 XML 摘要实现 `60125a4` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) 七 job success。真实报告为 25 errors、59 warnings、生成 `ERROR`，Developer 映射 2/2 解析，ECUC 通信 73 条范围内路径。后续统一能力评估按用户要求放在独立分支，确认后才合并；P30 独立人工内容审阅仍是主门。
+最新补充（2026-10-29）：围绕工具适配复核现有能力；CFG 原生 XML 摘要实现 `60125a4` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) 七 job success。真实报告为 25 errors、59 warnings、生成 `ERROR`，Developer 映射 2/2 解析，ECUC 通信 73 条范围内路径。统一能力评估在独立分支实现 `e766e0e` / [run `40800045375`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40800045375) 七 job success；按用户要求确认后才合并。P30 独立人工内容审阅仍是主门。
 
 最新补充（2026-10-28）：在隔离本地工程副本执行 DaVinci Developer 只读 ECUProject XML 导出和 CFG 原生校验；前者成功，后者报告 0 fatal、25 errors、59 warnings、641 improvements。新增[显式信号映射只读接入](davinci-mapping-bridge.md)，实际导出与接口 ARXML 的两条 Rx/Tx 引用均解析，合成正负例通过。实现 `c32f486` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、七 job success；具体结论见末尾续记。P30 主门仍为 0.7 development v1 独立人工审阅，内容门失败和 P25 人工演示待办保持。
 
@@ -2116,4 +2116,5 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 ### P30 配套：统一 DaVinci 能力评估（2026-10-29，独立分支实施中）
 
 - 按用户要求在 `feature/davinci-workflow-assessment` 分支开发与上传，确认后才合并 `main`。统一入口在组合前分别复验 Developer 映射、CFG 原生报告、ECUC 通信 trace 与工程审查，输出各层状态及来源哈希；CAN 总线层显式 unassessed。
-- 隔离本地工程的统一评估返回 attention-required：映射 2/2，ECUC 73 条范围内路径，工程审查 102 项结构发现，CFG 25 errors/59 warnings/generation ERROR，CAN 总线未评估；组合报告重新复验 passed。映射报告新增原输入重算复验及源变更拒绝。公开专项 7/7、授权回环环境全量 538 tests 通过（2 项环境跳过）、Ruff、三模块 mypy、diff check 通过。下一步推送分支并核对 CI；不把此评估误称端到端 CAN 验证。
+- 隔离本地工程的统一评估返回 attention-required：映射 2/2，ECUC 73 条范围内路径，工程审查 102 项结构发现，CFG 25 errors/59 warnings/generation ERROR，CAN 总线未评估；组合报告重新复验 passed。映射报告新增原输入重算复验及源变更拒绝。公开专项 7/7、授权回环环境全量 538 tests 通过（2 项环境跳过）、Ruff、三模块 mypy、diff check 通过。
+- 分支实现 `e766e0ee0aa7d746cccf5eff8ab7e0cd68231936` / [run `40800045375`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40800045375) head 一致、completed/success，七 job 均 success：runtime-currency `123205694147`，core-contracts Windows `123205694393` / Ubuntu `123205694462`，controlled-rejections Windows `123208400831` / Ubuntu `123208401013`，runtime-evidence Windows `123208400977` / Ubuntu `123208400873`。此状态记录是实现后的文档提交，不充作实现验收；仍待用户确认后才合并 `main`。下一主任务为 P30 独立人工审阅，不把此评估误称端到端 CAN 验证。
