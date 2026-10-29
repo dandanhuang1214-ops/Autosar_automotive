@@ -45,6 +45,21 @@ workbench verify-cross-tool-impact cross-tool-impact.json
 
 本地隔离工程的 1 条 Rx、1 条 Tx 跨工具链均为 `resolved-in-scope`，只证明这些显式引用与方向在输入范围内闭合。CFG 原生校验仍有 25 个错误，生成与 CAN 实测未通过本项证明。公开回归从两个结构不同的合成 ECUC 项目构造 Developer/System 输入，覆盖正常链、断引用、方向冲突和 SystemSignal 变化。
 
+跨工具变更到验收项使用显式绑定表。每条绑定含 Developer 端口、数据元素、已解析的 ECUC ComSignal 完整路径和已有项目报告中的验收 ID；平台核验 ComSignal 来自变更前或后的已解析追踪，验收 ID 存在，且其上一轮 evidence 文件的哈希、JSON 指针与记录的 actual 值一致。受影响项输出 `rerun_required=true` 和 `previous_status`，不把上一轮通过解释为变更后通过。无绑定的变化保留为 `unbound`。绑定由工程人员声明，关系语义仍需审阅。
+
+```json
+{"schema_version":"cross-tool-acceptance-bindings-0.1","project_name":"Demo acceptance","links":[{"port":"/Components/Node/Out","data_element":"/Interfaces/State/Ready","com_signal":"/Demo/Com/ValueA","acceptance_ids":["TX_VECTOR"]}]}
+```
+
+```sh
+workbench assess-cross-tool-acceptance --impact cross-tool-impact.json \
+  --bindings bindings.json --project-report bundle/project-report.json \
+  --output acceptance-impact.json
+workbench verify-cross-tool-acceptance acceptance-impact.json
+```
+
+这项能力已用公开合成项目的真实跨工具变更和项目验收证据做正负例。当前隔离商业工程尚无与之同源的 Workbench 项目验收报告，因此不能填入示例绑定；先建立项目验收基线，才能把本地跨工具变化挂到具体测试结果。
+
 本地能力复核：Developer 导出的两条显式映射均解析；现有 ECUC 通信 trace 形成 73 条范围内路径且离线复验通过；现有工程审查离线复验通过，但审查状态为 `attention-required`。CFG 原生 XML 摘要则明确为 25 errors、59 warnings、生成阶段 `ERROR`（6 个 generator failed）。这些是不同层次的结论：引用闭合只覆盖输入文件内的结构，原生配置错误仍要在 CFG 中处理；CAN 总线收发和物理 ECU 尚无本工程实测。
 
 七周实操计划与平台的接点：先用 Developer 导出验证现有 Rx/Tx data mapping；随后在 CFG 配置 COM/PduR/CanIf 时使用既有 ECUC 审查和通信 trace；Week 6 的候选建议只能引用本审计的已解析映射，Week 7 的写回仍需在隔离工程执行并由 CFG 重新校验。当前基础设施不把学习练习完成情况当成配置链已验收。计划标称每周 18 小时，若连续两周执行则为 36 小时，超过路线图原每两周总计 20–30 小时预算；应在实际排期中明确新预算或减少并行平台工作。计划中的测试 DBC 是经典 CAN 8 字节帧，CAN FD 仍需另备样本与配置证据。

@@ -11,6 +11,7 @@ from automotive_workbench.davinci_mapping import audit_mappings, verify_mapping_
 from automotive_workbench.cfg_validation import inspect_cfg_report, verify_cfg_report
 from automotive_workbench.davinci_workflow import assess_workflow, verify_workflow
 from automotive_workbench.cross_tool_trace import trace_cross_tool, verify_trace, compare_traces, verify_impact as verify_cross_tool_impact
+from automotive_workbench.cross_tool_acceptance import assess_acceptance, verify_acceptance
 from automotive_workbench.ecuc_communication import run_communication, verify_communication
 from automotive_workbench.ecuc_review import run_review as run_ecuc_review, verify_review as verify_ecuc_review
 from automotive_workbench.ecuc_impact import compare_reviews as compare_ecuc_reviews, verify_impact as verify_ecuc_impact
@@ -109,6 +110,13 @@ def build_parser() -> argparse.ArgumentParser:
     cross_compare.add_argument("--output", type=Path, required=True)
     cross_impact_verify = commands.add_parser("verify-cross-tool-impact", help="Rebuild a source-bound cross-tool comparison")
     cross_impact_verify.add_argument("report", type=Path)
+    acceptance_impact = commands.add_parser("assess-cross-tool-acceptance", help="Map exact cross-tool changes to declared acceptance reruns")
+    acceptance_impact.add_argument("--impact", type=Path, required=True)
+    acceptance_impact.add_argument("--bindings", type=Path, required=True)
+    acceptance_impact.add_argument("--project-report", type=Path, required=True)
+    acceptance_impact.add_argument("--output", type=Path, required=True)
+    acceptance_verify = commands.add_parser("verify-cross-tool-acceptance", help="Recheck source-bound acceptance rerun candidates")
+    acceptance_verify.add_argument("report", type=Path)
 
     mapping = commands.add_parser("audit-signal-mappings", help="Audit explicit ARXML data-element to system-signal mappings")
     mapping.add_argument("--source", type=Path, action="append", required=True)
@@ -1254,7 +1262,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
-        if args.command == "trace-cross-tool":
+        if args.command == "assess-cross-tool-acceptance":
+            result = assess_acceptance(args.impact, args.bindings, args.project_report, args.output)
+        elif args.command == "verify-cross-tool-acceptance":
+            result = verify_acceptance(args.report)
+        elif args.command == "trace-cross-tool":
             result = trace_cross_tool(args.mapping, args.system, args.project, args.output)
         elif args.command == "verify-cross-tool":
             result = verify_trace(args.report)
@@ -2589,7 +2601,7 @@ def main() -> int:
         return 1
     _print_json(result)
     exit_status = result.get("status", result.get("protocol_status"))
-    if exit_status in {"attention-required", "no-paths"}:
+    if exit_status in {"attention-required", "no-paths", "rerun-required"}:
         return 2
     if exit_status in {
         "failed",
