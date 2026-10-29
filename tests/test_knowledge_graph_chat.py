@@ -135,6 +135,8 @@ class GraphImportTest(unittest.TestCase):
                 with urlopen(origin + "/", timeout=5) as response:
                     html = response.read().decode()
                 self.assertIn("Automotive Workbench", html)
+                self.assertIn("证据检查器", html)
+                self.assertIn('role="tablist"', html)
                 with self.assertRaises(HTTPError) as denied:
                     post("/api/session", {}, "wrong")
                 self.assertEqual(denied.exception.code, 403)
@@ -150,6 +152,7 @@ class GraphImportTest(unittest.TestCase):
                 with urlopen(origin + "/api/state?session=" + session, timeout=5) as response:
                     state = json.load(response)
                 self.assertEqual(len(state["messages"]), 2)
+                self.assertEqual(state["sessions"][0]["title"], "CanIf")
                 (Path(directory) / "active.json").write_text("{}")
                 with self.assertRaises(HTTPError) as invalid:
                     urlopen(origin + "/api/state", timeout=5)

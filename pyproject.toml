@@ -24,6 +24,9 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+automotive_workbench = ["knowledge_chat_ui.html"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 88

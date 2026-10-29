@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工程问答 · Automotive Workbench</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #1b3036;
+      background: #f4f7f6;
+      line-height: 1.5;
+      --ink: #1b3036;
+      --muted: #52666d;
+      --line: #d9e3e1;
+      --surface: #fff;
+      --soft: #edf4f2;
+      --accent: #096b60;
+      --accent-dark: #07584f;
+      --amber: #805300;
+      --amber-bg: #fff3d9;
+      --danger: #9c3030;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: wait; opacity: .55; }
+    :focus-visible { outline: 3px solid #258f80; outline-offset: 2px; }
+    .skip { position: absolute; top: -60px; left: 12px; z-index: 5; background: #fff; padding: 8px; }
+    .skip:focus { top: 10px; }
+    .topbar { min-height: 72px; background: #19343c; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px clamp(16px, 3vw, 36px); }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 9px; background: #c7eee6; color: #174f49; font-weight: 800; letter-spacing: -.08em; }
+    .brand h1 { display: block; font-size: 16px; line-height: 1.2; margin: 0; }
+    .brand small { display: block; color: #c2d7d4; font-size: 12px; margin-top: 3px; }
+    .top-status { font-size: 13px; color: #d6e8e4; text-align: right; }
+    .shell { display: grid; grid-template-columns: minmax(248px, 285px) minmax(0, 1fr) minmax(300px, 342px); gap: 16px; max-width: 1750px; min-height: calc(100vh - 72px); margin: 0 auto; padding: 16px; }
+    .pane { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 3px 18px #19343c09; }
+    .sidebar, .inspector { padding: 20px; }
+    .sidebar { align-self: start; }
+    .eyebrow { margin: 0 0 6px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    .chat-title { font-size: clamp(22px, 2.2vw, 28px); line-height: 1.24; margin-bottom: 7px; }
+    h2 { font-size: 17px; margin-bottom: 12px; }
+    h3 { font-size: 14px; margin-bottom: 8px; }
+    .subtle { color: var(--muted); font-size: 13px; }
+    .section { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 18px; }
+    label { display: block; margin: 12px 0 6px; font-size: 13px; font-weight: 700; }
+    input:not([type=checkbox]), select, textarea { width: 100%; min-height: 42px; border: 1px solid #b8c9c5; border-radius: 8px; background: #fff; color: var(--ink); padding: 9px 11px; }
+    input[type=file] { font-size: 12px; padding: 7px; }
+    textarea { resize: vertical; }
+    .button { min-height: 42px; border: 1px solid transparent; border-radius: 8px; background: var(--accent); color: #fff; padding: 9px 14px; font-weight: 700; transition: background .16s ease, border-color .16s ease; }
+    .button:hover { background: var(--accent-dark); }
+    .button.secondary { background: #fff; border-color: #b8ceca; color: #18554e; }
+    .button.secondary:hover { background: var(--soft); }
+    .button.ghost { background: transparent; color: var(--accent); padding-inline: 8px; }
+    .button.ghost:hover { background: var(--soft); }
+    .button.small { min-height: 34px; padding: 5px 10px; font-size: 12px; }
+    .button.danger { color: var(--danger); }
+    .full { width: 100%; }
+    .line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .line > * { min-width: 0; }
+    .status-card { border: 1px solid #cde5de; border-radius: 9px; padding: 11px 12px; background: #eff8f5; font-size: 13px; overflow-wrap: anywhere; }
+    .status-card strong { display: block; margin-bottom: 2px; }
+    .status-card.missing { background: var(--amber-bg); border-color: #eddbac; }
+    .disclosure { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 15px; }
+    .disclosure summary { font-weight: 700; cursor: pointer; list-style-position: outside; }
+    .disclosure[open] summary { margin-bottom: 12px; }
+    .hint { font-size: 12px; color: var(--muted); margin: 7px 0 10px; }
+    .feedback { min-height: 18px; font-size: 12px; margin: 8px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+    .feedback.error { color: var(--danger); }
+    .chat { display: flex; flex-direction: column; min-height: 720px; height: calc(100vh - 104px); overflow: hidden; }
+    .chat-head { padding: 24px 26px 16px; border-bottom: 1px solid var(--line); }
+    .badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+    .badge { background: #eef3f2; color: #355459; border: 1px solid #d8e5e2; border-radius: 99px; font-size: 12px; font-weight: 650; padding: 4px 9px; }
+    .badge.warn { background: var(--amber-bg); color: var(--amber); border-color: #f1dfb4; }
+    .conversation { flex: 1; min-height: 0; overflow: auto; padding: 24px 26px; scrollbar-color: #bccfca transparent; }
+    .empty { max-width: 580px; margin: 9vh auto 0; text-align: center; }
+    .empty .symbol { display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 18px; border-radius: 16px; background: #e2f1ec; color: var(--accent); font-size: 28px; font-weight: 700; }
+    .empty h3 { font-size: 22px; margin-bottom: 8px; }
+    .suggestions { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .suggestions button { border: 1px solid #bad4ce; background: #fff; color: var(--accent-dark); border-radius: 99px; padding: 8px 13px; }
+    .suggestions button:hover { background: var(--soft); }
+    .message { max-width: min(780px, 100%); margin-bottom: 18px; }
+    .message.user { margin-left: auto; max-width: min(680px, 92%); }
+    .message-label { font-size: 12px; font-weight: 800; color: var(--muted); margin: 0 0 6px 5px; }
+    .message.user .message-label { text-align: right; margin-right: 5px; }
+    .message-body { white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--line); border-radius: 11px; background: #f7faf9; padding: 14px 16px; font-size: 14px; line-height: 1.68; }
+    .message.user .message-body { background: #e4f3ee; border-color: #c7e7de; }
+    .message.draft .message-body { border-color: #efdba8; background: #fffbf1; }
+    .composer { border-top: 1px solid var(--line); background: #fff; padding: 16px 26px 19px; }
+    .composer label { margin-top: 0; }
+    .composer textarea { min-height: 92px; max-height: 180px; }
+    .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; }
+    .check { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+    .check input { width: 17px; height: 17px; accent-color: var(--accent); }
+    .inspector { align-self: start; min-height: 470px; }
+    .inspector-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .inspector-head h2 { margin-bottom: 2px; }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); margin-top: 16px; gap: 2px; }
+    .tab { border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); font-size: 12px; padding: 10px 2px; font-weight: 700; }
+    .tab[aria-selected=true] { border-color: var(--accent); color: var(--accent-dark); }
+    .tab-panel { min-height: 220px; max-height: min(57vh, 650px); overflow: auto; padding-top: 16px; }
+    .fact, .graph-item, .source-item, .review-item { padding: 11px 0; border-bottom: 1px solid #e6eeeb; overflow-wrap: anywhere; }
+    .fact:first-child, .graph-item:first-child { padding-top: 0; }
+    .fact code { display: block; color: #42636a; font-size: 11px; margin-bottom: 5px; overflow-wrap: anywhere; }
+    .fact strong { display: block; font-size: 13px; font-weight: 650; }
+    .graph-item strong { font-size: 13px; }
+    .graph-item p { font-size: 12px; color: var(--muted); margin: 5px 0 0; }
+    .candidate { color: var(--amber); font-size: 11px; font-weight: 800; }
+    .source-item a { color: var(--accent-dark); font-weight: 700; }
+    .notice { border-radius: 9px; background: var(--amber-bg); color: #684500; padding: 10px 11px; font-size: 12px; margin: 12px 0; }
+    .memory-list { list-style: none; padding: 0; margin: 14px 0 0; }
+    .memory-list li { border-top: 1px solid var(--line); padding: 11px 0; font-size: 13px; overflow-wrap: anywhere; }
+    .memory-list .actions { display: flex; gap: 5px; margin-top: 5px; }
+    .toast { position: fixed; z-index: 4; bottom: 18px; left: 50%; transform: translateX(-50%); max-width: min(600px, calc(100vw - 24px)); padding: 10px 15px; border-radius: 9px; background: #19343c; color: #fff; font-size: 13px; box-shadow: 0 8px 28px #102b3340; }
+    .toast[hidden] { display: none; }
+    @media (max-width: 1160px) { .shell { grid-template-columns: 250px minmax(0,1fr); } .inspector { grid-column: 2; } .chat { height: min(760px, calc(100vh - 104px)); } }
+    @media (max-width: 780px) { .shell { display: flex; flex-direction: column; padding: 10px; gap: 10px; } .chat { order: 1; height: 72vh; min-height: 520px; } .sidebar { order: 2; } .inspector { order: 3; } body.no-graph .sidebar { order: 0; } .top-status { display: none; } .chat-head, .conversation, .composer { padding-left: 16px; padding-right: 16px; } .sidebar, .inspector { padding: 17px; } .conversation { padding-top: 16px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#chatMain">跳到工程问答</a>
+  <header class="topbar">
+    <div class="brand"><div class="mark" aria-hidden="true">AW</div><div><h1>Automotive Workbench</h1><small>工程证据与知识图谱</small></div></div>
+    <div class="top-status">本机运行 · 数据留在本地</div>
+  </header>
+  <div class="shell">
+    <aside class="pane sidebar" aria-label="工作区设置">
+      <p class="eyebrow">WORKSPACE</p>
+      <h2>当前工作区</h2>
+      <div id="graphState" class="status-card missing" role="status">尚未导入图谱</div>
+      <div class="section">
+        <div class="line"><h3 style="margin:0">会话</h3><button id="newSession" class="button secondary small" type="button">新会话</button></div>
+        <label for="sessions">历史会话</label><select id="sessions"></select>
+      </div>
+      <div class="section">
+        <h3>工程报告</h3>
+        <label for="report">project-report.json 本机绝对路径</label>
+        <input id="report" autocomplete="off" placeholder="/mnt/d/.../project-report.json">
+        <p class="hint">每次提问重放报告；静态 passed 不代表 CFG 生成或 CAN 实测。</p>
+      </div>
+      <details class="disclosure" id="graphImport">
+        <summary>导入或更新图谱</summary>
+        <p class="hint">从知识图谱站点下载 graph.json 与其全部 source-*.md；一次选中这些文件。</p>
+        <label for="files">图谱与来源文件</label><input id="files" type="file" multiple accept=".json,.md">
+        <label for="siteVersion">站点版本标签</label><input id="siteVersion" placeholder="例如 5">
+        <button id="importBtn" class="button full" type="button" style="margin-top:11px">导入并核验</button>
+        <p id="importStatus" class="feedback" role="status"></p>
+      </details>
+      <details class="disclosure">
+        <summary>图谱核实记录</summary>
+        <p class="hint">单独导入站点导出的核实记录。它只作用户注释，图谱仍为候选。</p>
+        <label for="reviewFile">核实记录 JSON</label><input id="reviewFile" type="file" accept=".json">
+        <button id="reviewImportBtn" class="button secondary full" type="button" style="margin-top:11px">导入核实记录</button>
+        <p id="reviewState" class="feedback" role="status">未导入核实记录。</p>
+      </details>
+      <details class="disclosure">
+        <summary>长期记忆</summary>
+        <p class="hint">只保存你明确填写的偏好或决定；不会自动记住模型回答。</p>
+        <label for="memory">记忆内容</label><textarea id="memory" rows="3"></textarea>
+        <label for="memoryScope">适用范围</label><select id="memoryScope"><option value="global">所有会话</option><option value="project">当前工程报告版本</option></select>
+        <button id="saveMemory" class="button secondary full" type="button" style="margin-top:11px">保存记忆</button>
+        <p id="memoryStatus" class="feedback" role="status"></p>
+        <ul id="memoryList" class="memory-list"></ul>
+      </details>
+    </aside>
+
+    <main id="chatMain" class="pane chat">
+      <div class="chat-head">
+        <p class="eyebrow">EVIDENCE CHAT</p>
+        <h2 class="chat-title">从证据出发，追踪工程问题</h2>
+        <p class="subtle" style="margin-bottom:0">项目事实、图谱线索和模型草稿分别呈现。每条结论都有清晰状态。</p>
+        <div class="badges"><span id="graphBadge" class="badge warn">图谱未导入</span><span id="projectBadge" class="badge">未选择工程报告</span><span class="badge">Ollama 草稿需人工审阅</span></div>
+      </div>
+      <div id="messages" class="conversation" aria-live="polite">
+        <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">?</div><h3>先问一个具体问题</h3><p class="subtle">选择工程报告可核对配置证据；仅导入图谱也能探索待核实的知识线索。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态</button></div></div>
+      </div>
+      <div class="composer">
+        <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="例如：CanIf 与 CanTp 在图谱中是什么关系？哪些仍待核实？"></textarea>
+        <div class="composer-foot"><label class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><button id="askBtn" class="button" type="button">发送问题</button></div>
+        <p id="chatStatus" class="feedback" role="status">按 Ctrl + Enter 也可发送。</p>
+      </div>
+    </main>
+
+    <aside class="pane inspector" aria-label="证据检查器">
+      <div class="inspector-head"><div><p class="eyebrow">INSPECTOR</p><h2>证据检查器</h2></div><span id="evidenceCount" class="badge">等待提问</span></div>
+      <p class="subtle">查看最近一条回答引用的原始工程字段与图谱线索。</p>
+      <div id="evidenceNotice" class="notice">图谱内容均为候选。模型草稿不能代替项目报告或实测。</div>
+      <div class="tabs" role="tablist" aria-label="证据类别">
+        <button id="tab-facts" class="tab" type="button" role="tab" data-tab="facts" aria-selected="true" aria-controls="evidencePanel">工程</button>
+        <button id="tab-graph" class="tab" type="button" role="tab" data-tab="graph" aria-selected="false" aria-controls="evidencePanel">图谱</button>
+        <button id="tab-sources" class="tab" type="button" role="tab" data-tab="sources" aria-selected="false" aria-controls="evidencePanel">来源</button>
+        <button id="tab-reviews" class="tab" type="button" role="tab" data-tab="reviews" aria-selected="false" aria-controls="evidencePanel">核实</button>
+      </div>
+      <div id="evidencePanel" class="tab-panel" role="tabpanel" aria-labelledby="tab-facts"></div>
+    </aside>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script>
+    const token = '__TOKEN__';
+    const $ = id => document.getElementById(id);
+    let sessionId = localStorage.getItem('awb-session') || '';
+    let activeHash = '';
+    let projectHash = '';
+    let currentEvidence = null;
+    let currentTab = 'facts';
+    let toastTimer;
+    $('report').value = localStorage.getItem('awb-report') || '';
+    $('useModel').checked = localStorage.getItem('awb-use-model') !== 'false';
+    $('report').onchange = () => localStorage.setItem('awb-report', $('report').value.trim());
+    $('useModel').onchange = () => localStorage.setItem('awb-use-model', String($('useModel').checked));
+
+    async function api(path, body) {
+      const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Workbench-Token': token }, body: JSON.stringify(body) });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error || '请求失败');
+      return data;
+    }
+    function el(tag, value, className) { const node = document.createElement(tag); if (value !== undefined) node.textContent = value; if (className) node.className = className; return node; }
+    function feedback(id, value, error = false) { $(id).textContent = value; $(id).classList.toggle('error', error); }
+    function toast(value) { $('toast').textContent = value; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 5000); }
+    function showError(error) { toast('操作失败：' + error.message); }
+    function setTab(tab) {
+      currentTab = tab;
+      for (const button of document.querySelectorAll('.tab')) button.setAttribute('aria-selected', String(button.dataset.tab === tab));
+      $('evidencePanel').setAttribute('aria-labelledby', 'tab-' + tab);
+      renderEvidencePanel();
+    }
+    const tabButtons = [...document.querySelectorAll('.tab')];
+    for (const button of tabButtons) {
+      button.onclick = () => setTab(button.dataset.tab);
+      button.onkeydown = event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const index = tabButtons.indexOf(button);
+        const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabButtons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabButtons.length) % tabButtons.length;
+        tabButtons[target].focus(); setTab(tabButtons[target].dataset.tab);
+      };
+    }
+
+    function renderMessage(role, content, kind = 'evidence') {
+      const box = el('article', undefined, `message ${role} ${kind === 'draft' ? 'draft' : ''}`);
+      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : '工作台证据', 'message-label'));
+      box.append(el('div', content || '本轮没有可展示的内容。', 'message-body'));
+      $('emptyState')?.remove();
+      $('messages').append(box);
+      $('messages').scrollTop = $('messages').scrollHeight;
+    }
+    function renderAssistant(result) {
+      renderMessage('assistant', result.summary || '未得到确定性摘要，请查看证据检查器。');
+      if (result.draft) renderMessage('assistant', result.draft, 'draft');
+    }
+    function renderEvidencePanel() {
+      const panel = $('evidencePanel'); panel.replaceChildren();
+      const ev = currentEvidence?.evidence;
+      if (!ev) { panel.append(el('p', '提问后，这里会按类别显示相关证据。', 'subtle')); return; }
+      const empty = value => panel.append(el('p', value, 'subtle'));
+      if (currentTab === 'facts') {
+        panel.append(el('p', `项目状态：${ev.project_status || 'unassessed'}。此状态不证明 CFG 生成或 CAN 总线实测。`, 'subtle'));
+        if (!ev.project_facts?.length) empty('本轮未选择工程报告。');
+        for (const fact of ev.project_facts || []) {
+          const box = el('div', undefined, 'fact'); box.append(el('code', `${fact.artifact_id}#${fact.pointer}`)); box.append(el('strong', JSON.stringify(fact.value))); panel.append(box);
+        }
+      } else if (currentTab === 'graph') {
+        if (!ev.graph_nodes?.length) empty('这次提问没有匹配到图谱节点。可换用实体名称再问。');
+        for (const node of ev.graph_nodes || []) {
+          const box = el('div', undefined, 'graph-item'); box.append(el('strong', `${node.id} · ${node.label}`), el('div', '待核实候选', 'candidate')); if (node.summary) box.append(el('p', node.summary)); panel.append(box);
+        }
+        if (ev.graph_edges?.length) { panel.append(el('h3', '候选关系')); for (const edge of ev.graph_edges) { const box = el('div', `${edge.id} · ${edge.source} → ${edge.target} · ${edge.type}`, 'graph-item'); panel.append(box); } }
+      } else if (currentTab === 'sources') {
+        const current = ev.graph_sha256 === activeHash;
+        if (!current) { empty('这条历史回答使用旧版图谱。请重新提问以取得当前来源。'); return; }
+        const needed = new Set((ev.graph_nodes || []).flatMap(node => node.source_documents || []));
+        const files = (ev.source_documents || []).filter(doc => needed.has(doc.id));
+        if (!files.length) empty('本轮没有匹配到图谱来源文件。');
+        for (const file of files) { const box = el('div', undefined, 'source-item'); const link = el('a', file.filename); link.href = '/api/source?name=' + encodeURIComponent(file.filename); link.target = '_blank'; link.rel = 'noopener'; box.append(link); panel.append(box); }
+        panel.append(el('p', '来源是候选知识的原文，可据此逐条核对。', 'subtle'));
+      } else {
+        if (!ev.review_annotations?.length) empty('本轮相关实体没有用户核实注释。');
+        for (const item of ev.review_annotations || []) { const box = el('div', undefined, 'review-item'); box.append(el('strong', `${item.task_id} · ${item.status}`), el('p', item.evidence || '无证据文本', 'subtle')); panel.append(box); }
+        panel.append(el('p', '核实记录是用户注释，不改变图谱候选状态。', 'subtle'));
+      }
+    }
+    function showEvidence(result) {
+      currentEvidence = result;
+      const ev = result.evidence || {};
+      projectHash = ev.project_sha256 || '';
+      $('projectBadge').textContent = ev.project_sha256 ? `工程 ${ev.project_status}` : '未选择工程报告';
+      $('evidenceCount').textContent = `${(ev.project_facts || []).length} 工程字段 · ${(ev.graph_nodes || []).length} 图谱节点`;
+      $('evidenceNotice').textContent = ev.graph_sha256 && ev.graph_sha256 !== activeHash ? '历史回答使用旧版图谱；请重新提问核对当前来源。' : '图谱节点与关系均为候选；Ollama 草稿未经语义审阅。';
+      renderEvidencePanel();
+    }
+    function renderMemories(items) {
+      const list = $('memoryList'); list.replaceChildren();
+      if (!items.length) { list.append(el('li', '还没有保存的记忆。', 'subtle')); return; }
+      for (const item of items) {
+        const li = el('li'); const content = el('div', item.content); const actions = el('div', undefined, 'actions');
+        const edit = el('button', '编辑', 'button ghost small'); const remove = el('button', '删除', 'button ghost danger small');
+        edit.onclick = () => {
+          const field = el('textarea'); field.value = item.content; field.rows = 3;
+          const save = el('button', '保存', 'button secondary small'); const cancel = el('button', '取消', 'button ghost small');
+          content.replaceWith(field); actions.replaceChildren(save, cancel); field.focus();
+          save.onclick = async () => { try { await api('/api/memory/edit', { id: item.id, content: field.value }); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };
+          cancel.onclick = () => { field.replaceWith(content); actions.replaceChildren(edit, remove); };
+        };
+        remove.onclick = async () => { if (!confirm('删除这条长期记忆？')) return; try { await api('/api/memory/delete', { id: item.id }); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };
+        actions.append(edit, remove); li.append(content, actions); list.append(li);
+      }
+    }
+    async function refresh() {
+      const response = await fetch('/api/state?session=' + encodeURIComponent(sessionId)); const data = await response.json();
+      if (!response.ok) throw Error(data.error || '工作区状态加载失败');
+      if (!data.sessions.length) { const created = await api('/api/session', {}); sessionId = created.session_id; localStorage.setItem('awb-session', sessionId); return refresh(); }
+      activeHash = data.active?.graph_sha256 || '';
+      document.body.classList.toggle('no-graph', !data.active);
+      const state = $('graphState'); state.classList.toggle('missing', !data.active);
+      state.replaceChildren();
+      if (data.active) { state.append(el('strong', `图谱版本 ${data.active.site_version}`), el('span', `${data.active.counts.nodes} 节点 · ${data.active.counts.edges} 关系 · ${data.active.graph_sha256.slice(0, 12)}`)); $('graphBadge').textContent = '图谱候选 · 已导入'; $('graphBadge').classList.remove('warn'); }
+      else { state.textContent = '尚未导入图谱。打开下方“导入或更新图谱”开始。'; $('graphImport').open = true; $('graphBadge').textContent = '图谱未导入'; $('graphBadge').classList.add('warn'); }
+      feedback('reviewState', data.reviews?.status === 'stale_graph' ? '核实记录属于旧版图谱，请重新导入。' : data.reviews?.status === 'user_annotation_only' ? `已导入 ${Object.keys(data.reviews.reviews).length} 项注释；图谱仍为候选。` : '未导入核实记录。');
+      const select = $('sessions'); select.replaceChildren();
+      for (const row of data.sessions) { const option = el('option', row.title ? `${row.title.slice(0, 28)} · ${row.created_at.slice(5, 16)}` : `新会话 · ${row.created_at.slice(5, 16)}`); option.value = row.id; select.append(option); }
+      if (!data.sessions.some(row => row.id === sessionId)) sessionId = data.sessions[0].id;
+      select.value = sessionId; localStorage.setItem('awb-session', sessionId);
+      $('messages').replaceChildren();
+      if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = '<div class="symbol" aria-hidden="true">?</div><h3>先问一个具体问题</h3><p class="subtle">选择工程报告可核对配置证据；仅导入图谱也能探索待核实的知识线索。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态</button></div>'; $('messages').append(empty); bindSuggestions(); }
+      for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
+      const latest = [...data.messages].reverse().find(message => message.role === 'assistant');
+      if (latest) showEvidence(latest.detail || {}); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+      renderMemories(data.memories || []);
+    }
+    function bindSuggestions() { for (const button of document.querySelectorAll('[data-prompt]')) button.onclick = () => { $('question').value = button.dataset.prompt; $('question').focus(); }; }
+    bindSuggestions();
+    $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; await refresh(); $('question').focus(); } catch (error) { showError(error); } };
+    $('sessions').onchange = async () => { sessionId = $('sessions').value; try { await refresh(); } catch (error) { showError(error); } };
+    $('importBtn').onclick = async () => {
+      const button = $('importBtn'); button.disabled = true; feedback('importStatus', '正在核验文件与来源哈希…');
+      try { const files = [...$('files').files]; if (!files.length) throw Error('请选择 graph.json 和对应的全部来源 Markdown。'); const contents = {}; for (const file of files) contents[file.name] = await file.text(); const result = await api('/api/import', { files: contents, site_version: $('siteVersion').value.trim() || '未标记' }); const changed = Object.values(result.diff).reduce((sum, value) => sum + value.added.length + value.removed.length + value.changed.length, 0); feedback('importStatus', `核验通过：${result.graph_sha256.slice(0, 12)}，${changed} 项对象差异。`); await refresh(); } catch (error) { feedback('importStatus', error.message, true); } finally { button.disabled = false; }
+    };
+    $('reviewImportBtn').onclick = async () => { try { const file = $('reviewFile').files[0]; if (!file) throw Error('请选择站点导出的核实记录 JSON。'); await api('/api/reviews/import', { content: await file.text() }); await refresh(); } catch (error) { feedback('reviewState', error.message, true); } };
+    $('askBtn').onclick = async () => {
+      const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
+      const button = $('askBtn'); button.disabled = true; button.textContent = '正在核对…'; feedback('chatStatus', '正在重放工程报告并查找图谱线索…');
+      try { const result = await api('/api/chat', { session_id: sessionId, question, report: $('report').value.trim(), use_model: $('useModel').checked }); renderMessage('user', question); renderAssistant(result); showEvidence(result); $('question').value = ''; feedback('chatStatus', result.model_error ? `证据已保留；Ollama：${result.model_error}` : result.draft ? '证据与 Ollama 草稿已分开展示。' : '证据已更新。'); } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
+    };
+    $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
+    $('saveMemory').onclick = async () => { try { const scope = $('memoryScope').value === 'global' ? 'global' : projectHash; if (!scope) throw Error('先选择工程报告并提问，再保存当前工程记忆。'); await api('/api/memory', { scope, content: $('memory').value }); $('memory').value = ''; feedback('memoryStatus', '已保存长期记忆。'); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };
+    refresh().catch(showError);
+  </script>
+</body>
+</html>
