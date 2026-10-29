@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-29）：在 `work/cross-tool-acceptance-impact` 子分支，将跨工具变更通过显式绑定接到已有项目验收 ID 与其上一轮证据；只给重跑候选，未绑定处保留未知。实现 `663731f` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) 七 job success。商业工程尚无同源项目验收报告，不做虚假绑定；`main` 未合并，P30 人工审阅仍待完成。
+最新补充（2026-10-29）：在 `work/cross-tool-acceptance-impact` 子分支，将跨工具变更通过显式绑定接到已有项目验收 ID 与其上一轮证据；只给重跑候选，未绑定处保留未知。实现 `663731f` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) 七 job success，已 fast-forward 合入项目集成分支。商业工程尚无同源项目验收报告，不做虚假绑定；`main` 未合并，P30 人工审阅仍待完成。
 
 最新补充（2026-10-29）：按用户确认的分支流程，在项目集成分支下建立 `work/cross-tool-references`，新增跨工具完整引用关联与差异检查。隔离实际工程 1 Rx/1 Tx 均可关联到 COM/PduR/CanIf 范围内路径；实现 `cf5d1b2` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) 七 job success，已 fast-forward 合入并推送项目集成分支。这是结构证据，CFG 原生错误和 CAN 实测边界继续保留；`main` 未合并，P30 人工内容审阅仍待独立完成。
 
@@ -2135,4 +2135,4 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 从项目集成分支建立 `work/cross-tool-acceptance-impact`。新增受限绑定契约：Developer 端口与数据元素身份、前/后已解析的 ECUC ComSignal 完整路径、项目验收 ID。复验跨工具差异与追踪、验收 ID、前次 evidence 文件哈希及 JSON 指针；变化后输出 `rerun_required` 和前次状态，无绑定变化保留 unbound。绑定语义由工程人员声明，平台不推断产品关系或变更后的测试结果。
 - 公开合成项目正例验证 previous passed 仍需重跑；无绑定、伪造 ComSignal、证据文件变更均拒绝或标未知。当前本地商业工程没有同源 Workbench 项目验收报告，故仅核对跨工具链和 CFG 原生结果，不产生虚构的验收项关联。
 - 授权回环环境全量 543 tests 通过（2 项环境跳过）；在全量启动后新增 CLI 退出码负例，另行专项 3/3 通过。Ruff、单模块 mypy、diff check 通过。有变化且需要重跑时 CLI 返回退出码 2，避免自动流程误收旧状态。
-- 子分支实现 `663731f929cb50e0928b9e4cd80c36e14d02d3e9` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) head 一致、completed/success，七 job success：runtime-currency `123255267115`，core-contracts Ubuntu `123255267314` / Windows `123255267392`，runtime-evidence Ubuntu `123258343559` / Windows `123258343534`，controlled-rejections Ubuntu `123258343553` / Windows `123258343614`。本次文档状态提交不充作实现验收；待合入项目集成分支，`main` 保持不变。P30 独立人工审阅仍待完成。
+- 子分支实现 `663731f929cb50e0928b9e4cd80c36e14d02d3e9` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) head 一致、completed/success，七 job success：runtime-currency `123255267115`，core-contracts Ubuntu `123255267314` / Windows `123255267392`，runtime-evidence Ubuntu `123258343559` / Windows `123258343534`，controlled-rejections Ubuntu `123258343553` / Windows `123258343614`。纯文档状态提交 `7eafab7` 不充作实现验收；已 fast-forward 合入并推送项目集成分支（head `7eafab7`），`main` 保持不变。下一项建立实际工程的同源验收基线，才能关联真实测试证据；P30 独立人工审阅仍待完成。
