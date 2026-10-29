@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-29 子分支配套工作：`work/cross-tool-acceptance-impact` 将跨工具差异关联到显式声明的项目验收 ID，并复验上一轮证据的文件哈希与 JSON 指针；输出只建议重跑，不把旧状态当变更后通过。当前商业工程没有同源项目验收基线，保持 unbound/未评估；公开项目用于合成正负例，见[桥接说明](davinci-mapping-bridge.md)。完成子分支验收后合入项目集成分支，`main` 仍不合并；P30 独立人工审阅主门不变。
+2026-10-29 子分支配套工作：`work/cross-tool-acceptance-impact` 将跨工具差异关联到显式声明的项目验收 ID，并复验上一轮证据的文件哈希与 JSON 指针；输出只建议重跑，不把旧状态当变更后通过。实现 `663731f` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) head 一致、七 job success。当前商业工程没有同源项目验收基线，保持 unbound/未评估；公开项目用于合成正负例，见[桥接说明](davinci-mapping-bridge.md)。子分支验收后合入项目集成分支，`main` 仍不合并；P30 独立人工审阅主门不变。
 
 2026-10-29 子分支配套工作：`work/cross-tool-references` 从本次项目集成分支建立，受限实现 Developer SystemSignal → System I-Signal/PDU 映射 → ECUC ComSignal → 既有通信路径的精确引用关联与两版差异检查；实现 `cf5d1b2` / [run `40806692313`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40806692313) head 一致、七 job success。本地真实工程两条 Rx/Tx 链已解析，CFG 原生错误仍独立保留。子分支已 fast-forward 合入项目集成分支；项目整体验收前不合入 `main`。P30 独立人工审阅仍是主门，见[桥接说明](davinci-mapping-bridge.md)。
 
