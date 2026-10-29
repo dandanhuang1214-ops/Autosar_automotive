@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-29）：围绕工具适配复核现有能力，并新增 CFG 原生 XML 校验摘要入口；本地原生报告的声明计数与逐条结果一致，摘要明确为 25 errors、59 warnings、生成 `ERROR`，与 Developer 映射 2/2 解析和 ECUC 通信 73 条范围内路径分开表述。实现/测试/远端结论见末尾续记。P30 的独立人工内容审阅仍是主门。
+最新补充（2026-10-29）：围绕工具适配复核现有能力；CFG 原生 XML 摘要实现 `60125a4` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) 七 job success。真实报告为 25 errors、59 warnings、生成 `ERROR`，Developer 映射 2/2 解析，ECUC 通信 73 条范围内路径。后续统一能力评估按用户要求放在独立分支，确认后才合并；P30 独立人工内容审阅仍是主门。
 
 最新补充（2026-10-28）：在隔离本地工程副本执行 DaVinci Developer 只读 ECUProject XML 导出和 CFG 原生校验；前者成功，后者报告 0 fatal、25 errors、59 warnings、641 improvements。新增[显式信号映射只读接入](davinci-mapping-bridge.md)，实际导出与接口 ARXML 的两条 Rx/Tx 引用均解析，合成正负例通过。实现 `c32f486` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、七 job success；具体结论见末尾续记。P30 主门仍为 0.7 development v1 独立人工审阅，内容门失败和 P25 人工演示待办保持。
 
@@ -2111,4 +2111,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 新增 `inspect-cfg-validation` / `verify-cfg-validation`：只读解析 DaVinciExecutionReport，核对声明与逐条严重度数量，记录分组 ID/来源/计数、generation 总状态和各 generator 状态；源路径、大小、SHA-256 绑定本地复验。拒绝 DTD、实体、超限、不支持严重度、计数不一致和摘要篡改。输入仍留本地，不作为可迁移公开胶囊。
 - 本地真实报告：0 fatal、25 error、59 warning、641 improvement；generation `ERROR`，6 failed、8 successful、1 none，摘要复验 passed。现有 ECUC 工程审查快照离线复验 passed 但内容状态 attention-required；在隔离副本新运行通信 trace 为 `resolved-in-scope`、73 条路径，离线复验 passed；Developer 显式映射保持 2/2 引用解析。三者分别属于供应商校验、范围内 ECUC 结构、SWC 数据映射，均不构成总线或 ECU 执行证明。
-- 合成正常、计数矛盾、DTD 拒绝与摘要篡改 3 项新增测试通过；连同映射桥专项 6/6。授权本地回环环境全量 537 tests 通过（2 项环境跳过）；Ruff、单模块 mypy、diff check 通过。实现远端 CI 待本次提交运行。下一主任务仍为 P30 0.7 development v1 独立人工审阅；工具适配继续优先消费实际导出并并列保留原生失败。
+- 合成正常、计数矛盾、DTD 拒绝与摘要篡改 3 项新增测试通过；连同映射桥专项 6/6。授权本地回环环境全量 537 tests 通过（2 项环境跳过）；Ruff、单模块 mypy、diff check 通过。实现 `60125a471121de9b24f6bfbe7457964f1762da06` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) head 一致、completed/success，七 job 全部 success：runtime-currency `123195351612`，core-contracts Ubuntu `123195351232` / Windows `123195351624`，runtime-evidence Ubuntu `123198868708` / Windows `123198868732`，controlled-rejections Ubuntu `123198868867` / Windows `123198868771`。下一主任务仍为 P30 0.7 development v1 独立人工审阅；工具适配继续优先消费实际导出并并列保留原生失败。
+
+### P30 配套：统一 DaVinci 能力评估（2026-10-29，独立分支实施中）
+
+- 按用户要求在 `feature/davinci-workflow-assessment` 分支开发与上传，确认后才合并 `main`。统一入口在组合前分别复验 Developer 映射、CFG 原生报告、ECUC 通信 trace 与工程审查，输出各层状态及来源哈希；CAN 总线层显式 unassessed。
+- 隔离本地工程的统一评估返回 attention-required：映射 2/2，ECUC 73 条范围内路径，工程审查 102 项结构发现，CFG 25 errors/59 warnings/generation ERROR，CAN 总线未评估；组合报告重新复验 passed。映射报告新增原输入重算复验及源变更拒绝。公开专项 7/7、授权回环环境全量 538 tests 通过（2 项环境跳过）、Ruff、三模块 mypy、diff check 通过。下一步推送分支并核对 CI；不把此评估误称端到端 CAN 验证。

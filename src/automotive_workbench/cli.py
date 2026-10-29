@@ -7,8 +7,9 @@ import sys
 from pathlib import Path
 
 from automotive_workbench.ecuc_project import run_inspection, verify_inspection
-from automotive_workbench.davinci_mapping import audit_mappings
+from automotive_workbench.davinci_mapping import audit_mappings, verify_mapping_audit
 from automotive_workbench.cfg_validation import inspect_cfg_report, verify_cfg_report
+from automotive_workbench.davinci_workflow import assess_workflow, verify_workflow
 from automotive_workbench.ecuc_communication import run_communication, verify_communication
 from automotive_workbench.ecuc_review import run_review as run_ecuc_review, verify_review as verify_ecuc_review
 from automotive_workbench.ecuc_impact import compare_reviews as compare_ecuc_reviews, verify_impact as verify_ecuc_impact
@@ -88,10 +89,18 @@ def build_parser() -> argparse.ArgumentParser:
     cfg_report.add_argument("--output", type=Path, required=True)
     cfg_verify = commands.add_parser("verify-cfg-validation", help="Recheck a CFG summary against its source")
     cfg_verify.add_argument("report", type=Path)
+    workflow = commands.add_parser("assess-davinci-workflow", help="Correlate verified Developer, ECUC and CFG evidence")
+    for option in ("mapping", "cfg", "communication", "review"):
+        workflow.add_argument(f"--{option}", type=Path, required=True)
+    workflow.add_argument("--output", type=Path, required=True)
+    workflow_verify = commands.add_parser("verify-davinci-workflow", help="Recheck a source-bound DaVinci assessment")
+    workflow_verify.add_argument("report", type=Path)
 
     mapping = commands.add_parser("audit-signal-mappings", help="Audit explicit ARXML data-element to system-signal mappings")
     mapping.add_argument("--source", type=Path, action="append", required=True)
     mapping.add_argument("--output", type=Path, required=True)
+    mapping_verify = commands.add_parser("verify-signal-mappings", help="Recheck a mapping audit against its sources")
+    mapping_verify.add_argument("report", type=Path)
 
     ecuc = commands.add_parser("inspect-ecuc-project", help="Inspect selected DPA/ECUC structure without invoking vendor tools")
     ecuc.add_argument("project", type=Path)
@@ -1231,12 +1240,18 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
-        if args.command == "inspect-cfg-validation":
+        if args.command == "assess-davinci-workflow":
+            result = assess_workflow(args.mapping, args.cfg, args.communication, args.review, args.output)
+        elif args.command == "verify-davinci-workflow":
+            result = verify_workflow(args.report)
+        elif args.command == "inspect-cfg-validation":
             result = inspect_cfg_report(args.source, args.output)
         elif args.command == "verify-cfg-validation":
             result = verify_cfg_report(args.report)
         elif args.command == "audit-signal-mappings":
             result = audit_mappings(args.source, args.output)
+        elif args.command == "verify-signal-mappings":
+            result = verify_mapping_audit(args.report)
         elif args.command == "inspect-ecuc-project":
             result = run_inspection(args.project, args.output)
         elif args.command == "verify-ecuc-inspection":

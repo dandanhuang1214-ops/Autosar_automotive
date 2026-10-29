@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-29 配套能力核验：现有 ECUC 通信 trace 和工程审查已在隔离商业工程副本离线复验；新增 CFG 原生 XML 报告只读摘要，能把供应商报错与 Developer 映射核对并列呈现，见[桥接说明](davinci-mapping-bridge.md)。此工作验证工具适配边界，不替代 P30 内容质量主门。下一主任务仍是获得 0.7 development v1 的独立人工审阅，再决定新 cohort 的模型对照；P25 演示和实际 CAN 总线实验仍待证据。
+2026-10-29 配套能力核验：现有 ECUC 通信 trace 和工程审查已在隔离商业工程副本离线复验；CFG 原生 XML 摘要实现 `60125a4` / [run `40796871575`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40796871575) 七 job success。后续统一能力评估在独立分支 `feature/davinci-workflow-assessment` 完成和验证，确认后才合并主分支，见[桥接说明](davinci-mapping-bridge.md)。此工作验证工具适配边界，不替代 P30 内容质量主门。下一主任务仍是获得 0.7 development v1 的独立人工审阅，再决定新 cohort 的模型对照；P25 演示和实际 CAN 总线实验仍待证据。
 
 2026-10-28 配套工作：七周实操计划与已有 P20–P29 通信/ECUC 能力相接，[DaVinci 显式映射只读桥](davinci-mapping-bridge.md)实现 `c32f486` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、七 job success。隔离的本地工程副本验证了 Developer XML 导出及两条 Rx/Tx 引用；CFG 原生校验仍有错误，故不宣称生成或总线通过。此项是 P30 阶段的配置证据补充，不改变当前主门。下一主任务仍为取得 0.7 development v1 的独立人工审阅，之后决定新 cohort 的模型对照；held-out v2 与 P25 人工演示仍待完成。
 

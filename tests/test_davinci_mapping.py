@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from automotive_workbench.davinci_mapping import audit_mappings
+from automotive_workbench.davinci_mapping import audit_mappings, verify_mapping_audit
 
 
 def _arxml(mapping_signal: str) -> str:
@@ -39,6 +39,10 @@ class MappingAuditTests(unittest.TestCase):
             self.assertEqual(report["status"], "passed")
             self.assertEqual(report["summary"], {"total": 1, "resolved": 1})
             self.assertEqual(report["mappings"][0]["direction"], "Tx")
+            self.assertEqual(verify_mapping_audit(Path(directory) / "report.json")["status"], "passed")
+            source.write_text(_arxml("Missing"), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                verify_mapping_audit(Path(directory) / "report.json")
 
     def test_audit_exposes_dangling_signal(self) -> None:
         with TemporaryDirectory() as directory:

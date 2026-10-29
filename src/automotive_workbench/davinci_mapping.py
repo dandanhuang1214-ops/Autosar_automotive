@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from typing import cast
 from xml.etree import ElementTree as ET
 
 from automotive_workbench.ecuc_project import xml
@@ -38,7 +39,7 @@ def _objects(root: ET.Element) -> dict[str, str]:
     return found
 
 
-def audit_mappings(sources: list[Path], output: Path) -> dict[str, object]:
+def summarize_mappings(sources: list[Path]) -> dict[str, object]:
     if not sources or len({p.resolve() for p in sources}) != len(sources):
         raise ValueError("Supply distinct ARXML sources")
     roots: list[ET.Element] = []
@@ -48,7 +49,7 @@ def audit_mappings(sources: list[Path], output: Path) -> dict[str, object]:
         data = source.read_bytes()
         root = xml(data)
         roots.append(root)
-        inputs.append({"path": str(source), "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)})
+        inputs.append({"path": str(source.resolve()), "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)})
         for ref, kind in _objects(root).items():
             if ref in objects and objects[ref] != kind:
                 raise ValueError(f"Conflicting object type: {ref}")
@@ -76,6 +77,23 @@ def audit_mappings(sources: list[Path], output: Path) -> dict[str, object]:
                                  "inputs": inputs,
                                  "mappings": rows, "summary": {"total": len(rows),
                                  "resolved": sum(row["status"] == "resolved" for row in rows)}}
+    return result
+
+
+def audit_mappings(sources: list[Path], output: Path) -> dict[str, object]:
+    result = summarize_mappings(sources)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return result
+
+
+def verify_mapping_audit(report_path: Path) -> dict[str, object]:
+    stored = json.loads(report_path.read_text(encoding="utf-8"))
+    if not isinstance(stored, dict) or not isinstance(stored.get("inputs"), list):
+        raise ValueError("Invalid mapping audit")
+    paths = [row.get("path") if isinstance(row, dict) else None for row in stored["inputs"]]
+    if not paths or any(not isinstance(path, str) for path in paths):
+        raise ValueError("Invalid mapping sources")
+    if stored != summarize_mappings([Path(cast(str, path)) for path in paths]):
+        raise ValueError("Mapping audit does not match sources")
+    return {"status": "passed", "verified": str(report_path)}
