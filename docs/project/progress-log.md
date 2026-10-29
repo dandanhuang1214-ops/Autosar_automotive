@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-29）：`work/product-source-provenance` 子分支补 ECUC DPA 同源严格门。隔离商业工程的通信静态基线 `passed`、项目包重放 `passed`；受控导出映射变化触发上一轮 `COMMUNICATION` passed 的重跑候选，严格结果复验 passed。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success。严格门只比对 DPA，Developer ARXML 导出与项目快照的语义一致性仍待验证；P30 人工审阅和 CAN 运行证据仍待完成。
+最新补充（2026-10-29）：`work/product-source-provenance` 子分支补 ECUC DPA 同源严格门。隔离商业工程的通信静态基线 `passed`、项目包重放 `passed`；受控导出映射变化触发上一轮 `COMMUNICATION` passed 的重跑候选，严格结果复验 passed。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success；子分支已 fast-forward 合入项目集成分支，`main` 未合并。严格门只比对 DPA，Developer ARXML 导出与项目快照的语义一致性仍待验证；P30 人工审阅和 CAN 运行证据仍待完成。
 
 最新补充（2026-10-29）：在 `work/cross-tool-acceptance-impact` 子分支，将跨工具变更通过显式绑定接到已有项目验收 ID 与其上一轮证据；只给重跑候选，未绑定处保留未知。实现 `663731f` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) 七 job success，已 fast-forward 合入项目集成分支。商业工程尚无同源项目验收报告，不做虚假绑定；`main` 未合并，P30 人工审阅仍待完成。
 
@@ -2139,9 +2139,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 授权回环环境全量 543 tests 通过（2 项环境跳过）；在全量启动后新增 CLI 退出码负例，另行专项 3/3 通过。Ruff、单模块 mypy、diff check 通过。有变化且需要重跑时 CLI 返回退出码 2，避免自动流程误收旧状态。
 - 子分支实现 `663731f929cb50e0928b9e4cd80c36e14d02d3e9` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) head 一致、completed/success，七 job success：runtime-currency `123255267115`，core-contracts Ubuntu `123255267314` / Windows `123255267392`，runtime-evidence Ubuntu `123258343559` / Windows `123258343534`，controlled-rejections Ubuntu `123258343553` / Windows `123258343614`。纯文档状态提交 `7eafab7` 不充作实现验收；已 fast-forward 合入并推送项目集成分支（head `7eafab7`），`main` 保持不变。下一项建立实际工程的同源验收基线，才能关联真实测试证据；P30 独立人工审阅仍待完成。
 
-### P30 配套：实际工程静态基线与 DPA 同源门（2026-10-29，子分支远端验收）
+### P30 配套：实际工程静态基线与 DPA 同源门（2026-10-29，已合入项目集成分支）
 
 - 在忽略目录的隔离副本声明 `workbench-project-0.6` 静态基线。首次选通信和影响两检查时报告 `unassessed`：COMMUNICATION passed、IMPACT 因覆盖不足 unassessed，包完整性与项目离线重放 passed。随后仅选 COMMUNICATION 建立明确受限的项目基线，项目状态 `passed`，`verify-ecuc-project` 重放 passed；未把未选检查当作通过。
 - 新增可选 `--require-project-provenance`：旧 0.1 接口保持，新 0.2 要求项目验收包可重放，并逐侧核对跨工具追踪 DPA 哈希与项目包的 before/after DPA 快照。公开正例、after 哈希不符负例及旧契约测试通过。
 - 受控演练仅复制 Developer 导出并改变一条映射，原工程不改；跨工具 trace 为 attention-required、impact 为 changed，严格验收影响为 `rerun-required`，上一轮 COMMUNICATION passed，输出复验 passed。严格门证明 ECUC DPA 同源，不证明 Developer 导出与项目快照 ARXML 语义一致、CFG 生成或 CAN 运行。
-- 授权回环环境全量 545 tests 通过（2 项环境跳过）；公开来源门专项及既有跨工具回归 7/7、Ruff、单模块 mypy、diff check 通过。子分支实现 `89f4591aa8e42686e9af17ea0a16efaa56b80ec8` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、completed/success；实际七 job 全部 success：runtime-currency `123416059793`，core-contracts Windows `123416059206` / Ubuntu `123416059536`，runtime-evidence Windows `123419781459` / Ubuntu `123419781475`，controlled-rejections Windows `123419781657` / Ubuntu `123419781593`。本次远端状态在实现提交后补录，不将文档状态提交充作实现验收。下一产品适配缺口是 Developer 导出与快照语义核对，P30 独立人工审阅仍待完成。
+- 授权回环环境全量 545 tests 通过（2 项环境跳过）；公开来源门专项及既有跨工具回归 7/7、Ruff、单模块 mypy、diff check 通过。子分支实现 `89f4591aa8e42686e9af17ea0a16efaa56b80ec8` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、completed/success；实际七 job 全部 success：runtime-currency `123416059793`，core-contracts Windows `123416059206` / Ubuntu `123416059536`，runtime-evidence Windows `123419781459` / Ubuntu `123419781475`，controlled-rejections Windows `123419781657` / Ubuntu `123419781593`。纯文档状态提交 `6ec6514` 不充作实现验收；子分支已 fast-forward 合入项目集成分支，`main` 保持不变。下一产品适配缺口是 Developer 导出与快照语义核对，P30 独立人工审阅仍待完成。

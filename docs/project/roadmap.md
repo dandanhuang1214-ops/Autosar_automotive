@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
-2026-10-29 配套来源核验：在 `work/product-source-provenance` 子分支新增可选的 ECUC DPA 同源门，保留验收影响 0.1 契约，严格模式 0.2 重放项目包并核对跨工具前/后 DPA 与项目快照的哈希。隔离工程已形成通信结构 `passed` 的静态项目基线；受控导出映射变化触发 `COMMUNICATION` 重跑候选并复验通过。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success。下一项核对 Developer 导出与项目快照的映射语义一致性；CFG 原生错误和 CAN 运行仍独立未通过，P30 独立人工审阅主门不变。
+2026-10-29 配套来源核验：在 `work/product-source-provenance` 子分支新增可选的 ECUC DPA 同源门，保留验收影响 0.1 契约，严格模式 0.2 重放项目包并核对跨工具前/后 DPA 与项目快照的哈希。隔离工程已形成通信结构 `passed` 的静态项目基线；受控导出映射变化触发 `COMMUNICATION` 重跑候选并复验通过。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success，已 fast-forward 合入项目集成分支，`main` 保持不变。下一项核对 Developer 导出与项目快照的映射语义一致性；CFG 原生错误和 CAN 运行仍独立未通过，P30 独立人工审阅主门不变。
 
 2026-10-29 子分支配套工作：`work/cross-tool-acceptance-impact` 将跨工具差异关联到显式声明的项目验收 ID，并复验上一轮证据的文件哈希与 JSON 指针；输出只建议重跑，不把旧状态当变更后通过。实现 `663731f` / [run `40815437365`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40815437365) head 一致、七 job success，已 fast-forward 合入项目集成分支。当前商业工程没有同源项目验收基线，保持 unbound/未评估；公开项目用于合成正负例，见[桥接说明](davinci-mapping-bridge.md)。`main` 仍不合并；下一项建立实际工程同源验收基线后，才能关联真实测试证据；P30 独立人工审阅主门不变。
 
