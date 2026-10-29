@@ -18,6 +18,8 @@
 
 ## 当前总览（2026-10-23）
 
+最新补充（2026-10-29）：围绕工具适配复核现有能力，并新增 CFG 原生 XML 校验摘要入口；本地原生报告的声明计数与逐条结果一致，摘要明确为 25 errors、59 warnings、生成 `ERROR`，与 Developer 映射 2/2 解析和 ECUC 通信 73 条范围内路径分开表述。实现/测试/远端结论见末尾续记。P30 的独立人工内容审阅仍是主门。
+
 最新补充（2026-10-28）：在隔离本地工程副本执行 DaVinci Developer 只读 ECUProject XML 导出和 CFG 原生校验；前者成功，后者报告 0 fatal、25 errors、59 warnings、641 improvements。新增[显式信号映射只读接入](davinci-mapping-bridge.md)，实际导出与接口 ARXML 的两条 Rx/Tx 引用均解析，合成正负例通过。实现 `c32f486` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、七 job success；具体结论见末尾续记。P30 主门仍为 0.7 development v1 独立人工审阅，内容门失败和 P25 人工演示待办保持。
 
 最新补充（2026-10-26）：P30 的[模型原文字面覆盖门 0.7](p30-agent-evidence-pair-model-coverage-v07-guide.md)实现 `0cb238b` / [run `40252739257`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40252739257) 七 job success，工程门 remote-accepted。新 `static-rejection` development v1 冻结 `bab78b0` / [run `40261653302`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40261653302) 七 job success 后唯一 Qwen 请求协议通过、4/4 证据对完整，停服三份离线复验通过；模型原文 0/4 规范行，并补造“共享同一根因”，内容门 `failed_for_the_requested_task`。旧题不修改或重跑，确定性呈现仍正确。[独立审阅工作表](../research/p30-agent-evidence-pair-coverage-v07-development-v1-human-review.md)已备妥；本机仅有 qwen3.5:2b、qwen3-vl:2b 两个生成模型及检索嵌入模型，没有已安装的更强文本基线。下一项先取得独立审阅，再根据实际可用性决定是否在新 cohort 对照 qwen3-vl；不继续在已见题上调 qwen3.5:2b。P30 implementing；held-out v2、资料适用性与 P25 人工演示仍待完成。
@@ -2104,3 +2106,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 新增 `audit-signal-mappings` 只读 CLI，记录输入哈希，沿完整 AUTOSAR 引用核对端口、数据元素、SystemSignal，区分 Rx/Tx 并列出未解析项；无映射或未解析返回 attention-required。真实导出与接口 ARXML：2 条映射，2 条引用解析；这不代表 CFG 生成、BSW 路由或总线通过。
 - 合成正例、悬空信号、端口方向冲突 3/3 通过；Ruff、单模块 mypy、diff check 通过。全量回归在默认沙箱 533 项中只有一项因本地回环监听权限报错、2 项环境跳过；授权回环环境同一全量命令 533 项通过（2 项跳过）。新增第三个定向测试在全量启动后写入，另行 3/3 通过。
 - 实现提交 `c32f48607a9651b0733f7722edf8d233b534b3b7` / [run `40705084241`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40705084241) head 一致、completed/success；实际七 job 全部 success：runtime-currency `122874910210`，core-contracts Windows `122874909672` / Ubuntu `122874910313`，controlled-rejections Windows `122880118947` / Ubuntu `122880119648`，runtime-evidence Windows `122880118974` / Ubuntu `122880118969`。本段远端状态在实现提交之后补录，不将本次文档状态提交充作实现验收。不将商业工程或个人学习完成情况作为公开平台验收。P30 主门仍为独立人工审阅 0.7 development v1；P25 人工演示待完成。
+
+### P30 配套：CFG 原生报告接入与能力边界复核（2026-10-29）
+
+- 新增 `inspect-cfg-validation` / `verify-cfg-validation`：只读解析 DaVinciExecutionReport，核对声明与逐条严重度数量，记录分组 ID/来源/计数、generation 总状态和各 generator 状态；源路径、大小、SHA-256 绑定本地复验。拒绝 DTD、实体、超限、不支持严重度、计数不一致和摘要篡改。输入仍留本地，不作为可迁移公开胶囊。
+- 本地真实报告：0 fatal、25 error、59 warning、641 improvement；generation `ERROR`，6 failed、8 successful、1 none，摘要复验 passed。现有 ECUC 工程审查快照离线复验 passed 但内容状态 attention-required；在隔离副本新运行通信 trace 为 `resolved-in-scope`、73 条路径，离线复验 passed；Developer 显式映射保持 2/2 引用解析。三者分别属于供应商校验、范围内 ECUC 结构、SWC 数据映射，均不构成总线或 ECU 执行证明。
+- 合成正常、计数矛盾、DTD 拒绝与摘要篡改 3 项新增测试通过；连同映射桥专项 6/6。授权本地回环环境全量 537 tests 通过（2 项环境跳过）；Ruff、单模块 mypy、diff check 通过。实现远端 CI 待本次提交运行。下一主任务仍为 P30 0.7 development v1 独立人工审阅；工具适配继续优先消费实际导出并并列保留原生失败。
