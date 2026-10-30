@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-10-29）：独立[汽车知识图谱聊天入口](automotive-knowledge-chat-guide.md)在 `work/knowledge-graph-chat` 子分支本地验收。站点第 5 版图谱与两份来源已哈希核对并本地导入；图谱差异、核实注释隔离、项目事实重放、本地会话/显式记忆和 Ollama 草稿网页入口已实现。公开专项 6/6、全量 551 tests 通过（2 项环境跳过）；真实图谱与隔离工程组合题只作开发冒烟，模型草稿未语义验收。远端 CI 结论见末尾续记。
+最新补充（2026-10-30）：独立[汽车知识图谱聊天入口](automotive-knowledge-chat-guide.md)在 `work/knowledge-graph-chat` 子分支已通过远端实现门，待合入项目集成分支。站点第 5 版图谱与两份来源已哈希核对并本地导入；图谱差异、核实注释隔离、项目事实重放、本地会话/显式记忆和 Ollama 草稿网页入口已实现。公开专项 6/6、全量 551 tests 通过（2 项环境跳过），两轮实现提交各自七 job 全绿；真实图谱与隔离工程组合题只作开发冒烟，模型草稿未语义验收。下一项核对 Developer 导出与项目快照的映射语义一致性，同时推进 P30 独立内容审阅。
 
 最新补充（2026-10-29）：`work/product-source-provenance` 子分支补 ECUC DPA 同源严格门。隔离商业工程的通信静态基线 `passed`、项目包重放 `passed`；受控导出映射变化触发上一轮 `COMMUNICATION` passed 的重跑候选，严格结果复验 passed。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success；子分支已 fast-forward 合入项目集成分支，`main` 未合并。严格门只比对 DPA，Developer ARXML 导出与项目快照的语义一致性仍待验证；P30 人工审阅和 CAN 运行证据仍待完成。
 
@@ -2148,11 +2148,12 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 受控演练仅复制 Developer 导出并改变一条映射，原工程不改；跨工具 trace 为 attention-required、impact 为 changed，严格验收影响为 `rerun-required`，上一轮 COMMUNICATION passed，输出复验 passed。严格门证明 ECUC DPA 同源，不证明 Developer 导出与项目快照 ARXML 语义一致、CFG 生成或 CAN 运行。
 - 授权回环环境全量 545 tests 通过（2 项环境跳过）；公开来源门专项及既有跨工具回归 7/7、Ruff、单模块 mypy、diff check 通过。子分支实现 `89f4591aa8e42686e9af17ea0a16efaa56b80ec8` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、completed/success；实际七 job 全部 success：runtime-currency `123416059793`，core-contracts Windows `123416059206` / Ubuntu `123416059536`，runtime-evidence Windows `123419781459` / Ubuntu `123419781475`，controlled-rejections Windows `123419781657` / Ubuntu `123419781593`。纯文档状态提交 `6ec6514` 不充作实现验收；子分支已 fast-forward 合入项目集成分支，`main` 保持不变。下一产品适配缺口是 Developer 导出与快照语义核对，P30 独立人工审阅仍待完成。
 
-### P30 配套：独立汽车知识图谱本地聊天入口（2026-10-29，本地验收）
+### P30 配套：独立汽车知识图谱本地聊天入口（2026-10-30，子分支远端验收）
 
 - 在 `work/knowledge-graph-chat` 子分支实现本机网页：手动导入站点 `graph.json` 与来源 Markdown，严格校验 1.0 候选契约、引用和来源哈希；保留内容寻址快照与逐对象差异。站点核实记录作为独立、版本关联的用户注释；不自动提升图谱结论。
 - 每次工程提问重放 `project-report.json`，分开展示项目字段、图谱候选、来源和 Ollama 未审阅草稿。会话与显式保存/编辑/删除的记忆持久化在本地；模型请求和原始响应留本地 trace。模型不可用、截断或身份变化时保留确定性证据摘要。
 - 实际站点 v5 源码 `989a3e6`、图谱 SHA `07c763ae…8f20ea`：66 节点、90 关系、71 结论、71 片段、27 工作单，两份来源哈希精确匹配。本地真实导入重放通过；隔离商业工程的通信静态项目报告 `passed` 可与图谱候选并列查看，不证明 CFG 生成或 CAN 总线实测。真实 Ollama `0.31.1` / qwen3.5:2b 已返回未审阅草稿；内容质量仍待 P30 独立人工审阅。
-- 公开合成正例、版本更新、悬空关系、来源变更、注释过期/篡改、浏览器接口令牌和损坏状态、记忆及模型截断回退专项 6/6 通过；授权回环环境全量 551 tests 通过（2 项环境跳过）。Ruff、三模块 mypy、浏览器脚本语法、桌面截图与 `git diff --check` 通过。远端七 job 待实现提交后核对；不将本地结果写成远端验收。
+- 公开合成正例、版本更新、悬空关系、来源变更、注释过期/篡改、浏览器接口令牌和损坏状态、记忆及模型截断回退专项 6/6 通过；授权回环环境全量 551 tests 通过（2 项环境跳过）。Ruff、三模块 mypy、浏览器脚本语法、桌面与窄屏截图、安装后 wheel 页面资源读取和 `git diff --check` 通过。
 - 下一项核对 Developer 导出与项目快照的映射语义一致性，并取得 P30 0.7 development v1 独立人工内容审阅。图谱同步继续使用显式导出更新，未来站点改 schema 时需版本化适配；本轮不接入 Simulink 项目资料。
-- 首轮入口实现 `64792954f58cb415863477f734fc80102ecd84fa` / [run `40900324955`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40900324955) head 一致、completed/success，七 job 均 success：runtime-currency `123540518486`，core-contracts Ubuntu `123540518776` / Windows `123540518873`，controlled-rejections Ubuntu `123546769201` / Windows `123546769392`，runtime-evidence Ubuntu `123546769475` / Windows `123546769493`。用户反馈首轮 UI 信息密集后，在同一子分支用独立 HTML 资源、页签证据检查器、响应式布局和内联记忆编辑改版；新 UI 提交及其远端 CI 仍待单独记录，不能沿用首轮 CI 结论。
+- 首轮入口实现 `64792954f58cb415863477f734fc80102ecd84fa` / [run `40900324955`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40900324955) head 一致、completed/success，七 job 均 success：runtime-currency `123540518486`，core-contracts Ubuntu `123540518776` / Windows `123540518873`，controlled-rejections Ubuntu `123546769201` / Windows `123546769392`，runtime-evidence Ubuntu `123546769475` / Windows `123546769493`。
+- 用户反馈首轮 UI 信息密集后，在同一子分支以 `2760a83419a896fc2feb0ccec4318dcfd6a7953f` 改为独立 HTML 资源、页签证据检查器、响应式布局和内联记忆编辑；[run `40905010728`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40905010728) head 一致、completed/success，七 job 均 success：runtime-currency `123557267835`，core-contracts Ubuntu `123557268286` / Windows `123557268669`，controlled-rejections Ubuntu `123564693674` / Windows `123564694113`，runtime-evidence Ubuntu `123564693897` / Windows `123564693737`。此条后续纯文档状态提交不充作实现验收；待快进合入项目集成分支，`main` 保持不变。
