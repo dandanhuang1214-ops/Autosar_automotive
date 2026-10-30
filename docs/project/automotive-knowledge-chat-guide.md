@@ -1,6 +1,6 @@
 # 本地汽车知识图谱与工程聊天入口
 
-状态：子分支实现已通过远端 CI，待合入项目集成分支；P30 模型内容审阅仍待人工完成。本入口消费独立的[汽车软件知识图谱站点](https://automotive-knowledge-graph-oct21.silly-civet-8184.chatgpt.site/)导出，不使用 Simulink 助手的资料库、聊天或记忆。站点仍独立编辑和发布；Workbench 在本机保存带哈希的导入版本。
+状态：实现已通过远端 CI，并从子分支快进合入项目集成分支；`main` 保持不变，P30 模型内容审阅仍待人工完成。本入口消费独立的[汽车软件知识图谱站点](https://automotive-knowledge-graph-oct21.silly-civet-8184.chatgpt.site/)导出，不使用 Simulink 助手的资料库、聊天或记忆。站点仍独立编辑和发布；Workbench 在本机保存带哈希的导入版本。
 
 ## 启动与操作
 
