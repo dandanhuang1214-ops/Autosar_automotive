@@ -6,7 +6,7 @@
 
 P30 当前进度：[证据对确定性呈现 0.5](docs/project/p30-agent-evidence-pair-presentation-v05-guide.md)、[验收项原文绑定输入 0.6](docs/project/p30-agent-evidence-pair-projection-v06-guide.md)和[模型原文字面覆盖门 0.7](docs/project/p30-agent-evidence-pair-model-coverage-v07-guide.md)均已远端验收。新 `static-rejection` development v1 冻结 `bab78b0` / [run `40261653302`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40261653302) 七 job 成功；唯一 Qwen 请求和停服三份复验通过，确定性事实 4/4 准确，但模型原文 0/4 规范行并补造根因，内容门失败，旧题不重跑。[独立审阅工作表](docs/research/p30-agent-evidence-pair-coverage-v07-development-v1-human-review.md)已备妥；先取得实际审阅，再决定是否在新 cohort 对照已安装的另一 2b 模型。P30 仍 implementing，一般复杂解释与资料适用性尚未验收，见[进度账本](docs/project/progress-log.md)。
 
-P30 配套的[跨工具语义快照核对](docs/project/davinci-mapping-bridge.md)已新增可选 0.3 门：将 Developer/System 显式映射关联到项目包中逐文件核对的 ECUC DPA、collection 和模块快照。独立合成测试工程覆盖闭合映射、断引用及 DPA 不变的模块漂移；当前本地验收，远端 CI 待本轮实现提交。P30 独立人工内容审阅仍待完成。
+P30 配套的[跨工具语义快照核对](docs/project/davinci-mapping-bridge.md)已新增可选 0.3 门：将 Developer/System 显式映射关联到项目包中逐文件核对的 ECUC DPA、collection 和模块快照。独立合成测试工程覆盖闭合映射、断引用及 DPA 不变的模块漂移；实现 `388eb96` / [run `41474608023`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41474608023) 七 job 成功。下一项按用户要求把现有 AI 平台接入项目需求、验证和受支持的生成路径；P30 独立人工内容审阅仍待完成。
 
 P20 已实现 [声明式多项目完整流程](docs/project/p20-multi-project-guide.md)：车窗与 ThermalControl 共用项目运行、路径绑定、审查、比较与迁移复验；整阶段已通过七 job 远端验收及本地双项目 SocketCAN 全流程，见 [验收记录](docs/project/p20-acceptance.md)。
 
