@@ -18,6 +18,8 @@
 
 ## 当前总览（2026-10-23）
 
+最新补充（2026-11-02）：P30 配套的跨工具语义快照门 0.3 已实现于当前项目集成分支。合成独立工程的真实 ECUC 项目包逐文件核对 DPA、collection 和模块；Developer/System 显式引用断开保留 `attention-required`，同一 DPA 下模块漂移被拒绝。公开场景与专项通过；全量回归及本轮远端 CI 状态见末尾续记。下一主门仍是 0.7 development v1 独立人工内容审阅；若要宣称 Developer 导出与项目包完全同源，尚需把 Developer/System 导出纳入同次版本化项目捕获。
+
 最新补充（2026-10-30）：独立[汽车知识图谱聊天入口](automotive-knowledge-chat-guide.md)在 `work/knowledge-graph-chat` 子分支已通过远端实现门，并快进合入项目集成分支；`main` 未合并。站点第 5 版图谱与两份来源已哈希核对并本地导入；图谱差异、核实注释隔离、项目事实重放、本地会话/显式记忆和 Ollama 草稿网页入口已实现。公开专项 6/6、全量 551 tests 通过（2 项环境跳过），两轮实现提交各自七 job 全绿；真实图谱与隔离工程组合题只作开发冒烟，模型草稿未语义验收。下一项核对 Developer 导出与项目快照的映射语义一致性，同时推进 P30 独立内容审阅。
 
 最新补充（2026-10-29）：`work/product-source-provenance` 子分支补 ECUC DPA 同源严格门。隔离商业工程的通信静态基线 `passed`、项目包重放 `passed`；受控导出映射变化触发上一轮 `COMMUNICATION` passed 的重跑候选，严格结果复验 passed。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success；子分支已 fast-forward 合入项目集成分支，`main` 未合并。严格门只比对 DPA，Developer ARXML 导出与项目快照的语义一致性仍待验证；P30 人工审阅和 CAN 运行证据仍待完成。
@@ -2157,3 +2159,10 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - 下一项核对 Developer 导出与项目快照的映射语义一致性，并取得 P30 0.7 development v1 独立人工内容审阅。图谱同步继续使用显式导出更新，未来站点改 schema 时需版本化适配；本轮不接入 Simulink 项目资料。
 - 首轮入口实现 `64792954f58cb415863477f734fc80102ecd84fa` / [run `40900324955`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40900324955) head 一致、completed/success，七 job 均 success：runtime-currency `123540518486`，core-contracts Ubuntu `123540518776` / Windows `123540518873`，controlled-rejections Ubuntu `123546769201` / Windows `123546769392`，runtime-evidence Ubuntu `123546769475` / Windows `123546769493`。
 - 用户反馈首轮 UI 信息密集后，在同一子分支以 `2760a83419a896fc2feb0ccec4318dcfd6a7953f` 改为独立 HTML 资源、页签证据检查器、响应式布局和内联记忆编辑；[run `40905010728`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40905010728) head 一致、completed/success，七 job 均 success：runtime-currency `123557267835`，core-contracts Ubuntu `123557268286` / Windows `123557268669`，controlled-rejections Ubuntu `123564693674` / Windows `123564694113`，runtime-evidence Ubuntu `123564693897` / Windows `123564693737`。纯文档状态提交 `539514b` 不充作实现验收；子分支已快进合入项目集成分支，`main` 保持不变。
+
+### P30 配套：Developer 显式映射与 ECUC 项目快照语义核对（2026-11-02）
+
+- 当前项目集成分支新增可选 `--require-semantic-snapshot` / `cross-tool-acceptance-impact-0.3`。先重放完整 ECUC 项目包，再对照追踪所读 DPA、collection 和受选模块的逐文件哈希；逐侧呈现 Developer/System 到 ComSignal、ComIPdu、PduR、CanIf 的完整引用、方向和解析状态。旧 0.1、DPA-only 0.2 的调用与离线复验保持兼容。
+- 用户允许建立专用测试工程后，脚本 `scripts/run_cross_tool_semantic_snapshot_scenarios.py` 在 `output/p30-semantic-snapshot-20261102/` 创建独立合成工程与真实 `workbench-project-0.6` 验收包。正常链输出 `rerun-required` 且离线复验 passed；断开的 SystemSignal 关联输出 `attention-required`；DPA 不变而模块漂移被 0.3 拒绝，0.2 对照仍仅能确认 DPA 同源。三种场景均只读合成输入，不代表商业工具生成或 CAN 运行。
+- 本地专项 5/5、Ruff、单模块 mypy、`git diff --check` 已通过；两份保存的 0.3 正常/断引用结果在场景结束后分别离线复验 passed。首次全量 552 tests 中两项已有 HTTP fixture 因沙箱禁止绑定回环地址报错；允许本地回环后同一全量 552 tests 通过（2 项环境跳过）。当前状态为 local-accepted，远端 CI 待本轮实现提交。
+- 本门限制：Developer/System 导出在追踪报告中哈希绑定，尚未内置于 ECUC 项目验收包；0.3 只证明提供的文件与已捕获 ECUC 快照在支持的显式引用范围内一致。下一主门仍是 P30 0.7 development v1 独立人工内容审阅；后续产品适配需把 Developer/System 导出纳入同次版本化项目捕获。P25 人工演示与外部反馈仍待实际取得。

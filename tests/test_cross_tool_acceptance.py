@@ -12,6 +12,7 @@ from io import StringIO
 from automotive_workbench.cross_tool_acceptance import assess_acceptance, verify_acceptance
 from automotive_workbench.cross_tool_trace import compare_traces, trace_cross_tool
 from automotive_workbench.cli import main
+from automotive_workbench.project_ecuc import capture, run
 from tests.test_cross_tool_trace import ROOT, fixture
 
 
@@ -46,6 +47,51 @@ def scenario(root: Path) -> tuple[Path, Path, Path, Path, str]:
 
 
 class CrossToolAcceptanceTests(unittest.TestCase):
+    def test_semantic_snapshot_with_real_isolated_project_bundle(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            impact, bindings, _, _, _ = scenario(root)
+            declaration = {"schema_version": "workbench-project-0.6", "name": "Demo acceptance",
+                           "comparison_key": "cross-tool-snapshot-test",
+                           "inputs": {role: {"project": f"{side}/demo.dpa", "applications": [], "tool_logs": []}
+                                      for role, side in (("baseline", "before"), ("candidate", "after"))},
+                           "requirements": [{"id": "TX_VECTOR", "text": "Communication structure",
+                                             "stage": "ecuc", "pointer": "/checks/communication/status",
+                                             "expected": "passed"}]}
+            declaration_path = root / "test.project.json"
+            declaration_path.write_text(json.dumps(declaration), encoding="utf-8")
+            package = root / "project-package"
+            run(declaration, capture(declaration_path, declaration, declaration_path.read_bytes()), package)
+            report = package / "bundle/project-report.json"
+            output = root / "semantic.json"
+            result = assess_acceptance(impact, bindings, report, output, strict_semantics=True)
+            self.assertEqual(result["contract_version"], "cross-tool-acceptance-impact-0.3")
+            self.assertEqual(result["status"], "rerun-required")
+            self.assertEqual(result["semantic_consistency"]["before"]["status"], "resolved-in-scope")
+            self.assertIn("modules.arxml", result["ecuc_source_sha256"]["after"])
+            self.assertEqual(verify_acceptance(output)["status"], "passed")
+
+            system = root / "after/system.arxml"
+            original_system = system.read_bytes()
+            system.write_bytes(original_system.replace(b"/Signal/Alternate", b"/Signal/Unknown"))
+            trace_cross_tool(root / "after/mapping.json", system, root / "after/demo.dpa", root / "after/trace.json")
+            compare_traces(root / "before/trace.json", root / "after/trace.json", impact)
+            unresolved = assess_acceptance(impact, bindings, report, root / "unresolved.json", strict_semantics=True)
+            self.assertEqual(unresolved["status"], "attention-required")
+            self.assertEqual(unresolved["semantic_consistency"]["after"]["links"][0]["status"], "unassessed")
+            system.write_bytes(original_system)
+
+            # The DPA remains identical while an ECUC module outside the snapshot changes.
+            module = root / "after/modules.arxml"
+            module.write_bytes(module.read_bytes().replace(b"ComSystemTemplateSystemSignalRef", b"ComSystemTemplateOtherRef"))
+            trace_cross_tool(root / "after/mapping.json", root / "after/system.arxml",
+                             root / "after/demo.dpa", root / "after/trace.json")
+            compare_traces(root / "before/trace.json", root / "after/trace.json", impact)
+            legacy = assess_acceptance(impact, bindings, report, root / "dpa-only.json", strict_source=True)
+            self.assertEqual(legacy["contract_version"], "cross-tool-acceptance-impact-0.2")
+            with self.assertRaisesRegex(ValueError, "after ECUC source modules.arxml differs"):
+                assess_acceptance(impact, bindings, report, root / "drift.json", strict_semantics=True)
+
     def test_strict_project_source_provenance(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)

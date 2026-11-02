@@ -68,6 +68,24 @@ workbench assess-cross-tool-acceptance --impact cross-tool-impact.json \
   --require-project-provenance --output acceptance-impact.json
 ```
 
+新增 `--require-semantic-snapshot` 输出 `cross-tool-acceptance-impact-0.3`，保留 0.1/0.2 读取和复验。它重放完整项目包，并把跨工具追踪读取的 DPA、collection 和所有受选 ECUC 模块文件逐一与项目前后快照的 SHA-256 对照；同一 DPA 引用的模块若已变更，直接拒绝。随后将 Developer 导出的端口/数据元素/SystemSignal 与 System ARXML 的 I-Signal/PDU、ECUC ComSignal/ComIPdu/PduR/CanIf 显式关系及方向逐侧列入 `semantic_consistency`。存在断引用、歧义或方向冲突时整体为 `attention-required`，不会把上一轮验收状态当作变化后通过。离线 verifier 会重算以上输入和结论。
+
+```sh
+workbench assess-cross-tool-acceptance --impact cross-tool-impact.json \
+  --bindings bindings.json --project-report bundle/project-report.json \
+  --require-semantic-snapshot --output semantic-impact.json
+workbench verify-cross-tool-acceptance semantic-impact.json
+```
+
+可从源码运行专用合成测试工程：
+
+```sh
+PYTHONPATH=src:. .venv/bin/python scripts/run_cross_tool_semantic_snapshot_scenarios.py \
+  --output output/p30-semantic-snapshot-demo
+```
+
+脚本在独立目录生成 Developer/System/ECUC 输入、真实 `workbench-project-0.6` 项目包与三种结果：闭合映射得到 `rerun-required`，断开的 SystemSignal 关联得到 `attention-required`，DPA 不变而 ECUC 模块漂移被拒绝。`semantic-positive.json` 在原始工程目录中可重放；负例使用各自的工程副本。此门只证明**提供的 Developer/System 文件与已快照 ECUC 配置在受支持引用范围内语义一致**。Developer/System 文件作为追踪输入独立哈希绑定，尚未成为 ECUC 项目包的内置快照；项目包也不证明供应商生成、CAN 运行或物理 ECU。
+
 隔离商业工程现已建立只要求通信结构的 Workbench 静态项目基线：项目报告 `passed`，项目包重放 `passed`。额外声明的影响覆盖检查为 `unassessed`，所以它没有被计入这个窄范围基线。受控演练仅在忽略目录复制 Developer 导出并改变一条映射；跨工具差异为 `changed`，严格来源门给出 `COMMUNICATION` 前次 `passed`、本次 `rerun_required=true`，结果离线复验通过。该演练不是新的实际 CFG 配置，也不是 CAN 总线运行。
 
 本地能力复核：Developer 导出的两条显式映射均解析；现有 ECUC 通信 trace 形成 73 条范围内路径且离线复验通过；现有工程审查离线复验通过，但审查状态为 `attention-required`。CFG 原生 XML 摘要则明确为 25 errors、59 warnings、生成阶段 `ERROR`（6 个 generator failed）。这些是不同层次的结论：引用闭合只覆盖输入文件内的结构，原生配置错误仍要在 CFG 中处理；CAN 总线收发和物理 ECU 尚无本工程实测。

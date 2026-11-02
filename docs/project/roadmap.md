@@ -52,6 +52,8 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
+2026-11-02 配套实现：跨工具验收影响新增可选 0.3 语义快照门，在现有 DPA 同源核验之外逐文件比对项目包内的 ECUC collection/模块快照，并并列保留 Developer/System 到通信路径的逐项解析状态。独立合成测试工程覆盖正常、断引用和 DPA 不变但模块漂移；本地场景通过，远端验收待本轮实现提交和 CI。此门不把 Developer/System 导出收进 ECUC 项目包，也不替代 P30 0.7 development v1 的独立人工内容审阅。下一主门仍为实际人工审阅；项目适配的后续缺口是把 Developer/System 导出纳入同次版本化项目捕获，随后才能主张完整项目包内同源。
+
 2026-10-30 本地产品入口配套能力已在 `work/knowledge-graph-chat` 子分支实现：独立汽车知识图谱站点的版本化 `graph.json`/来源 Markdown 导入、候选关系与核实注释分离、项目事实重放、Ollama 草稿、本地会话和显式记忆，见[使用指南](automotive-knowledge-chat-guide.md)。用户反馈首版界面拥挤后改为问答主区与分栏证据检查器；公开专项 6/6、全量 551 tests（2 项环境跳过），首版实现 `6479295` / [run `40900324955`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40900324955) 和 UI 改版 `2760a83` / [run `40905010728`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40905010728) 各自 head 一致、七 job success。子分支已快进合入项目集成分支，`main` 不动。本入口不替代 P30 独立人工内容审阅；下一项核对 Developer 导出与项目快照的映射语义一致性，同时取得 P30 0.7 development v1 独立审阅。
 
 2026-10-29 配套来源核验：在 `work/product-source-provenance` 子分支新增可选的 ECUC DPA 同源门，保留验收影响 0.1 契约，严格模式 0.2 重放项目包并核对跨工具前/后 DPA 与项目快照的哈希。隔离工程已形成通信结构 `passed` 的静态项目基线；受控导出映射变化触发 `COMMUNICATION` 重跑候选并复验通过。实现 `89f4591` / [run `40864600468`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/40864600468) head 一致、七 job success，已 fast-forward 合入项目集成分支，`main` 保持不变。下一项核对 Developer 导出与项目快照的映射语义一致性；CFG 原生错误和 CAN 运行仍独立未通过，P30 独立人工审阅主门不变。

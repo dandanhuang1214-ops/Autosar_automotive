@@ -10,6 +10,7 @@ from typing import Any
 from automotive_workbench.cross_tool_trace import verify_impact, verify_trace
 from automotive_workbench.project_review import load_project_report
 from automotive_workbench.project_ecuc import verify as verify_ecuc_project
+from automotive_workbench.ecuc_project import read_project
 
 VERSION = "cross-tool-acceptance-impact-0.1"
 
@@ -54,28 +55,41 @@ def _evidence(requirement: dict[str, Any], report_path: Path) -> dict[str, Any]:
     return {"path": evidence["path"], "sha256": evidence["sha256"], "pointer": evidence["pointer"]}
 
 
-def _same_ecuc_source(project_path: Path, project_report: dict[str, Any], before: dict[str, Any], after: dict[str, Any]) -> dict[str, str]:
+def _same_ecuc_source(project_path: Path, project_report: dict[str, Any], before: dict[str, Any], after: dict[str, Any],
+                      complete: bool = False) -> dict[str, Any]:
     verification = verify_ecuc_project(project_path)
     if verification["status"] != "passed":
         raise ValueError("Project acceptance bundle did not replay")
     artifacts = project_report.get("source_artifacts")
     if not isinstance(artifacts, list):
         raise ValueError("Project acceptance lacks source artifacts")
-    matched: dict[str, str] = {}
+    matched: dict[str, Any] = {}
     for side, trace in (("before", before), ("after", after)):
+        prefix = f"bundle/ecuc/{side}/snapshot/"
         hashes = [item.get("sha256") for item in artifacts
                   if isinstance(item, dict) and isinstance(item.get("source"), str)
-                  and f"/ecuc/{side}/snapshot/" in "/" + item["source"]
+                  and item["source"].startswith(prefix)
                   and item["source"].endswith(".dpa")]
         actual = trace["inputs"]["project"]["sha256"]
         if len(hashes) != 1 or hashes[0] != actual:
             raise ValueError(f"{side} ECUC DPA differs from project acceptance snapshot")
-        matched[side] = actual
+        if not complete:
+            matched[side] = actual
+            continue
+        _, sources, _ = read_project(Path(trace["inputs"]["project"]["path"]))
+        snapshot = {item["source"][len(prefix):]: item["sha256"] for item in artifacts
+                    if isinstance(item, dict) and isinstance(item.get("source"), str)
+                    and item["source"].startswith(prefix)}
+        source_hashes = {name: hashlib.sha256(raw).hexdigest() for name, raw in sources.items()}
+        for name, digest in source_hashes.items():
+            if snapshot.get("project/" + name) != digest:
+                raise ValueError(f"{side} ECUC source {name} differs from project acceptance snapshot")
+        matched[side] = source_hashes
     return matched
 
 
 def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: Path,
-                         strict_source: bool = False) -> dict[str, Any]:
+                         strict_source: bool = False, strict_semantics: bool = False) -> dict[str, Any]:
     verify_impact(impact_path)
     impact, impact_sha = _read(impact_path)
     bindings, bindings_sha = _read(bindings_path)
@@ -92,7 +106,17 @@ def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: P
     verify_trace(after_path)
     before = json.loads(before_path.read_text(encoding="utf-8"))
     after = json.loads(after_path.read_text(encoding="utf-8"))
-    source_provenance = _same_ecuc_source(project_path, report, before, after) if strict_source else None
+    source_provenance = _same_ecuc_source(project_path, report, before, after, strict_semantics) if strict_source or strict_semantics else None
+    semantic_consistency = None
+    if strict_semantics:
+        semantic_consistency = {}
+        for side, trace in (("before", before), ("after", after)):
+            semantic_consistency[side] = {
+                "status": trace["status"],
+                "links": [{field: row[field] for field in ("port", "data_element", "system_signal", "direction",
+                                                        "com_signal", "com_ipdu", "pdur_route", "canif_pdu", "status")}
+                          for row in trace["links"]],
+            }
     traces = [*before["links"], *after["links"]]
     allowed: dict[tuple[str, str], set[str]] = {}
     for row in traces:
@@ -131,8 +155,9 @@ def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: P
                            "rerun_required": True})
         affected.append({"port": key[0], "data_element": key[1],
                          "change_fields": change["fields"], "acceptance": checks})
-    result: dict[str, Any] = {"contract_version": "cross-tool-acceptance-impact-0.2" if strict_source else VERSION,
-            "status": "attention-required" if unbound else "rerun-required" if affected else "unchanged",
+    result: dict[str, Any] = {"contract_version": "cross-tool-acceptance-impact-0.3" if strict_semantics else "cross-tool-acceptance-impact-0.2" if strict_source else VERSION,
+            "status": "attention-required" if unbound or (semantic_consistency is not None and any(
+                side["status"] != "resolved-in-scope" for side in semantic_consistency.values())) else "rerun-required" if affected else "unchanged",
             "inputs": {"impact": {"path": str(impact_path.resolve()), "sha256": impact_sha},
                        "bindings": {"path": str(bindings_path.resolve()), "sha256": bindings_sha},
                        "project_report": {"path": str(project_path.resolve()), "sha256": report_sha}},
@@ -140,12 +165,14 @@ def summarize_acceptance(impact_path: Path, bindings_path: Path, project_path: P
             "scope": "Explicitly declared candidate reruns; previous evidence does not prove post-change behavior"}
     if source_provenance is not None:
         result["ecuc_source_sha256"] = source_provenance
+    if semantic_consistency is not None:
+        result["semantic_consistency"] = semantic_consistency
     return result
 
 
 def assess_acceptance(impact: Path, bindings: Path, project_report: Path, output: Path,
-                      strict_source: bool = False) -> dict[str, Any]:
-    result = summarize_acceptance(impact, bindings, project_report, strict_source)
+                      strict_source: bool = False, strict_semantics: bool = False) -> dict[str, Any]:
+    result = summarize_acceptance(impact, bindings, project_report, strict_source, strict_semantics)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return result
@@ -163,9 +190,10 @@ def verify_acceptance(report: Path) -> dict[str, str]:
     except (KeyError, TypeError) as exc:
         raise ValueError("Invalid acceptance impact paths") from exc
     version = stored.get("contract_version")
-    if version not in {VERSION, "cross-tool-acceptance-impact-0.2"}:
+    if version not in {VERSION, "cross-tool-acceptance-impact-0.2", "cross-tool-acceptance-impact-0.3"}:
         raise ValueError("Unsupported acceptance impact contract")
     if stored != summarize_acceptance(impact_path, bindings_path, project_path,
-                                     strict_source=version == "cross-tool-acceptance-impact-0.2"):
+                                     strict_source=version == "cross-tool-acceptance-impact-0.2",
+                                     strict_semantics=version == "cross-tool-acceptance-impact-0.3"):
         raise ValueError("Acceptance impact does not match sources")
     return {"status": "passed", "verified": str(report)}
