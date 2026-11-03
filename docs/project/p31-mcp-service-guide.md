@@ -1,6 +1,6 @@
 # P31 Workbench MCP 服务化：首条工程证据链
 
-状态：0.1 首版本地验证通过，远端 CI 待验收。P30 仅按受限范围交付；本阶段不改变原有模型质量结论。
+状态：0.1 首版已远端验收，实现 `67092d9` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致、七 job `success`。当前进入 0.2。P30 仅按受限范围交付；本阶段不改变原有模型质量结论。
 
 ## 调研与架构
 

@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-11-03）：P31 MCP 服务化 0.1 本地验证完成，远端验收待执行。已按官方 MCP 2026-07-28 协议和 Python SDK 2.3 建立独立只读项目证据服务，网页可选通过 MCP 客户端获取重放事实。隔离本机两进程场景中，网页 `/api/chat` 返回 `evidence_only`、真实项目 `blocked`、报告 SHA `1f9f4c73…49c63a58` 和 16 条事实；停掉 MCP 后返回 400，不降级直读。SDK 测试 3/3、全量 559 tests（2 环境跳过）、Ruff、四文件 mypy、CI topology、compileall 和 diff check 通过。当前仍需实现提交与实际七 job CI；**不标为远端验收**。下一步先完成 0.1 门，再推进需求候选项目声明和显式验证的 0.2 MCP 工具。P30 受限收口与严格模型失败结论、P25 人工演示待办保持原状。见 [P31 指南](p31-mcp-service-guide.md)。
+最新补充（2026-11-03）：P31 MCP 服务化 0.1 已远端验收。实现 `67092d92196daaec9c9a7865479b07b6c26b33ba` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致；`runtime-currency`、Windows/Ubuntu `core-contracts`、Windows/Ubuntu `runtime-evidence`、Windows/Ubuntu `controlled-rejections` 七个实际 job 均为 `success`。独立只读项目证据服务和网页 MCP 客户端已接通：隔离本机两进程场景中，网页 `/api/chat` 返回 `evidence_only`、真实项目 `blocked`、报告 SHA `1f9f4c73…49c63a58` 和 16 条事实；停掉 MCP 后返回 400，不降级直读。SDK 测试 3/3、全量 559 tests（2 环境跳过）、Ruff、四文件 mypy、CI topology、compileall 和 diff check 本地通过。下一主任务是需求候选项目声明与显式验证的 0.2 MCP 工具；模型仍留在网页 Host。P30 受限收口与严格模型失败结论、P25 人工演示待办保持原状。见 [P31 指南](p31-mcp-service-guide.md)。此处状态回填为文档提交，不把该文档提交当作实现验收 run。
 
 最新补充（2026-11-03）：P30 **受限范围收口**。用户非盲审阅认可有最终回答的 3/3 样本；两题无回答、0.7 规范行 0/4、四题 Agent 任务门 0/4 均保留。已通过各自实现 CI 的工程事实、确定性呈现、受控只读 Agent 基础和静态 ECUC AI 验收候选入口作为[受限交付](p30-convergence.md)；一般复杂解释与资料适用性没有验收，不得引用本次收口宣称通过。下一主课题为 Workbench MCP 服务化设计，P25 人工演示/外部反馈另列。此次只更新状态文档，不产生新的实现 CI。
 
