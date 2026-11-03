@@ -19,18 +19,21 @@ from automotive_workbench.knowledge_graph_workspace import (
     active_snapshot, import_graph, import_reviews,
 )
 from automotive_workbench.project_ai_workflow import propose as propose_project, validate as validate_project
+from automotive_workbench.mcp_evidence_client import load_project_evidence, validate_endpoint
 
 HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="utf-8")
 
 
 class WorkspaceServer(ThreadingHTTPServer):
-    def __init__(self, address: tuple[str, int], root: Path, model: str, ollama_url: str):
+    def __init__(self, address: tuple[str, int], root: Path, model: str, ollama_url: str,
+                 mcp_url: str | None = None):
         if address[0] not in {"127.0.0.1", "localhost"}:
             raise ValueError("Workbench web server must bind to loopback")
         self.root = root
         self.db_path = root / "chat.sqlite3"
         self.model = model
         self.ollama_url = ollama_url
+        self.mcp_url = validate_endpoint(mcp_url) if mcp_url else None
         self.token = secrets.token_urlsafe(24)
         super().__init__(address, Handler)
 
@@ -137,11 +140,13 @@ class Handler(BaseHTTPRequestHandler):
                                       site_version=str(body.get("site_version", "unreported")))
             elif self.path == "/api/chat":
                 report = body.get("report")
+                mcp_url = self.server.mcp_url
+                loader = (lambda path, question: load_project_evidence(mcp_url, path, question)) if mcp_url else None
                 result = ask(self.server.root, self.server.db_path,
                              session_id=str(body.get("session_id", "")), question=str(body.get("question", "")),
                              report=Path(report) if isinstance(report, str) and report else None,
                              model=self.server.model, ollama_url=self.server.ollama_url,
-                             use_model=body.get("use_model") is True)
+                             use_model=body.get("use_model") is True, evidence_loader=loader)
             elif self.path == "/api/project/propose":
                 project = body.get("project")
                 requirement = body.get("requirement")
@@ -180,8 +185,10 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8767)
     parser.add_argument("--model", default="qwen3.5:2b")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    parser.add_argument("--mcp-url", help="Optional local Workbench MCP evidence endpoint")
     args = parser.parse_args()
-    server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url)
+    server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url,
+                             mcp_url=args.mcp_url)
     print(f"Automotive Workbench: http://127.0.0.1:{args.port}/", flush=True)
     try:
         server.serve_forever()

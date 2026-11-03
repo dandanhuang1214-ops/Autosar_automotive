@@ -8,7 +8,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from automotive_workbench.explanation_services import Endpoint, ServiceError, parse_json
 from automotive_workbench.knowledge_graph_workspace import active_reviews, active_snapshot, search_graph
@@ -108,7 +108,8 @@ def _store_message(db_path: Path, session_id: str, role: str, content: str,
 
 
 def ask(root: Path, db_path: Path, *, session_id: str, question: str,
-        report: Path | None, model: str, ollama_url: str, use_model: bool) -> dict[str, Any]:
+        report: Path | None, model: str, ollama_url: str, use_model: bool,
+        evidence_loader: Callable[[Path, str], dict[str, Any]] | None = None) -> dict[str, Any]:
     if not isinstance(question, str) or not question.strip() or len(question) > 2000:
         raise ValueError("Question must contain 1..2000 characters")
     snapshot = active_snapshot(root)
@@ -118,7 +119,7 @@ def ask(root: Path, db_path: Path, *, session_id: str, question: str,
     graph_hash = manifest["graph_sha256"] if snapshot is not None else "none"
     selected = search_graph(graph, question) if snapshot is not None else {"nodes": [], "edges": []}
     review_export = active_reviews(root) if snapshot is not None else None
-    request = build_request(report, question) if report else None
+    request = (evidence_loader or build_request)(report, question) if report else None
     project_hash = request["report_sha256"] if request else None
     scope = project_hash or "global"
     notes = memories(db_path, scope)
