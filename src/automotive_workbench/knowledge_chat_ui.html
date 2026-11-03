@@ -142,6 +142,18 @@
         <input id="report" autocomplete="off" placeholder="/mnt/d/.../project-report.json">
         <p class="hint">每次提问重放报告；静态 passed 不代表 CFG 生成或 CAN 实测。</p>
       </div>
+      <details class="disclosure" id="projectTask">
+        <summary>AI 需求 → 项目验收</summary>
+        <p class="hint">选择已有静态 ECUC 项目。Ollama 只挑选已声明的验收项；生成的项目声明和实际验证报告分别保存。</p>
+        <label for="projectSource">项目声明绝对路径</label>
+        <input id="projectSource" autocomplete="off" placeholder="/mnt/d/.../project.json">
+        <label for="projectRequirement">需要验证的需求</label>
+        <textarea id="projectRequirement" rows="3" placeholder="例如：验证 COM 通信引用链完整"></textarea>
+        <button id="proposeProject" class="button full" type="button">让 AI 生成验收项目</button>
+        <div id="projectProposal" class="status-card" style="margin-top:10px" hidden></div>
+        <button id="validateProject" class="button secondary full" type="button" style="margin-top:10px" disabled>运行项目验证</button>
+        <p id="projectTaskStatus" class="feedback" role="status">先生成并查看验收项，再运行验证。</p>
+      </details>
       <details class="disclosure" id="graphImport">
         <summary>导入或更新图谱</summary>
         <p class="hint">从知识图谱站点下载 graph.json 与其全部 source-*.md；一次选中这些文件。</p>
@@ -207,10 +219,13 @@
     let projectHash = '';
     let currentEvidence = null;
     let currentTab = 'facts';
+    let projectTaskId = '';
     let toastTimer;
     $('report').value = localStorage.getItem('awb-report') || '';
+    $('projectSource').value = localStorage.getItem('awb-project-source') || '';
     $('useModel').checked = localStorage.getItem('awb-use-model') !== 'false';
     $('report').onchange = () => localStorage.setItem('awb-report', $('report').value.trim());
+    $('projectSource').onchange = () => localStorage.setItem('awb-project-source', $('projectSource').value.trim());
     $('useModel').onchange = () => localStorage.setItem('awb-use-model', String($('useModel').checked));
 
     async function api(path, body) {
@@ -334,6 +349,32 @@
     }
     function bindSuggestions() { for (const button of document.querySelectorAll('[data-prompt]')) button.onclick = () => { $('question').value = button.dataset.prompt; $('question').focus(); }; }
     bindSuggestions();
+    $('proposeProject').onclick = async () => {
+      const button = $('proposeProject'); button.disabled = true; projectTaskId = '';
+      $('validateProject').disabled = true; $('projectProposal').hidden = true; $('projectProposal').replaceChildren();
+      localStorage.setItem('awb-project-source', $('projectSource').value.trim());
+      feedback('projectTaskStatus', '正在核对项目输入并请求本地 Ollama…');
+      try {
+        const result = await api('/api/project/propose', { project: $('projectSource').value.trim(), requirement: $('projectRequirement').value.trim() });
+        projectTaskId = result.id; $('validateProject').disabled = false;
+        const panel = $('projectProposal'); panel.hidden = false; panel.replaceChildren();
+        panel.append(el('strong', `AI 草案 · ${result.selection.acceptance_ids.join('、')}`),
+                     el('span', `原项目验收描述：${result.selection.rationale}`),
+                     el('p', `已生成：${result.generated_project.path}`, 'hint'));
+        feedback('projectTaskStatus', '草案已保存。核对所选 ID 与原项目验收描述后，可运行项目验证。');
+      } catch (error) { projectTaskId = ''; $('validateProject').disabled = true; feedback('projectTaskStatus', error.message, true); }
+      finally { button.disabled = false; }
+    };
+    $('validateProject').onclick = async () => {
+      if (!projectTaskId) return;
+      const button = $('validateProject'); button.disabled = true; feedback('projectTaskStatus', '正在运行项目并复验结果…');
+      try {
+        const result = await api('/api/project/validate', { task_id: projectTaskId });
+        $('report').value = result.report; localStorage.setItem('awb-report', result.report);
+        feedback('projectTaskStatus', `项目 ${result.status}；包复验 ${result.verification_status}。报告已填入工程报告栏，可继续提问。`);
+        $('projectProposal').append(el('p', `验证报告：${result.report}`, 'hint'));
+      } catch (error) { feedback('projectTaskStatus', error.message, true); button.disabled = false; }
+    };
     $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; await refresh(); $('question').focus(); } catch (error) { showError(error); } };
     $('sessions').onchange = async () => { sessionId = $('sessions').value; try { await refresh(); } catch (error) { showError(error); } };
     $('importBtn').onclick = async () => {

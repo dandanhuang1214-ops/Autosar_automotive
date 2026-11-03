@@ -18,6 +18,7 @@ from automotive_workbench.knowledge_graph_workspace import (
     MAX_GRAPH_BYTES, MAX_REVIEW_BYTES, MAX_SOURCE_BYTES, active_reviews,
     active_snapshot, import_graph, import_reviews,
 )
+from automotive_workbench.project_ai_workflow import propose as propose_project, validate as validate_project
 
 HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="utf-8")
 
@@ -141,6 +142,18 @@ class Handler(BaseHTTPRequestHandler):
                              report=Path(report) if isinstance(report, str) and report else None,
                              model=self.server.model, ollama_url=self.server.ollama_url,
                              use_model=body.get("use_model") is True)
+            elif self.path == "/api/project/propose":
+                project = body.get("project")
+                requirement = body.get("requirement")
+                if not isinstance(project, str) or not isinstance(requirement, str):
+                    raise ValueError("Project path and requirement are required")
+                result = propose_project(self.server.root, Path(project), requirement,
+                                         self.server.model, self.server.ollama_url)
+            elif self.path == "/api/project/validate":
+                task_id = body.get("task_id")
+                if not isinstance(task_id, str):
+                    raise ValueError("AI project task ID is required")
+                result = validate_project(self.server.root, task_id)
             elif self.path == "/api/reviews/import":
                 content = body.get("content")
                 if not isinstance(content, str) or len(content.encode("utf-8")) > MAX_REVIEW_BYTES:

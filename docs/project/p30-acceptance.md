@@ -14,6 +14,7 @@
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
 | 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；0.12 恢复 qwen3.5 输出。0.16 的 v7 开发集 6/6 精确字段任务通过，但引用由系统绑定、草稿只经开发者审读。一般解释、独立语义与资料适用性仍未验收 |
 | Typed action intent 与确定性准入 | remote-accepted | 精确 action/capability/observation 条件由控制面绑定；唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖。`36eac3b` / run `38997832114` 七 job success |
+| AI 需求到项目验收入口 0.1 | local-accepted；远端待验收 | 现有聊天网页调用 Ollama 选择静态 ECUC 项目中的一个已有验收 ID，生成独立项目声明，经显式点击后 `run-project` 执行、包复验并回到无图谱问答；真实公开场景与 556 tests 本地通过。模型选择相关性未独立验收；不生成 ARXML/ECUC。见[指南](p30-ai-project-workflow-guide.md)。 |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 

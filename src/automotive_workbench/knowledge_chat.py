@@ -112,12 +112,12 @@ def ask(root: Path, db_path: Path, *, session_id: str, question: str,
     if not isinstance(question, str) or not question.strip() or len(question) > 2000:
         raise ValueError("Question must contain 1..2000 characters")
     snapshot = active_snapshot(root)
-    if snapshot is None:
-        raise ValueError("Import a graph snapshot first")
-    graph, manifest = snapshot
-    graph_hash = manifest["graph_sha256"]
-    selected = search_graph(graph, question)
-    review_export = active_reviews(root)
+    if snapshot is None and report is None:
+        raise ValueError("Choose a project report or import a graph snapshot first")
+    graph, manifest = snapshot if snapshot is not None else ({"sourceDocuments": [], "verificationTasks": []}, {})
+    graph_hash = manifest["graph_sha256"] if snapshot is not None else "none"
+    selected = search_graph(graph, question) if snapshot is not None else {"nodes": [], "edges": []}
+    review_export = active_reviews(root) if snapshot is not None else None
     request = build_request(report, question) if report else None
     project_hash = request["report_sha256"] if request else None
     scope = project_hash or "global"
@@ -149,7 +149,7 @@ def ask(root: Path, db_path: Path, *, session_id: str, question: str,
                                      for x in graph["sourceDocuments"]],
                 "review_annotations": annotations[:12],
                 "review_status": review_export["status"] if review_export else "not_imported",
-                "graph_status": "candidate_only", "graph_sha256": graph_hash,
+                "graph_status": "candidate_only" if snapshot is not None else "not_imported", "graph_sha256": graph_hash,
                 "project_sha256": project_hash}
     summary_lines = [
         f"所选项目验收状态：{evidence['project_status']}。这不证明 CFG 生成或 CAN 总线实测。"
