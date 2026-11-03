@@ -1,6 +1,6 @@
 # P30 验收表
 
-整阶段：implementing，现进入[收敛审查](p30-convergence.md)。首轮只读事实门 remote-accepted。实现 `a82ee62c758c82741aa083636744b5c6766892a3` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job 全部 success；Windows/Ubuntu 事实场景、隔离安装、证据上传均 success。模型解释不在首轮已验收范围。
+整阶段：**受限范围收口**，见[范围决定与保留失败](p30-convergence.md)。一般复杂解释、完整引用及资料适用性未验收，不属于本次受限交付。首轮只读事实门 remote-accepted：实现 `a82ee62c758c82741aa083636744b5c6766892a3` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job 全部 success。
 
 | 门 | 状态 | 证据与范围 |
 |---|---|---|
@@ -15,6 +15,7 @@
 | 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；新[非盲可用性反馈](../research/p30-user-content-review-20261103.md)认可有最终回答的 3/3 样本，但五题中两题无回答，冻结格式/任务门仍失败。一般解释、稳定完成率与资料适用性仍未验收。 |
 | Typed action intent 与确定性准入 | remote-accepted | 精确 action/capability/observation 条件由控制面绑定；唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖。`36eac3b` / run `38997832114` 七 job success |
 | AI 需求到项目验收入口 0.1 | remote-accepted；P30 内容门待审阅 | 现有聊天网页调用 Ollama 选择静态 ECUC 项目中的一个已有验收 ID，生成独立项目声明，经显式点击后 `run-project` 执行、包复验并回到无图谱问答；真实公开场景与 556 tests 本地通过。实现 `93cee4d` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) 七 job 成功。模型选择相关性未独立验收；不生成 ARXML/ECUC。见[指南](p30-ai-project-workflow-guide.md)。 |
+| P30 受限交付 | restricted_scope_accepted | 工程事实、确定性呈现、受控只读 Agent 基础与静态 ECUC AI 验收候选入口按各自已记录实现 CI 交付；用户认可 3/3 个有回答样本的可用性，2/5 无回答和冻结模型任务失败保留。一般复杂解释、资料适用性及模型自主工程判定未获验收。见[收口记录](p30-convergence.md)。 |
 
 ## 提示 0.9 局部事实选择修正（2026-10-08）
 
