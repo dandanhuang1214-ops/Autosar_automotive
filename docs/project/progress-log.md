@@ -18,6 +18,8 @@
 
 ## 当前总览（2026-10-23）
 
+最新补充（2026-11-03）：用户决定先收敛 P30，MCP 服务化留到后续。既有 `static-rejection` 项目报告、0.6 模型结果、确定性呈现和 0.7 字面覆盖全部再次离线复验通过，但原模型覆盖仍 0/4、内容开发结论 failed；四题 Agent 评测与人工审阅包也再次离线复验通过，实际评测 0/4、人工状态 pending。已整理[收敛记录](p30-convergence.md)：下一主任务是独立审阅已准备的 0.7 工作表与四题 review pack，并确定受限交付或完整质量门范围。P30 当前仍 implementing，不把复验通过写成内容质量通过。
+
 最新补充（2026-11-03）：按用户要求在现有 AI 聊天网页接入静态 ECUC 项目。真实 Ollama 从已声明验收 ID 中选择 `COMMUNICATION`，平台生成独立项目声明并由原 `run-project` 执行；网页 API 的令牌拒绝、模型生成、项目运行、包复验和无图谱报告问答均已本地通过。全量 556 tests 通过（2 环境跳过）；实现 `93cee4d` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) head 一致、七 job success，受限入口已远端验收。此版生成的是项目验收声明，不是 ARXML 或 ECUC 写回；模型选择仍需人工审阅。P30 0.7 独立内容门保持未完成，生成器扩展需接真实 Generate-Arxml 产物及回读门。
 
 最新补充（2026-11-03）：P30 配套的跨工具语义快照门 0.3 实现 `388eb96` / [run `41474608023`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41474608023) head 一致、七 job success，已远端验收。合成独立工程的真实 ECUC 项目包逐文件核对 DPA、collection 和模块；Developer/System 显式引用断开保留 `attention-required`，同一 DPA 下模块漂移被拒绝。用户新增下一项：把现有 AI 平台实际接入项目需求、验证和受支持的生成路径，作为 P30 项目入口工作推进；0.7 development v1 独立人工内容审阅仍是未完成主门。若要宣称 Developer 导出与项目包完全同源，尚需把 Developer/System 导出纳入同次版本化项目捕获。
@@ -2186,3 +2188,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 实现提交 `93cee4d131cf1dbd8718ed418bea9fb53caf3aba` 对应 [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432)，head 一致、completed/success。七个实际 job 均 success：core-contracts Ubuntu `125677159023` / Windows `125677159225`，runtime-currency `125677159266`，controlled-rejections Ubuntu `125680628434` / Windows `125680628644`，runtime-evidence Ubuntu `125680628584` / Windows `125680628469`。此后的文档状态提交不充作实现验收。
 - 受限 AI 项目入口 0.1 remote-accepted，下一主门仍为 P30 0.7 development v1 独立人工内容审阅。可继续扩展已有 Generate-Arxml 真实生成与回读路径，但必须逐项保留来源、生成器结果和验证结论；P25 人工演示/外部反馈待实际取得。`main` 保持未合并。
+
+### P30：阶段收敛核对（2026-11-03）
+
+- 未改动冻结题或模型结果；对 0.7 `static-rejection` 报告、0.6 模型结果、0.6 确定性呈现和 0.7 覆盖分别运行离线 verifier，四项均 `status=passed`，但覆盖结果仍 `incomplete`、0/4，模型语义仍 `unassessed`，已记录的非盲内容诊断仍 `failed_for_the_requested_task`。四题 Agent 评测离线重评分 `passed`，其真实 `evaluation_status=failed`（0/4）；人工审阅包离线验签 `passed`，4 项仍 `pending_human_review`。
+- [收敛记录](p30-convergence.md)固定可交付范围和两条关闭路径，不预先选择或伪造人工结论。下一主任务为取得 0.7 工作表与四题审阅包的独立人工判断，并记录 P30 受限或完整范围决定。MCP 服务化随后开展；P25 人工演示/外部反馈另列。本文档状态提交不充作新的实现远端验收。

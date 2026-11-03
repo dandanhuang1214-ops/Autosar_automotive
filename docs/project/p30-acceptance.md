@@ -1,6 +1,6 @@
 # P30 验收表
 
-整阶段：implementing。首轮只读事实门 remote-accepted。实现 `a82ee62c758c82741aa083636744b5c6766892a3` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job 全部 success；Windows/Ubuntu 事实场景、隔离安装、证据上传均 success。模型解释不在首轮已验收范围。
+整阶段：implementing，现进入[收敛审查](p30-convergence.md)。首轮只读事实门 remote-accepted。实现 `a82ee62c758c82741aa083636744b5c6766892a3` / [run `37183484781`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/37183484781) 七 job 全部 success；Windows/Ubuntu 事实场景、隔离安装、证据上传均 success。模型解释不在首轮已验收范围。
 
 | 门 | 状态 | 证据与范围 |
 |---|---|---|

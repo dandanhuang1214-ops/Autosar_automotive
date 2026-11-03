@@ -52,6 +52,8 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：P30 implementing（P29 已按受限范围验收，P25 人工验收待完成）
 
+2026-11-03 收敛审查：按用户要求先完成 P30，再讨论 Workbench MCP 服务化。[P30 收敛记录](p30-convergence.md)核对已远端验收的事实/确定性呈现/受限 AI 项目入口，并离线复验两组既有模型评测；0.7 模型原文字面覆盖 0/4，四题 Agent 评测 0/4，独立人工审阅仍 pending。当前不修改冻结题、不补跑已见模型题，也不将工程门成功等同复杂解释可用。下一主任务是完成现成 0.7 工作表和四题 review pack 的独立人工判断，再根据用户确定的受限或完整范围记录 P30 关闭决定；在此之前 P30 保持 implementing。
+
 2026-11-03 配套验收：跨工具验收影响 0.3 语义快照门已由实现 `388eb96` / [run `41474608023`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41474608023) head 一致、七 job success 远端验收。独立合成工程覆盖正常、断引用和 DPA 不变但模块漂移；此门逐文件比对 ECUC 快照，并保留 Developer/System 到通信路径的逐项解析状态。Developer/System 导出尚未收进 ECUC 项目包，P30 0.7 development v1 独立人工内容审阅仍待完成。用户新增下一项：把现有 AI 平台实际接入项目需求、验证和受支持的生成路径，作为 P30 当前阶段的项目入口能力；项目适配的后续缺口仍是把 Developer/System 导出纳入同次版本化项目捕获。
 
 2026-11-03 用户指定的 AI 项目入口首版已远端验收：现有本地网页调用 Ollama 从静态 ECUC 项目的已声明 ID 中选择一项，生成独立项目声明，显式点击后运行既有项目引擎并把报告送回无图谱问答。真实模型/网页场景、拒绝用例与全量 556 tests 本地通过；实现 `93cee4d131cf1dbd8718ed418bea9fb53caf3aba` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) head 一致、七 job success。P30 仍 implementing，下一主门为 0.7 development v1 独立人工内容审阅；生成器扩展需以同一受控入口接入已有 Generate-Arxml 的真实生成及回读验收，当前项目声明生成不等同于 ARXML/ECUC 生成。P25 人工演示与外部反馈仍待取得。
