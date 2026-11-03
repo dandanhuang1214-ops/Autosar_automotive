@@ -8,7 +8,7 @@ P30 当前进度：[证据对确定性呈现 0.5](docs/project/p30-agent-evidenc
 
 P30 配套的[跨工具语义快照核对](docs/project/davinci-mapping-bridge.md)已新增可选 0.3 门：将 Developer/System 显式映射关联到项目包中逐文件核对的 ECUC DPA、collection 和模块快照。独立合成测试工程覆盖闭合映射、断引用及 DPA 不变的模块漂移；实现 `388eb96` / [run `41474608023`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41474608023) 七 job 成功。下一项按用户要求把现有 AI 平台接入项目需求、验证和受支持的生成路径；P30 独立人工内容审阅仍待完成。
 
-已新增 [AI 需求到项目验收入口](docs/project/p30-ai-project-workflow-guide.md)：在现有本地聊天网页输入需求和 `workbench-project-0.6` 静态 ECUC 项目，Ollama 从已声明验收项中选择一个 ID，平台生成独立项目声明；用户检查后运行真实 `run-project`，报告可直接进入无图谱项目问答。公开真实模型与网页 API 场景已本地通过，当前待本轮实现提交的远端 CI；模型选择仍需人工审阅，实际 ARXML/ECUC 生成未纳入此版。
+已新增 [AI 需求到项目验收入口](docs/project/p30-ai-project-workflow-guide.md)：在现有本地聊天网页输入需求和 `workbench-project-0.6` 静态 ECUC 项目，Ollama 从已声明验收项中选择一个 ID，平台生成独立项目声明；用户检查后运行真实 `run-project`，报告可直接进入无图谱项目问答。公开真实模型与网页 API 场景已本地通过；实现 `93cee4d` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) head 一致、七 job 成功。模型选择仍需人工审阅，实际 ARXML/ECUC 生成未纳入此版；下一主门是 P30 0.7 独立人工内容审阅，后续生成器扩展需接实际 Generate-Arxml 产物和回读验收。
 
 P20 已实现 [声明式多项目完整流程](docs/project/p20-multi-project-guide.md)：车窗与 ThermalControl 共用项目运行、路径绑定、审查、比较与迁移复验；整阶段已通过七 job 远端验收及本地双项目 SocketCAN 全流程，见 [验收记录](docs/project/p20-acceptance.md)。
 

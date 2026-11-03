@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-11-03）：按用户要求在现有 AI 聊天网页接入静态 ECUC 项目。真实 Ollama 从已声明验收 ID 中选择 `COMMUNICATION`，平台生成独立项目声明并由原 `run-project` 执行；网页 API 的令牌拒绝、模型生成、项目运行、包复验和无图谱报告问答均已本地通过。全量 556 tests 通过（2 环境跳过）；实现提交与远端 CI 待完成，见末尾续记。此版生成的是项目验收声明，不是 ARXML 或 ECUC 写回；模型选择仍需人工审阅。P30 独立内容门保持未完成。
+最新补充（2026-11-03）：按用户要求在现有 AI 聊天网页接入静态 ECUC 项目。真实 Ollama 从已声明验收 ID 中选择 `COMMUNICATION`，平台生成独立项目声明并由原 `run-project` 执行；网页 API 的令牌拒绝、模型生成、项目运行、包复验和无图谱报告问答均已本地通过。全量 556 tests 通过（2 环境跳过）；实现 `93cee4d` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) head 一致、七 job success，受限入口已远端验收。此版生成的是项目验收声明，不是 ARXML 或 ECUC 写回；模型选择仍需人工审阅。P30 0.7 独立内容门保持未完成，生成器扩展需接真实 Generate-Arxml 产物及回读门。
 
 最新补充（2026-11-03）：P30 配套的跨工具语义快照门 0.3 实现 `388eb96` / [run `41474608023`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41474608023) head 一致、七 job success，已远端验收。合成独立工程的真实 ECUC 项目包逐文件核对 DPA、collection 和模块；Developer/System 显式引用断开保留 `attention-required`，同一 DPA 下模块漂移被拒绝。用户新增下一项：把现有 AI 平台实际接入项目需求、验证和受支持的生成路径，作为 P30 项目入口工作推进；0.7 development v1 独立人工内容审阅仍是未完成主门。若要宣称 Developer 导出与项目包完全同源，尚需把 Developer/System 导出纳入同次版本化项目捕获。
 
@@ -2180,4 +2180,9 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 - `project_ai_workflow.py` 绑定原项目、DPA/collection/模块逐文件哈希、模型身份、原始响应和生成声明；未知 ID、额外文本、输入漂移、生成文件或原始响应篡改在执行前拒绝。模型失败留 `model-trace.json`；有效任务只运行一次，保存 `proposal.json`、项目快照、manifest、完整性和项目包重放结果。模型只做 ID 建议，不能覆盖工具状态。
 - 本地真实模型：Docker Desktop 本次启动后已有 Ollama 容器返回版本 `0.31.1`。首个结构化请求返回空内容，未生成或运行项目；改用单 ID 原文协议，在**新的公开合成需求**上 qwen3.5:2b 返回 `COMMUNICATION`。最终代码的网页 API 场景再以新需求验证错误令牌 403、模型建议、项目执行与无图谱问答 `evidence_only` 均通过，保存在忽略目录 `output/ai-project-final-20261103/`。模型 digest `324d162b…5c94dbad`、96 输入/3 输出 token；项目运行、包完整性与离线复验均 `passed`，报告 SHA-256 `8d825499…76b35460`。随后停止 Ollama，原报告 `verify-ecuc-project` 停服重放仍 `passed`。提示已点名目标 ID，这只证明集成路径，不是自然语言选择质量评测。
 - 专项 4/4、现有网页专项一起 10/10、全量 556 tests 通过（2 项环境跳过）；Ruff、三模块 mypy、JavaScript `node --check`、`git diff --check` 通过。Playwright CLI 技能脚本存在 CRLF，本机 `npx` 下载成功后因 Node `18.19.1` 低于所需 20 而无法启动；未取得浏览器截图，已用真实 HTTP 端到端场景核对表单资源与 API 功能。远端 CI 待本轮实现提交，不提前写为 remote-accepted。
-- 状态：local-accepted，P30 整阶段仍 implementing。下一步提交推送并取得本实现 head 一致七 job 结论；之后仍需 P30 0.7 development v1 独立人工内容审阅。生成器扩展应接已有 Generate-Arxml 的实际 DOCX/ARXML 产物及回读门，当前仅生成项目验收声明；P25 人工演示与外部反馈待取得，商业 CFG/CAN/物理 ECU 不因本轮代理实测而通过。
+- 状态：本地验收；远端结果见下条。P30 整阶段仍 implementing。下一主门为 P30 0.7 development v1 独立人工内容审阅。生成器扩展应接已有 Generate-Arxml 的实际 DOCX/ARXML 产物及回读门，当前仅生成项目验收声明；P25 人工演示与外部反馈待取得，商业 CFG/CAN/物理 ECU 不因本轮代理实测而通过。
+
+### P30 配套：AI 项目入口远端验收（2026-11-03）
+
+- 实现提交 `93cee4d131cf1dbd8718ed418bea9fb53caf3aba` 对应 [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432)，head 一致、completed/success。七个实际 job 均 success：core-contracts Ubuntu `125677159023` / Windows `125677159225`，runtime-currency `125677159266`，controlled-rejections Ubuntu `125680628434` / Windows `125680628644`，runtime-evidence Ubuntu `125680628584` / Windows `125680628469`。此后的文档状态提交不充作实现验收。
+- 受限 AI 项目入口 0.1 remote-accepted，下一主门仍为 P30 0.7 development v1 独立人工内容审阅。可继续扩展已有 Generate-Arxml 真实生成与回读路径，但必须逐项保留来源、生成器结果和验证结论；P25 人工演示/外部反馈待实际取得。`main` 保持未合并。
