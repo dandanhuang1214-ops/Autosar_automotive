@@ -18,6 +18,8 @@
 
 ## 当前总览（2026-10-23）
 
+最新补充（2026-11-03）：用户审阅分开的五题问题与模型原文后，明确认为有最终回答的 Q1、Q2、Q5 可视为通过；按[反馈记录](../research/p30-user-content-review-20261103.md)，这是非盲的 3/3 有回答样本整体可用性意见。Q3、Q4 无最终回答，原冻结 0.7 格式门 0/4、Agent 任务门 0/4 与正式 review template pending 均不改变。下一主任务仍是确定 P30 受限或完整关闭范围，不以人工认可替换冻结评分。
+
 最新补充（2026-11-03）：用户决定先收敛 P30，MCP 服务化留到后续。既有 `static-rejection` 项目报告、0.6 模型结果、确定性呈现和 0.7 字面覆盖全部再次离线复验通过，但原模型覆盖仍 0/4、内容开发结论 failed；四题 Agent 评测与人工审阅包也再次离线复验通过，实际评测 0/4、人工状态 pending。已整理[收敛记录](p30-convergence.md)：下一主任务是独立审阅已准备的 0.7 工作表与四题 review pack，并确定受限交付或完整质量门范围。P30 当前仍 implementing，不把复验通过写成内容质量通过。
 
 最新补充（2026-11-03）：按用户要求在现有 AI 聊天网页接入静态 ECUC 项目。真实 Ollama 从已声明验收 ID 中选择 `COMMUNICATION`，平台生成独立项目声明并由原 `run-project` 执行；网页 API 的令牌拒绝、模型生成、项目运行、包复验和无图谱报告问答均已本地通过。全量 556 tests 通过（2 环境跳过）；实现 `93cee4d` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) head 一致、七 job success，受限入口已远端验收。此版生成的是项目验收声明，不是 ARXML 或 ECUC 写回；模型选择仍需人工审阅。P30 0.7 独立内容门保持未完成，生成器扩展需接真实 Generate-Arxml 产物及回读门。
@@ -2193,3 +2195,8 @@ P15 已本地验收；本轮 P16 接入固定 Generate-Arxml 提交的三组实�
 
 - 未改动冻结题或模型结果；对 0.7 `static-rejection` 报告、0.6 模型结果、0.6 确定性呈现和 0.7 覆盖分别运行离线 verifier，四项均 `status=passed`，但覆盖结果仍 `incomplete`、0/4，模型语义仍 `unassessed`，已记录的非盲内容诊断仍 `failed_for_the_requested_task`。四题 Agent 评测离线重评分 `passed`，其真实 `evaluation_status=failed`（0/4）；人工审阅包离线验签 `passed`，4 项仍 `pending_human_review`。
 - [收敛记录](p30-convergence.md)固定可交付范围和两条关闭路径，不预先选择或伪造人工结论。下一主任务为取得 0.7 工作表与四题审阅包的独立人工判断，并记录 P30 受限或完整范围决定。MCP 服务化随后开展；P25 人工演示/外部反馈另列。本文档状态提交不充作新的实现远端验收。
+
+### P30：用户对有回答样本的可用性反馈（2026-11-03）
+
+- 从封存的 0.7 问题/模型结果和四题 Agent review pack 分离导出 `output/p30-user-review-20261103/questions.md`、`answers.md`，原始来源与输出 SHA-256 固定在同目录 `receipt.json`；没有混入冻结参考或自动分数。五题中 Q1、Q2、Q5 有最终模型文本，Q3、Q4 分别为 `refused`、`blocked`，无最终回答。
+- 用户看过材料后表示“回答了问题的答案都可以视作通过”。[审阅范围记录](../research/p30-user-content-review-20261103.md)将该意见限定为 3/3 有回答样本可用；它不是五题全通过，也不改变 0.7 规范行 0/4、四题 Agent 自动任务 0/4 或正式逐字段人工 assessment 的 pending 状态。P30 仍 implementing，下一步决定是否按受限能力收敛；一般复杂解释和资料适用性不可因此宣称通过。

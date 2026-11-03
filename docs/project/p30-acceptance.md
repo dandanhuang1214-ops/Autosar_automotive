@@ -12,7 +12,7 @@
 | Ollama 与现有知识助手 | remote-accepted | 原服务已恢复；只读接口、模型/提示/原始输出/回退、12 个协议场景及安装验证通过；真实模型质量另列 |
 | 项目事实与资料知识分离 | remote-accepted | 原文检索与审核/来源核对，手册逐字摘录检查；草稿语义始终 unassessed |
 | 冻结问题评测工具 | remote-accepted | `8735bc3` / run `37419810449` 七 job success；冻结证据/代码、分项评分与篡改拒绝 |
-| 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；0.12 恢复 qwen3.5 输出。0.16 的 v7 开发集 6/6 精确字段任务通过，但引用由系统绑定、草稿只经开发者审读。一般解释、独立语义与资料适用性仍未验收 |
+| 模型回答质量 | 部分通过，继续 implementing | 用户已确认 v5/v6 qwen3-vl 简单状态文本；新[非盲可用性反馈](../research/p30-user-content-review-20261103.md)认可有最终回答的 3/3 样本，但五题中两题无回答，冻结格式/任务门仍失败。一般解释、稳定完成率与资料适用性仍未验收。 |
 | Typed action intent 与确定性准入 | remote-accepted | 精确 action/capability/observation 条件由控制面绑定；唯一精确候选才能进入审批，确定性拒绝不可被模型覆盖。`36eac3b` / run `38997832114` 七 job success |
 | AI 需求到项目验收入口 0.1 | remote-accepted；P30 内容门待审阅 | 现有聊天网页调用 Ollama 选择静态 ECUC 项目中的一个已有验收 ID，生成独立项目声明，经显式点击后 `run-project` 执行、包复验并回到无图谱问答；真实公开场景与 556 tests 本地通过。实现 `93cee4d` / [run `41562819432`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41562819432) 七 job 成功。模型选择相关性未独立验收；不生成 ARXML/ECUC。见[指南](p30-ai-project-workflow-guide.md)。 |
 
