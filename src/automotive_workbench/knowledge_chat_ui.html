@@ -118,6 +118,235 @@
     .toast[hidden] { display: none; }
     @media (max-width: 1160px) { .shell { grid-template-columns: 250px minmax(0,1fr); } .inspector { grid-column: 2; } .chat { height: min(760px, calc(100vh - 104px)); } }
     @media (max-width: 780px) { .shell { display: flex; flex-direction: column; padding: 10px; gap: 10px; } .chat { order: 1; height: 72vh; min-height: 520px; } .sidebar { order: 2; } .inspector { order: 3; } body.no-graph .sidebar { order: 0; } .top-status { display: none; } .chat-head, .conversation, .composer { padding-left: 16px; padding-right: 16px; } .sidebar, .inspector { padding: 17px; } .conversation { padding-top: 16px; } }
+    /* P31 visual system: a quiet engineering console with one reading surface. */
+    :root {
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      color: #172433;
+      background: #f3f5f7;
+      --ink: #172433;
+      --muted: #536273;
+      --line: #dce2e8;
+      --surface: #fff;
+      --soft: #f3f6fa;
+      --accent: #245ca6;
+      --accent-dark: #174980;
+      --amber: #8d5716;
+      --amber-bg: #fff5e5;
+      --danger: #aa3636;
+      --nav: #142233;
+      --nav-line: #334255;
+      --nav-text: #e8eef5;
+    }
+    body { background: #f3f5f7; }
+    :focus-visible { outline-color: #4b89e3; }
+    .topbar { min-height: 64px; padding: 10px 24px; background: #101c2c; border-bottom: 1px solid #304153; }
+    .mark { width: 38px; height: 38px; flex-basis: 38px; border-radius: 6px; background: #3d73bd; color: #fff; font-size: 13px; letter-spacing: -.04em; }
+    .brand h1 { font-size: 14px; letter-spacing: .015em; }
+    .brand small { color: #aebed0; font-size: 11px; letter-spacing: .02em; }
+    .top-status { display: flex; align-items: center; gap: 8px; color: #c0cfdd; font-size: 12px; }
+    .top-status::before { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: #78c9a3; box-shadow: 0 0 0 3px #78c9a322; }
+    .shell { max-width: none; min-height: calc(100vh - 64px); grid-template-columns: minmax(235px, 264px) minmax(0, 1fr) minmax(290px, 340px); gap: 0; padding: 0; }
+    .pane { border: 0; border-radius: 0; box-shadow: none; }
+    .sidebar { min-height: calc(100vh - 64px); align-self: stretch; padding: 30px 20px 38px; background: var(--nav); color: var(--nav-text); border-right: 1px solid #26384b; }
+    .sidebar h2 { font-size: 20px; font-weight: 650; letter-spacing: -.02em; margin-bottom: 17px; }
+    .sidebar h3 { color: #edf3f9; font-size: 13px; letter-spacing: .01em; }
+    .sidebar label { color: #dce6f0; }
+    .sidebar .hint, .sidebar .feedback { color: #b9cad9; }
+    .sidebar .feedback.error { color: #ffd2cd; }
+    .sidebar .eyebrow { color: #90b9f2; }
+    .sidebar .section, .sidebar .disclosure { border-color: var(--nav-line); }
+    .sidebar .disclosure summary { min-height: 44px; display: list-item; padding: 10px 0; color: #e5edf6; font-size: 13px; }
+    .sidebar .disclosure[open] summary { color: #fff; }
+    .sidebar .status-card { background: #1f3548; border-color: #3a5870; color: #e5f0f9; border-left: 3px solid #78c9a3; }
+    .sidebar .status-card.missing { background: #3d3025; border-color: #766044; border-left-color: #e8aa55; color: #fff2da; }
+    .sidebar .button.secondary { color: #e7f0fa; background: #23374d; border-color: #52677b; }
+    .sidebar .button.secondary:hover { background: #314963; }
+    .sidebar .button.ghost { color: #b8d3f5; }
+    .sidebar .button.ghost:hover { background: #273d55; }
+    .sidebar .button.danger { color: #ffd2cd; }
+    .sidebar .memory-list li { border-color: var(--nav-line); }
+    .sidebar .subtle { color: #b9cad9; }
+    .sidebar input:not([type=checkbox]), .sidebar select, .sidebar textarea { background: #f9fbfd; border-color: #9aaabb; color: #142233; }
+    .eyebrow { color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .16em; }
+    .section { margin-top: 24px; padding-top: 22px; }
+    .disclosure { margin-top: 18px; padding-top: 8px; }
+    .button { min-height: 44px; background: var(--accent); border-radius: 6px; font-size: 13px; transition: background .18s ease, border-color .18s ease; }
+    .button:hover { background: var(--accent-dark); }
+    .button.small { min-height: 36px; font-size: 12px; }
+    .button:disabled { opacity: .62; }
+    input:not([type=checkbox]), select, textarea { min-height: 44px; border-color: #bdc8d3; border-radius: 6px; }
+    .chat { min-height: calc(100vh - 64px); height: calc(100vh - 64px); background: #fff; border-right: 1px solid var(--line); }
+    .chat-head { padding: 30px clamp(22px, 3vw, 48px) 20px; border-bottom: 1px solid #e9edf1; }
+    .chat-title { font-size: clamp(25px, 2.2vw, 32px); font-weight: 650; letter-spacing: -.035em; line-height: 1.25; margin-bottom: 7px; }
+    .chat-head .subtle { font-size: 13px; }
+    .badges { margin-top: 18px; gap: 7px; }
+    .badge { border-radius: 4px; padding: 5px 8px; background: #f1f5f9; border-color: #dce5ef; color: #3c5268; font-size: 11px; font-weight: 650; }
+    .badge.warn { background: var(--amber-bg); border-color: #f0d9b3; color: var(--amber); }
+    .conversation { padding: 28px clamp(22px, 3vw, 48px); scrollbar-color: #b8c5d2 transparent; }
+    .empty { max-width: 600px; margin: min(14vh, 110px) 0 0; text-align: left; }
+    .empty .symbol { width: 44px; height: 44px; margin: 0 0 20px; border-radius: 6px; background: #e9f0fa; color: var(--accent); font-size: 22px; font-weight: 700; }
+    .empty h3 { font-size: clamp(24px, 2.5vw, 34px); letter-spacing: -.035em; line-height: 1.3; margin-bottom: 10px; }
+    .empty .subtle { max-width: 460px; font-size: 14px; line-height: 1.7; }
+    .suggestions { justify-content: flex-start; gap: 10px; margin-top: 26px; }
+    .suggestions button { min-height: 44px; border-radius: 6px; border-color: #c7d5e6; color: #234b7c; padding: 8px 14px; font-size: 13px; text-align: left; }
+    .suggestions button:hover { background: #f0f5fb; }
+    .message { margin-bottom: 24px; }
+    .message-label { margin: 0 0 8px; color: #506177; font-size: 11px; letter-spacing: .04em; }
+    .message-body { border-radius: 6px; background: #f7f9fb; border-color: #e4eaf0; color: #1d2c3c; font-size: 14px; line-height: 1.8; padding: 17px 19px; }
+    .message.user .message-body { background: #edf3fb; border-color: #dce7f5; }
+    .message.draft .message-body { background: #fffaf1; border-color: #f0dfbf; }
+    .message.selected .message-body { border-left: 3px solid var(--accent); }
+    .message-evidence { display: inline-flex; align-items: center; min-height: 36px; margin-top: 6px; padding: 5px 10px; border: 0; border-radius: 4px; background: transparent; color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .message-evidence:hover { background: #edf3fb; }
+    .composer { padding: 20px clamp(22px, 3vw, 48px) 22px; border-color: #e4eaf0; box-shadow: 0 -8px 24px #15253708; }
+    .composer label { color: #334b65; }
+    .composer textarea { min-height: 84px; max-height: 180px; }
+    .composer-foot { flex-wrap: wrap; }
+    .inspector { min-height: calc(100vh - 64px); align-self: stretch; padding: 31px 22px; background: #f8fafc; }
+    .inspector h2 { font-size: 18px; letter-spacing: -.02em; }
+    .inspector > .subtle { font-size: 12px; line-height: 1.65; }
+    .inspector .notice { background: #f4f0e8; border-left: 3px solid #c38a39; border-radius: 3px; color: #6c4a1f; line-height: 1.6; }
+    .tabs { margin-top: 25px; gap: 0; }
+    .tab { min-height: 44px; font-size: 12px; }
+    .tab[aria-selected=true] { border-color: var(--accent); color: var(--accent-dark); }
+    .tab-panel { max-height: calc(100vh - 300px); }
+    .fact code, .source-item a { color: #245a9c; }
+    .fact code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .fact strong { line-height: 1.6; }
+    .status-card, .notice { overflow-wrap: anywhere; }
+    @media (min-width: 1161px) {
+      .shell { height: calc(100vh - 64px); min-height: 0; }
+      .sidebar, .inspector { height: calc(100vh - 64px); min-height: 0; overflow-y: auto; }
+    }
+    @media (max-width: 1160px) {
+      .shell { grid-template-columns: 240px minmax(0, 1fr); }
+      .sidebar { grid-row: span 2; }
+      .chat { height: min(810px, calc(100vh - 64px)); min-height: 620px; }
+      .inspector { grid-column: 2; min-height: 360px; border-top: 1px solid var(--line); }
+      .tab-panel { max-height: 460px; }
+    }
+    @media (max-width: 780px) {
+      .shell { display: flex; flex-direction: column; padding: 0; gap: 0; }
+      .chat { order: 1; height: min(780px, calc(100vh - 64px)); min-height: 520px; }
+      .sidebar { order: 2; min-height: auto; padding: 25px 20px; }
+      .inspector { order: 3; min-height: 350px; padding: 25px 20px; }
+      body.no-graph .sidebar { order: 2; }
+      .chat-head, .conversation, .composer { padding-left: 20px; padding-right: 20px; }
+      .chat-head { padding-top: 23px; }
+      .conversation { padding-top: 20px; }
+      .empty { margin-top: 12px; }
+      .topbar { padding-inline: 16px; }
+    }
+    @media (max-width: 430px) {
+      .topbar { min-height: 60px; }
+      .brand h1 { font-size: 13px; }
+      .brand small { font-size: 10px; }
+      .chat { min-height: 500px; }
+      .chat-title { font-size: 24px; }
+      .empty h3 { font-size: 22px; }
+      .suggestions { margin-top: 16px; }
+      .composer-foot { align-items: stretch; }
+      .composer-foot .button { width: 100%; }
+      .suggestions { flex-direction: column; align-items: stretch; }
+    }
+    /* Information architecture: views share one primary reading area. */
+    [hidden] { display: none !important; }
+    .topbar { justify-content: flex-start; gap: clamp(18px, 3vw, 42px); }
+    .primary-nav { display: flex; align-self: stretch; align-items: stretch; gap: 3px; margin-left: clamp(8px, 2vw, 24px); }
+    .nav-item { min-height: 44px; padding: 0 16px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #b8c9da; font-size: 13px; font-weight: 650; cursor: pointer; }
+    .nav-item:hover { color: #fff; background: #263951; }
+    .nav-item[aria-current=page] { color: #fff; border-bottom-color: #77a8ef; }
+    .top-status { margin-left: auto; }
+    .header-action { display: none; }
+    .shell { display: grid; grid-template-columns: minmax(235px, 264px) minmax(0, 1fr); height: calc(100dvh - 64px); min-height: 0; }
+    body.inspector-open .shell { grid-template-columns: minmax(235px, 264px) minmax(0, 1fr) minmax(300px, 360px); }
+    .sidebar { min-height: 0; height: 100%; overflow-y: auto; grid-row: auto; }
+    .sidebar .new-session { margin: 3px 0 24px; text-align: left; font-size: 13px; }
+    .session-section { border-top: 1px solid var(--nav-line); padding-top: 20px; }
+    .session-section h3 { margin-bottom: 10px; color: #a9bdd0; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+    .session-list { display: flex; flex-direction: column; gap: 3px; max-height: min(38vh, 420px); overflow-y: auto; list-style: none; padding: 0 4px 0 0; margin: 0; scrollbar-color: #586b7e transparent; }
+    .session-list li { margin: 0; }
+    .session-item { display: block; width: 100%; min-height: 52px; padding: 9px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #e4edf5; text-align: left; cursor: pointer; }
+    .session-item:hover { background: #23374d; }
+    .session-item[aria-current=true] { background: #2c4562; border-color: #537397; }
+    .session-item strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; font-weight: 650; }
+    .session-item small { display: block; margin-top: 3px; color: #afc2d3; font-size: 10px; }
+    .main-area { min-width: 0; height: 100%; overflow: hidden; background: #fff; }
+    .view { height: 100%; }
+    .chat { height: 100%; min-height: 0; }
+    .inspector { grid-column: 3; height: 100%; min-height: 0; overflow-y: auto; }
+    .panel-close { min-height: 36px; padding: 4px 8px; border: 1px solid #c9d6e5; border-radius: 5px; background: #fff; color: #31557a; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .panel-close:hover { background: #edf3fb; }
+    .workspace-close { display: none; }
+    .inspector-head { align-items: center; margin-bottom: 12px; }
+    .inspector-head h2 { margin-bottom: 0; }
+    .inspector > .badge { display: inline-block; margin: 0 0 10px; }
+    .page-view { overflow-y: auto; padding: 40px clamp(22px, 4vw, 64px) 64px; background: #f7f9fb; }
+    .page-heading, .workflow-steps, .page-card, #graphStateSummary, .data-grid { max-width: 960px; margin-left: auto; margin-right: auto; }
+    .page-heading { margin-bottom: 28px; }
+    .page-heading h2 { font-size: clamp(26px, 2.6vw, 36px); line-height: 1.25; letter-spacing: -.035em; margin: 7px 0 8px; }
+    .page-heading .subtle { font-size: 14px; }
+    .workflow-steps { display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; padding: 0; gap: 8px; margin-bottom: 24px; }
+    .workflow-steps li { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 9px 12px; border: 1px solid #dce4ec; border-radius: 6px; background: #fff; color: #5b6878; font-size: 12px; font-weight: 650; }
+    .workflow-steps li span { font-family: ui-monospace, Consolas, monospace; color: #60758a; }
+    .workflow-steps li.active { border-color: #99bae8; background: #edf4fd; color: #1a4e89; }
+    .workflow-steps li.done { border-color: #b9d9cd; background: #f0f8f4; color: #28614b; }
+    .page-card { padding: 28px; border: 1px solid #e0e6ec; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px #17243308; }
+    .page-card h3 { font-size: 17px; margin-bottom: 8px; }
+    .page-card .subtle { margin-bottom: 20px; }
+    .page-card input:not([type=checkbox]), .page-card textarea, .page-card select { max-width: 760px; }
+    .workflow-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .proposal-card { margin-top: 20px; border-left: 3px solid var(--accent); background: #f2f6fb; }
+    .proposal-card span, .proposal-card p { display: block; margin-top: 8px; }
+    #graphStateSummary { margin-top: 0; margin-bottom: 20px; }
+    .data-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+    .data-grid .page-card { width: 100%; margin: 0; }
+    .data-grid .page-card:last-child { grid-column: 1 / -1; }
+    .data-grid .memory-list li { border-color: var(--line); }
+    .panel-scrim { position: fixed; inset: 64px 0 0; z-index: 5; background: #0b172766; }
+    @media (max-width: 1160px) {
+      .shell, body.inspector-open .shell { grid-template-columns: 240px minmax(0, 1fr); }
+      .sidebar { grid-row: auto; }
+      .inspector { position: fixed; z-index: 6; top: 64px; right: 0; bottom: 0; width: min(420px, 100vw); height: auto; box-shadow: -12px 0 32px #0b17272e; }
+      .chat { height: 100%; min-height: 0; }
+      .data-grid { grid-template-columns: minmax(0, 1fr); }
+      .data-grid .page-card:last-child { grid-column: auto; }
+      .workflow-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 780px) {
+      .topbar { min-height: 112px; height: 112px; flex-wrap: wrap; align-content: space-between; gap: 0; padding: 8px 16px 0; }
+      .brand { height: 50px; }
+      .top-status { display: none; }
+      .header-action { display: block; margin-left: auto; min-height: 40px; padding: 6px 11px; border: 1px solid #52677b; border-radius: 5px; background: #23374d; color: #fff; font-size: 12px; font-weight: 700; }
+      .primary-nav { order: 3; flex: 0 0 100%; height: 46px; margin: 0; justify-content: space-between; }
+      .nav-item { flex: 1; padding: 0 6px; font-size: 12px; }
+      .shell, body.inspector-open .shell { display: grid; grid-template-columns: minmax(0, 1fr); height: calc(100dvh - 112px); padding: 0; }
+      .main-area { grid-column: 1; }
+      .sidebar { position: fixed; z-index: 6; top: 112px; bottom: 0; left: 0; width: min(340px, 88vw); height: auto; min-height: 0; padding: 25px 20px; box-shadow: 12px 0 32px #0b17272e; transform: translateX(-110%); transition: transform .2s ease; }
+      body.workspace-open .sidebar { transform: translateX(0); }
+      .workspace-close { display: block; float: right; background: #23374d; color: #fff; border-color: #52677b; }
+      .inspector { top: 112px; width: min(420px, 100vw); }
+      .panel-scrim { top: 112px; }
+      .chat { order: initial; height: 100%; min-height: 0; }
+      .page-view { padding: 26px 18px 48px; }
+      .page-card { padding: 20px; }
+      .workflow-steps { gap: 6px; }
+      .workflow-steps li { padding: 8px; }
+    }
+    @media (max-width: 430px) {
+      .topbar { min-height: 112px; }
+      .chat { min-height: 0; }
+      .chat-head { padding-top: 20px; padding-bottom: 15px; }
+      .chat-head .subtle { display: none; }
+      .badges { margin-top: 12px; }
+      .conversation { padding-top: 16px; }
+      .empty .symbol { display: none; }
+      .empty h3 { font-size: 20px; margin-bottom: 6px; }
+      .empty .subtle { font-size: 13px; line-height: 1.55; }
+      .empty .suggestions { margin-top: 12px; }
+      .composer { padding-top: 14px; padding-bottom: 14px; }
+      .composer textarea { min-height: 70px; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
   </style>
 </head>
@@ -125,81 +354,109 @@
   <a class="skip" href="#chatMain">跳到工程问答</a>
   <header class="topbar">
     <div class="brand"><div class="mark" aria-hidden="true">AW</div><div><h1>Automotive Workbench</h1><small>工程证据与知识图谱</small></div></div>
+    <nav class="primary-nav" aria-label="主要功能">
+      <button type="button" class="nav-item" data-view="chat" aria-current="page">工程问答</button>
+      <button type="button" class="nav-item" data-view="project">项目验收</button>
+      <button type="button" class="nav-item" data-view="data">资料管理</button>
+    </nav>
     <div class="top-status">本机运行 · 数据留在本地</div>
+    <button id="toggleWorkspace" class="header-action" type="button" aria-expanded="false" aria-controls="workspace">工作区</button>
   </header>
   <div class="shell">
-    <aside class="pane sidebar" aria-label="工作区设置">
+    <aside id="workspace" class="pane sidebar" aria-label="项目与会话">
+      <button id="closeWorkspace" class="panel-close workspace-close" type="button">关闭工作区</button>
       <p class="eyebrow">WORKSPACE</p>
-      <h2>当前工作区</h2>
-      <div id="graphState" class="status-card missing" role="status">尚未导入图谱</div>
-      <div class="section">
-        <div class="line"><h3 style="margin:0">会话</h3><button id="newSession" class="button secondary small" type="button">新会话</button></div>
-        <label for="sessions">历史会话</label><select id="sessions"></select>
+      <h2>工程会话</h2>
+      <button id="newSession" class="button secondary full new-session" type="button">＋ 新会话</button>
+      <div class="session-section">
+        <h3>最近会话</h3>
+        <ul id="sessions" class="session-list" aria-label="最近会话"></ul>
       </div>
       <div class="section">
-        <h3>工程报告</h3>
+        <h3>当前工程报告</h3>
         <label for="report">project-report.json 本机绝对路径</label>
         <input id="report" autocomplete="off" placeholder="/mnt/d/.../project-report.json">
         <p class="hint">每次提问重放报告；静态 passed 不代表 CFG 生成或 CAN 实测。</p>
       </div>
-      <details class="disclosure" id="projectTask">
-        <summary>AI 需求 → 项目验收</summary>
-        <p class="hint">选择已有静态 ECUC 项目。Ollama 只挑选已声明的验收项；生成的项目声明和实际验证报告分别保存。</p>
-        <label for="projectSource">项目声明绝对路径</label>
-        <input id="projectSource" autocomplete="off" placeholder="/mnt/d/.../project.json">
-        <label for="projectRequirement">需要验证的需求</label>
-        <textarea id="projectRequirement" rows="3" placeholder="例如：验证 COM 通信引用链完整"></textarea>
-        <button id="proposeProject" class="button full" type="button">让 AI 生成验收项目</button>
-        <div id="projectProposal" class="status-card" style="margin-top:10px" hidden></div>
-        <button id="validateProject" class="button secondary full" type="button" style="margin-top:10px" disabled>运行项目验证</button>
-        <p id="projectTaskStatus" class="feedback" role="status">先生成并查看验收项，再运行验证。</p>
-      </details>
-      <details class="disclosure" id="graphImport">
-        <summary>导入或更新图谱</summary>
-        <p class="hint">从知识图谱站点下载 graph.json 与其全部 source-*.md；一次选中这些文件。</p>
-        <label for="files">图谱与来源文件</label><input id="files" type="file" multiple accept=".json,.md">
-        <label for="siteVersion">站点版本标签</label><input id="siteVersion" placeholder="例如 5">
-        <button id="importBtn" class="button full" type="button" style="margin-top:11px">导入并核验</button>
-        <p id="importStatus" class="feedback" role="status"></p>
-      </details>
-      <details class="disclosure">
-        <summary>图谱核实记录</summary>
-        <p class="hint">单独导入站点导出的核实记录。它只作用户注释，图谱仍为候选。</p>
-        <label for="reviewFile">核实记录 JSON</label><input id="reviewFile" type="file" accept=".json">
-        <button id="reviewImportBtn" class="button secondary full" type="button" style="margin-top:11px">导入核实记录</button>
-        <p id="reviewState" class="feedback" role="status">未导入核实记录。</p>
-      </details>
-      <details class="disclosure">
-        <summary>长期记忆</summary>
-        <p class="hint">只保存你明确填写的偏好或决定；不会自动记住模型回答。</p>
-        <label for="memory">记忆内容</label><textarea id="memory" rows="3"></textarea>
-        <label for="memoryScope">适用范围</label><select id="memoryScope"><option value="global">所有会话</option><option value="project">当前工程报告版本</option></select>
-        <button id="saveMemory" class="button secondary full" type="button" style="margin-top:11px">保存记忆</button>
-        <p id="memoryStatus" class="feedback" role="status"></p>
-        <ul id="memoryList" class="memory-list"></ul>
-      </details>
+      <div class="section"><h3>知识图谱</h3><div id="graphState" class="status-card missing" role="status">尚未导入图谱</div></div>
     </aside>
 
-    <main id="chatMain" class="pane chat">
+    <main class="main-area">
+    <section id="chatMain" class="pane chat view" aria-label="工程问答">
       <div class="chat-head">
         <p class="eyebrow">EVIDENCE CHAT</p>
-        <h2 class="chat-title">从证据出发，追踪工程问题</h2>
+        <h2 id="chatTitle" class="chat-title" tabindex="-1">工程问题，从证据开始</h2>
         <p class="subtle" style="margin-bottom:0">项目事实、图谱线索和模型草稿分别呈现。每条结论都有清晰状态。</p>
         <div class="badges"><span id="graphBadge" class="badge warn">图谱未导入</span><span id="projectBadge" class="badge">未选择工程报告</span><span class="badge">Ollama 草稿需人工审阅</span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
-        <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">?</div><h3>先问一个具体问题</h3><p class="subtle">选择工程报告可核对配置证据；仅导入图谱也能探索待核实的知识线索。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态</button></div></div>
+        <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div></div>
       </div>
       <div class="composer">
         <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="例如：CanIf 与 CanTp 在图谱中是什么关系？哪些仍待核实？"></textarea>
         <div class="composer-foot"><label class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><button id="askBtn" class="button" type="button">发送问题</button></div>
         <p id="chatStatus" class="feedback" role="status">按 Ctrl + Enter 也可发送。</p>
       </div>
+    </section>
+
+    <section id="projectView" class="view page-view" aria-labelledby="projectViewTitle" hidden>
+      <div class="page-heading"><p class="eyebrow">PROJECT ACCEPTANCE</p><h2 id="projectViewTitle" tabindex="-1">从需求到验收报告</h2><p class="subtle">先审阅 AI 所选的已声明验收项，再显式运行项目验证。</p></div>
+      <ol class="workflow-steps" aria-label="项目验收步骤">
+        <li id="step-input" class="active"><span>01</span>输入需求</li>
+        <li id="step-review"><span>02</span>审阅候选</li>
+        <li id="step-run"><span>03</span>运行验证</li>
+        <li id="step-report"><span>04</span>检查报告</li>
+      </ol>
+      <div id="projectTask" class="page-card">
+        <h3>选择项目并描述需求</h3>
+        <p class="subtle">Ollama 只挑选项目中已声明的验收项。生成的项目声明和实际验证报告分别保存。</p>
+        <label for="projectSource">项目声明绝对路径</label>
+        <input id="projectSource" autocomplete="off" placeholder="/mnt/d/.../project.json">
+        <label for="projectRequirement">需要验证的需求</label>
+        <textarea id="projectRequirement" rows="3" placeholder="例如：验证 COM 通信引用链完整"></textarea>
+        <div class="workflow-actions"><button id="proposeProject" class="button" type="button">生成验收候选</button><button id="validateProject" class="button secondary" type="button" disabled>运行项目验证</button></div>
+        <div id="projectProposal" class="status-card proposal-card" hidden></div>
+        <p id="projectTaskStatus" class="feedback" role="status">先生成并查看验收项，再运行验证。</p>
+        <button id="goToChat" class="button ghost" type="button" hidden>带着报告继续问答 →</button>
+      </div>
+    </section>
+
+    <section id="dataView" class="view page-view" aria-labelledby="dataViewTitle" hidden>
+      <div class="page-heading"><p class="eyebrow">SOURCES & MEMORY</p><h2 id="dataViewTitle" tabindex="-1">资料管理</h2><p class="subtle">管理候选图谱、核实注释和明确保存的长期记忆。</p></div>
+      <p id="graphStateSummary" class="status-card missing" role="status">尚未导入图谱</p>
+      <div class="data-grid">
+      <section class="page-card" id="graphImport" aria-labelledby="importTitle">
+        <h3 id="importTitle">导入或更新图谱</h3>
+        <p class="hint">从知识图谱站点下载 graph.json 与其全部 source-*.md；一次选中这些文件。</p>
+        <label for="files">图谱与来源文件</label><input id="files" type="file" multiple accept=".json,.md">
+        <label for="siteVersion">站点版本标签</label><input id="siteVersion" placeholder="例如 5">
+        <button id="importBtn" class="button" type="button" style="margin-top:11px">导入并核验</button>
+        <p id="importStatus" class="feedback" role="status"></p>
+      </section>
+      <section class="page-card" aria-labelledby="reviewTitle">
+        <h3 id="reviewTitle">图谱核实记录</h3>
+        <p class="hint">单独导入站点导出的核实记录。它只作用户注释，图谱仍为候选。</p>
+        <label for="reviewFile">核实记录 JSON</label><input id="reviewFile" type="file" accept=".json">
+        <button id="reviewImportBtn" class="button secondary" type="button" style="margin-top:11px">导入核实记录</button>
+        <p id="reviewState" class="feedback" role="status">未导入核实记录。</p>
+      </section>
+      <section class="page-card" aria-labelledby="memoryTitle">
+        <h3 id="memoryTitle">长期记忆</h3>
+        <p class="hint">只保存你明确填写的偏好或决定；不会自动记住模型回答。</p>
+        <label for="memory">记忆内容</label><textarea id="memory" rows="3"></textarea>
+        <label for="memoryScope">适用范围</label><select id="memoryScope"><option value="global">所有会话</option><option value="project">当前工程报告版本</option></select>
+        <button id="saveMemory" class="button secondary" type="button" style="margin-top:11px">保存记忆</button>
+        <p id="memoryStatus" class="feedback" role="status"></p>
+        <ul id="memoryList" class="memory-list"></ul>
+      </section>
+      </div>
+    </section>
     </main>
 
-    <aside class="pane inspector" aria-label="证据检查器">
-      <div class="inspector-head"><div><p class="eyebrow">INSPECTOR</p><h2>证据检查器</h2></div><span id="evidenceCount" class="badge">等待提问</span></div>
-      <p class="subtle">查看最近一条回答引用的原始工程字段与图谱线索。</p>
+    <aside id="inspector" class="pane inspector" aria-label="证据检查器" hidden>
+      <div class="inspector-head"><div><p class="eyebrow">INSPECTOR</p><h2>证据检查器</h2></div><button id="closeInspector" class="panel-close" type="button">关闭证据</button></div>
+      <span id="evidenceCount" class="badge">等待提问</span>
+      <p class="subtle">查看当前选中回答引用的原始工程字段与图谱线索。</p>
       <div id="evidenceNotice" class="notice">图谱内容均为候选。模型草稿不能代替项目报告或实测。</div>
       <div class="tabs" role="tablist" aria-label="证据类别">
         <button id="tab-facts" class="tab" type="button" role="tab" data-tab="facts" aria-selected="true" aria-controls="evidencePanel">工程</button>
@@ -210,6 +467,7 @@
       <div id="evidencePanel" class="tab-panel" role="tabpanel" aria-labelledby="tab-facts"></div>
     </aside>
   </div>
+  <div id="panelScrim" class="panel-scrim" hidden></div>
   <div id="toast" class="toast" role="status" hidden></div>
   <script>
     const token = '__TOKEN__';
@@ -220,6 +478,7 @@
     let currentEvidence = null;
     let currentTab = 'facts';
     let projectTaskId = '';
+    let evidenceTrigger = null;
     let toastTimer;
     $('report').value = localStorage.getItem('awb-report') || '';
     $('projectSource').value = localStorage.getItem('awb-project-source') || '';
@@ -238,6 +497,73 @@
     function feedback(id, value, error = false) { $(id).textContent = value; $(id).classList.toggle('error', error); }
     function toast(value) { $('toast').textContent = value; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 5000); }
     function showError(error) { toast('操作失败：' + error.message); }
+    function syncScrim() {
+      $('panelScrim').hidden = !(document.body.classList.contains('workspace-open') ||
+        (document.body.classList.contains('inspector-open') && matchMedia('(max-width: 1160px)').matches));
+      $('workspace').inert = matchMedia('(max-width: 780px)').matches && !document.body.classList.contains('workspace-open');
+      document.querySelector('.main-area').inert = !$('panelScrim').hidden;
+      document.querySelector('.topbar').inert = !$('panelScrim').hidden;
+    }
+    function closeWorkspace(restoreFocus = false) {
+      document.body.classList.remove('workspace-open');
+      $('toggleWorkspace').setAttribute('aria-expanded', 'false');
+      syncScrim();
+      if (restoreFocus) $('toggleWorkspace').focus();
+    }
+    function closeInspector(restoreFocus = false) {
+      document.body.classList.remove('inspector-open');
+      $('inspector').hidden = true;
+      evidenceTrigger?.setAttribute('aria-expanded', 'false');
+      syncScrim();
+      if (restoreFocus) evidenceTrigger?.focus();
+    }
+    function openInspector(trigger) {
+      closeWorkspace();
+      evidenceTrigger?.setAttribute('aria-expanded', 'false');
+      evidenceTrigger = trigger;
+      evidenceTrigger?.setAttribute('aria-expanded', 'true');
+      $('inspector').hidden = false;
+      document.body.classList.add('inspector-open');
+      syncScrim();
+      if (matchMedia('(max-width: 1160px)').matches) $('closeInspector').focus();
+    }
+    function setView(view, focusHeading = false) {
+      const targets = { chat: 'chatMain', project: 'projectView', data: 'dataView' };
+      if (!targets[view]) view = 'chat';
+      for (const [key, id] of Object.entries(targets)) $(id).hidden = key !== view;
+      for (const button of document.querySelectorAll('[data-view]')) {
+        if (button.dataset.view === view) button.setAttribute('aria-current', 'page');
+        else button.removeAttribute('aria-current');
+      }
+      localStorage.setItem('awb-view', view);
+      closeWorkspace();
+      closeInspector();
+      if (focusHeading) $(view === 'chat' ? 'chatTitle' : view === 'project' ? 'projectViewTitle' : 'dataViewTitle').focus();
+    }
+    function updateSteps(stage) {
+      for (const [index, id] of ['step-input', 'step-review', 'step-run', 'step-report'].entries()) {
+        $(id).classList.toggle('done', index < stage);
+        $(id).classList.toggle('active', index === stage);
+      }
+    }
+    for (const button of document.querySelectorAll('[data-view]')) button.onclick = () => setView(button.dataset.view, true);
+    $('toggleWorkspace').onclick = () => {
+      if (document.body.classList.contains('workspace-open')) { closeWorkspace(true); return; }
+      closeInspector();
+      document.body.classList.add('workspace-open');
+      $('toggleWorkspace').setAttribute('aria-expanded', 'true');
+      syncScrim();
+      $('closeWorkspace').focus();
+    };
+    $('closeWorkspace').onclick = () => closeWorkspace(true);
+    $('closeInspector').onclick = () => closeInspector(true);
+    $('panelScrim').onclick = () => { closeWorkspace(); closeInspector(); };
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      if (document.body.classList.contains('workspace-open')) closeWorkspace(true);
+      else if (document.body.classList.contains('inspector-open')) closeInspector(true);
+    });
+    window.addEventListener('resize', () => { if (innerWidth > 780) closeWorkspace(); syncScrim(); });
     function setTab(tab) {
       currentTab = tab;
       for (const button of document.querySelectorAll('.tab')) button.setAttribute('aria-selected', String(button.dataset.tab === tab));
@@ -263,10 +589,18 @@
       $('emptyState')?.remove();
       $('messages').append(box);
       $('messages').scrollTop = $('messages').scrollHeight;
+      return box;
     }
     function renderAssistant(result) {
-      renderMessage('assistant', result.summary || '未得到确定性摘要，请查看证据检查器。');
+      const box = renderMessage('assistant', result.summary || '未得到确定性摘要，请查看证据检查器。');
+      const inspect = el('button', '查看这条回答的证据 →', 'message-evidence');
+      inspect.type = 'button';
+      inspect.setAttribute('aria-controls', 'inspector');
+      inspect.setAttribute('aria-expanded', 'false');
+      inspect.onclick = () => showEvidence(result, box, true);
+      box.append(inspect);
       if (result.draft) renderMessage('assistant', result.draft, 'draft');
+      return box;
     }
     function renderEvidencePanel() {
       const panel = $('evidencePanel'); panel.replaceChildren();
@@ -299,14 +633,17 @@
         panel.append(el('p', '核实记录是用户注释，不改变图谱候选状态。', 'subtle'));
       }
     }
-    function showEvidence(result) {
+    function showEvidence(result, selectedBox = null, reveal = false) {
       currentEvidence = result;
+      for (const box of document.querySelectorAll('.message.assistant.selected')) box.classList.remove('selected');
+      selectedBox?.classList.add('selected');
       const ev = result.evidence || {};
       projectHash = ev.project_sha256 || '';
       $('projectBadge').textContent = ev.project_sha256 ? `工程 ${ev.project_status}` : '未选择工程报告';
       $('evidenceCount').textContent = `${(ev.project_facts || []).length} 工程字段 · ${(ev.graph_nodes || []).length} 图谱节点`;
       $('evidenceNotice').textContent = ev.graph_sha256 && ev.graph_sha256 !== activeHash ? '历史回答使用旧版图谱；请重新提问核对当前来源。' : '图谱节点与关系均为候选；Ollama 草稿未经语义审阅。';
       renderEvidencePanel();
+      if (reveal) openInspector(selectedBox?.querySelector('.message-evidence'));
     }
     function renderMemories(items) {
       const list = $('memoryList'); list.replaceChildren();
@@ -334,29 +671,40 @@
       const state = $('graphState'); state.classList.toggle('missing', !data.active);
       state.replaceChildren();
       if (data.active) { state.append(el('strong', `图谱版本 ${data.active.site_version}`), el('span', `${data.active.counts.nodes} 节点 · ${data.active.counts.edges} 关系 · ${data.active.graph_sha256.slice(0, 12)}`)); $('graphBadge').textContent = '图谱候选 · 已导入'; $('graphBadge').classList.remove('warn'); }
-      else { state.textContent = '尚未导入图谱。打开下方“导入或更新图谱”开始。'; $('graphImport').open = true; $('graphBadge').textContent = '图谱未导入'; $('graphBadge').classList.add('warn'); }
+      else { state.textContent = '尚未导入图谱。请到“资料管理”导入。'; $('graphBadge').textContent = '图谱未导入'; $('graphBadge').classList.add('warn'); }
+      $('graphStateSummary').textContent = state.textContent;
+      $('graphStateSummary').classList.toggle('missing', !data.active);
       feedback('reviewState', data.reviews?.status === 'stale_graph' ? '核实记录属于旧版图谱，请重新导入。' : data.reviews?.status === 'user_annotation_only' ? `已导入 ${Object.keys(data.reviews.reviews).length} 项注释；图谱仍为候选。` : '未导入核实记录。');
-      const select = $('sessions'); select.replaceChildren();
-      for (const row of data.sessions) { const option = el('option', row.title ? `${row.title.slice(0, 28)} · ${row.created_at.slice(5, 16)}` : `新会话 · ${row.created_at.slice(5, 16)}`); option.value = row.id; select.append(option); }
       if (!data.sessions.some(row => row.id === sessionId)) sessionId = data.sessions[0].id;
-      select.value = sessionId; localStorage.setItem('awb-session', sessionId);
+      const sessionList = $('sessions'); sessionList.replaceChildren();
+      for (const row of data.sessions) {
+        const item = el('button', undefined, 'session-item'); item.type = 'button';
+        item.title = row.title || '新会话';
+        item.append(el('strong', row.title || '新会话'), el('small', row.created_at.slice(5, 16).replace('T', ' ')));
+        if (row.id === sessionId) item.setAttribute('aria-current', 'true');
+        item.onclick = async () => { sessionId = row.id; try { await refresh(); setView('chat'); } catch (error) { showError(error); } };
+        const entry = el('li'); entry.append(item); sessionList.append(entry);
+      }
+      localStorage.setItem('awb-session', sessionId);
       $('messages').replaceChildren();
-      if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = '<div class="symbol" aria-hidden="true">?</div><h3>先问一个具体问题</h3><p class="subtle">选择工程报告可核对配置证据；仅导入图谱也能探索待核实的知识线索。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态</button></div>'; $('messages').append(empty); bindSuggestions(); }
+      if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = '<div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div>'; $('messages').append(empty); bindSuggestions(); }
       for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
       const latest = [...data.messages].reverse().find(message => message.role === 'assistant');
-      if (latest) showEvidence(latest.detail || {}); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll('.message.assistant:not(.draft)')].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
       renderMemories(data.memories || []);
     }
     function bindSuggestions() { for (const button of document.querySelectorAll('[data-prompt]')) button.onclick = () => { $('question').value = button.dataset.prompt; $('question').focus(); }; }
     bindSuggestions();
     $('proposeProject').onclick = async () => {
-      const button = $('proposeProject'); button.disabled = true; projectTaskId = '';
+      const button = $('proposeProject'); button.disabled = true; projectTaskId = ''; updateSteps(0);
       $('validateProject').disabled = true; $('projectProposal').hidden = true; $('projectProposal').replaceChildren();
+      $('goToChat').hidden = true;
       localStorage.setItem('awb-project-source', $('projectSource').value.trim());
       feedback('projectTaskStatus', '正在核对项目输入并请求本地 Ollama…');
       try {
         const result = await api('/api/project/propose', { project: $('projectSource').value.trim(), requirement: $('projectRequirement').value.trim() });
         projectTaskId = result.id; $('validateProject').disabled = false;
+        updateSteps(1);
         const panel = $('projectProposal'); panel.hidden = false; panel.replaceChildren();
         panel.append(el('strong', `AI 草案 · ${result.selection.acceptance_ids.join('、')}`),
                      el('span', `原项目验收描述：${result.selection.rationale}`),
@@ -367,16 +715,17 @@
     };
     $('validateProject').onclick = async () => {
       if (!projectTaskId) return;
-      const button = $('validateProject'); button.disabled = true; feedback('projectTaskStatus', '正在运行项目并复验结果…');
+      const button = $('validateProject'); button.disabled = true; updateSteps(2); feedback('projectTaskStatus', '正在运行项目并复验结果…');
       try {
         const result = await api('/api/project/validate', { task_id: projectTaskId });
         $('report').value = result.report; localStorage.setItem('awb-report', result.report);
         feedback('projectTaskStatus', `项目 ${result.status}；包复验 ${result.verification_status}。报告已填入工程报告栏，可继续提问。`);
         $('projectProposal').append(el('p', `验证报告：${result.report}`, 'hint'));
-      } catch (error) { feedback('projectTaskStatus', error.message, true); button.disabled = false; }
+        updateSteps(4); $('goToChat').hidden = false;
+      } catch (error) { feedback('projectTaskStatus', error.message, true); button.disabled = false; updateSteps(1); }
     };
-    $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; await refresh(); $('question').focus(); } catch (error) { showError(error); } };
-    $('sessions').onchange = async () => { sessionId = $('sessions').value; try { await refresh(); } catch (error) { showError(error); } };
+    $('goToChat').onclick = () => { setView('chat'); $('question').focus(); };
+    $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; await refresh(); setView('chat'); $('question').focus(); } catch (error) { showError(error); } };
     $('importBtn').onclick = async () => {
       const button = $('importBtn'); button.disabled = true; feedback('importStatus', '正在核验文件与来源哈希…');
       try { const files = [...$('files').files]; if (!files.length) throw Error('请选择 graph.json 和对应的全部来源 Markdown。'); const contents = {}; for (const file of files) contents[file.name] = await file.text(); const result = await api('/api/import', { files: contents, site_version: $('siteVersion').value.trim() || '未标记' }); const changed = Object.values(result.diff).reduce((sum, value) => sum + value.added.length + value.removed.length + value.changed.length, 0); feedback('importStatus', `核验通过：${result.graph_sha256.slice(0, 12)}，${changed} 项对象差异。`); await refresh(); } catch (error) { feedback('importStatus', error.message, true); } finally { button.disabled = false; }
@@ -385,10 +734,11 @@
     $('askBtn').onclick = async () => {
       const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
       const button = $('askBtn'); button.disabled = true; button.textContent = '正在核对…'; feedback('chatStatus', '正在重放工程报告并查找图谱线索…');
-      try { const result = await api('/api/chat', { session_id: sessionId, question, report: $('report').value.trim(), use_model: $('useModel').checked }); renderMessage('user', question); renderAssistant(result); showEvidence(result); $('question').value = ''; feedback('chatStatus', result.model_error ? `证据已保留；Ollama：${result.model_error}` : result.draft ? '证据与 Ollama 草稿已分开展示。' : '证据已更新。'); } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
+      try { const result = await api('/api/chat', { session_id: sessionId, question, report: $('report').value.trim(), use_model: $('useModel').checked }); renderMessage('user', question); const answer = renderAssistant(result); showEvidence(result, answer); $('question').value = ''; feedback('chatStatus', result.model_error ? `证据已保留；Ollama：${result.model_error}` : result.draft ? '证据与 Ollama 草稿已分开展示。' : '证据已更新。'); } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
     };
     $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
     $('saveMemory').onclick = async () => { try { const scope = $('memoryScope').value === 'global' ? 'global' : projectHash; if (!scope) throw Error('先选择工程报告并提问，再保存当前工程记忆。'); await api('/api/memory', { scope, content: $('memory').value }); $('memory').value = ''; feedback('memoryStatus', '已保存长期记忆。'); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };
+    setView(localStorage.getItem('awb-view') || 'chat');
     refresh().catch(showError);
   </script>
 </body>
