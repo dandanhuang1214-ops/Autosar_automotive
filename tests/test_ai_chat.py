@@ -69,7 +69,7 @@ class DirectChatTest(unittest.TestCase):
             self.assertEqual(other["status"], "answered")
             self.assertEqual([m["role"] for m in history(db, first_session)],
                              ["user", "assistant", "user", "assistant"])
-            trace = json.loads((root / "runs" / f"{first['trace_id']}.json").read_text())
+            trace = json.loads((root / "runs" / f"{first['trace_id']}.json").read_text(encoding="utf-8"))
             self.assertEqual(trace["result"]["called_at"], first["called_at"])
 
     def test_offline_answer_is_not_replayed_as_model_context(self) -> None:
