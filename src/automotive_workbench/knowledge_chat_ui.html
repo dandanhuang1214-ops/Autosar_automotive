@@ -757,8 +757,9 @@
       $('messages').replaceChildren();
       if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = $('chatMode').value === 'general' ? '<div class="symbol" aria-hidden="true">AI</div><h3>有什么想聊的？</h3><p class="subtle">直接输入问题即可。模型离线时会明确提示，回答旁会显示调用时间和耗时。</p>' : '<div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div>'; $('messages').append(empty); bindSuggestions(); }
       for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
-      const latest = [...data.messages].reverse().find(message => message.role === 'assistant');
-      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll('.message.assistant:not(.draft)')].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = 'Ollama 待调用'; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+      const latest = [...data.messages].reverse().find(message => message.role === 'assistant' &&
+        ($('chatMode').value === 'general' ? message.detail?.mode === 'general' : message.detail?.mode !== 'general'));
+      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll(`.message.assistant.${$('chatMode').value === 'general' ? 'general' : 'evidence'}`)].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = 'Ollama 待调用'; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
       renderMemories(data.memories || []);
       $('memoryBadge').textContent = `长期记忆 ${(data.memories || []).filter(item => item.scope === 'global').length} 条`;
     }
