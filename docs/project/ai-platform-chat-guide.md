@@ -1,5 +1,7 @@
 # AI 平台 Chat 0.1：直接 Ollama 对话
 
+状态：实现 `8bd5a6f`、界面状态修正 `c31c930`、跨平台测试修正 `d76d1da` / [core-ci run `41798800109`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41798800109) head 一致，七个实际 job 均为 `success`，Chat 0.1 已远端验收。此状态由后续文档提交回填；文档提交本身不代表实现验收。
+
 AI 平台与 Automotive Workbench 按产品职责分开。AI 平台首页是普通聊天；Workbench 是后续可选的工程资料与工具来源。当前工程证据问答仍可在“对话方式”中切换，旧 `/api/chat` 请求不带 `mode` 时保持原 `evidence` 行为。
 
 ## 启动与验收

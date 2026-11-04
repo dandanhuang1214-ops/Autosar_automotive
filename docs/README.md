@@ -1,5 +1,9 @@
 # Workbench 文档导航
 
+## AI 平台
+
+- [Chat 0.1 直接 Ollama 对话](project/ai-platform-chat-guide.md)：无资料聊天、会话上下文、显式长期记忆、调用时间与当前知识库边界。
+
 ## 项目管理
 
 - [P26 工程审查与两版影响](project/p26-engineering-review-guide.md)：应用/任务/模式、历史日志、变更依赖见证、完整安装与迁移流程。
