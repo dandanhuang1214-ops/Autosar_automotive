@@ -198,6 +198,9 @@
     .message.selected .message-body { border-left: 3px solid var(--accent); }
     .message-evidence { display: inline-flex; align-items: center; min-height: 36px; margin-top: 6px; padding: 5px 10px; border: 0; border-radius: 4px; background: transparent; color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; }
     .message-evidence:hover { background: #edf3fb; }
+    .model-notice { margin: 0 0 8px; padding: 10px 12px; border-left: 3px solid #bd7c2e; border-radius: 3px; background: #fff6e9; color: #68471d; font-size: 12px; line-height: 1.6; }
+    .summary-disclosure summary { display: flex; align-items: center; min-height: 44px; color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .summary-disclosure[open] .message-body { margin-top: 5px; }
     .composer { padding: 20px clamp(22px, 3vw, 48px) 22px; border-color: #e4eaf0; box-shadow: 0 -8px 24px #15253708; }
     .composer label { color: #334b65; }
     .composer textarea { min-height: 84px; max-height: 180px; }
@@ -359,7 +362,7 @@
       <button type="button" class="nav-item" data-view="project">项目验收</button>
       <button type="button" class="nav-item" data-view="data">资料管理</button>
     </nav>
-    <div class="top-status">本机运行 · 数据留在本地</div>
+    <div class="top-status">Workbench 本机服务 · 数据留在本地</div>
     <button id="toggleWorkspace" class="header-action" type="button" aria-expanded="false" aria-controls="workspace">工作区</button>
   </header>
   <div class="shell">
@@ -387,7 +390,7 @@
         <p class="eyebrow">EVIDENCE CHAT</p>
         <h2 id="chatTitle" class="chat-title" tabindex="-1">工程问题，从证据开始</h2>
         <p class="subtle" style="margin-bottom:0">项目事实、图谱线索和模型草稿分别呈现。每条结论都有清晰状态。</p>
-        <div class="badges"><span id="graphBadge" class="badge warn">图谱未导入</span><span id="projectBadge" class="badge">未选择工程报告</span><span class="badge">Ollama 草稿需人工审阅</span></div>
+        <div class="badges"><span id="graphBadge" class="badge warn">图谱未导入</span><span id="projectBadge" class="badge">未选择工程报告</span><span id="modelBadge" class="badge">Ollama 未检查</span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
         <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div></div>
@@ -584,7 +587,7 @@
 
     function renderMessage(role, content, kind = 'evidence') {
       const box = el('article', undefined, `message ${role} ${kind === 'draft' ? 'draft' : ''}`);
-      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : '工作台证据', 'message-label'));
+      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : '确定性证据摘要', 'message-label'));
       box.append(el('div', content || '本轮没有可展示的内容。', 'message-body'));
       $('emptyState')?.remove();
       $('messages').append(box);
@@ -592,14 +595,28 @@
       return box;
     }
     function renderAssistant(result) {
+      if (result.draft) {
+        const draft = renderMessage('assistant', result.draft, 'draft');
+        draft.querySelector('.message-label').textContent = `Ollama ${result.model?.name || ''} · 已返回草稿 · 未经语义审阅`;
+      }
       const box = renderMessage('assistant', result.summary || '未得到确定性摘要，请查看证据检查器。');
+      if (result.draft) {
+        const details = el('details', undefined, 'summary-disclosure');
+        const body = box.querySelector('.message-body');
+        body.replaceWith(details);
+        details.append(el('summary', '展开确定性证据摘要'), body);
+      }
+      let modelNotice = '';
+      if (result.status === 'model_unavailable') modelNotice = 'Ollama 未返回可用回答。本条仅显示工作台证据摘要。';
+      else if (result.model_requested && !result.model_attempted) modelNotice = '没有匹配的工程事实或图谱候选，本次未调用 Ollama。';
+      else if (result.model_requested === false) modelNotice = '本次未启用 Ollama；下方是工作台证据摘要。';
+      if (modelNotice) box.querySelector('.message-label').after(el('div', modelNotice, 'model-notice'));
       const inspect = el('button', '查看这条回答的证据 →', 'message-evidence');
       inspect.type = 'button';
       inspect.setAttribute('aria-controls', 'inspector');
       inspect.setAttribute('aria-expanded', 'false');
       inspect.onclick = () => showEvidence(result, box, true);
       box.append(inspect);
-      if (result.draft) renderMessage('assistant', result.draft, 'draft');
       return box;
     }
     function renderEvidencePanel() {
@@ -640,6 +657,8 @@
       const ev = result.evidence || {};
       projectHash = ev.project_sha256 || '';
       $('projectBadge').textContent = ev.project_sha256 ? `工程 ${ev.project_status}` : '未选择工程报告';
+      $('modelBadge').textContent = result.draft ? 'Ollama 已返回草稿 · 待审阅' : result.status === 'model_unavailable' ? 'Ollama 未返回回答' : result.model_requested && !result.model_attempted ? 'Ollama 未调用 · 无匹配证据' : result.model_requested === false ? 'Ollama 本轮未启用' : 'Ollama 未检查';
+      $('modelBadge').classList.toggle('warn', result.status === 'model_unavailable');
       $('evidenceCount').textContent = `${(ev.project_facts || []).length} 工程字段 · ${(ev.graph_nodes || []).length} 图谱节点`;
       $('evidenceNotice').textContent = ev.graph_sha256 && ev.graph_sha256 !== activeHash ? '历史回答使用旧版图谱；请重新提问核对当前来源。' : '图谱节点与关系均为候选；Ollama 草稿未经语义审阅。';
       renderEvidencePanel();
@@ -690,7 +709,7 @@
       if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = '<div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div>'; $('messages').append(empty); bindSuggestions(); }
       for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
       const latest = [...data.messages].reverse().find(message => message.role === 'assistant');
-      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll('.message.assistant:not(.draft)')].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll('.message.assistant:not(.draft)')].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = 'Ollama 未检查'; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
       renderMemories(data.memories || []);
     }
     function bindSuggestions() { for (const button of document.querySelectorAll('[data-prompt]')) button.onclick = () => { $('question').value = button.dataset.prompt; $('question').focus(); }; }
@@ -734,7 +753,7 @@
     $('askBtn').onclick = async () => {
       const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
       const button = $('askBtn'); button.disabled = true; button.textContent = '正在核对…'; feedback('chatStatus', '正在重放工程报告并查找图谱线索…');
-      try { const result = await api('/api/chat', { session_id: sessionId, question, report: $('report').value.trim(), use_model: $('useModel').checked }); renderMessage('user', question); const answer = renderAssistant(result); showEvidence(result, answer); $('question').value = ''; feedback('chatStatus', result.model_error ? `证据已保留；Ollama：${result.model_error}` : result.draft ? '证据与 Ollama 草稿已分开展示。' : '证据已更新。'); } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
+      try { const result = await api('/api/chat', { session_id: sessionId, question, report: $('report').value.trim(), use_model: $('useModel').checked }); renderMessage('user', question); const answer = renderAssistant(result); showEvidence(result, answer); $('question').value = ''; feedback('chatStatus', result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。'); } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
     };
     $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
     $('saveMemory').onclick = async () => { try { const scope = $('memoryScope').value === 'global' ? 'global' : projectHash; if (!scope) throw Error('先选择工程报告并提问，再保存当前工程记忆。'); await api('/api/memory', { scope, content: $('memory').value }); $('memory').value = ''; feedback('memoryStatus', '已保存长期记忆。'); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };

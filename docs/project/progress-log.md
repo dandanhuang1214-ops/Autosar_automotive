@@ -18,7 +18,9 @@
 
 ## 当前总览（2026-10-23）
 
-最新补充（2026-11-04）：用户确认 AI 平台 UI 信息结构升级为 P31 配套开发，并指定会话采用左侧可直接点选的列表。网页现有工程问答、项目验收、资料管理三个视图；项目验收独立四步页，证据检查器按需展开，手机工作区与证据为可关闭面板。隔离合成图谱的无头浏览器检查已通过：1440/820/375 像素均无横向溢出、页面错误为零，视图切换、历史回答证据选择、新会话与旧会话恢复、手机工作区 Escape 关闭均通过。网页、AI 项目入口与 MCP 专项测试在授权的回环网络环境 13/13 通过，Ruff 与 diff check 通过；默认沙箱曾阻断回环 socket，授权环境重跑后消除该环境错误。当前为本地实现验证，远端 CI 尚待提交/运行；P31 主任务仍是 0.2 MCP 候选项目声明与显式验证迁移。
+最新补充（2026-11-04）：用户指出问答页面所见内容不像模型答案，并质疑 Docker 关闭时是否调用了 Ollama。授权环境只读探测 `127.0.0.1:11434/api/version` 为 `ConnectionRefusedError`；隔离图谱浏览器复现得到 `model_unavailable`、无草稿、只有证据摘要，原页面仅在输入框下方显示错误。已本地补充 `model_requested/model_attempted/model_skip_reason`，回答内显示模型离线、未启用或无匹配证据未调用的状态；有草稿时先显示带模型名与“未经语义审阅”标签的草稿，再显示确定性摘要。离线与无证据两条浏览器场景由红转绿，模型字段专项测试由 2 项失败转为 2/2 通过；这不构成真实 Ollama 成功调用证据。补强提交与远端 CI 待完成，P31 0.2 MCP 迁移仍为主任务。
+
+最新补充（2026-11-04）：用户确认 AI 平台 UI 信息结构升级为 P31 配套开发，并指定会话采用左侧可直接点选的列表。网页现有工程问答、项目验收、资料管理三个视图；项目验收独立四步页，证据检查器按需展开，手机工作区与证据为可关闭面板。隔离合成图谱的无头浏览器检查已通过：1440/820/375 像素均无横向溢出、页面错误为零，视图切换、历史回答证据选择、新会话与旧会话恢复、手机工作区 Escape 关闭均通过。网页、AI 项目入口与 MCP 专项测试在授权的回环网络环境 13/13 通过，Ruff 与 diff check 通过；默认沙箱曾阻断回环 socket，授权环境重跑后消除该环境错误。信息结构实现 `9b7557ff092628c3e1ff7e480e4ddd9e2059719b` / [run `41749164838`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41749164838) head 一致、七个实际 job 均为 `success`，该实现门已远端验收；后续模型状态可见性补强另行验收。P31 主任务仍是 0.2 MCP 候选项目声明与显式验证迁移。
 
 最新补充（2026-11-03）：P31 MCP 服务化 0.1 已远端验收。实现 `67092d92196daaec9c9a7865479b07b6c26b33ba` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致；`runtime-currency`、Windows/Ubuntu `core-contracts`、Windows/Ubuntu `runtime-evidence`、Windows/Ubuntu `controlled-rejections` 七个实际 job 均为 `success`。独立只读项目证据服务和网页 MCP 客户端已接通：隔离本机两进程场景中，网页 `/api/chat` 返回 `evidence_only`、真实项目 `blocked`、报告 SHA `1f9f4c73…49c63a58` 和 16 条事实；停掉 MCP 后返回 400，不降级直读。SDK 测试 3/3、全量 559 tests（2 环境跳过）、Ruff、四文件 mypy、CI topology、compileall 和 diff check 本地通过。下一主任务是需求候选项目声明与显式验证的 0.2 MCP 工具；模型仍留在网页 Host。P30 受限收口与严格模型失败结论、P25 人工演示待办保持原状。见 [P31 指南](p31-mcp-service-guide.md)。此处状态回填为文档提交，不把该文档提交当作实现验收 run。
 

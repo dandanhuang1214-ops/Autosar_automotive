@@ -108,6 +108,8 @@ class GraphImportTest(unittest.TestCase):
             answer = ask(root, db, session_id=session, question="CanIf", report=None,
                          model="unused", ollama_url="http://127.0.0.1:11434", use_model=False)
             self.assertEqual(answer["status"], "evidence_only")
+            self.assertFalse(answer["model_requested"])
+            self.assertFalse(answer["model_attempted"])
             self.assertEqual(answer["evidence"]["graph_status"], "candidate_only")
             self.assertEqual([x["role"] for x in history(db, session)], ["user", "assistant"])
             self.assertEqual(memories(db, "global"), [])
@@ -193,6 +195,8 @@ class GraphImportTest(unittest.TestCase):
                 first = ask(root, db, session_id=new_session(db), question="CanIf",
                             report=None, model="fake", ollama_url="http://127.0.0.1:11434", use_model=True)
                 self.assertEqual(first["status"], "draft_unassessed")
+                self.assertTrue(first["model_requested"])
+                self.assertTrue(first["model_attempted"])
                 self.assertEqual(first["semantic_status"], "unassessed")
                 self.assertEqual(first["citations"], [])
                 self.assertTrue((root / "runs" / (first["trace_id"] + ".json")).is_file())
@@ -200,7 +204,14 @@ class GraphImportTest(unittest.TestCase):
                 second = ask(root, db, session_id=new_session(db), question="CanIf",
                              report=None, model="fake", ollama_url="http://127.0.0.1:11434", use_model=True)
                 self.assertEqual(second["status"], "model_unavailable")
+                self.assertTrue(second["model_attempted"])
                 self.assertEqual(second["evidence"]["graph_status"], "candidate_only")
+                skipped = ask(root, db, session_id=new_session(db), question="unrelated subject",
+                              report=None, model="fake", ollama_url="http://127.0.0.1:11434", use_model=True)
+                self.assertEqual(skipped["status"], "evidence_only")
+                self.assertTrue(skipped["model_requested"])
+                self.assertFalse(skipped["model_attempted"])
+                self.assertEqual(skipped["model_skip_reason"], "no_selected_evidence")
 
 
 if __name__ == "__main__":

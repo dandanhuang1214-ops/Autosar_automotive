@@ -170,9 +170,12 @@ def ask(root: Path, db_path: Path, *, session_id: str, question: str,
     response: dict[str, Any] = {
         "status": "evidence_only", "summary": summary, "draft": "", "citations": [], "evidence": evidence,
         "model": None, "model_error": None, "semantic_status": "unassessed",
+        "model_requested": use_model, "model_attempted": False,
+        "model_skip_reason": "no_selected_evidence" if use_model and not (facts or graph_items) else None,
         "memory_count": len(notes),
     }
     if use_model and (facts or graph_items):
+        response["model_attempted"] = True
         client = OllamaModelClient(Endpoint(ollama_url, 60))
         context: dict[str, Any] | None = None
         try:
