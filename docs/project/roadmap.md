@@ -50,9 +50,11 @@ P15–P18 的历史跨平台冻结保持有效；P18 独立复验补强/P19 已�
 
 P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和离线语义比较，商业往返保留 blocked，并推进 P23；不伪造导入成功，也不让许可等待阻断整个半年计划。P23 的 SocketCAN 环境不可用时完成离线/virtual 自动回归，现场门仍待验收。P24 只有确定性基线与真实解释缺口明确后才接可选模型，模型不拥有工程判定权。
 
-## 当前执行：P31 MCP 服务化（P25 人工验收待完成）
+## 当前执行：AI 平台 Chat 0.1（Workbench P31 暂停，P25 人工验收待完成）
 
-2026-11-03 新主阶段 P31：用户确认 P30 受限交付后，开始 [Workbench MCP 服务化](p31-mcp-service-guide.md)。首条 0.1 能力是独立 MCP 服务读取并重放项目报告，网页 Host 通过官方 MCP 客户端取得有版本的项目事实；模型仍由网页调用，工程判定仍由确定性内核承担。实现 `67092d9` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致，七 job `success`，0.1 已远端验收。0.2 项目候选声明与显式验证迁移由实现 `9ddfff4` / [run `41763647825`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41763647825) head 一致、七 job `success` 远端验收；原网页合约保留。下一主任务按用户选择接入“自然语言→结构化配置草案→人工审阅→真实 Generate-Arxml 输出→Workbench 回读”：首版限可验证字段，并把原输入、模型草案、生成器版本/输出与回读变化绑定。2026-11-04 [隔离实测](../research/p31-ollama-generate-arxml-feasibility-20261104.md)发现 Runnable 周期 `10→20 ms` 能在 ARXML 回读为 `0.01→0.02`，数值型 signal 初值 `0→5` 在固定生产者中仍输出 `0`；后者在生产者修复和回读复测前禁止作为可完成操作。AI 网页信息结构与视觉升级属 P31 配套开发。P25 人工演示/外部反馈另列；P30 严格模型质量失败结论不改变，微调须先建立失败归因和独立留出评测。
+2026-11-04 用户明确将 AI 平台与 Workbench 分为两条产品线，并要求先让 AI 平台普通聊天直接连通 Ollama，再选择性接知识库、MCP、工具调用与 Agent。当前主实现门是 [AI 平台 Chat 0.1](ai-platform-chat-guide.md)：无报告/图谱直接提问、真实模型回答、同会话上下文、显式跨会话记忆、调用时间与离线状态、旧工程问答兼容、真实浏览器/模型与 CI 验证。Workbench P31 停留在已远端验收的 0.2；此前规划的 Generate-Arxml 受控接入保留为恢复后的主任务，不把暂停记为完成或 blocked。AI Chat 0.1 验收后先补流式回答和中途取消，再设计可选知识库检索引用，MCP/工具/Agent 按依赖推进。
+
+2026-11-03 新主阶段 P31：用户确认 P30 受限交付后，开始 [Workbench MCP 服务化](p31-mcp-service-guide.md)。首条 0.1 能力是独立 MCP 服务读取并重放项目报告，网页 Host 通过官方 MCP 客户端取得有版本的项目事实；模型仍由网页调用，工程判定仍由确定性内核承担。实现 `67092d9` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致，七 job `success`，0.1 已远端验收。0.2 项目候选声明与显式验证迁移由实现 `9ddfff4` / [run `41763647825`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41763647825) head 一致、七 job `success` 远端验收；原网页合约保留。恢复 Workbench 工作时的下一主任务是“自然语言→结构化配置草案→人工审阅→真实 Generate-Arxml 输出→Workbench 回读”：首版限可验证字段，并把原输入、模型草案、生成器版本/输出与回读变化绑定。2026-11-04 [隔离实测](../research/p31-ollama-generate-arxml-feasibility-20261104.md)发现 Runnable 周期 `10→20 ms` 能在 ARXML 回读为 `0.01→0.02`，数值型 signal 初值 `0→5` 在固定生产者中仍输出 `0`；后者在生产者修复和回读复测前禁止作为可完成操作。P25 人工演示/外部反馈另列；P30 严格模型质量失败结论不改变，微调须先建立失败归因和独立留出评测。
 
 2026-11-03 阶段决定：按用户先收敛 P30 的安排，将已远端验收的工程事实、确定性呈现、只读 Agent 控制面和静态 ECUC AI 验收候选入口作为[受限交付](p30-convergence.md)。用户非盲审阅认可有回答样本 3/3 的整体可用性；两题无最终回答、0.7 格式门 0/4、Agent 任务门 0/4 均保留，一般复杂解释和资料适用性未验收。后续主课题是 Workbench MCP 服务化设计；P25 人工演示和外部反馈继续单列。下面旧的 P30 implementing 段落是当时实施记录，以本段为现行状态。
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>工程问答 · Automotive Workbench</title>
+  <title>本地 AI 聊天 · Automotive Workbench</title>
   <style>
     :root {
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -116,6 +116,16 @@
     .memory-list .actions { display: flex; gap: 5px; margin-top: 5px; }
     .toast { position: fixed; z-index: 4; bottom: 18px; left: 50%; transform: translateX(-50%); max-width: min(600px, calc(100vw - 24px)); padding: 10px 15px; border-radius: 9px; background: #19343c; color: #fff; font-size: 13px; box-shadow: 0 8px 28px #102b3340; }
     .toast[hidden] { display: none; }
+    body.general-chat .shell { grid-template-columns: minmax(235px, 264px) minmax(0, 1fr); }
+    body.general-chat .inspector { display: none; }
+    body.general-chat #engineeringContext, body.general-chat #graphContext,
+    body.general-chat #evidenceBadges, body.general-chat #useModelWrap { display: none; }
+    .chat-mode { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+    .chat-mode label { margin: 0; }
+    .chat-mode select { width: auto; min-width: 160px; }
+    .model-meta { color: var(--muted); font-size: 12px; margin: 7px 5px 0; }
+    .model-meta details { margin-top: 5px; }
+    .model-meta summary { cursor: pointer; }
     @media (max-width: 1160px) { .shell { grid-template-columns: 250px minmax(0,1fr); } .inspector { grid-column: 2; } .chat { height: min(760px, calc(100vh - 104px)); } }
     @media (max-width: 780px) { .shell { display: flex; flex-direction: column; padding: 10px; gap: 10px; } .chat { order: 1; height: 72vh; min-height: 520px; } .sidebar { order: 2; } .inspector { order: 3; } body.no-graph .sidebar { order: 0; } .top-status { display: none; } .chat-head, .conversation, .composer { padding-left: 16px; padding-right: 16px; } .sidebar, .inspector { padding: 17px; } .conversation { padding-top: 16px; } }
     /* P31 visual system: a quiet engineering console with one reading surface. */
@@ -144,7 +154,7 @@
     .brand h1 { font-size: 14px; letter-spacing: .015em; }
     .brand small { color: #aebed0; font-size: 11px; letter-spacing: .02em; }
     .top-status { display: flex; align-items: center; gap: 8px; color: #c0cfdd; font-size: 12px; }
-    .top-status::before { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: #78c9a3; box-shadow: 0 0 0 3px #78c9a322; }
+    .top-status::before { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: #9bacbd; }
     .shell { max-width: none; min-height: calc(100vh - 64px); grid-template-columns: minmax(235px, 264px) minmax(0, 1fr) minmax(290px, 340px); gap: 0; padding: 0; }
     .pane { border: 0; border-radius: 0; box-shadow: none; }
     .sidebar { min-height: calc(100vh - 64px); align-self: stretch; padding: 30px 20px 38px; background: var(--nav); color: var(--nav-text); border-right: 1px solid #26384b; }
@@ -324,6 +334,7 @@
       .primary-nav { order: 3; flex: 0 0 100%; height: 46px; margin: 0; justify-content: space-between; }
       .nav-item { flex: 1; padding: 0 6px; font-size: 12px; }
       .shell, body.inspector-open .shell { display: grid; grid-template-columns: minmax(0, 1fr); height: calc(100dvh - 112px); padding: 0; }
+      body.general-chat .shell { grid-template-columns: minmax(0, 1fr); }
       .main-area { grid-column: 1; }
       .sidebar { position: fixed; z-index: 6; top: 112px; bottom: 0; left: 0; width: min(340px, 88vw); height: auto; min-height: 0; padding: 25px 20px; box-shadow: 12px 0 32px #0b17272e; transform: translateX(-110%); transition: transform .2s ease; }
       body.workspace-open .sidebar { transform: translateX(0); }
@@ -338,6 +349,8 @@
     }
     @media (max-width: 430px) {
       .topbar { min-height: 112px; }
+      .chat-mode { flex-wrap: wrap; }
+      .chat-mode #manageMemory { flex-basis: 100%; text-align: left; }
       .chat { min-height: 0; }
       .chat-head { padding-top: 20px; padding-bottom: 15px; }
       .chat-head .subtle { display: none; }
@@ -353,51 +366,52 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
   </style>
 </head>
-<body>
-  <a class="skip" href="#chatMain">跳到工程问答</a>
+<body class="general-chat">
+  <a class="skip" href="#chatMain">跳到聊天</a>
   <header class="topbar">
-    <div class="brand"><div class="mark" aria-hidden="true">AW</div><div><h1>Automotive Workbench</h1><small>工程证据与知识图谱</small></div></div>
+    <div class="brand"><div class="mark" aria-hidden="true">AI</div><div><h1>本地 AI 平台</h1><small>Ollama 聊天与工程扩展</small></div></div>
     <nav class="primary-nav" aria-label="主要功能">
-      <button type="button" class="nav-item" data-view="chat" aria-current="page">工程问答</button>
-      <button type="button" class="nav-item" data-view="project">项目验收</button>
+      <button type="button" class="nav-item" data-view="chat" aria-current="page">聊天</button>
+      <button type="button" class="nav-item" data-view="project">工程任务</button>
       <button type="button" class="nav-item" data-view="data">资料管理</button>
     </nav>
-    <div class="top-status">Workbench 本机服务 · 数据留在本地</div>
+    <div class="top-status">本机页面 · 数据留在本地</div>
     <button id="toggleWorkspace" class="header-action" type="button" aria-expanded="false" aria-controls="workspace">工作区</button>
   </header>
   <div class="shell">
     <aside id="workspace" class="pane sidebar" aria-label="项目与会话">
       <button id="closeWorkspace" class="panel-close workspace-close" type="button">关闭工作区</button>
       <p class="eyebrow">WORKSPACE</p>
-      <h2>工程会话</h2>
+      <h2>会话</h2>
       <button id="newSession" class="button secondary full new-session" type="button">＋ 新会话</button>
       <div class="session-section">
         <h3>最近会话</h3>
         <ul id="sessions" class="session-list" aria-label="最近会话"></ul>
       </div>
-      <div class="section">
+      <div id="engineeringContext" class="section">
         <h3>当前工程报告</h3>
         <label for="report">project-report.json 本机绝对路径</label>
         <input id="report" autocomplete="off" placeholder="/mnt/d/.../project-report.json">
         <p class="hint">每次提问重放报告；静态 passed 不代表 CFG 生成或 CAN 实测。</p>
       </div>
-      <div class="section"><h3>知识图谱</h3><div id="graphState" class="status-card missing" role="status">尚未导入图谱</div></div>
+      <div id="graphContext" class="section"><h3>知识图谱</h3><div id="graphState" class="status-card missing" role="status">尚未导入图谱</div></div>
     </aside>
 
     <main class="main-area">
-    <section id="chatMain" class="pane chat view" aria-label="工程问答">
+    <section id="chatMain" class="pane chat view" aria-label="聊天">
       <div class="chat-head">
-        <p class="eyebrow">EVIDENCE CHAT</p>
-        <h2 id="chatTitle" class="chat-title" tabindex="-1">工程问题，从证据开始</h2>
-        <p class="subtle" style="margin-bottom:0">项目事实、图谱线索和模型草稿分别呈现。每条结论都有清晰状态。</p>
-        <div class="badges"><span id="graphBadge" class="badge warn">图谱未导入</span><span id="projectBadge" class="badge">未选择工程报告</span><span id="modelBadge" class="badge">Ollama 未检查</span></div>
+        <p class="eyebrow">LOCAL AI</p>
+        <h2 id="chatTitle" class="chat-title" tabindex="-1">直接开始对话</h2>
+        <p id="chatDescription" class="subtle" style="margin-bottom:0">普通聊天直接调用本地 Ollama。工程资料和工具按需使用。</p>
+        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
+        <div class="badges"><span id="modelBadge" class="badge">Ollama 待调用</span><span id="memoryBadge" class="badge">长期记忆 0 条</span><span id="evidenceBadges"><span id="graphBadge" class="badge warn">图谱未导入</span> <span id="projectBadge" class="badge">未选择工程报告</span></span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
-        <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div></div>
+        <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">AI</div><h3>有什么想聊的？</h3><p class="subtle">直接输入问题即可。模型离线时会明确提示，回答旁会显示调用时间和耗时。</p></div>
       </div>
       <div class="composer">
-        <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="例如：CanIf 与 CanTp 在图谱中是什么关系？哪些仍待核实？"></textarea>
-        <div class="composer-foot"><label class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><button id="askBtn" class="button" type="button">发送问题</button></div>
+        <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="输入问题，直接与本地 Ollama 对话"></textarea>
+        <div class="composer-foot"><label id="useModelWrap" class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><button id="askBtn" class="button" type="button">发送问题</button></div>
         <p id="chatStatus" class="feedback" role="status">按 Ctrl + Enter 也可发送。</p>
       </div>
     </section>
@@ -543,6 +557,17 @@
       closeInspector();
       if (focusHeading) $(view === 'chat' ? 'chatTitle' : view === 'project' ? 'projectViewTitle' : 'dataViewTitle').focus();
     }
+    function setChatMode(mode) {
+      const general = mode !== 'evidence';
+      $('chatMode').value = general ? 'general' : 'evidence';
+      document.body.classList.toggle('general-chat', general);
+      $('chatTitle').textContent = general ? '直接开始对话' : '工程问题，从证据开始';
+      $('chatDescription').textContent = general ? '普通聊天直接调用本地 Ollama。工程资料和工具按需使用。' : '项目事实、图谱线索和模型草稿分别呈现。';
+      $('question').placeholder = general ? '输入问题，直接与本地 Ollama 对话' : '例如：CanIf 与 CanTp 在图谱中是什么关系？';
+      closeInspector();
+    }
+    $('chatMode').onchange = () => { setChatMode($('chatMode').value); refresh().catch(showError); };
+    $('manageMemory').onclick = () => { setView('data'); $('memoryTitle').scrollIntoView({ block: 'start' }); $('memory').focus(); };
     function updateSteps(stage) {
       for (const [index, id] of ['step-input', 'step-review', 'step-run', 'step-report'].entries()) {
         $(id).classList.toggle('done', index < stage);
@@ -586,8 +611,8 @@
     }
 
     function renderMessage(role, content, kind = 'evidence') {
-      const box = el('article', undefined, `message ${role} ${kind === 'draft' ? 'draft' : ''}`);
-      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : '确定性证据摘要', 'message-label'));
+      const box = el('article', undefined, `message ${role} ${kind}`);
+      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : kind === 'general' ? 'Ollama 回答' : '确定性证据摘要', 'message-label'));
       box.append(el('div', content || '本轮没有可展示的内容。', 'message-body'));
       $('emptyState')?.remove();
       $('messages').append(box);
@@ -595,6 +620,24 @@
       return box;
     }
     function renderAssistant(result) {
+      if (result.mode === 'general') {
+        const succeeded = result.status === 'answered';
+        const box = renderMessage('assistant', succeeded ? result.answer : 'Ollama 未返回可用回答。请检查服务状态后重试。', 'general');
+        box.querySelector('.message-label').textContent = succeeded ? `Ollama ${result.model?.name || ''} · 模型回答` : 'Ollama 调用失败';
+        const meta = el('div', undefined, 'model-meta');
+        const when = result.called_at ? new Date(result.called_at).toLocaleString('zh-CN', { hour12: false }) : '时间未知';
+        const elapsed = typeof result.elapsed_ms === 'number' ? `${(result.elapsed_ms / 1000).toFixed(1)} 秒` : '耗时未知';
+        meta.append(el('span', `${when} 调用 · ${elapsed}${result.memory_count ? ` · 使用 ${result.memory_count} 条长期记忆` : ''}`));
+        if (succeeded && Object.keys(result.timings_ms || {}).length) {
+          const detail = el('details'); detail.append(el('summary', '查看 Ollama 耗时'));
+          const timing = result.timings_ms;
+          detail.append(el('div', `模型总耗时 ${timing.total_duration ?? '—'} ms · 加载 ${timing.load_duration ?? '—'} ms · 输入处理 ${timing.prompt_eval_duration ?? '—'} ms · 生成 ${timing.eval_duration ?? '—'} ms`));
+          meta.append(detail);
+        }
+        if (!succeeded && result.model_error) meta.append(el('div', `调用错误：${result.model_error}`));
+        box.append(meta);
+        return box;
+      }
       if (result.draft) {
         const draft = renderMessage('assistant', result.draft, 'draft');
         draft.querySelector('.message-label').textContent = `Ollama ${result.model?.name || ''} · 已返回草稿 · 未经语义审阅`;
@@ -651,6 +694,12 @@
       }
     }
     function showEvidence(result, selectedBox = null, reveal = false) {
+      if (result.mode === 'general') {
+        currentEvidence = null; projectHash = '';
+        $('modelBadge').textContent = result.status === 'answered' ? `Ollama ${result.model?.name || ''} 已回答` : 'Ollama 调用失败';
+        $('modelBadge').classList.toggle('warn', result.status !== 'answered');
+        return;
+      }
       currentEvidence = result;
       for (const box of document.querySelectorAll('.message.assistant.selected')) box.classList.remove('selected');
       selectedBox?.classList.add('selected');
@@ -706,11 +755,12 @@
       }
       localStorage.setItem('awb-session', sessionId);
       $('messages').replaceChildren();
-      if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = '<div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div>'; $('messages').append(empty); bindSuggestions(); }
+      if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = $('chatMode').value === 'general' ? '<div class="symbol" aria-hidden="true">AI</div><h3>有什么想聊的？</h3><p class="subtle">直接输入问题即可。模型离线时会明确提示，回答旁会显示调用时间和耗时。</p>' : '<div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div>'; $('messages').append(empty); bindSuggestions(); }
       for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
       const latest = [...data.messages].reverse().find(message => message.role === 'assistant');
-      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll('.message.assistant:not(.draft)')].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = 'Ollama 未检查'; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll('.message.assistant:not(.draft)')].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = 'Ollama 待调用'; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
       renderMemories(data.memories || []);
+      $('memoryBadge').textContent = `长期记忆 ${(data.memories || []).filter(item => item.scope === 'global').length} 条`;
     }
     function bindSuggestions() { for (const button of document.querySelectorAll('[data-prompt]')) button.onclick = () => { $('question').value = button.dataset.prompt; $('question').focus(); }; }
     bindSuggestions();
@@ -743,8 +793,8 @@
         updateSteps(4); $('goToChat').hidden = false;
       } catch (error) { feedback('projectTaskStatus', error.message, true); button.disabled = false; updateSteps(1); }
     };
-    $('goToChat').onclick = () => { setView('chat'); $('question').focus(); };
-    $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; await refresh(); setView('chat'); $('question').focus(); } catch (error) { showError(error); } };
+    $('goToChat').onclick = () => { setChatMode('evidence'); setView('chat'); $('question').focus(); };
+    $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; setChatMode('general'); await refresh(); setView('chat'); $('question').focus(); } catch (error) { showError(error); } };
     $('importBtn').onclick = async () => {
       const button = $('importBtn'); button.disabled = true; feedback('importStatus', '正在核验文件与来源哈希…');
       try { const files = [...$('files').files]; if (!files.length) throw Error('请选择 graph.json 和对应的全部来源 Markdown。'); const contents = {}; for (const file of files) contents[file.name] = await file.text(); const result = await api('/api/import', { files: contents, site_version: $('siteVersion').value.trim() || '未标记' }); const changed = Object.values(result.diff).reduce((sum, value) => sum + value.added.length + value.removed.length + value.changed.length, 0); feedback('importStatus', `核验通过：${result.graph_sha256.slice(0, 12)}，${changed} 项对象差异。`); await refresh(); } catch (error) { feedback('importStatus', error.message, true); } finally { button.disabled = false; }
@@ -752,12 +802,20 @@
     $('reviewImportBtn').onclick = async () => { try { const file = $('reviewFile').files[0]; if (!file) throw Error('请选择站点导出的核实记录 JSON。'); await api('/api/reviews/import', { content: await file.text() }); await refresh(); } catch (error) { feedback('reviewState', error.message, true); } };
     $('askBtn').onclick = async () => {
       const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
-      const button = $('askBtn'); button.disabled = true; button.textContent = '正在核对…'; feedback('chatStatus', '正在重放工程报告并查找图谱线索…');
-      try { const result = await api('/api/chat', { session_id: sessionId, question, report: $('report').value.trim(), use_model: $('useModel').checked }); renderMessage('user', question); const answer = renderAssistant(result); showEvidence(result, answer); $('question').value = ''; feedback('chatStatus', result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。'); } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
+      const mode = $('chatMode').value;
+      const button = $('askBtn'); button.disabled = true; button.textContent = '正在回答…';
+      feedback('chatStatus', mode === 'general' ? '正在调用本地 Ollama…' : '正在重放工程报告并查找图谱线索…');
+      try {
+        const result = await api('/api/chat', { session_id: sessionId, question, mode, report: mode === 'evidence' ? $('report').value.trim() : '', use_model: mode === 'evidence' ? $('useModel').checked : true });
+        $('question').value = '';
+        await refresh();
+        feedback('chatStatus', mode === 'general' ? result.status === 'answered' ? 'Ollama 已返回回答。' : 'Ollama 未返回可用回答，请检查服务。' : result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。');
+      } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
     };
     $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
     $('saveMemory').onclick = async () => { try { const scope = $('memoryScope').value === 'global' ? 'global' : projectHash; if (!scope) throw Error('先选择工程报告并提问，再保存当前工程记忆。'); await api('/api/memory', { scope, content: $('memory').value }); $('memory').value = ''; feedback('memoryStatus', '已保存长期记忆。'); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };
-    setView(localStorage.getItem('awb-view') || 'chat');
+    setChatMode('general');
+    setView('chat');
     refresh().catch(showError);
   </script>
 </body>
