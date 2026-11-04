@@ -1,6 +1,6 @@
 # P31 Workbench MCP 服务化：工程证据与项目候选
 
-状态：0.1 首版已远端验收，实现 `67092d9` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致、七 job `success`。0.2 项目候选工具正在验收。P30 仅按受限范围交付；本阶段不改变原有模型质量结论。
+状态：0.1 首版已远端验收，实现 `67092d9` / [run `41586327182`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41586327182) head 一致、七 job `success`。0.2 项目候选与显式验证实现 `9ddfff4` / [run `41763647825`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41763647825) head 一致、七 job `success`，已远端验收。P30 仅按受限范围交付；本阶段不改变原有模型质量结论。
 
 ## 调研与架构
 
@@ -38,6 +38,6 @@ workbench-chat --data output/knowledge-chat --port 8767 \
 
 首版门：SDK 能发现两个只读工具、读取真实项目报告并核对 SHA/状态；越界路径拒绝；网页经独立 MCP 进程返回工程证据；停服后网页失败关闭；原直读路径和全量回归保持通过；实现提交须有 head 一致的七 job 远端 CI。模型文本本身不纳入工程验收。
 
-0.2 门：三个工具的 SDK 注册/边界/真实项目运行检查；独立 MCP 进程经网页 API 完成候选、显式验证和报告问答，停服后失败关闭；原直读模式和全量回归通过；实现提交须有 head 一致的七 job 远端 CI。独立双进程开发场景使用测试模型选择，不能证明本机 Ollama 成功推理。
+0.2 门已通过：三个工具的 SDK 注册/边界/真实项目运行检查；独立 MCP 进程经网页 API 完成候选、显式验证和报告问答，停服后失败关闭；原直读模式和全量回归通过；实现提交 `9ddfff4` 的七 job 远端 CI 全绿。独立双进程开发场景使用测试模型选择，不能证明本机 Ollama 成功推理。
 
 下一步：以 Generate-Arxml 的实际输出和回读证据设计受控生成工具，不把项目声明生成写成 ECUC/ARXML 生成。远端服务、身份授权及跨机器部署需另立安全与验收门。
