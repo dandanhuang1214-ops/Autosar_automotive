@@ -19,7 +19,7 @@ class FakeModel:
         self.selected_id = selected_id
 
     def identity(self, name: str) -> dict:
-        return {"name": name, "digest": "a" * 64}
+        return {"name": name, "digest": "sha256:" + "a" * 64}
 
     def service_version(self) -> str:
         return "test-service"

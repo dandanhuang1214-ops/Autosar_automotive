@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,7 @@ from automotive_workbench.project_ecuc import declaration, verify as verify_proj
 from automotive_workbench.project_workflow import run_project
 
 VERSION = "ai-project-proposal-0.1"
+CATALOG_VERSION = "ai-project-check-catalog-0.1"
 
 
 def _canonical(value: Any) -> bytes:
@@ -57,22 +59,33 @@ def _generated(source: dict[str, Any], source_path: Path, ids: list[str]) -> dic
     return project
 
 
-def propose(root: Path, source_path: Path, requirement: str, model: str, ollama_url: str,
-            client: ModelClient | None = None) -> dict[str, Any]:
+def catalog(source_path: Path) -> dict[str, Any]:
+    """Expose the versioned check list without making a model decision."""
+    source, source_sha, input_sha = _project(source_path)
+    return {"schema_version": CATALOG_VERSION, "project_path": str(source_path.resolve()),
+            "project_sha256": source_sha, "input_sha256": input_sha,
+            "available_checks": [{"id": item["id"], "text": item["text"]}
+                                 for item in source["requirements"]]}
+
+
+class SelectionError(ValueError):
+    def __init__(self, message: str, response: Any, transport: list[dict[str, Any]]):
+        super().__init__(message)
+        self.response = response
+        self.transport = transport
+
+
+def select_check(requirement: str, checks: list[dict[str, str]], model: str,
+                 ollama_url: str, client: ModelClient | None = None) -> dict[str, Any]:
+    """Keep the model call in the Host; its output remains an unassessed selection."""
     if not isinstance(requirement, str) or not 1 <= len(requirement.strip()) <= 2000:
         raise ValueError("Requirement must contain 1..2000 characters")
-    if not source_path.is_absolute() or source_path.is_symlink():
-        raise ValueError("Choose an existing absolute project JSON path")
-    source_path = source_path.resolve()
-    source, source_sha, input_sha = _project(source_path)
-    checks = [{"id": item["id"], "text": item["text"]} for item in source["requirements"]]
+    if not isinstance(checks, list) or not checks or any(
+            not isinstance(item, dict) or not isinstance(item.get("id"), str)
+            or not isinstance(item.get("text"), str) for item in checks):
+        raise ValueError("Project check catalog is invalid")
     allowed = {item["id"] for item in checks}
     model_client = client or OllamaModelClient(Endpoint(ollama_url, 90))
-    task_id = uuid.uuid4().hex
-    task = root / "project-tasks" / task_id
-    task.mkdir(parents=True, exist_ok=False)
-    request = {"requirement": requirement.strip(), "available_checks": checks,
-               "project_path": str(source_path), "project_sha256": source_sha, "model": model}
     response: Any = None
     try:
         identity = model_client.identity(model)
@@ -81,7 +94,8 @@ def propose(root: Path, source_path: Path, requirement: str, model: str, ollama_
             "model": model, "stream": False, "think": False, "keep_alive": "2m",
             "messages": [
                 {"role": "system", "content": "从给定验收项里选择最相关的一项。只输出一个验收 ID，不能输出说明或新 ID。"},
-                {"role": "user", "content": json.dumps({"requirement": requirement.strip(), "available_checks": checks}, ensure_ascii=False)},
+                {"role": "user", "content": json.dumps({"requirement": requirement.strip(),
+                                                       "available_checks": checks}, ensure_ascii=False)},
             ],
             "options": {"temperature": 0, "seed": 0, "num_ctx": 8192, "num_predict": 128},
         })
@@ -99,38 +113,117 @@ def propose(root: Path, source_path: Path, requirement: str, model: str, ollama_
         selected_id = message["content"].strip()
         if selected_id not in allowed:
             raise ValueError("Model selected an unknown check or returned extra text")
-        ids = [selected_id]
-        rationale = next(item["text"] for item in checks if item["id"] == selected_id)
         if model_client.identity(model) != identity:
             raise ValueError("Model identity changed during project selection")
     except (ValueError, TypeError, KeyError) as exc:
-        (task / "model-trace.json").write_bytes(_canonical({"status": "rejected", "request": request,
-                                                "response": response, "transport": model_client.records,
-                                                "error": str(exc)}))
-        raise
-    generated = _generated(source, source_path, ids)
+        raise SelectionError(str(exc), response, model_client.records) from exc
+    return {"selected_id": selected_id, "response": response,
+            "transport": model_client.records, "model": model,
+            "digest": identity["digest"], "service_version": version}
+
+
+def create_candidate(root: Path, source_path: Path, requirement: str,
+                     selection: dict[str, Any], expected_project_sha: str,
+                     expected_input_sha: dict[str, dict[str, str]],
+                     task_id: str | None = None) -> dict[str, Any]:
+    """Bind an AI selection to current inputs and write a draft declaration."""
+    if not isinstance(requirement, str) or not 1 <= len(requirement.strip()) <= 2000:
+        raise ValueError("Requirement must contain 1..2000 characters")
+    source, source_sha, input_sha = _project(source_path)
+    if source_sha != expected_project_sha or input_sha != expected_input_sha:
+        raise ValueError("Project inputs changed after check catalog was read")
+    checks = {item["id"]: item["text"] for item in source["requirements"]}
+    selected_id = selection.get("selected_id")
+    model = selection.get("model")
+    response = selection.get("response")
+    message = response.get("message") if isinstance(response, dict) else None
+    if (not isinstance(selected_id, str) or selected_id not in checks
+            or not isinstance(model, str) or not model
+            or not isinstance(response, dict) or response.get("done") is not True
+            or response.get("done_reason") != "stop" or response.get("model") != model
+            or not isinstance(message, dict) or message.get("role") != "assistant"
+            or message.get("tool_calls") or message.get("content") != selected_id
+            or type(response.get("prompt_eval_count")) is not int
+            or type(response.get("eval_count")) is not int
+            or response["prompt_eval_count"] < 0 or response["eval_count"] < 0
+            or response["prompt_eval_count"] + response["eval_count"] > 8192
+            or not isinstance(selection.get("digest"), str)
+            or re.fullmatch(r"(?:sha256:)?[0-9a-f]{64}", selection["digest"]) is None
+            or not isinstance(selection.get("service_version"), str)
+            or not isinstance(selection.get("transport"), list)):
+        raise ValueError("Invalid model selection for project candidate")
+    task_id = task_id or uuid.uuid4().hex
+    tasks = root / "project-tasks"
+    if tasks.is_symlink():
+        raise ValueError("AI project task root must not be a symlink")
+    task = tasks / task_id
+    if task.exists():
+        if any(task.iterdir()):
+            raise ValueError("AI project task already exists")
+    else:
+        task.mkdir(parents=True, exist_ok=False)
+    request = {"requirement": requirement.strip(),
+               "available_checks": [{"id": item["id"], "text": item["text"]}
+                                    for item in source["requirements"]],
+               "project_path": str(source_path.resolve()), "project_sha256": source_sha,
+               "model": model}
+    generated = _generated(source, source_path, [selected_id])
     generated_path = task / "generated-project.json"
     generated_raw = _canonical(generated)
     generated_path.write_bytes(generated_raw)
     result = {"contract_version": VERSION, "id": task_id, "status": "draft_unassessed",
-              "requirement": requirement.strip(), "project": {"path": str(source_path),
+              "requirement": requirement.strip(), "project": {"path": str(source_path.resolve()),
               "sha256": source_sha, "input_sha256": input_sha},
-              "selection": {"acceptance_ids": ids, "rationale": rationale},
+              "selection": {"acceptance_ids": [selected_id], "rationale": checks[selected_id]},
               "generated_project": {"path": str(generated_path), "sha256": _sha(generated_raw)},
-              "model": {"name": model, "digest": identity["digest"], "service_version": version,
-                        "input_tokens": response["prompt_eval_count"], "output_tokens": response["eval_count"],
+              "model": {"name": model, "digest": selection["digest"],
+                        "service_version": selection["service_version"],
+                        "input_tokens": response["prompt_eval_count"],
+                        "output_tokens": response["eval_count"],
                         "response_sha256": _sha(_canonical(response))},
               "scope": "AI selected existing check IDs; the generated declaration is a draft until run-project executes"}
     (task / "proposal.json").write_bytes(_canonical(result))
     (task / "model-trace.json").write_bytes(_canonical({"status": "accepted_draft", "request": request,
-                                               "response": response, "transport": model_client.records}))
+                                               "response": response, "transport": selection["transport"]}))
     return result
+
+
+def propose(root: Path, source_path: Path, requirement: str, model: str, ollama_url: str,
+            client: ModelClient | None = None) -> dict[str, Any]:
+    if not isinstance(requirement, str) or not 1 <= len(requirement.strip()) <= 2000:
+        raise ValueError("Requirement must contain 1..2000 characters")
+    if not source_path.is_absolute() or source_path.is_symlink():
+        raise ValueError("Choose an existing absolute project JSON path")
+    source_path = source_path.resolve()
+    snapshot = catalog(source_path)
+    task_id = uuid.uuid4().hex
+    task = root / "project-tasks" / task_id
+    task.mkdir(parents=True, exist_ok=False)
+    request = {"requirement": requirement.strip(),
+               "available_checks": snapshot["available_checks"],
+               "project_path": str(source_path),
+               "project_sha256": snapshot["project_sha256"], "model": model}
+    try:
+        selection = select_check(requirement, snapshot["available_checks"], model,
+                                 ollama_url, client)
+    except SelectionError as exc:
+        (task / "model-trace.json").write_bytes(_canonical({"status": "rejected", "request": request,
+                                                "response": exc.response, "transport": exc.transport,
+                                                "error": str(exc)}))
+        raise
+    return create_candidate(root, source_path, requirement, selection,
+                            snapshot["project_sha256"], snapshot["input_sha256"], task_id)
 
 
 def validate(root: Path, task_id: str) -> dict[str, Any]:
     if not isinstance(task_id, str) or len(task_id) != 32 or any(c not in "0123456789abcdef" for c in task_id):
         raise ValueError("Invalid AI project task ID")
-    task = root / "project-tasks" / task_id
+    tasks = root / "project-tasks"
+    task = tasks / task_id
+    if (tasks.is_symlink() or task.is_symlink()
+            or any((task / name).is_symlink() for name in (
+                "proposal.json", "model-trace.json", "generated-project.json", "validation"))):
+        raise ValueError("AI project task contains a symlink")
     proposal = json.loads((task / "proposal.json").read_text(encoding="utf-8"))
     if proposal.get("contract_version") != VERSION or proposal.get("id") != task_id:
         raise ValueError("Invalid AI project proposal")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,6 +25,8 @@ class McpServiceTests(unittest.TestCase):
         cls.root = Path(cls.temp.name)
         run_project(PROJECT, cls.root / "run", BusConfig("virtual", "mcp-test"))
         cls.report = cls.root / "run/bundle/project-report.json"
+        shutil.copytree(PROJECT.parent, cls.root / "source")
+        cls.source = cls.root / "source" / PROJECT.name
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -65,6 +68,61 @@ class McpServiceTests(unittest.TestCase):
                       "http://127.0.0.1:8768/other", "http://127.0.0.1:8768/mcp?x=1"):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 validate_endpoint(value)
+
+    def test_opt_in_project_tools_create_and_verify_candidate(self) -> None:
+        from mcp import Client
+        from automotive_workbench.mcp_service import build_server
+
+        async def exercise() -> None:
+            async with Client(build_server(self.root, enable_project_actions=True),
+                              mode="2026-07-28", read_timeout_seconds=60) as client:
+                tools = await client.list_tools()
+                names = {item.name for item in tools.tools}
+                self.assertEqual(names, {"verify_project_report", "project_evidence",
+                                         "project_check_catalog", "create_project_candidate",
+                                         "validate_project_candidate"})
+                annotations = {item.name: item.annotations for item in tools.tools}
+                self.assertTrue(annotations["project_check_catalog"].read_only_hint)
+                self.assertFalse(annotations["create_project_candidate"].read_only_hint)
+                snapshot = (await client.call_tool("project_check_catalog", {
+                    "project_path": str(self.source),
+                })).structured_content
+                self.assertEqual(snapshot["schema_version"], "ai-project-check-catalog-0.1")
+                selection = {"selected_id": "COMMUNICATION", "model": "fake-model",
+                             "digest": "a" * 64, "service_version": "fake-service",
+                             "transport": [{"path": "/api/chat", "status": "completed"}],
+                             "response": {"model": "fake-model", "done": True,
+                                          "done_reason": "stop", "message": {
+                                              "role": "assistant", "content": "COMMUNICATION"},
+                                          "prompt_eval_count": 70, "eval_count": 25}}
+                arguments = {"project_path": str(self.source),
+                             "requirement": "Verify the COM chain", "selection": selection,
+                             "project_sha256": snapshot["project_sha256"],
+                             "input_sha256": snapshot["input_sha256"]}
+                stale = await client.call_tool("create_project_candidate", {
+                    **arguments, "project_sha256": "0" * 64,
+                })
+                self.assertTrue(stale.is_error)
+                outside = await client.call_tool("project_check_catalog", {
+                    "project_path": str(PROJECT),
+                })
+                self.assertTrue(outside.is_error)
+                created = await client.call_tool("create_project_candidate", arguments)
+                self.assertFalse(created.is_error)
+                proposal = created.structured_content
+                self.assertEqual(proposal["selection"]["acceptance_ids"], ["COMMUNICATION"])
+                result = await client.call_tool("validate_project_candidate", {
+                    "task_id": proposal["id"],
+                })
+                self.assertFalse(result.is_error)
+                self.assertEqual(result.structured_content["status"], "passed")
+                self.assertEqual(result.structured_content["verification_status"], "passed")
+                repeated = await client.call_tool("validate_project_candidate", {
+                    "task_id": proposal["id"],
+                })
+                self.assertTrue(repeated.is_error)
+
+        asyncio.run(exercise())
 
 
 if __name__ == "__main__":

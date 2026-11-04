@@ -19,7 +19,10 @@ from automotive_workbench.knowledge_graph_workspace import (
     active_snapshot, import_graph, import_reviews,
 )
 from automotive_workbench.project_ai_workflow import propose as propose_project, validate as validate_project
-from automotive_workbench.mcp_evidence_client import load_project_evidence, validate_endpoint
+from automotive_workbench.mcp_evidence_client import (
+    load_project_evidence, propose_project_via_mcp, validate_endpoint,
+    validate_project_via_mcp,
+)
 
 HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="utf-8")
 
@@ -152,13 +155,19 @@ class Handler(BaseHTTPRequestHandler):
                 requirement = body.get("requirement")
                 if not isinstance(project, str) or not isinstance(requirement, str):
                     raise ValueError("Project path and requirement are required")
-                result = propose_project(self.server.root, Path(project), requirement,
-                                         self.server.model, self.server.ollama_url)
+                if self.server.mcp_url:
+                    result = propose_project_via_mcp(self.server.mcp_url, Path(project),
+                                                     requirement, self.server.model,
+                                                     self.server.ollama_url)
+                else:
+                    result = propose_project(self.server.root, Path(project), requirement,
+                                             self.server.model, self.server.ollama_url)
             elif self.path == "/api/project/validate":
                 task_id = body.get("task_id")
                 if not isinstance(task_id, str):
                     raise ValueError("AI project task ID is required")
-                result = validate_project(self.server.root, task_id)
+                result = (validate_project_via_mcp(self.server.mcp_url, task_id)
+                          if self.server.mcp_url else validate_project(self.server.root, task_id))
             elif self.path == "/api/reviews/import":
                 content = body.get("content")
                 if not isinstance(content, str) or len(content.encode("utf-8")) > MAX_REVIEW_BYTES:
