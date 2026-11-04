@@ -1,6 +1,6 @@
 # 本地汽车知识图谱与工程聊天入口
 
-状态：原入口实现已通过远端 CI，并从子分支快进合入项目集成分支；P31 配套 UI 信息结构实现 `9b7557f` / run `41749164838`、模型状态可见性实现 `559b880` / [run `41755878258`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41755878258) 均与实现 head 一致且各自七个 job 成功。后者只验证离线/跳过时的真实状态和成功响应的界面呈现；本机 Docker/Ollama 未启动，未取得真实成功模型草稿。`main` 保持不变，P30 模型内容审阅仍待人工完成。本入口消费独立的[汽车软件知识图谱站点](https://automotive-knowledge-graph-oct21.silly-civet-8184.chatgpt.site/)导出，不使用 Simulink 助手的资料库、聊天或记忆。站点仍独立编辑和发布；Workbench 在本机保存带哈希的导入版本。
+状态：原入口实现已通过远端 CI，并从子分支快进合入项目集成分支；P31 配套 UI 信息结构实现 `9b7557f` / run `41749164838`、模型状态可见性实现 `559b880` / [run `41755878258`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/41755878258) 均与实现 head 一致且各自七个 job 成功。模型状态补强验收时 Docker/Ollama 未启动，仅验证了离线/跳过状态和成功响应的界面呈现；后续本机真实草稿与质量对照见 [2026-11-04 检查](../research/p31-live-ollama-smoke-20261104.md)。`main` 保持不变，P30 模型内容审阅仍待人工完成。本入口消费独立的[汽车软件知识图谱站点](https://automotive-knowledge-graph-oct21.silly-civet-8184.chatgpt.site/)导出，不使用 Simulink 助手的资料库、聊天或记忆。站点仍独立编辑和发布；Workbench 在本机保存带哈希的导入版本。
 
 ## 启动与操作
 
