@@ -49,6 +49,9 @@ class GraphImportTest(unittest.TestCase):
             self.assertEqual(first["counts"]["nodes"], 1)
             self.assertEqual(active_snapshot(root)[1]["graph_sha256"], first["graph_sha256"])
             self.assertEqual(search_graph(active_snapshot(root)[0], "CanIf")["nodes"][0]["id"], "K001")
+            graph_for_chinese = active_snapshot(root)[0]
+            graph_for_chinese["nodes"][0]["title"] = "通信接口候选"
+            self.assertEqual(search_graph(graph_for_chinese, "请说明通信接口")["nodes"][0]["id"], "K001")
             changed = json.loads(raw)
             changed["nodes"][0]["summary"] = "A revised candidate"
             second = import_graph(root, json.dumps(changed).encode(), sources, site_version="v2")

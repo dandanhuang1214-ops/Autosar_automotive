@@ -404,6 +404,7 @@
     body.general-chat .knowledge-sources { margin: 10px 0 0; color: #526273; font-size: 12px; }
     body.general-chat .knowledge-sources summary { cursor: pointer; min-height: 32px; }
     body.general-chat .knowledge-sources li { margin: 5px 0; }
+    body.general-chat .knowledge-sources blockquote { margin: 6px 0 10px; padding: 6px 10px; border-left: 2px solid #aab9cc; white-space: pre-wrap; overflow-wrap: anywhere; }
     body.general-chat .composer { border: 0; box-shadow: none; padding: 12px max(22px, calc((100% - 800px) / 2)) 18px; }
     body.general-chat .composer > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
     body.general-chat .composer textarea { min-height: 54px; max-height: 180px; border: 1px solid #cbd5df; border-radius: 18px; padding: 14px 17px; font-size: 15px; box-shadow: 0 2px 10px #2233480c; }
@@ -473,7 +474,7 @@
         <p class="eyebrow">LOCAL AI</p>
         <h2 id="chatTitle" class="chat-title" tabindex="-1">直接开始对话</h2>
         <p id="chatDescription" class="subtle" style="margin-bottom:0">普通聊天直接调用本地 Ollama。工程资料和工具按需使用。</p>
-        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><span id="knowledgeBadge" class="knowledge-badge">知识库自动检索</span><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
+        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><span id="knowledgeBadge" class="knowledge-badge" role="status" aria-atomic="true">知识库自动检索</span><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
         <div class="badges"><span id="modelBadge" class="badge">Ollama 待调用</span><span id="memoryBadge" class="badge">长期记忆 0 条</span><span id="evidenceBadges"><span id="graphBadge" class="badge warn">图谱未导入</span> <span id="projectBadge" class="badge">未选择工程报告</span></span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
@@ -710,10 +711,19 @@
         if (!succeeded && result.model_error) meta.append(el('div', `调用错误：${result.model_error}`));
         if (result.knowledge?.sources?.length) {
           const sources = el('details', undefined, 'knowledge-sources');
-          sources.append(el('summary', `查看知识库检索片段 · ${result.knowledge.sources.length} 条`));
+          sources.append(el('summary', `查看候选原文 · ${result.knowledge.sources.length} 条（模型回答未核验）`));
           const list = el('ol');
           for (const source of result.knowledge.sources) {
-            list.append(el('li', `${source.title} · 文档 ${source.document_id} · 片段 ${source.chunk_id}`));
+            const item = el('li');
+            item.append(el('span', `${source.title} · 文档 ${source.document_id} · 片段 ${source.chunk_id}${source.authority === 'candidate' ? ' · 候选' : ''}`));
+            if (source.filename) {
+              const link = el('a', '查看来源');
+              link.href = '/api/source?name=' + encodeURIComponent(source.filename);
+              link.target = '_blank'; link.rel = 'noopener';
+              item.append(' · ', link);
+            }
+            if (source.excerpt) item.append(el('blockquote', source.excerpt));
+            list.append(item);
           }
           sources.append(list);
           meta.append(sources);
@@ -782,7 +792,7 @@
         $('modelBadge').textContent = result.status === 'answered' ? `Ollama ${result.model?.name || ''} 已回答` : result.status === 'cancelled' ? '生成已停止' : 'Ollama 调用失败';
         $('modelBadge').classList.toggle('warn', result.status !== 'answered');
         const knowledge = result.knowledge || {};
-        $('knowledgeBadge').textContent = knowledge.status === 'retrieved' ? `知识库检索 · ${knowledge.sources.length} 条` : knowledge.status === 'no_match' ? '知识库 · 无匹配' : knowledge.status === 'unavailable' ? '知识库暂不可用' : '知识库未连接';
+        $('knowledgeBadge').textContent = knowledge.status === 'graph_candidates' ? `知识图谱候选 · ${knowledge.sources.length} 条` : knowledge.status === 'graph_no_match' ? '知识图谱 · 无匹配' : knowledge.status === 'retrieved' ? `知识库检索 · ${knowledge.sources.length} 条` : knowledge.status === 'no_match' ? '知识库 · 无匹配' : knowledge.status === 'unavailable' ? '知识库暂不可用' : '知识库未连接';
         return;
       }
       currentEvidence = result;

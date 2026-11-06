@@ -13,6 +13,8 @@ from automotive_workbench.ai_chat import ask_general, ask_general_stream
 from automotive_workbench.explanation_services import ServiceError
 from automotive_workbench.knowledge_chat import forget, history, new_session, remember
 from automotive_workbench.knowledge_chat_server import WorkspaceServer
+from automotive_workbench.knowledge_graph_workspace import import_graph
+from tests.test_knowledge_graph_chat import fixture
 
 
 class FakeClient:
@@ -172,6 +174,38 @@ class DirectChatTest(unittest.TestCase):
             self.assertEqual(result["knowledge"]["sources"][0]["chunk_id"], 7)
             self.assertTrue(any("CAN 手册" in item["content"]
                                 for item in FakeClient.calls[0]["messages"]))
+
+    def test_active_graph_is_searched_automatically_as_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw, sources = fixture()
+            manifest = import_graph(root, raw, sources, site_version="site-live")
+            db = root / "chat.sqlite3"
+            with patch("automotive_workbench.ai_chat.StreamingChatClient", FakeClient):
+                result = ask_general_stream(
+                    root, db, session_id=new_session(db), question="CanIf 是什么",
+                    model="fake:2b", ollama_url="http://127.0.0.1:11434",
+                    emit=lambda _kind, _payload: None, cancelled=lambda: False,
+                    register_client=lambda _client: None)
+            self.assertEqual(result["knowledge"]["status"], "graph_candidates")
+            self.assertEqual(result["knowledge"]["graph_sha256"], manifest["graph_sha256"])
+            self.assertEqual(result["knowledge"]["sources"][0]["authority"], "candidate")
+            self.assertEqual(result["knowledge"]["sources"][0]["filename"], "source-doc1.md")
+            self.assertTrue(any("尚未独立核实" in item["content"]
+                                for item in FakeClient.calls[0]["messages"]))
+
+    def test_active_graph_no_match_keeps_direct_chat(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw, sources = fixture()
+            import_graph(root, raw, sources)
+            with patch("automotive_workbench.ai_chat.OllamaModelClient", FakeClient):
+                result = ask_general(root, root / "chat.sqlite3",
+                                     session_id=new_session(root / "chat.sqlite3"),
+                                     question="你好", model="fake:2b",
+                                     ollama_url="http://127.0.0.1:11434")
+            self.assertEqual(result["status"], "answered")
+            self.assertEqual(result["knowledge"]["status"], "graph_no_match")
 
     def test_knowledge_outage_is_visible_and_direct_chat_continues(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

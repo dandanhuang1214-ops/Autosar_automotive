@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
+import os
 import secrets
 import sqlite3
 import threading
@@ -27,6 +29,7 @@ from automotive_workbench.mcp_evidence_client import (
     load_project_evidence, propose_project_via_mcp, validate_endpoint,
     validate_project_via_mcp,
 )
+from automotive_workbench.site_graph_sync import sync_site_graph
 
 HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="utf-8")
 
@@ -103,7 +106,7 @@ class Handler(BaseHTTPRequestHandler):
                              "sessions": [dict(x) for x in rows],
                              "messages": messages,
                              "memories": memories(self.server.db_path, memory_scope or "global"),
-                             "knowledge_configured": bool(self.server.knowledge_url)})
+                             "knowledge_configured": bool(self.server.knowledge_url or active)})
             return
         if route.path == "/api/source":
             name = parse_qs(route.query).get("name", [""])[0]
@@ -281,7 +284,15 @@ def main() -> None:
     parser.add_argument("--mcp-url", help="Optional local Workbench MCP evidence endpoint")
     parser.add_argument("--knowledge-url",
                         help="Explicit knowledge assistant origin; searched automatically for every general chat")
+    parser.add_argument("--sync-graph-site", action="store_true",
+                        help="Refresh the owner's private automotive graph Site before serving")
     args = parser.parse_args()
+    site_token = os.environ.pop("AUTOMOTIVE_GRAPH_SITE_TOKEN", "")
+    if args.sync_graph_site or site_token:
+        if not site_token:
+            site_token = getpass.getpass("Automotive graph Site access token: ")
+        manifest = sync_site_graph(args.data, site_token)
+        print(f"Automotive graph ready: {manifest['graph_sha256'][:12]}", flush=True)
     server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url,
                              mcp_url=args.mcp_url, knowledge_url=args.knowledge_url)
     print(f"Automotive Workbench: http://127.0.0.1:{args.port}/", flush=True)

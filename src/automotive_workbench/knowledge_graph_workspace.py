@@ -181,12 +181,17 @@ def import_graph(root: Path, raw: bytes, sources: dict[str, bytes], *, site_vers
 
 
 def search_graph(graph: dict[str, Any], question: str, limit: int = 6) -> dict[str, Any]:
-    words = [x.casefold() for x in re.findall(r"[A-Za-z][A-Za-z0-9_/-]{1,}|[\u4e00-\u9fff]{2,}", question)]
+    words = [x.casefold() for x in re.findall(r"[A-Za-z][A-Za-z0-9_/-]{1,}", question)]
+    for phrase in re.findall(r"[\u4e00-\u9fff]{2,}", question):
+        words.extend(phrase[index:index + 2] for index in range(len(phrase) - 1))
     scored = []
     for node in graph["nodes"]:
         label = str(node.get("label", "")).casefold()
         aliases = str(node.get("aliases", "")).casefold()
-        score = sum(4 if word in label else 2 if word in aliases else 0 for word in words)
+        title = str(node.get("title", "")).casefold()
+        summary = str(node.get("summary", "")).casefold()
+        score = sum(4 if word in label else 3 if word in aliases or word in title
+                    else 1 if word in summary else 0 for word in set(words))
         if score:
             scored.append((score, node["id"], node))
     selected = [item[2] for item in sorted(scored, key=lambda x: (-x[0], x[1]))[:limit]]
