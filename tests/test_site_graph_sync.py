@@ -60,6 +60,35 @@ class SiteGraphSyncTest(unittest.TestCase):
                 sync_site_graph(Path(directory), "private-token")
             fetch.assert_called_once()
 
+    def test_update_outage_and_recovery_preserve_verified_snapshot(self) -> None:
+        raw, sources = fixture()
+        updated = json.loads(raw)
+        updated["nodes"][0]["summary"] = "A revised candidate after recovery"
+        new_raw = json.dumps(updated, ensure_ascii=False).encode()
+        served = {"graph.json": raw, **sources}
+
+        def fetch(name, _token, _limit):
+            value = served[name]
+            if isinstance(value, OSError):
+                raise value
+            return value
+
+        with tempfile.TemporaryDirectory() as directory, \
+                patch("automotive_workbench.site_graph_sync._fetch", side_effect=fetch):
+            root = Path(directory)
+            first = sync_site_graph(root, "private-token")
+            served["graph.json"] = OSError("site unavailable")
+            with self.assertRaisesRegex(OSError, "site unavailable"):
+                sync_site_graph(root, "private-token")
+            self.assertEqual(active_snapshot(root)[1]["graph_sha256"], first["graph_sha256"])
+            served["graph.json"] = new_raw
+            second = sync_site_graph(root, "private-token")
+            self.assertNotEqual(second["graph_sha256"], first["graph_sha256"])
+            self.assertEqual(second["previous_graph_sha256"], first["graph_sha256"])
+            self.assertEqual(second["diff"]["nodes"]["changed"], ["K001"])
+            self.assertEqual(active_snapshot(root)[0]["nodes"][0]["summary"],
+                             "A revised candidate after recovery")
+
 
 if __name__ == "__main__":
     unittest.main()

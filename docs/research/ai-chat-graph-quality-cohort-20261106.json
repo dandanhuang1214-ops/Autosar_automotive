@@ -1,0 +1,21 @@
+{
+  "format": "graph-chat-quality-cohort-0.1",
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "questions": [
+    {
+      "id": "ff-length",
+      "question": "在 First Frame 示例 10 1B 中，27 字节是整个 UDS payload 的长度，还是该 CAN 帧的数据长度？请仅根据候选片段回答并标明资料序号。",
+      "target_chunk_id": "chunk.week07.K002"
+    },
+    {
+      "id": "nrc-limitation",
+      "question": "在 7F 22 31 中，可以仅凭 NRC 0x31 断定 ECU 不支持该 DID 吗？请仅根据候选片段回答并标明资料序号。",
+      "target_chunk_id": "chunk.week07.K015"
+    },
+    {
+      "id": "canif-boundary",
+      "question": "CanIf 会解析 0x22 并判断 DID 是否存在吗？请仅根据候选片段回答并标明资料序号。",
+      "target_chunk_id": "chunk.week07.K005"
+    }
+  ]
+}

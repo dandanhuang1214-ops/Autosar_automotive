@@ -56,3 +56,14 @@ PYTHONPATH=src .venv/bin/python -m automotive_workbench.knowledge_chat_server \
 - 浏览器中的同一短句指令曾得到偏题/虚构自我描述，也曾正确照答。这里只证明链路和状态显示，模型内容质量尚未通过独立评测。
 
 下一步先核对模型引用的资料序号与实际检索片段是否一致，并补服务恢复场景；随后按依赖推进 AI 平台 MCP、工具调用和 Agent。Workbench P31 0.2 已验收，本轮不推进 Workbench。
+
+## 图谱回答引用审阅（进行中）
+
+`chat_citation_audit` 从本地流式回答 trace 生成审阅包，核对图谱候选片段确实进入该次模型提示、回答中的 `[资料N]` 是否在当次片段范围内。输出保留每条原文和逐句审阅位；`citation_index_status=indexed` 只表示编号有效，`semantic_status` 仍为 `pending_human_review`，需要审阅者判断每句话的语义依据。原始 trace 与审阅包都放在忽略目录，不上传私有站点内容。
+
+```bash
+PYTHONPATH=src .venv/bin/python -m automotive_workbench.chat_citation_audit \
+  output/knowledge-chat/runs/<trace-id>.json output/knowledge-chat/reviews/<trace-id>.json
+```
+
+[全新问题集](../research/ai-chat-graph-quality-cohort-20261106.json)固定了站点 v5 图谱哈希、三道未见问题和各题期望检索片段。`scripts/run_graph_chat_quality_cohort.py` 将已验证本地图谱复制到隔离输出目录，对指定模型逐题新建会话、流式运行并保存引用审阅包。模型答案仍须逐句审阅；目标片段召回、编号有效和回答语义分别计量。站点同步另有“更新时断线保留旧活动快照、恢复后切换新版”的回归。
