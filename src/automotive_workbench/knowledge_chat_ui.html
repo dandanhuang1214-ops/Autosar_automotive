@@ -363,6 +363,76 @@
       .composer { padding-top: 14px; padding-bottom: 14px; }
       .composer textarea { min-height: 70px; }
     }
+    /* Chat-first reading surface: compact controls, centered transcript, persistent composer. */
+    body.general-chat { background: #fff; }
+    body.general-chat .topbar { background: #fff; color: #202b36; border-bottom: 1px solid #e6e9ed; }
+    body.general-chat .brand h1 { color: #202b36; }
+    body.general-chat .brand small { color: #627080; }
+    body.general-chat .mark { background: #eff3f8; color: #245ca6; }
+    body.general-chat .nav-item { color: #526273; }
+    body.general-chat .nav-item:hover { color: #172433; background: #f2f5f8; }
+    body.general-chat .nav-item[aria-current=page] { color: #172433; border-bottom-color: #245ca6; }
+    body.general-chat .top-status { color: #627080; }
+    body.general-chat .sidebar { background: #f7f8fa; color: #273443; border-right-color: #e7ebef; }
+    body.general-chat .sidebar h3, body.general-chat .sidebar .eyebrow { color: #5b6978; }
+    body.general-chat .sidebar .session-section { border-color: #e1e6eb; }
+    body.general-chat .sidebar .session-item { color: #334153; border-radius: 10px; }
+    body.general-chat .sidebar .session-item:hover { background: #eef1f5; }
+    body.general-chat .sidebar .session-item[aria-current=true] { background: #e8eef7; border-color: #d4e0f0; }
+    body.general-chat .sidebar .session-item small { color: #697889; }
+    body.general-chat .sidebar .new-session { background: #fff; border-color: #d6dee7; color: #253b57; border-radius: 10px; }
+    body.general-chat .sidebar .new-session:hover { background: #edf3fa; }
+    body.general-chat .chat { border: 0; }
+    body.general-chat .chat-head { display: flex; align-items: center; gap: 12px; min-height: 66px; padding: 10px clamp(20px, 4vw, 48px); }
+    body.general-chat .chat-head .eyebrow, body.general-chat .chat-head .subtle, body.general-chat .chat-head .badges { display: none; }
+    body.general-chat .chat-title { font-size: 16px; font-weight: 650; letter-spacing: 0; margin: 0 auto 0 0; }
+    body.general-chat .chat-mode { margin: 0; gap: 7px; }
+    body.general-chat .chat-mode label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    body.general-chat .chat-mode select { width: auto; min-width: 0; border: 0; background: #f3f5f8; border-radius: 9px; font-size: 12px; }
+    .knowledge-badge { display: none; font-size: 11px; color: #536273; white-space: nowrap; }
+    body.general-chat .knowledge-badge { display: inline; }
+    body.general-chat #manageMemory { white-space: nowrap; }
+    body.general-chat .conversation { padding: 28px max(22px, calc((100% - 800px) / 2)); }
+    body.general-chat .empty { margin: min(18vh, 150px) auto 0; text-align: center; }
+    body.general-chat .empty .symbol { margin: 0 auto 20px; border-radius: 14px; }
+    body.general-chat .empty .subtle { margin-inline: auto; }
+    body.general-chat .message { max-width: 100%; margin-bottom: 24px; }
+    body.general-chat .message.user { max-width: min(78%, 600px); }
+    body.general-chat .message.assistant .message-body { background: transparent; border: 0; padding: 3px 0; font-size: 16px; line-height: 1.78; }
+    body.general-chat .message.user .message-body { background: #f0f2f5; border: 0; border-radius: 18px; padding: 12px 16px; font-size: 15px; }
+    body.general-chat .message-label { margin: 0 0 6px; color: #627080; font-size: 12px; }
+    body.general-chat .knowledge-sources { margin: 10px 0 0; color: #526273; font-size: 12px; }
+    body.general-chat .knowledge-sources summary { cursor: pointer; min-height: 32px; }
+    body.general-chat .knowledge-sources li { margin: 5px 0; }
+    body.general-chat .composer { border: 0; box-shadow: none; padding: 12px max(22px, calc((100% - 800px) / 2)) 18px; }
+    body.general-chat .composer > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    body.general-chat .composer textarea { min-height: 54px; max-height: 180px; border: 1px solid #cbd5df; border-radius: 18px; padding: 14px 17px; font-size: 15px; box-shadow: 0 2px 10px #2233480c; }
+    body.general-chat .composer-foot { margin-top: 8px; }
+    body.general-chat .composer-actions { margin-left: auto; }
+    .composer-actions { display: flex; gap: 8px; }
+    .message.streaming .message-body:empty::after { content: '正在生成…'; color: #718091; }
+    .message.cancelled .message-label { color: #805300; }
+    @media (max-width: 780px) {
+      body.general-chat .header-action { background: #f2f5f8; color: #334153; border-color: #d6dee7; }
+      body.general-chat .chat-head { flex-wrap: wrap; min-height: 74px; padding: 10px 16px; }
+      body.general-chat .chat-title { font-size: 14px; }
+      body.general-chat .chat-mode { gap: 3px; }
+      body.general-chat .chat-mode select { font-size: 11px; padding: 5px; }
+      body.general-chat .conversation { padding-inline: 18px; }
+      body.general-chat .composer { padding-inline: 16px; }
+      body.general-chat .sidebar { background: #f7f8fa; }
+      body.general-chat .workspace-close { background: #fff; color: #334153; border-color: #d6dee7; }
+    }
+    @media (max-width: 430px) {
+      body.general-chat .chat-head { flex-direction: column; align-items: stretch; gap: 5px; min-height: 88px; }
+      body.general-chat .chat-title { margin: 0; }
+      body.general-chat .chat-mode { width: 100%; justify-content: space-between; }
+      body.general-chat .chat-mode select { max-width: 145px; }
+      body.general-chat .knowledge-badge { font-size: 10px; }
+      body.general-chat #manageMemory { display: none; }
+      body.general-chat .composer-foot .button { width: auto; }
+      body.general-chat .message.user { max-width: 88%; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
   </style>
 </head>
@@ -403,7 +473,7 @@
         <p class="eyebrow">LOCAL AI</p>
         <h2 id="chatTitle" class="chat-title" tabindex="-1">直接开始对话</h2>
         <p id="chatDescription" class="subtle" style="margin-bottom:0">普通聊天直接调用本地 Ollama。工程资料和工具按需使用。</p>
-        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
+        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><span id="knowledgeBadge" class="knowledge-badge">知识库自动检索</span><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
         <div class="badges"><span id="modelBadge" class="badge">Ollama 待调用</span><span id="memoryBadge" class="badge">长期记忆 0 条</span><span id="evidenceBadges"><span id="graphBadge" class="badge warn">图谱未导入</span> <span id="projectBadge" class="badge">未选择工程报告</span></span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
@@ -411,7 +481,7 @@
       </div>
       <div class="composer">
         <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="输入问题，直接与本地 Ollama 对话"></textarea>
-        <div class="composer-foot"><label id="useModelWrap" class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><button id="askBtn" class="button" type="button">发送问题</button></div>
+        <div class="composer-foot"><label id="useModelWrap" class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><div class="composer-actions"><button id="stopBtn" class="button secondary" type="button" hidden>停止生成</button><button id="askBtn" class="button" type="button">发送</button></div></div>
         <p id="chatStatus" class="feedback" role="status">按 Ctrl + Enter 也可发送。</p>
       </div>
     </section>
@@ -497,6 +567,7 @@
     let projectTaskId = '';
     let evidenceTrigger = null;
     let toastTimer;
+    let streamingRequestId = '';
     $('report').value = localStorage.getItem('awb-report') || '';
     $('projectSource').value = localStorage.getItem('awb-project-source') || '';
     $('useModel').checked = localStorage.getItem('awb-use-model') !== 'false';
@@ -622,8 +693,10 @@
     function renderAssistant(result) {
       if (result.mode === 'general') {
         const succeeded = result.status === 'answered';
-        const box = renderMessage('assistant', succeeded ? result.answer : 'Ollama 未返回可用回答。请检查服务状态后重试。', 'general');
-        box.querySelector('.message-label').textContent = succeeded ? `Ollama ${result.model?.name || ''} · 模型回答` : 'Ollama 调用失败';
+        const stopped = result.status === 'cancelled';
+        const box = renderMessage('assistant', result.answer || (stopped ? '已停止生成。' : 'Ollama 未返回可用回答。请检查服务状态后重试。'), 'general');
+        if (stopped) box.classList.add('cancelled');
+        box.querySelector('.message-label').textContent = succeeded ? `Ollama ${result.model?.name || ''} · 模型回答` : stopped ? '已停止 · 回答未完成' : 'Ollama 调用失败';
         const meta = el('div', undefined, 'model-meta');
         const when = result.called_at ? new Date(result.called_at).toLocaleString('zh-CN', { hour12: false }) : '时间未知';
         const elapsed = typeof result.elapsed_ms === 'number' ? `${(result.elapsed_ms / 1000).toFixed(1)} 秒` : '耗时未知';
@@ -635,6 +708,16 @@
           meta.append(detail);
         }
         if (!succeeded && result.model_error) meta.append(el('div', `调用错误：${result.model_error}`));
+        if (result.knowledge?.sources?.length) {
+          const sources = el('details', undefined, 'knowledge-sources');
+          sources.append(el('summary', `查看知识库检索片段 · ${result.knowledge.sources.length} 条`));
+          const list = el('ol');
+          for (const source of result.knowledge.sources) {
+            list.append(el('li', `${source.title} · 文档 ${source.document_id} · 片段 ${source.chunk_id}`));
+          }
+          sources.append(list);
+          meta.append(sources);
+        }
         box.append(meta);
         return box;
       }
@@ -696,8 +779,10 @@
     function showEvidence(result, selectedBox = null, reveal = false) {
       if (result.mode === 'general') {
         currentEvidence = null; projectHash = '';
-        $('modelBadge').textContent = result.status === 'answered' ? `Ollama ${result.model?.name || ''} 已回答` : 'Ollama 调用失败';
+        $('modelBadge').textContent = result.status === 'answered' ? `Ollama ${result.model?.name || ''} 已回答` : result.status === 'cancelled' ? '生成已停止' : 'Ollama 调用失败';
         $('modelBadge').classList.toggle('warn', result.status !== 'answered');
+        const knowledge = result.knowledge || {};
+        $('knowledgeBadge').textContent = knowledge.status === 'retrieved' ? `知识库检索 · ${knowledge.sources.length} 条` : knowledge.status === 'no_match' ? '知识库 · 无匹配' : knowledge.status === 'unavailable' ? '知识库暂不可用' : '知识库未连接';
         return;
       }
       currentEvidence = result;
@@ -735,6 +820,7 @@
       if (!response.ok) throw Error(data.error || '工作区状态加载失败');
       if (!data.sessions.length) { const created = await api('/api/session', {}); sessionId = created.session_id; localStorage.setItem('awb-session', sessionId); return refresh(); }
       activeHash = data.active?.graph_sha256 || '';
+      $('knowledgeBadge').textContent = data.knowledge_configured ? '知识库自动检索' : '知识库未连接';
       document.body.classList.toggle('no-graph', !data.active);
       const state = $('graphState'); state.classList.toggle('missing', !data.active);
       state.replaceChildren();
@@ -750,7 +836,7 @@
         item.title = row.title || '新会话';
         item.append(el('strong', row.title || '新会话'), el('small', row.created_at.slice(5, 16).replace('T', ' ')));
         if (row.id === sessionId) item.setAttribute('aria-current', 'true');
-        item.onclick = async () => { sessionId = row.id; try { await refresh(); setView('chat'); } catch (error) { showError(error); } };
+        item.onclick = async () => { if (streamingRequestId) return; sessionId = row.id; try { await refresh(); setView('chat'); } catch (error) { showError(error); } };
         const entry = el('li'); entry.append(item); sessionList.append(entry);
       }
       localStorage.setItem('awb-session', sessionId);
@@ -795,23 +881,79 @@
       } catch (error) { feedback('projectTaskStatus', error.message, true); button.disabled = false; updateSteps(1); }
     };
     $('goToChat').onclick = () => { setChatMode('evidence'); setView('chat'); $('question').focus(); };
-    $('newSession').onclick = async () => { try { const created = await api('/api/session', {}); sessionId = created.session_id; setChatMode('general'); await refresh(); setView('chat'); $('question').focus(); } catch (error) { showError(error); } };
+    $('newSession').onclick = async () => { if (streamingRequestId) return; try { const created = await api('/api/session', {}); sessionId = created.session_id; setChatMode('general'); await refresh(); setView('chat'); $('question').focus(); } catch (error) { showError(error); } };
     $('importBtn').onclick = async () => {
       const button = $('importBtn'); button.disabled = true; feedback('importStatus', '正在核验文件与来源哈希…');
       try { const files = [...$('files').files]; if (!files.length) throw Error('请选择 graph.json 和对应的全部来源 Markdown。'); const contents = {}; for (const file of files) contents[file.name] = await file.text(); const result = await api('/api/import', { files: contents, site_version: $('siteVersion').value.trim() || '未标记' }); const changed = Object.values(result.diff).reduce((sum, value) => sum + value.added.length + value.removed.length + value.changed.length, 0); feedback('importStatus', `核验通过：${result.graph_sha256.slice(0, 12)}，${changed} 项对象差异。`); await refresh(); } catch (error) { feedback('importStatus', error.message, true); } finally { button.disabled = false; }
     };
     $('reviewImportBtn').onclick = async () => { try { const file = $('reviewFile').files[0]; if (!file) throw Error('请选择站点导出的核实记录 JSON。'); await api('/api/reviews/import', { content: await file.text() }); await refresh(); } catch (error) { feedback('reviewState', error.message, true); } };
+    async function streamGeneral(question) {
+      const requestId = crypto.randomUUID();
+      streamingRequestId = requestId;
+      $('stopBtn').hidden = false;
+      $('chatMode').disabled = true;
+      $('newSession').disabled = true;
+      renderMessage('user', question, 'general');
+      const box = renderMessage('assistant', '', 'general');
+      box.classList.add('streaming');
+      box.querySelector('.message-label').textContent = 'Ollama · 正在回答';
+      const body = box.querySelector('.message-body');
+      body.textContent = '';
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Workbench-Token': token },
+        body: JSON.stringify({ mode: 'general', session_id: sessionId, question, request_id: requestId })
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw Error(error.error || '流式请求失败');
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let completed = null;
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const event = JSON.parse(line);
+            if (event.type === 'delta') {
+              body.textContent += event.content;
+              $('messages').scrollTop = $('messages').scrollHeight;
+            } else if (event.type === 'done') {
+              completed = event;
+            }
+          }
+          if (done) break;
+        }
+      } finally { reader.releaseLock(); }
+      if (!completed) throw Error('流式连接中断，回答未完成。');
+      $('question').value = '';
+      await refresh();
+      feedback('chatStatus', completed.status === 'answered' ? '回答已完成。' : completed.status === 'cancelled' ? '已停止生成；已收到的内容保留在会话中。' : 'Ollama 未返回完整回答，请检查服务。', completed.status === 'model_unavailable');
+    }
+    $('stopBtn').onclick = async () => {
+      if (!streamingRequestId) return;
+      $('stopBtn').disabled = true;
+      feedback('chatStatus', '正在停止生成…');
+      try { await api('/api/chat/cancel', { request_id: streamingRequestId, session_id: sessionId }); }
+      catch (error) { feedback('chatStatus', error.message, true); }
+    };
     $('askBtn').onclick = async () => {
       const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
       const mode = $('chatMode').value;
       const button = $('askBtn'); button.disabled = true; button.textContent = '正在回答…';
-      feedback('chatStatus', mode === 'general' ? '正在调用本地 Ollama…' : '正在重放工程报告并查找图谱线索…');
+      feedback('chatStatus', mode === 'general' ? '正在检索知识库并调用本地 Ollama…' : '正在重放工程报告并查找图谱线索…');
       try {
+        if (mode === 'general') { await streamGeneral(question); return; }
         const result = await api('/api/chat', { session_id: sessionId, question, mode, report: mode === 'evidence' ? $('report').value.trim() : '', use_model: mode === 'evidence' ? $('useModel').checked : true });
         $('question').value = '';
         await refresh();
         feedback('chatStatus', mode === 'general' ? result.status === 'answered' ? 'Ollama 已返回回答。' : 'Ollama 未返回可用回答，请检查服务。' : result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。');
-      } catch (error) { feedback('chatStatus', error.message, true); } finally { button.disabled = false; button.textContent = '发送问题'; }
+      } catch (error) { feedback('chatStatus', error.message, true); await refresh().catch(showError); } finally { streamingRequestId = ''; $('stopBtn').hidden = true; $('stopBtn').disabled = false; $('chatMode').disabled = false; $('newSession').disabled = false; button.disabled = false; button.textContent = '发送'; }
     };
     $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
     $('saveMemory').onclick = async () => { try { const scope = $('memoryScope').value === 'global' ? 'global' : projectHash; if (!scope) throw Error('先选择工程报告并提问，再保存当前工程记忆。'); await api('/api/memory', { scope, content: $('memory').value }); $('memory').value = ''; feedback('memoryStatus', '已保存长期记忆。'); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };

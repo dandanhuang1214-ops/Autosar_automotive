@@ -5,13 +5,16 @@ import argparse
 import json
 import secrets
 import sqlite3
+import threading
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import parse_qs, urlsplit
 
 from automotive_workbench.explanation_services import parse_json
-from automotive_workbench.ai_chat import ask_general
+from automotive_workbench.explanation_services import Endpoint
+from automotive_workbench.ai_chat import ask_general, ask_general_stream
 from automotive_workbench.knowledge_chat import (
     _connect, ask, edit_memory, forget, history, memories, new_session, remember,
 )
@@ -30,15 +33,18 @@ HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="ut
 
 class WorkspaceServer(ThreadingHTTPServer):
     def __init__(self, address: tuple[str, int], root: Path, model: str, ollama_url: str,
-                 mcp_url: str | None = None):
+                 mcp_url: str | None = None, knowledge_url: str | None = None):
         if address[0] not in {"127.0.0.1", "localhost"}:
             raise ValueError("Workbench web server must bind to loopback")
         self.root = root
         self.db_path = root / "chat.sqlite3"
         self.model = model
         self.ollama_url = ollama_url
+        self.knowledge_url = Endpoint(knowledge_url, 4).url if knowledge_url else None
         self.mcp_url = validate_endpoint(mcp_url) if mcp_url else None
         self.token = secrets.token_urlsafe(24)
+        self.active_chats: dict[str, dict[str, Any]] = {}
+        self.chat_lock = threading.Lock()
         super().__init__(address, Handler)
 
 
@@ -96,7 +102,8 @@ class Handler(BaseHTTPRequestHandler):
                              "reviews": active_reviews(self.server.root),
                              "sessions": [dict(x) for x in rows],
                              "messages": messages,
-                             "memories": memories(self.server.db_path, memory_scope or "global")})
+                             "memories": memories(self.server.db_path, memory_scope or "global"),
+                             "knowledge_configured": bool(self.server.knowledge_url)})
             return
         if route.path == "/api/source":
             name = parse_qs(route.query).get("name", [""])[0]
@@ -129,6 +136,71 @@ class Handler(BaseHTTPRequestHandler):
             body = parse_json(self.rfile.read(size).decode("utf-8"))
             if not isinstance(body, dict):
                 raise ValueError("Expected JSON object")
+            if self.path == "/api/chat/cancel":
+                request_id = str(body.get("request_id", ""))
+                session_id = str(body.get("session_id", ""))
+                with self.server.chat_lock:
+                    active = self.server.active_chats.get(request_id)
+                    if active is None or active["session_id"] != session_id:
+                        raise ValueError("Active chat request not found")
+                    active["cancel"].set()
+                    client = active.get("client")
+                if client is not None:
+                    try:
+                        client.cancel_stream()
+                    except OSError:
+                        pass
+                self._json(200, {"cancelled": True})
+                return
+            if self.path == "/api/chat/stream":
+                if body.get("mode") != "general":
+                    raise ValueError("Streaming requires general chat mode")
+                request_id = str(body.get("request_id", ""))
+                if str(uuid.UUID(request_id)) != request_id:
+                    raise ValueError("Invalid chat request ID")
+                session_id = str(body.get("session_id", ""))
+                question = body.get("question", "")
+                if not isinstance(question, str) or not question.strip() or len(question) > 2000:
+                    raise ValueError("Question must contain 1..2000 characters")
+                with _connect(self.server.db_path) as db:
+                    if db.execute("SELECT 1 FROM sessions WHERE id=?", (session_id,)).fetchone() is None:
+                        raise ValueError("Unknown chat session")
+                active: dict[str, Any] = {"session_id": session_id,
+                                          "cancel": threading.Event(), "client": None}
+                with self.server.chat_lock:
+                    if request_id in self.server.active_chats or any(
+                        item["session_id"] == session_id for item in self.server.active_chats.values()
+                    ):
+                        raise ValueError("Chat request is already active")
+                    self.server.active_chats[request_id] = active
+                try:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("X-Content-Type-Options", "nosniff")
+                    self.end_headers()
+
+                    def emit(kind: str, payload: dict[str, Any]) -> None:
+                        raw = json.dumps({"type": kind, **payload}, ensure_ascii=False).encode("utf-8") + b"\n"
+                        self.wfile.write(raw)
+                        self.wfile.flush()
+
+                    ask_general_stream(
+                        self.server.root, self.server.db_path, session_id=session_id,
+                        question=question, model=self.server.model,
+                        ollama_url=self.server.ollama_url,
+                        knowledge_url=self.server.knowledge_url, emit=emit,
+                        cancelled=active["cancel"].is_set,
+                        register_client=lambda client: active.__setitem__("client", client),
+                    )
+                except (BrokenPipeError, ConnectionResetError):
+                    active["cancel"].set()
+                    if active.get("client") is not None:
+                        active["client"].cancel_stream()
+                finally:
+                    with self.server.chat_lock:
+                        self.server.active_chats.pop(request_id, None)
+                return
             result: dict[str, Any]
             if self.path == "/api/session":
                 result = {"session_id": new_session(self.server.db_path)}
@@ -149,7 +221,8 @@ class Handler(BaseHTTPRequestHandler):
                         self.server.root, self.server.db_path,
                         session_id=str(body.get("session_id", "")),
                         question=str(body.get("question", "")),
-                        model=self.server.model, ollama_url=self.server.ollama_url)
+                        model=self.server.model, ollama_url=self.server.ollama_url,
+                        knowledge_url=self.server.knowledge_url)
                 elif mode == "evidence":
                     report = body.get("report")
                     mcp_url = self.server.mcp_url
@@ -206,9 +279,11 @@ def main() -> None:
     parser.add_argument("--model", default="qwen3.5:2b")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--mcp-url", help="Optional local Workbench MCP evidence endpoint")
+    parser.add_argument("--knowledge-url", default="http://127.0.0.1:18080",
+                        help="Existing knowledge assistant origin; searched automatically for every general chat")
     args = parser.parse_args()
     server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url,
-                             mcp_url=args.mcp_url)
+                             mcp_url=args.mcp_url, knowledge_url=args.knowledge_url)
     print(f"Automotive Workbench: http://127.0.0.1:{args.port}/", flush=True)
     try:
         server.serve_forever()
