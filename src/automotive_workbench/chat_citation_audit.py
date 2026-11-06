@@ -12,8 +12,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-_CITATION = re.compile(r"\[资料([0-9]+)\]")
-_SENTENCE = re.compile(r".*?(?:[。！？!?；;]\s*(?:\[资料[0-9]+\])?|\n|$)", re.DOTALL)
+_CITATION = re.compile(r"\[\s*资料\s*([0-9]+)\s*\]")
+_SENTENCE = re.compile(r".*?(?:[。！？!?；;]\s*(?:\[\s*资料\s*[0-9]+\s*\])?|\n|$)", re.DOTALL)
 
 
 def audit_trace(path: Path) -> dict[str, Any]:

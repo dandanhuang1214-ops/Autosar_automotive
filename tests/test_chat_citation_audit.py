@@ -29,6 +29,11 @@ class CitationAuditTest(unittest.TestCase):
             self.assertEqual(packet["sentence_reviews"][0]["cited_indices"], [1])
             self.assertTrue(all(item["support"] == "pending_human_review"
                                 for item in packet["sentence_reviews"]))
+            trace["result"]["answer"] = "只负责映射。[资料 1]"
+            path.write_text(json.dumps(trace, ensure_ascii=False), encoding="utf-8")
+            spaced = audit_trace(path)
+            self.assertEqual(spaced["citation_index_status"], "indexed")
+            self.assertEqual(spaced["sentence_reviews"][0]["cited_indices"], [1])
             trace["messages"][0]["content"] = "[资料1] CanIf\n不同的内容。"
             path.write_text(json.dumps(trace, ensure_ascii=False), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "absent from the model prompt"):
