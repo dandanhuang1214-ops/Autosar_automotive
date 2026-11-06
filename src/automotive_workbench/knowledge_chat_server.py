@@ -279,8 +279,8 @@ def main() -> None:
     parser.add_argument("--model", default="qwen3.5:2b")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--mcp-url", help="Optional local Workbench MCP evidence endpoint")
-    parser.add_argument("--knowledge-url", default="http://127.0.0.1:18080",
-                        help="Existing knowledge assistant origin; searched automatically for every general chat")
+    parser.add_argument("--knowledge-url",
+                        help="Explicit knowledge assistant origin; searched automatically for every general chat")
     args = parser.parse_args()
     server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url,
                              mcp_url=args.mcp_url, knowledge_url=args.knowledge_url)

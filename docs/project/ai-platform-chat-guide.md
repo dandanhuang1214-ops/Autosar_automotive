@@ -26,11 +26,13 @@ Chat 0.1 的 `/api/chat` 完整 JSON 合约仍保留，供旧调用方使用。C
 
 状态：实现提交 `61258bf9340273fffe6d032c53f72d967bc1f2a6` / [core-ci run `42143392204`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42143392204) head 一致，`runtime-currency`、Windows/Ubuntu `core-contracts`、Windows/Ubuntu `runtime-evidence`、Windows/Ubuntu `controlled-rejections` 七个实际 job 全部 `success`，Chat 0.2 实现门已远端验收。本段由后续文档状态提交回填，不把文档提交视为实现 CI。普通聊天网页调用 `POST /api/chat/stream`，上游 Ollama `/api/chat` 明确使用 `stream: true`；浏览器逐段显示 NDJSON 内容。点击“停止生成”会调用 `POST /api/chat/cancel` 关闭本轮上游连接，已收到的文字以“回答未完成”保存；该轮不进入下一次模型上下文。旧 `/api/chat` 完整响应和工程证据问答合约保持兼容。
 
-服务器默认以 `--knowledge-url http://127.0.0.1:18080` 自动查询**已有知识助手**的 `/api/search`、`/api/documents` 和 `/api/evidence/{id}`。网页不要求用户逐次挑选资料；只接收现有服务已启用、ready、已审核且来源哈希一致的最多三条候选片段。回答旁显示检索状态和片段身份；模型的 `[资料序号]` 文字尚未经过逐条引用验证。无命中或服务不可用时，普通聊天继续运行，并明确显示知识库状态；不把无命中解释为整个知识库缺资料。服务地址属于启动配置，不作为用户每次提问的选择。
+2026-11-06 纠正：上述实现提交把默认知识源误接成旧 `simulink-assistant` 的 `127.0.0.1:18080`。用户指出这不是所指的汽车知识源；当前后续本地修正已取消默认连接，只有显式传入 `--knowledge-url` 才使用该服务。此前真实检索到的三条片段属于旧助手，**不能当成汽车知识图谱接入证据**。正确外部知识源与连接方式待确认；Chat 仍可直接调用 Ollama，知识状态显示“未连接”。此前实现提交的远端 CI 结论只覆盖其当时的代码。
+
+显式配置旧知识助手时，Chat 查询其 `/api/search`、`/api/documents` 和 `/api/evidence/{id}`。网页不要求用户逐次挑选资料；只接收服务已启用、ready、已审核且来源哈希一致的最多三条候选片段。回答旁显示检索状态和片段身份；模型的 `[资料序号]` 文字尚未经过逐条引用验证。无命中或服务不可用时，普通聊天继续运行，并明确显示知识库状态；不把无命中解释为整个知识库缺资料。
 
 聊天页参考 [ChatGPT 网页侧栏与输入区更新](https://help.openai.com/en/articles/6825453-chatgpt-release-notes)和其[停止生成操作](https://help.openai.com/en/articles/7996703-troubleshooting-chatgpt-error-messages)：保留左侧可点选会话，把阅读列与底部输入框居中，收紧顶部工程信息，并在生成期间显示停止按钮。实现只借鉴交互结构，没有复制品牌样式。
 
-本地证据：AI Chat、图谱聊天和项目入口专项 16 项通过，随后新增知识服务不可用专项 1 项通过；全量 566 tests 通过（2 项环境跳过）；Ruff 与差异检查通过。隔离 Ollama HTTP 服务和 Chromium 实测 `stream: true`、逐段显示、停止、历史保存，1440px/375px 无横向溢出、无页面脚本错误。现有 Docker Desktop 恢复后，真实 Ollama `0.31.1` 与原知识助手 `/health/ready` 均可用；首次真实聊天取得 370 个流式片段和完整回答，但 4 秒知识检索超时，明确记录 `unavailable`。按现有知识助手调用预算改为 30 秒后，第二条真实聊天检索到 3 条已审核片段，Ollama 返回 197 个流式片段、完整回答；两次原始 trace 均留本机忽略目录 `output/ai-chat-live-20261106/`。这验证了调用链和资料注入，尚未验证模型引用文字逐项准确。
+本地证据：AI Chat、图谱聊天和项目入口专项 16 项通过，随后新增知识服务不可用专项 1 项通过；全量 566 tests 通过（2 项环境跳过）；Ruff 与差异检查通过。隔离 Ollama HTTP 服务和 Chromium 实测 `stream: true`、逐段显示、停止、历史保存，1440px/375px 无横向溢出、无页面脚本错误。现有 Docker Desktop 恢复后，真实 Ollama `0.31.1` 与旧 `simulink-assistant` 知识助手 `/health/ready` 均可用；首次真实聊天取得 370 个流式片段和完整回答，但 4 秒知识检索超时，明确记录 `unavailable`。按旧助手调用预算改为 30 秒后，第二条真实聊天检索到 3 条片段，Ollama 返回 197 个流式片段、完整回答；两次原始 trace 均留本机忽略目录 `output/ai-chat-live-20261106/`。这只验证旧助手调用链，不证明目标汽车知识源接入，也未验证模型引用文字逐项准确。
 
 ## 既有图谱接法
 
