@@ -67,3 +67,5 @@ PYTHONPATH=src .venv/bin/python -m automotive_workbench.chat_citation_audit \
 ```
 
 [全新问题集](../research/ai-chat-graph-quality-cohort-20261106.json)固定了站点 v5 图谱哈希、三道未见问题和各题期望检索片段。`scripts/run_graph_chat_quality_cohort.py` 将已验证本地图谱复制到隔离输出目录，对指定模型逐题新建会话、流式运行并保存引用审阅包。模型答案仍须逐句审阅；目标片段召回、编号有效和回答语义分别计量。站点同步另有“更新时断线保留旧活动快照、恢复后切换新版”的回归。
+
+[本轮新题审阅与 2b/4b 速度实测](../research/ai-chat-graph-quality-review-20261106.md)记录显存峰值、首字时间、完整回答耗时和内容缺陷。对照没有改变平台默认模型；内容质量门仍未通过。

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import time
 from pathlib import Path
 
 from automotive_workbench.ai_chat import ask_general_stream
@@ -38,15 +39,32 @@ def main() -> None:
     summary = []
     for model in args.model:
         for item in cohort["questions"]:
+            session_id = new_session(db)
+            started = time.perf_counter()
+            first_delta_at: float | None = None
+
+            def emit(kind, _payload):
+                nonlocal first_delta_at
+                if kind == "delta" and first_delta_at is None:
+                    first_delta_at = time.perf_counter()
+
             response = ask_general_stream(
-                args.output, db, session_id=new_session(db), question=item["question"],
+                args.output, db, session_id=session_id, question=item["question"],
                 model=model, ollama_url=args.ollama_url,
-                emit=lambda _kind, _payload: None, cancelled=lambda: False,
+                emit=emit, cancelled=lambda: False,
                 register_client=lambda _client: None)
+            evaluation_ms = response["timings_ms"].get("eval_duration")
+            output_tokens = (response["model"] or {}).get("output_tokens")
             record = {"case_id": item["id"], "model": model,
                       "status": response["status"], "trace_id": response["trace_id"],
                       "knowledge_status": response["knowledge"]["status"],
-                      "model_identity": response["model"]}
+                      "model_identity": response["model"],
+                      "first_delta_ms": round((first_delta_at - started) * 1000, 1)
+                      if first_delta_at is not None else None,
+                      "elapsed_ms": response["elapsed_ms"],
+                      "output_tokens": output_tokens,
+                      "eval_tokens_per_second": round(output_tokens * 1000 / evaluation_ms, 1)
+                      if isinstance(output_tokens, int) and evaluation_ms else None}
             if response["status"] == "answered":
                 packet = audit_trace(args.output / "runs" / (response["trace_id"] + ".json"))
                 record["target_retrieved"] = any(
