@@ -24,7 +24,7 @@ Chat 0.1 的 `/api/chat` 完整 JSON 合约仍保留，供旧调用方使用。C
 
 ## Chat 0.2：流式聊天与现有知识助手
 
-状态：本地实现与验证完成，远端 CI 尚待实现提交后跟进。普通聊天网页调用 `POST /api/chat/stream`，上游 Ollama `/api/chat` 明确使用 `stream: true`；浏览器逐段显示 NDJSON 内容。点击“停止生成”会调用 `POST /api/chat/cancel` 关闭本轮上游连接，已收到的文字以“回答未完成”保存；该轮不进入下一次模型上下文。旧 `/api/chat` 完整响应和工程证据问答合约保持兼容。
+状态：实现提交 `61258bf9340273fffe6d032c53f72d967bc1f2a6` / [core-ci run `42143392204`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42143392204) head 一致，`runtime-currency`、Windows/Ubuntu `core-contracts`、Windows/Ubuntu `runtime-evidence`、Windows/Ubuntu `controlled-rejections` 七个实际 job 全部 `success`，Chat 0.2 实现门已远端验收。本段由后续文档状态提交回填，不把文档提交视为实现 CI。普通聊天网页调用 `POST /api/chat/stream`，上游 Ollama `/api/chat` 明确使用 `stream: true`；浏览器逐段显示 NDJSON 内容。点击“停止生成”会调用 `POST /api/chat/cancel` 关闭本轮上游连接，已收到的文字以“回答未完成”保存；该轮不进入下一次模型上下文。旧 `/api/chat` 完整响应和工程证据问答合约保持兼容。
 
 服务器默认以 `--knowledge-url http://127.0.0.1:18080` 自动查询**已有知识助手**的 `/api/search`、`/api/documents` 和 `/api/evidence/{id}`。网页不要求用户逐次挑选资料；只接收现有服务已启用、ready、已审核且来源哈希一致的最多三条候选片段。回答旁显示检索状态和片段身份；模型的 `[资料序号]` 文字尚未经过逐条引用验证。无命中或服务不可用时，普通聊天继续运行，并明确显示知识库状态；不把无命中解释为整个知识库缺资料。服务地址属于启动配置，不作为用户每次提问的选择。
 
@@ -42,4 +42,4 @@ Chat 0.1 的 `/api/chat` 完整 JSON 合约仍保留，供旧调用方使用。C
 - 真实浏览器确认默认普通聊天、路径隐藏、模型回答和调用时刻可见、工程模式路径按需显示、新会话回到普通聊天、记忆管理入口可用；375px 手机宽度无横向溢出和页面 JS 错误。另以不可用的本机模型端口验证页面明确显示“调用失败”而无伪回答。截图与场景记录在 `output/playwright/p31-ai-chat/`。
 - 浏览器中的同一短句指令曾得到偏题/虚构自我描述，也曾正确照答。这里只证明链路和状态显示，模型内容质量尚未通过独立评测。
 
-下一步先完成 Chat 0.2 实现提交及七 job 远端 CI；再补可验证引用与服务恢复场景。MCP、工具调用和 Agent 以 AI 平台 Host 为主线继续。Workbench P31 0.2 已验收，本轮不推进 Workbench。
+下一步先核对模型引用的资料序号与实际检索片段是否一致，并补服务恢复场景；随后按依赖推进 AI 平台 MCP、工具调用和 Agent。Workbench P31 0.2 已验收，本轮不推进 Workbench。
