@@ -36,6 +36,8 @@ Chat 0.1 的 `/api/chat` 完整 JSON 合约仍保留，供旧调用方使用。C
 
 ## 直接接入汽车知识图谱站点
 
+状态：实现 `4e6c00122f87910eae8571382e5ec4b02df48308` / [core-ci run `42180657587`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42180657587) head 一致，七个实际 job 全部 `success`，站点同步与自动候选检索的实现门已远端验收。此状态由后续文档提交回填；模型回答的语义准确性另列未通过。
+
 目标来源固定为用户确认的私有 [汽车软件知识图谱站点](https://automotive-knowledge-graph-oct21.silly-civet-8184.chatgpt.site/)。本地启动时可用 `--sync-graph-site` 从站点读取 `graph.json` 和其中声明的来源 Markdown；站点私有访问令牌由终端无回显输入，或在本次进程环境中通过 `AUTOMOTIVE_GRAPH_SITE_TOKEN` 提供。程序只将令牌发送到固定站点，拒绝重定向、异常文件名、超限文件和来源哈希不符；全部文件验证后才切换 `--data/active.json`。不保存访问令牌。无令牌时可继续使用已验证的本地快照；在站点发生变化后须再次同步，当前没有后台自动刷新。
 
 ```bash
