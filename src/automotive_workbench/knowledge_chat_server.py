@@ -16,7 +16,9 @@ from urllib.parse import parse_qs, urlsplit
 
 from automotive_workbench.explanation_services import parse_json
 from automotive_workbench.explanation_services import Endpoint
-from automotive_workbench.ai_chat import ask_general, ask_general_stream
+from automotive_workbench.ai_chat import (
+    CHAT_KEEP_ALIVE_CHOICES, _chat_keep_alive, ask_general, ask_general_stream,
+)
 from automotive_workbench.knowledge_chat import (
     _connect, ask, edit_memory, forget, history, memories, new_session, remember,
 )
@@ -36,13 +38,15 @@ HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="ut
 
 class WorkspaceServer(ThreadingHTTPServer):
     def __init__(self, address: tuple[str, int], root: Path, model: str, ollama_url: str,
-                 mcp_url: str | None = None, knowledge_url: str | None = None):
+                 mcp_url: str | None = None, knowledge_url: str | None = None,
+                 chat_keep_alive: str = "2m"):
         if address[0] not in {"127.0.0.1", "localhost"}:
             raise ValueError("Workbench web server must bind to loopback")
         self.root = root
         self.db_path = root / "chat.sqlite3"
         self.model = model
         self.ollama_url = ollama_url
+        self.chat_keep_alive = _chat_keep_alive(chat_keep_alive)
         self.knowledge_url = Endpoint(knowledge_url, 4).url if knowledge_url else None
         self.mcp_url = validate_endpoint(mcp_url) if mcp_url else None
         self.token = secrets.token_urlsafe(24)
@@ -193,6 +197,7 @@ class Handler(BaseHTTPRequestHandler):
                         question=question, model=self.server.model,
                         ollama_url=self.server.ollama_url,
                         knowledge_url=self.server.knowledge_url, emit=emit,
+                        keep_alive=self.server.chat_keep_alive,
                         cancelled=active["cancel"].is_set,
                         register_client=lambda client: active.__setitem__("client", client),
                     )
@@ -225,7 +230,8 @@ class Handler(BaseHTTPRequestHandler):
                         session_id=str(body.get("session_id", "")),
                         question=str(body.get("question", "")),
                         model=self.server.model, ollama_url=self.server.ollama_url,
-                        knowledge_url=self.server.knowledge_url)
+                        knowledge_url=self.server.knowledge_url,
+                        keep_alive=self.server.chat_keep_alive)
                 elif mode == "evidence":
                     report = body.get("report")
                     mcp_url = self.server.mcp_url
@@ -281,6 +287,8 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8767)
     parser.add_argument("--model", default="qwen3.5:2b")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    parser.add_argument("--chat-keep-alive", choices=CHAT_KEEP_ALIVE_CHOICES, default="2m",
+                        help="Ollama residence after a general chat response (default: 2m)")
     parser.add_argument("--mcp-url", help="Optional local Workbench MCP evidence endpoint")
     parser.add_argument("--knowledge-url",
                         help="Explicit knowledge assistant origin; searched automatically for every general chat")
@@ -294,7 +302,8 @@ def main() -> None:
         manifest = sync_site_graph(args.data, site_token)
         print(f"Automotive graph ready: {manifest['graph_sha256'][:12]}", flush=True)
     server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url,
-                             mcp_url=args.mcp_url, knowledge_url=args.knowledge_url)
+                             mcp_url=args.mcp_url, knowledge_url=args.knowledge_url,
+                             chat_keep_alive=args.chat_keep_alive)
     print(f"Automotive Workbench: http://127.0.0.1:{args.port}/", flush=True)
     try:
         server.serve_forever()

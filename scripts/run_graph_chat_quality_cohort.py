@@ -7,7 +7,7 @@ import json
 import time
 from pathlib import Path
 
-from automotive_workbench.ai_chat import ask_general_stream
+from automotive_workbench.ai_chat import CHAT_KEEP_ALIVE_CHOICES, ask_general_stream
 from automotive_workbench.chat_citation_audit import audit_trace
 from automotive_workbench.knowledge_chat import new_session
 from automotive_workbench.knowledge_graph_workspace import active_snapshot, import_graph
@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--model", action="append", required=True)
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    parser.add_argument("--keep-alive", choices=CHAT_KEEP_ALIVE_CHOICES, default="2m")
     args = parser.parse_args()
     if args.output.exists():
         raise ValueError("Cohort output already exists; choose a new directory")
@@ -51,6 +52,7 @@ def main() -> None:
             response = ask_general_stream(
                 args.output, db, session_id=session_id, question=item["question"],
                 model=model, ollama_url=args.ollama_url,
+                keep_alive=args.keep_alive,
                 emit=emit, cancelled=lambda: False,
                 register_client=lambda _client: None)
             evaluation_ms = response["timings_ms"].get("eval_duration")
@@ -80,6 +82,7 @@ def main() -> None:
         "format": "graph-chat-quality-run-0.1", "graph_sha256": digest,
         "cohort": str(args.cohort),
         "cohort_sha256": hashlib.sha256(cohort_raw).hexdigest(), "results": summary,
+        "keep_alive": args.keep_alive,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

@@ -1,0 +1,21 @@
+{
+  "format": "graph-chat-quality-cohort-0.1",
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "questions": [
+    {
+      "id": "did-count-limit",
+      "question": "教学会话中的 DcmDspMaxDidToRead 限制一次 0x22 请求的 DID 个数，还是返回字节数？请只根据候选片段回答，并说明该规范声称是否已独立核实。",
+      "target_chunk_id": "chunk.week07.K016"
+    },
+    {
+      "id": "server-runnable-trigger",
+      "question": "教学场景中的诊断读取 Server Runnable 必须改成 10ms 周期执行吗？请只根据候选片段回答并标明资料序号。",
+      "target_chunk_id": "chunk.week07.K024"
+    },
+    {
+      "id": "f111-offset",
+      "question": "教学 DID F111 的 Position 与 MotorStatus 都配置在 ByteOffset=0，能满足两个独立 1 字节元素的布局要求吗？请只根据候选片段回答并标明资料序号。",
+      "target_chunk_id": "chunk.week07.K027"
+    }
+  ]
+}

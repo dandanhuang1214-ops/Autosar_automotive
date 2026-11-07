@@ -59,6 +59,25 @@ class DirectChatTest(unittest.TestCase):
         FakeClient.calls = []
         FakeClient.fail = False
 
+    def test_chat_keep_alive_reaches_both_transports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            db = root / "chat.sqlite3"
+            session = new_session(db)
+            with patch("automotive_workbench.ai_chat.OllamaModelClient", FakeClient), \
+                 patch("automotive_workbench.ai_chat.StreamingChatClient", FakeClient):
+                ask_general(root, db, session_id=session, question="默认", model="fake:2b",
+                            ollama_url="http://127.0.0.1:11434")
+                ask_general_stream(
+                    root, db, session_id=session, question="试验", model="fake:2b",
+                    ollama_url="http://127.0.0.1:11434", keep_alive="5m",
+                    emit=lambda _kind, _payload: None, cancelled=lambda: False,
+                    register_client=lambda _client: None)
+            self.assertEqual([call["keep_alive"] for call in FakeClient.calls], ["2m", "5m"])
+            with self.assertRaises(ValueError):
+                ask_general(root, db, session_id=session, question="非法配置", model="fake:2b",
+                            ollama_url="http://127.0.0.1:11434", keep_alive="-1")
+
     def test_no_evidence_multiturn_and_call_time(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
