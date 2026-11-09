@@ -85,4 +85,4 @@ PYTHONPATH=src .venv/bin/python -m automotive_workbench.knowledge_chat_server \
   --data output/knowledge-chat --port 8767 --provider deepseek --model deepseek-flash
 ```
 
-不要把密钥写入命令行参数、仓库文件或聊天记录。未配置密钥时服务在绑定端口前报错；现有 `--provider ollama` 默认行为不变。工程证据问答和项目候选仍使用本机 Ollama（可由 `--local-model` 选择），尚未接入云端 Agent 工具循环。模拟 DeepSeek HTTP/SSE 与原 Chat/图谱专项测试已通过；用户尚未配置密钥，因此真实 DeepSeek 内容、首字、全答、费用及远端实现 CI 须另行记录，不能以替身测试代替。下一阶段以该模型适配为基础，建设 AI 平台首条自主选择图谱与 Workbench MCP 的只读 Agent 路径。
+不要把密钥写入命令行参数、仓库文件或聊天记录。未配置密钥时服务在绑定端口前报错；现有 `--provider ollama` 默认行为不变。工程证据问答和项目候选仍使用本机 Ollama（可由 `--local-model` 选择），尚未接入云端 Agent 工具循环。模拟 DeepSeek HTTP/SSE 与原 Chat/图谱专项共 24 项测试、Ruff、源文件 mypy 和页面脚本语法检查通过。实现 `d4573a34576ba2bc6fd5e245bb8358a02caa4192` / [core-ci run `42588234889`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42588234889) head 一致且七 job success；用户尚未配置密钥，**0 次真实 DeepSeek 调用**，内容、首字、全答和费用待测，不能以替身测试代替。下一阶段以该模型适配为基础，建设 AI 平台首条自主选择图谱与 Workbench MCP 的只读 Agent 路径。
