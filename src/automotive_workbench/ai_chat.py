@@ -3,14 +3,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from automotive_workbench.explanation_services import Endpoint, ServiceError, retrieve
 from automotive_workbench.chat_stream import StreamingChatClient, StreamingEndpoint
+from automotive_workbench.deepseek_chat import DeepSeekChatClient, MODELS as DEEPSEEK_MODELS
 from automotive_workbench.knowledge_chat import _connect, _store_message, history, memories
 from automotive_workbench.knowledge_graph_workspace import active_snapshot, search_graph
 from automotive_workbench.model_client import OllamaModelClient
@@ -23,6 +25,14 @@ def _chat_keep_alive(value: str) -> str:
     if value not in CHAT_KEEP_ALIVE_CHOICES:
         raise ValueError("Chat keep_alive must be 2m, 5m or 10m")
     return value
+
+
+def _chat_provider(provider: str, model: str) -> str:
+    if provider not in {"ollama", "deepseek"}:
+        raise ValueError("Chat provider must be ollama or deepseek")
+    if provider == "deepseek" and model not in DEEPSEEK_MODELS:
+        raise ValueError("Unsupported DeepSeek model")
+    return provider
 
 
 def _context(db_path: Path, session_id: str) -> list[dict[str, str]]:
@@ -119,7 +129,7 @@ def _prompt(root: Path, db_path: Path, session_id: str, question: str,
                             for index, source in enumerate(sources, 1))}]
         except (ValueError, OSError, KeyError, TypeError) as exc:
             knowledge = {"status": "unavailable", "sources": [], "error": str(exc)}
-    prompt = [{"role": "system", "content": "你是本地 AI 助手。直接回答用户问题；不确定时说明不确定。不要声称已使用未提供的资料或工具。"},
+    prompt = [{"role": "system", "content": "你是 AI 助手。直接回答用户问题；不确定时说明不确定。不要声称已使用未提供的资料或工具。"},
               *([{"role": "system", "content": "用户明确保存的长期记忆（偏好和决定，不是事实来源）：\n"
                  + "\n".join(f"- {item['content']}" for item in saved)}] if saved else []),
               *source_prompt,
@@ -129,12 +139,14 @@ def _prompt(root: Path, db_path: Path, session_id: str, question: str,
 
 def ask_general(root: Path, db_path: Path, *, session_id: str, question: str,
                 model: str, ollama_url: str, knowledge_url: str | None = None,
-                keep_alive: str = "2m") -> dict[str, Any]:
+                keep_alive: str = "2m", provider: str = "ollama") -> dict[str, Any]:
     keep_alive = _chat_keep_alive(keep_alive)
+    provider = _chat_provider(provider, model)
     called_at = datetime.now(timezone.utc).isoformat()
     started = time.perf_counter()
     prompt, memory_count, knowledge = _prompt(root, db_path, session_id, question, knowledge_url)
-    client = OllamaModelClient(Endpoint(ollama_url, 120))
+    client = (OllamaModelClient(Endpoint(ollama_url, 120)) if provider == "ollama"
+              else DeepSeekChatClient(os.environ.get("DEEPSEEK_API_KEY", "")))
     response: dict[str, Any] = {
         "mode": "general", "status": "model_unavailable", "answer": "",
         "model_requested": True, "model_attempted": True,
@@ -143,8 +155,13 @@ def ask_general(root: Path, db_path: Path, *, session_id: str, question: str,
         "knowledge": knowledge,
     }
     try:
-        identity = client.identity(model)
-        version = client.service_version()
+        if provider == "ollama":
+            ollama_client = cast(OllamaModelClient, client)
+            identity = ollama_client.identity(model)
+            version = ollama_client.service_version()
+        else:
+            identity = None
+            version = None
         completion = client.complete({
             "model": model, "messages": prompt, "stream": False, "think": False,
             "keep_alive": keep_alive, "options": {"num_ctx": 8192, "num_predict": 2048},
@@ -157,14 +174,18 @@ def ask_general(root: Path, db_path: Path, *, session_id: str, question: str,
                 or not completion["message"]["content"].strip()
                 or len(completion["message"]["content"]) > 20_000):
             raise ValueError("incomplete_or_invalid_model_response")
-        if client.identity(model) != identity:
+        if provider == "ollama" and cast(OllamaModelClient, client).identity(model) != identity:
             raise ValueError("Model identity changed during answer")
         timings = {key: round(completion[key] / 1_000_000, 1)
                    for key in ("total_duration", "load_duration", "prompt_eval_duration", "eval_duration")
                    if type(completion.get(key)) is int and completion[key] >= 0}
         response.update(
             status="answered", answer=completion["message"]["content"],
-            model={"name": model, "digest": identity["digest"], "service_version": version,
+            model={"name": model, "provider": provider,
+                   "digest": identity["digest"] if identity else None,
+                   "service_version": version,
+                   "reported_model": completion.get("reported_model"),
+                   "response_id": completion.get("response_id"),
                    "input_tokens": completion.get("prompt_eval_count"),
                    "output_tokens": completion.get("eval_count"),
                    "raw_sha256": hashlib.sha256(canonical(completion).encode()).hexdigest()},
@@ -180,7 +201,7 @@ def ask_general(root: Path, db_path: Path, *, session_id: str, question: str,
         trace_dir.mkdir(parents=True, exist_ok=True)
         (trace_dir / f"{trace_id}.json").write_text(
             json.dumps({"mode": "general", "session_id": session_id,
-                        "question": question.strip(), "model": model,
+                        "question": question.strip(), "model": model, "provider": provider,
                         "called_at": called_at, "messages": prompt,
                         "transport": client.records, "result": response},
                        ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -196,14 +217,16 @@ def ask_general_stream(root: Path, db_path: Path, *, session_id: str, question: 
                        model: str, ollama_url: str, knowledge_url: str | None = None,
                        emit: Callable[[str, dict[str, Any]], None],
                        cancelled: Callable[[], bool],
-                       register_client: Callable[[StreamingChatClient], None],
-                       keep_alive: str = "2m") -> dict[str, Any]:
+                       register_client: Callable[[Any], None],
+                       keep_alive: str = "2m", provider: str = "ollama") -> dict[str, Any]:
     """Stream an answer, preserving an interrupted turn without replaying it as context."""
     keep_alive = _chat_keep_alive(keep_alive)
+    provider = _chat_provider(provider, model)
     called_at = datetime.now(timezone.utc).isoformat()
     started = time.perf_counter()
     prompt, memory_count, knowledge = _prompt(root, db_path, session_id, question, knowledge_url)
-    client = StreamingChatClient(StreamingEndpoint(ollama_url, 120))
+    client = (StreamingChatClient(StreamingEndpoint(ollama_url, 120)) if provider == "ollama"
+              else DeepSeekChatClient(os.environ.get("DEEPSEEK_API_KEY", "")))
     register_client(client)
     answer = ""
     final: dict[str, Any] | None = None
@@ -218,8 +241,13 @@ def ask_general_stream(root: Path, db_path: Path, *, session_id: str, question: 
         if cancelled():
             response["status"] = "cancelled"
         else:
-            identity = client.identity(model)
-            version = client.service_version()
+            if provider == "ollama":
+                ollama_client = cast(OllamaModelClient, client)
+                identity = ollama_client.identity(model)
+                version = ollama_client.service_version()
+            else:
+                identity = None
+                version = None
             if cancelled():
                 response["status"] = "cancelled"
             else:
@@ -248,13 +276,16 @@ def ask_general_stream(root: Path, db_path: Path, *, session_id: str, question: 
                       or not isinstance(final.get("message"), dict)
                       or final["message"].get("role") != "assistant"):
                     raise ValueError("incomplete_or_invalid_model_response")
-                elif client.identity(model) != identity:
+                elif (provider == "ollama" and cast(OllamaModelClient, client).identity(model) != identity):
                     raise ValueError("Model identity changed during answer")
                 else:
                     response.update(
                         status="answered", model={
-                            "name": model, "digest": identity["digest"],
+                            "name": model, "provider": provider,
+                            "digest": identity["digest"] if identity else None,
                             "service_version": version,
+                            "reported_model": final.get("reported_model"),
+                            "response_id": final.get("response_id"),
                             "input_tokens": final.get("prompt_eval_count"),
                             "output_tokens": final.get("eval_count"),
                             "raw_sha256": hashlib.sha256(canonical(final).encode()).hexdigest(),
@@ -279,7 +310,7 @@ def ask_general_stream(root: Path, db_path: Path, *, session_id: str, question: 
         trace_dir.mkdir(parents=True, exist_ok=True)
         (trace_dir / f"{trace_id}.json").write_text(
             json.dumps({"mode": "general", "session_id": session_id,
-                        "question": question.strip(), "model": model,
+                        "question": question.strip(), "model": model, "provider": provider,
                         "called_at": called_at, "messages": prompt,
                         "transport": client.records, "result": response},
                        ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

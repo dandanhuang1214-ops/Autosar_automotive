@@ -18,6 +18,8 @@
 
 ## 当前总览（2026-10-23）
 
+最新补充（2026-11-09，DeepSeek 云端普通聊天适配，本地阶段）：用户确定 DeepSeek，持有 API Key 但尚未在 WSL 配置。新增 `--provider deepseek`，普通聊天支持官方 `deepseek-flash`/`deepseek-v4-pro` 的完整和流式 Chat Completions，取消、SSE 结束检查、用量/响应 ID、无密钥启动拒绝；本地检索继续工作，旧 Ollama 聊天/工程证据/项目候选路径兼容。见[接入说明](ai-platform-chat-guide.md)。DeepSeek 适配专项 4 项及原 Chat/图谱/站点同步专项 20 项、Ruff、本次源文件 mypy 已本地通过；真实 DeepSeek 调用、首字/全答/费用、实现提交和远端 CI 待完成，不宣称云端质量通过。本项仅是 AI 平台 Agent 的模型底座；下一主实现门仍为自主选取图谱与 Workbench MCP 的只读 Agent 闭环。Workbench P31 保持暂停，P25 人工门待完成。
+
 最新方向（2026-11-09，AI 平台 Agent 主线）：用户确认平台主要目标是 Agent，而非单纯聊天或外接知识库问答：Agent 接收工程目标后，应自主规划并选择本地图谱、Workbench MCP 及后续受控工具，执行可核验步骤，返回来源和失败边界。用户允许当前资料发送云端，外发保密不再阻断云端基线；服务商/凭据仍未指定。现有 Chat 0.2、图谱候选和 Workbench MCP 是可复用底座，尚未形成上述 AI 平台 Agent 闭环。本次仅更新产品方向与下一门，无代码变更、模型调用或新实现 CI；不将 2b 内容质量失败改写为通过。下一主实现门为云端模型可切换适配和首条只读 Agent 端到端路径，记录工具调用、来源版本、首字/全答/费用并用冻结题与本地基线比较；有副作用操作继续遵守审批和确定性验收。Workbench P31 仍暂停，P25 人工门待完成。
 
 最新补充（2026-11-07，Chat 0.2 实现门远端验收）：实现 `bb6b4876176262921783c32246ae59320cb84828` / [core-ci run `42385512446`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42385512446) head 一致、completed/success；实际七 job 均 `success`：`runtime-currency` 128441931359，`core-contracts` Windows 128441931461 / Ubuntu 128441931651，`controlled-rejections` Ubuntu 128444172596 / Windows 128444172646，`runtime-evidence` Windows 128444172614 / Ubuntu 128444172656。本段仅为后续文档状态回填，不能把文档提交当作新的实现 CI。工程实现门已远端验收，2b 图谱回答的内容质量门仍失败，独立人工审阅 pending。下一主任务是独立人工逐句审阅新留出题，并在确定允许外发的资料范围、服务商与预算后，建立云端 API 同题质量/延迟/费用基线；Workbench P31 继续暂停，P25 人工门待完成。

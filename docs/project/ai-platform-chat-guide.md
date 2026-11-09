@@ -45,7 +45,7 @@ PYTHONPATH=src .venv/bin/python -m automotive_workbench.knowledge_chat_server \
   --data output/knowledge-chat --port 8767 --model qwen3.5:2b --sync-graph-site
 ```
 
-首次真实同步已从站点版本 5 取回图谱 `c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f`，包含 66 节点、90 关系、71 条主张与 71 片段；来源 Markdown 的哈希通过图谱声明核对，本机快照在忽略目录 `output/knowledge-chat/`。普通聊天不要求用户选择资料：每题自动在活动图谱的标签、别名、标题和摘要中检索，最多注入 6 条关联片段，并显示文档、片段、候选状态和来源原文链接。图谱主张仍是候选资料；模型引用内容的语义准确性需要独立核对，单凭编号存在不等于已验证。显式旧 `--knowledge-url` 仍保留兼容，启动新 Chat 时应移除旧命令中的 `--knowledge-url http://127.0.0.1:18080`。
+首次真实同步已从站点版本 5 取回图谱 `c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f`，包含 66 节点、90 关系、71 条主张与 71 片段；来源 Markdown 的哈希通过图谱声明核对，本机快照在忽略目录 `output/knowledge-chat/`。普通聊天不要求用户选择资料：每题自动在活动图谱的标签、别名、标题和摘要中检索；2026-11-07 后最多取 2 节点、4 条关联片段，并显示文档、片段、候选状态和来源原文链接。图谱主张仍是候选资料；模型引用内容的语义准确性需要独立核对，单凭编号存在不等于已验证。显式旧 `--knowledge-url` 仍保留兼容，启动新 Chat 时应移除旧命令中的 `--knowledge-url http://127.0.0.1:18080`。
 
 本地核验：专项 18 项、全量 572 项测试通过（2 项环境跳过），Ruff 与差异检查通过；无头 Chromium 桌面/375px 手机能展开来源原文，页面无横向溢出或 JS 错误。真实 Ollama 流式问答两轮均检索到活动图谱片段，但 `qwen3.5:2b` 对清楚的字节问题仍扩写出未被片段支持的内容；收紧提示后仍有错误，因此**内容质量未通过**。页面来源区现显示候选摘录及“模型回答未核验”，供直接核对。原始本机 trace 在 `output/knowledge-chat/runs/`，不上传。
 
@@ -71,3 +71,18 @@ PYTHONPATH=src .venv/bin/python -m automotive_workbench.chat_citation_audit \
 [本轮新题审阅与 2b/4b 速度实测](../research/ai-chat-graph-quality-review-20261106.md)记录显存峰值、首字时间、完整回答耗时和内容缺陷。对照没有改变平台默认模型；内容质量门仍未通过。
 
 [驻留/图谱回答及云端 API 评估](../research/ai-chat-keepalive-cloud-assessment-20261107.md)记录 5m 试验、隔离 Flash Attention/q8 KV 探针和新留出三题。普通聊天启动参数 `--chat-keep-alive` 支持 `2m`（默认）、`5m`、`10m`；较长驻留减少频繁冷加载的机会，也持续占用显存，不改变热态生成速度。工程回答仍需核对候选原文和独立人工审阅。
+
+## DeepSeek 云端普通聊天适配（2026-11-09）
+
+用户选定 DeepSeek，当前资料允许发送云端。新增 `--provider deepseek`，普通聊天与其流式入口使用 DeepSeek 官方 [Chat Completions API](https://api-docs.deepseek.com/api/create-chat-completion/)；当前官方名称为 `deepseek-flash`（默认）或 `deepseek-v4-pro`，不使用已退役的 `deepseek-chat`/`deepseek-reasoner` 名称。首版关闭 thinking，限制 2048 输出 token，解析 SSE 增量和最终 usage，保留停止生成与不完整回答隔离。模型元数据记录服务回报名称、响应 ID 与用量；云端 API 没有 Ollama 本地 digest，不伪造同等身份固定。密钥只用于请求头，不进入聊天 trace。检索仍在本机，发送给模型的是问题、选中片段、当前会话上下文和用户明确保存的全局记忆。
+
+在**启动平台的同一个 WSL 终端**无回显输入密钥，然后启动：
+
+```bash
+read -rsp 'DeepSeek API Key: ' DEEPSEEK_API_KEY; echo
+export DEEPSEEK_API_KEY
+PYTHONPATH=src .venv/bin/python -m automotive_workbench.knowledge_chat_server \
+  --data output/knowledge-chat --port 8767 --provider deepseek --model deepseek-flash
+```
+
+不要把密钥写入命令行参数、仓库文件或聊天记录。未配置密钥时服务在绑定端口前报错；现有 `--provider ollama` 默认行为不变。工程证据问答和项目候选仍使用本机 Ollama（可由 `--local-model` 选择），尚未接入云端 Agent 工具循环。模拟 DeepSeek HTTP/SSE 与原 Chat/图谱专项测试已通过；用户尚未配置密钥，因此真实 DeepSeek 内容、首字、全答、费用及远端实现 CI 须另行记录，不能以替身测试代替。下一阶段以该模型适配为基础，建设 AI 平台首条自主选择图谱与 Workbench MCP 的只读 Agent 路径。

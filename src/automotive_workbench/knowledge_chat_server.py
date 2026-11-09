@@ -17,7 +17,8 @@ from urllib.parse import parse_qs, urlsplit
 from automotive_workbench.explanation_services import parse_json
 from automotive_workbench.explanation_services import Endpoint
 from automotive_workbench.ai_chat import (
-    CHAT_KEEP_ALIVE_CHOICES, _chat_keep_alive, ask_general, ask_general_stream,
+    CHAT_KEEP_ALIVE_CHOICES, _chat_keep_alive, _chat_provider, ask_general,
+    ask_general_stream,
 )
 from automotive_workbench.knowledge_chat import (
     _connect, ask, edit_memory, forget, history, memories, new_session, remember,
@@ -39,12 +40,17 @@ HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="ut
 class WorkspaceServer(ThreadingHTTPServer):
     def __init__(self, address: tuple[str, int], root: Path, model: str, ollama_url: str,
                  mcp_url: str | None = None, knowledge_url: str | None = None,
-                 chat_keep_alive: str = "2m"):
+                 chat_keep_alive: str = "2m", provider: str = "ollama",
+                 local_model: str | None = None):
         if address[0] not in {"127.0.0.1", "localhost"}:
             raise ValueError("Workbench web server must bind to loopback")
         self.root = root
         self.db_path = root / "chat.sqlite3"
         self.model = model
+        self.provider = _chat_provider(provider, model)
+        if provider == "deepseek" and not os.environ.get("DEEPSEEK_API_KEY", "").strip():
+            raise ValueError("DEEPSEEK_API_KEY is required for DeepSeek provider")
+        self.local_model = local_model or (model if provider == "ollama" else "qwen3.5:2b")
         self.ollama_url = ollama_url
         self.chat_keep_alive = _chat_keep_alive(chat_keep_alive)
         self.knowledge_url = Endpoint(knowledge_url, 4).url if knowledge_url else None
@@ -84,7 +90,8 @@ class Handler(BaseHTTPRequestHandler):
     def _get_local(self) -> None:
         route = urlsplit(self.path)
         if route.path == "/":
-            raw = HTML.replace("__TOKEN__", self.server.token).encode("utf-8")
+            raw = (HTML.replace("__TOKEN__", self.server.token)
+                   .replace("__PROVIDER__", self.server.provider)).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(raw)))
@@ -110,6 +117,8 @@ class Handler(BaseHTTPRequestHandler):
                              "sessions": [dict(x) for x in rows],
                              "messages": messages,
                              "memories": memories(self.server.db_path, memory_scope or "global"),
+                             "provider": self.server.provider,
+                             "model": self.server.model,
                              "knowledge_configured": bool(self.server.knowledge_url or active)})
             return
         if route.path == "/api/source":
@@ -198,6 +207,7 @@ class Handler(BaseHTTPRequestHandler):
                         ollama_url=self.server.ollama_url,
                         knowledge_url=self.server.knowledge_url, emit=emit,
                         keep_alive=self.server.chat_keep_alive,
+                        provider=self.server.provider,
                         cancelled=active["cancel"].is_set,
                         register_client=lambda client: active.__setitem__("client", client),
                     )
@@ -231,7 +241,8 @@ class Handler(BaseHTTPRequestHandler):
                         question=str(body.get("question", "")),
                         model=self.server.model, ollama_url=self.server.ollama_url,
                         knowledge_url=self.server.knowledge_url,
-                        keep_alive=self.server.chat_keep_alive)
+                        keep_alive=self.server.chat_keep_alive,
+                        provider=self.server.provider)
                 elif mode == "evidence":
                     report = body.get("report")
                     mcp_url = self.server.mcp_url
@@ -239,7 +250,7 @@ class Handler(BaseHTTPRequestHandler):
                     result = ask(self.server.root, self.server.db_path,
                                  session_id=str(body.get("session_id", "")), question=str(body.get("question", "")),
                                  report=Path(report) if isinstance(report, str) and report else None,
-                                 model=self.server.model, ollama_url=self.server.ollama_url,
+                                 model=self.server.local_model, ollama_url=self.server.ollama_url,
                                  use_model=body.get("use_model") is True, evidence_loader=loader)
                 else:
                     raise ValueError("Unknown chat mode")
@@ -250,11 +261,11 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Project path and requirement are required")
                 if self.server.mcp_url:
                     result = propose_project_via_mcp(self.server.mcp_url, Path(project),
-                                                     requirement, self.server.model,
+                                                     requirement, self.server.local_model,
                                                      self.server.ollama_url)
                 else:
                     result = propose_project(self.server.root, Path(project), requirement,
-                                             self.server.model, self.server.ollama_url)
+                                             self.server.local_model, self.server.ollama_url)
             elif self.path == "/api/project/validate":
                 task_id = body.get("task_id")
                 if not isinstance(task_id, str):
@@ -285,7 +296,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Local automotive graph and project chat")
     parser.add_argument("--data", type=Path, default=Path("output/knowledge-chat"))
     parser.add_argument("--port", type=int, default=8767)
-    parser.add_argument("--model", default="qwen3.5:2b")
+    parser.add_argument("--provider", choices=("ollama", "deepseek"), default="ollama")
+    parser.add_argument("--model", help="General chat model (default: qwen3.5:2b or deepseek-flash)")
+    parser.add_argument("--local-model", default="qwen3.5:2b",
+                        help="Ollama model for existing engineering evidence/project paths")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--chat-keep-alive", choices=CHAT_KEEP_ALIVE_CHOICES, default="2m",
                         help="Ollama residence after a general chat response (default: 2m)")
@@ -295,15 +309,17 @@ def main() -> None:
     parser.add_argument("--sync-graph-site", action="store_true",
                         help="Refresh the owner's private automotive graph Site before serving")
     args = parser.parse_args()
+    model = args.model or ("deepseek-flash" if args.provider == "deepseek" else "qwen3.5:2b")
     site_token = os.environ.pop("AUTOMOTIVE_GRAPH_SITE_TOKEN", "")
     if args.sync_graph_site or site_token:
         if not site_token:
             site_token = getpass.getpass("Automotive graph Site access token: ")
         manifest = sync_site_graph(args.data, site_token)
         print(f"Automotive graph ready: {manifest['graph_sha256'][:12]}", flush=True)
-    server = WorkspaceServer(("127.0.0.1", args.port), args.data, args.model, args.ollama_url,
+    server = WorkspaceServer(("127.0.0.1", args.port), args.data, model, args.ollama_url,
                              mcp_url=args.mcp_url, knowledge_url=args.knowledge_url,
-                             chat_keep_alive=args.chat_keep_alive)
+                             chat_keep_alive=args.chat_keep_alive,
+                             provider=args.provider, local_model=args.local_model)
     print(f"Automotive Workbench: http://127.0.0.1:{args.port}/", flush=True)
     try:
         server.serve_forever()

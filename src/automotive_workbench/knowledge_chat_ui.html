@@ -440,7 +440,7 @@
 <body class="general-chat">
   <a class="skip" href="#chatMain">跳到聊天</a>
   <header class="topbar">
-    <div class="brand"><div class="mark" aria-hidden="true">AI</div><div><h1>本地 AI 平台</h1><small>Ollama 聊天与工程扩展</small></div></div>
+    <div class="brand"><div class="mark" aria-hidden="true">AI</div><div><h1>AI 平台</h1><small>模型对话与工程扩展</small></div></div>
     <nav class="primary-nav" aria-label="主要功能">
       <button type="button" class="nav-item" data-view="chat" aria-current="page">聊天</button>
       <button type="button" class="nav-item" data-view="project">工程任务</button>
@@ -471,17 +471,17 @@
     <main class="main-area">
     <section id="chatMain" class="pane chat view" aria-label="聊天">
       <div class="chat-head">
-        <p class="eyebrow">LOCAL AI</p>
+        <p class="eyebrow">AI PLATFORM</p>
         <h2 id="chatTitle" class="chat-title" tabindex="-1">直接开始对话</h2>
-        <p id="chatDescription" class="subtle" style="margin-bottom:0">普通聊天直接调用本地 Ollama。工程资料和工具按需使用。</p>
+        <p id="chatDescription" class="subtle" style="margin-bottom:0">普通聊天直接调用所选模型。工程资料和工具按需使用。</p>
         <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><span id="knowledgeBadge" class="knowledge-badge" role="status" aria-atomic="true">知识库自动检索</span><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
-        <div class="badges"><span id="modelBadge" class="badge">Ollama 待调用</span><span id="memoryBadge" class="badge">长期记忆 0 条</span><span id="evidenceBadges"><span id="graphBadge" class="badge warn">图谱未导入</span> <span id="projectBadge" class="badge">未选择工程报告</span></span></div>
+        <div class="badges"><span id="modelBadge" class="badge">模型待调用</span><span id="memoryBadge" class="badge">长期记忆 0 条</span><span id="evidenceBadges"><span id="graphBadge" class="badge warn">图谱未导入</span> <span id="projectBadge" class="badge">未选择工程报告</span></span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
         <div class="empty" id="emptyState"><div class="symbol" aria-hidden="true">AI</div><h3>有什么想聊的？</h3><p class="subtle">直接输入问题即可。模型离线时会明确提示，回答旁会显示调用时间和耗时。</p></div>
       </div>
       <div class="composer">
-        <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="输入问题，直接与本地 Ollama 对话"></textarea>
+        <label for="question">你的问题</label><textarea id="question" rows="3" placeholder="输入问题，与所选模型对话"></textarea>
         <div class="composer-foot"><label id="useModelWrap" class="check" for="useModel"><input id="useModel" type="checkbox" checked> 使用本地 Ollama 写解释草稿</label><div class="composer-actions"><button id="stopBtn" class="button secondary" type="button" hidden>停止生成</button><button id="askBtn" class="button" type="button">发送</button></div></div>
         <p id="chatStatus" class="feedback" role="status">按 Ctrl + Enter 也可发送。</p>
       </div>
@@ -559,6 +559,8 @@
   <div id="toast" class="toast" role="status" hidden></div>
   <script>
     const token = '__TOKEN__';
+    const provider = '__PROVIDER__';
+    const generalModelLabel = provider === 'deepseek' ? 'DeepSeek' : 'Ollama';
     const $ = id => document.getElementById(id);
     let sessionId = localStorage.getItem('awb-session') || '';
     let activeHash = '';
@@ -634,8 +636,8 @@
       $('chatMode').value = general ? 'general' : 'evidence';
       document.body.classList.toggle('general-chat', general);
       $('chatTitle').textContent = general ? '直接开始对话' : '工程问题，从证据开始';
-      $('chatDescription').textContent = general ? '普通聊天直接调用本地 Ollama。工程资料和工具按需使用。' : '项目事实、图谱线索和模型草稿分别呈现。';
-      $('question').placeholder = general ? '输入问题，直接与本地 Ollama 对话' : '例如：CanIf 与 CanTp 在图谱中是什么关系？';
+      $('chatDescription').textContent = general ? `普通聊天直接调用${generalModelLabel}。工程资料和工具按需使用。` : '项目事实、图谱线索和模型草稿分别呈现。';
+      $('question').placeholder = general ? `输入问题，与${generalModelLabel}对话` : '例如：CanIf 与 CanTp 在图谱中是什么关系？';
       closeInspector();
     }
     $('chatMode').onchange = () => { setChatMode($('chatMode').value); refresh().catch(showError); };
@@ -684,7 +686,7 @@
 
     function renderMessage(role, content, kind = 'evidence') {
       const box = el('article', undefined, `message ${role} ${kind}`);
-      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : kind === 'general' ? 'Ollama 回答' : '确定性证据摘要', 'message-label'));
+      box.append(el('div', role === 'user' ? '你' : kind === 'draft' ? 'Ollama 草稿 · 未经语义审阅' : kind === 'general' ? `${generalModelLabel} 回答` : '确定性证据摘要', 'message-label'));
       box.append(el('div', content || '本轮没有可展示的内容。', 'message-body'));
       $('emptyState')?.remove();
       $('messages').append(box);
@@ -695,15 +697,15 @@
       if (result.mode === 'general') {
         const succeeded = result.status === 'answered';
         const stopped = result.status === 'cancelled';
-        const box = renderMessage('assistant', result.answer || (stopped ? '已停止生成。' : 'Ollama 未返回可用回答。请检查服务状态后重试。'), 'general');
+        const box = renderMessage('assistant', result.answer || (stopped ? '已停止生成。' : `${generalModelLabel} 未返回可用回答。请检查服务状态后重试。`), 'general');
         if (stopped) box.classList.add('cancelled');
-        box.querySelector('.message-label').textContent = succeeded ? `Ollama ${result.model?.name || ''} · 模型回答` : stopped ? '已停止 · 回答未完成' : 'Ollama 调用失败';
+        box.querySelector('.message-label').textContent = succeeded ? `${generalModelLabel} ${result.model?.name || ''} · 模型回答` : stopped ? '已停止 · 回答未完成' : `${generalModelLabel} 调用失败`;
         const meta = el('div', undefined, 'model-meta');
         const when = result.called_at ? new Date(result.called_at).toLocaleString('zh-CN', { hour12: false }) : '时间未知';
         const elapsed = typeof result.elapsed_ms === 'number' ? `${(result.elapsed_ms / 1000).toFixed(1)} 秒` : '耗时未知';
         meta.append(el('span', `${when} 调用 · ${elapsed}${result.memory_count ? ` · 使用 ${result.memory_count} 条长期记忆` : ''}`));
         if (succeeded && Object.keys(result.timings_ms || {}).length) {
-          const detail = el('details'); detail.append(el('summary', '查看 Ollama 耗时'));
+          const detail = el('details'); detail.append(el('summary', `查看${generalModelLabel}耗时`));
           const timing = result.timings_ms;
           detail.append(el('div', `模型总耗时 ${timing.total_duration ?? '—'} ms · 加载 ${timing.load_duration ?? '—'} ms · 输入处理 ${timing.prompt_eval_duration ?? '—'} ms · 生成 ${timing.eval_duration ?? '—'} ms`));
           meta.append(detail);
@@ -789,7 +791,7 @@
     function showEvidence(result, selectedBox = null, reveal = false) {
       if (result.mode === 'general') {
         currentEvidence = null; projectHash = '';
-        $('modelBadge').textContent = result.status === 'answered' ? `Ollama ${result.model?.name || ''} 已回答` : result.status === 'cancelled' ? '生成已停止' : 'Ollama 调用失败';
+        $('modelBadge').textContent = result.status === 'answered' ? `${generalModelLabel} ${result.model?.name || ''} 已回答` : result.status === 'cancelled' ? '生成已停止' : `${generalModelLabel} 调用失败`;
         $('modelBadge').classList.toggle('warn', result.status !== 'answered');
         const knowledge = result.knowledge || {};
         $('knowledgeBadge').textContent = knowledge.status === 'graph_candidates' ? `知识图谱候选 · ${knowledge.sources.length} 条` : knowledge.status === 'graph_no_match' ? '知识图谱 · 无匹配' : knowledge.status === 'retrieved' ? `知识库检索 · ${knowledge.sources.length} 条` : knowledge.status === 'no_match' ? '知识库 · 无匹配' : knowledge.status === 'unavailable' ? '知识库暂不可用' : '知识库未连接';
@@ -855,7 +857,7 @@
       for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
       const latest = [...data.messages].reverse().find(message => message.role === 'assistant' &&
         ($('chatMode').value === 'general' ? message.detail?.mode === 'general' : message.detail?.mode !== 'general'));
-      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll(`.message.assistant.${$('chatMode').value === 'general' ? 'general' : 'evidence'}`)].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = 'Ollama 待调用'; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll(`.message.assistant.${$('chatMode').value === 'general' ? 'general' : 'evidence'}`)].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = `${generalModelLabel} 待调用`; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
       renderMemories(data.memories || []);
       $('memoryBadge').textContent = `长期记忆 ${(data.memories || []).filter(item => item.scope === 'global').length} 条`;
     }
@@ -906,7 +908,7 @@
       renderMessage('user', question, 'general');
       const box = renderMessage('assistant', '', 'general');
       box.classList.add('streaming');
-      box.querySelector('.message-label').textContent = 'Ollama · 正在回答';
+      box.querySelector('.message-label').textContent = `${generalModelLabel} · 正在回答`;
       const body = box.querySelector('.message-body');
       body.textContent = '';
       const response = await fetch('/api/chat/stream', {
@@ -943,7 +945,7 @@
       if (!completed) throw Error('流式连接中断，回答未完成。');
       $('question').value = '';
       await refresh();
-      feedback('chatStatus', completed.status === 'answered' ? '回答已完成。' : completed.status === 'cancelled' ? '已停止生成；已收到的内容保留在会话中。' : 'Ollama 未返回完整回答，请检查服务。', completed.status === 'model_unavailable');
+      feedback('chatStatus', completed.status === 'answered' ? '回答已完成。' : completed.status === 'cancelled' ? '已停止生成；已收到的内容保留在会话中。' : `${generalModelLabel} 未返回完整回答，请检查服务。`, completed.status === 'model_unavailable');
     }
     $('stopBtn').onclick = async () => {
       if (!streamingRequestId) return;
@@ -956,13 +958,13 @@
       const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
       const mode = $('chatMode').value;
       const button = $('askBtn'); button.disabled = true; button.textContent = '正在回答…';
-      feedback('chatStatus', mode === 'general' ? '正在检索知识库并调用本地 Ollama…' : '正在重放工程报告并查找图谱线索…');
+      feedback('chatStatus', mode === 'general' ? `正在检索知识库并调用${generalModelLabel}…` : '正在重放工程报告并查找图谱线索…');
       try {
         if (mode === 'general') { await streamGeneral(question); return; }
         const result = await api('/api/chat', { session_id: sessionId, question, mode, report: mode === 'evidence' ? $('report').value.trim() : '', use_model: mode === 'evidence' ? $('useModel').checked : true });
         $('question').value = '';
         await refresh();
-        feedback('chatStatus', mode === 'general' ? result.status === 'answered' ? 'Ollama 已返回回答。' : 'Ollama 未返回可用回答，请检查服务。' : result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。');
+        feedback('chatStatus', mode === 'general' ? result.status === 'answered' ? `${generalModelLabel} 已返回回答。` : `${generalModelLabel} 未返回可用回答，请检查服务。` : result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。');
       } catch (error) { feedback('chatStatus', error.message, true); await refresh().catch(showError); } finally { streamingRequestId = ''; $('stopBtn').hidden = true; $('stopBtn').disabled = false; $('chatMode').disabled = false; $('newSession').disabled = false; button.disabled = false; button.textContent = '发送'; }
     };
     $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
