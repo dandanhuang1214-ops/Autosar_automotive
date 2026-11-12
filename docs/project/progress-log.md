@@ -16,7 +16,9 @@
 
 编号约定：`P` 表示平台功能，`R` 表示运行时实验底座，`E` 表示环境与基础设施，`L` 表示学习材料。
 
-## 当前总览（2026-10-23）
+## 当前总览（2026-11-12）
+
+最新计划（2026-11-12，进度核对；无新实现验收）：当前 `work/p31-ui-upgrade` 与远端跟踪分支同步，工作区干净。已远端验收的最近实现为 DeepSeek 普通聊天适配 `d4573a34576ba2bc6fd5e245bb8358a02caa4192` / [run `42588234889`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42588234889)，七 job success；本地图谱检索、Workbench MCP 只读证据工具及 P30 只读 AgentRunner 已各自存在，但 AI 平台 Agent 自主选择这些工具的闭环尚未实现。本次进程未设置 `DEEPSEEK_API_KEY`，真实云端内容、首字/全答和费用均未评估；本机 2b 图谱回答内容质量门仍未通过，独立人工审阅 pending。**下一主任务**为 AI 平台只读 Agent 0.1：模型按目标选择图谱和 MCP 项目事实工具，受限执行并保存来源、工具输入/输出、模型用量和失败状态；先完成替身服务、独立任务、停服/越界负例、旧路径兼容及实现提交七 job CI。密钥可用后，按冻结同题集补真实 DeepSeek 与本地模型对照及人工审阅，不以替身测试充云端验收。Workbench P31 继续暂停，P25 人工演示与外部反馈仍待实际取得。本条仅记录计划，不产生实现 CI；较早条目的“下一步”均以本条及路线图最新执行段为准。
 
 最新补充（2026-11-09，DeepSeek 适配远端实现验收）：实现 `d4573a34576ba2bc6fd5e245bb8358a02caa4192` / [core-ci run `42588234889`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/42588234889) head 一致、completed/success。实际七 job 均 success：`core-contracts` Windows 129063149695 / Ubuntu 129063150105，`runtime-currency` 129063150131，`controlled-rejections` Ubuntu 129067187215 / Windows 129067187217，`runtime-evidence` Windows 129067187230 / Ubuntu 129067187267。仅验收适配器、模拟协议/流式取消与旧路径兼容；用户 API Key 尚未配置，**没有真实 DeepSeek API 请求**，也无云端质量/速度/费用或 Agent 闭环结论。本段为文档状态提交回填，不是新的实现 CI。下一主任务待 Key 就绪后用同题做真实 DeepSeek 基线，并实现自主选取图谱与 Workbench MCP 的首条只读 Agent 路径；Workbench P31 保持暂停，P25 人工门待完成。
 
