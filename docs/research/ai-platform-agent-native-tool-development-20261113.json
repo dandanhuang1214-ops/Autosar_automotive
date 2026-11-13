@@ -1,0 +1,24 @@
+{
+  "format": "ai-platform-agent-native-tool-development-0.1",
+  "frozen_before_local_model_probe": true,
+  "purpose": "Check whether native Ollama tool calling yields a valid first read-only action on new development questions. This is not held-out answer quality evidence.",
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "project_report_sha256": "8d82549975c0d91eece9de658cd6e1016edb7d3eea34ea0aa38c738276b35460",
+  "model": "qwen3.5:2b",
+  "cases": [
+    {
+      "id": "cf-sequence",
+      "goal": "在候选资料中，Consecutive Frame 的 PCI 字节 21 低四位表示什么？",
+      "report": null,
+      "required_tools": ["graph_search"],
+      "target_chunk_id": "chunk.week07.K003"
+    },
+    {
+      "id": "ecuc-stage",
+      "goal": "请从这个项目报告读取 ECUC 阶段的状态，并指出状态来源。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["project_evidence"]
+    }
+  ],
+  "assessment": "One first-action native tool call per case. Valid means exactly one registered tool call with only a nonempty query argument and measured usage; no answer quality score, no repair or rerun."
+}
