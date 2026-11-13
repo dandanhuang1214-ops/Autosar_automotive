@@ -86,7 +86,7 @@ class AgentPathTests(unittest.TestCase):
 
             def load(endpoint: str, path: Path, question: str) -> dict:
                 calls.append((endpoint, path, question))
-                return {"schema_version": MCP_VERSION, "report_path": str(path),
+                return {"schema_version": MCP_VERSION, "report_path": str(path.resolve()),
                         "question": question, "report_sha256": "a" * 64,
                         "project_status": "passed", "facts": [{"pointer": "/status", "value": "passed"}],
                         "available_fact_count": 1, "boundary": "Static only"}
@@ -112,7 +112,7 @@ class AgentPathTests(unittest.TestCase):
             report.write_text("{}")
 
             def load(_endpoint: str, path: Path, question: str) -> dict:
-                return {"schema_version": MCP_VERSION, "report_path": str(path),
+                return {"schema_version": MCP_VERSION, "report_path": str(path.resolve()),
                         "question": question, "report_sha256": "b" * 64,
                         "project_status": "passed", "facts": [], "boundary": "Static only"}
 
@@ -192,7 +192,7 @@ class AgentPathTests(unittest.TestCase):
                                                       "goal": "核对 CanIf", "report": ""})
                 self.assertEqual(result["status"], "completed_unassessed")
                 trace_path = root / "runs" / f"{result['trace_id']}.json"
-                self.assertTrue(verify_trace(json.loads(trace_path.read_text())))
+                self.assertTrue(verify_trace(json.loads(trace_path.read_text(encoding="utf-8"))))
                 state = json.load(urlopen(base + f"/api/state?session={session}", timeout=10))
                 self.assertEqual(state["messages"][-1]["detail"]["mode"], "agent")
             finally:
