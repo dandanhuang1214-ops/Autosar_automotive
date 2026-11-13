@@ -14,6 +14,7 @@ from automotive_workbench.ai_platform_agent import run_readonly_agent, verify_tr
 from automotive_workbench.knowledge_graph_workspace import import_graph
 from automotive_workbench.mcp_service import VERSION as MCP_VERSION
 from automotive_workbench.knowledge_chat_server import WorkspaceServer
+from automotive_workbench.model_client import ToolCompletion
 
 
 class ScriptedClient:
@@ -34,6 +35,24 @@ class ScriptedClient:
 
     def service_version(self) -> str:
         return "scripted-1"
+
+
+class NativeScriptedClient:
+    def __init__(self, calls: list[tuple[str, dict]]) -> None:
+        self.calls = list(calls)
+        self.requests: list[dict] = []
+
+    def complete_tool_call(self, **request: object) -> ToolCompletion:
+        self.requests.append(request)
+        name, arguments = self.calls.pop(0)
+        return ToolCompletion(name=name, arguments=arguments, content="",
+                              input_tokens=50, output_tokens=20,
+                              raw={"done": True, "done_reason": "stop",
+                                   "model": request["model"],
+                                   "message": {"role": "assistant", "content": "",
+                                               "tool_calls": [{"function": {
+                                                   "name": name, "arguments": arguments}}]},
+                                   "prompt_eval_count": 50, "eval_count": 20})
 
 
 def action(name: str, *, query: str = "", answer: str = "", ids: list[str] | None = None) -> dict:
@@ -59,6 +78,50 @@ def graph_fixture(root: Path) -> str:
 
 
 class AgentPathTests(unittest.TestCase):
+    def test_ollama_native_combined_tools_and_finish_are_bound(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            graph_fixture(root)
+            report = root / "report.json"
+            report.write_text("{}")
+
+            def load(_endpoint: str, path: Path, question: str) -> dict:
+                return {"schema_version": MCP_VERSION, "report_path": str(path.resolve()),
+                        "question": question, "report_sha256": "c" * 64,
+                        "project_status": "passed", "facts": [], "boundary": "Static only"}
+
+            client = NativeScriptedClient([
+                ("project_evidence", {"query": "project status"}),
+                ("graph_search", {"query": "CanIf 0x22"}),
+                ("finish", {"answer": "项目事实与图谱候选分开。", "evidence_ids": ["o1", "o2"]}),
+            ])
+            trace = run_readonly_agent(root, goal="联合核对", model="qwen3.5:2b",
+                                       provider="ollama", ollama_url="http://127.0.0.1:11434",
+                                       report=report, mcp_url="http://127.0.0.1:8768/mcp",
+                                       client=client, project_loader=load)
+            self.assertEqual(trace["status"], "completed_unassessed")
+            self.assertEqual(trace["protocol"], "ollama_native_tool_call")
+            self.assertEqual([item["tool"] for item in trace["observations"]],
+                             ["project_evidence", "graph_search"])
+            self.assertEqual(trace["usage"]["model_calls"], 3)
+            self.assertTrue(verify_trace(trace))
+
+    def test_ollama_native_unknown_or_extra_arguments_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            graph_fixture(root)
+            for name, arguments in (("project_evidence", {"query": "status"}),
+                                    ("graph_search", {"query": "CanIf", "extra": True}),
+                                    ("graph_search", {"query": ""})):
+                with self.subTest(name=name, arguments=arguments):
+                    client = NativeScriptedClient([(name, arguments)])
+                    trace = run_readonly_agent(root, goal="核对 CanIf", model="qwen3.5:2b",
+                                               provider="ollama", ollama_url="http://127.0.0.1:11434",
+                                               client=client)
+                    self.assertEqual(trace["status"], "refused")
+                    self.assertEqual(trace["observations"], [])
+                    self.assertTrue(verify_trace(trace))
+
     def test_graph_only_uses_bound_candidate_source(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
