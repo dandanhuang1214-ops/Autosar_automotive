@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 from automotive_workbench.mcp_evidence_client import validate_endpoint
 
 ROOT = Path(__file__).resolve().parents[1]
-COHORT = ROOT / "docs/research/ai-platform-agent-cohort-20261112.json"
+DEFAULT_COHORT = ROOT / "docs/research/ai-platform-agent-cohort-20261112.json"
 
 
 def _get(url: str) -> bytes:
@@ -58,14 +58,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", required=True)
     parser.add_argument("--mode", choices=("agent", "chat", "stream-chat"), required=True)
-    parser.add_argument("--case", choices=("graph-only", "project-only", "combined"))
+    parser.add_argument("--cohort", type=Path, default=DEFAULT_COHORT)
+    parser.add_argument("--case")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     # Reuse the local URL boundary; the MCP path is only a sentinel for its origin.
     origin = args.server_url.rstrip("/")
     validate_endpoint(origin + "/mcp")
-    cohort_raw = COHORT.read_bytes()
+    cohort_raw = args.cohort.read_bytes()
     cohort = json.loads(cohort_raw)
+    case_ids = {item["id"] for item in cohort["cases"]}
+    if args.case and args.case not in case_ids:
+        parser.error(f"Unknown case {args.case!r}; available: {', '.join(sorted(case_ids))}")
     html = _get(origin + "/").decode("utf-8")
     token_match = re.search(r"const token = '([^']+)';", html)
     if token_match is None:
