@@ -17,6 +17,26 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COHORT = ROOT / "docs/research/ai-platform-agent-cohort-20261112.json"
 
 
+def _preflight_sources(cohort: dict) -> None:
+    graph_hash = cohort["graph_sha256"]
+    graph_path = ROOT / "output" / "knowledge-chat" / "snapshots" / graph_hash / "graph.json"
+    graph_raw = graph_path.read_bytes()
+    if hashlib.sha256(graph_raw).hexdigest() != graph_hash:
+        raise ValueError("Frozen graph hash differs from the local snapshot")
+    graph = json.loads(graph_raw)
+    chunk_ids = {item["id"] for item in graph["chunks"]}
+    output_root = (ROOT / "output").resolve()
+    for case in cohort["cases"]:
+        target = case.get("target_chunk_id")
+        if target is not None and target not in chunk_ids:
+            raise ValueError(f"Frozen target chunk does not exist: {case['id']}: {target}")
+        if case.get("report"):
+            report = (output_root / case["report"]).resolve()
+            if (not report.is_relative_to(output_root)
+                    or hashlib.sha256(report.read_bytes()).hexdigest() != cohort["project_report_sha256"]):
+                raise ValueError(f"Frozen project report differs: {case['id']}")
+
+
 def _get(url: str) -> bytes:
     with urlopen(url, timeout=10) as response:
         return response.read(2_000_000)
@@ -70,6 +90,7 @@ def main() -> None:
     case_ids = {item["id"] for item in cohort["cases"]}
     if args.case and args.case not in case_ids:
         parser.error(f"Unknown case {args.case!r}; available: {', '.join(sorted(case_ids))}")
+    _preflight_sources(cohort)
     html = _get(origin + "/").decode("utf-8")
     token_match = re.search(r"const token = '([^']+)';", html)
     if token_match is None:
@@ -83,8 +104,6 @@ def main() -> None:
         if args.case and case["id"] != args.case:
             continue
         report = (ROOT / "output" / case["report"]).resolve() if case["report"] else None
-        if report and hashlib.sha256(report.read_bytes()).hexdigest() != cohort["project_report_sha256"]:
-            raise ValueError("Project report differs from frozen cohort")
         session = _post(origin + "/api/session", token, {})["session_id"]
         started = time.perf_counter()
         payload = ({"session_id": session, "goal": case["goal"],
