@@ -1,0 +1,38 @@
+{
+  "format": "ai-platform-readonly-agent-heldout-0.4",
+  "frozen_before_model_run": true,
+  "scope": "New within-project tasks on the same validated graph and replayed report; use once per available model, preserve failures.",
+  "models": ["qwen3.5:2b", "deepseek-flash"],
+  "agent_budget": {"max_model_calls": 3, "max_tool_calls": 2, "max_total_tokens": 6000, "max_seconds": 120},
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "project_report_sha256": "8d82549975c0d91eece9de658cd6e1016edb7d3eea34ea0aa38c738276b35460",
+  "cases": [
+    {
+      "id": "nrc-31-meaning",
+      "goal": "教学示例收到 UDS 否定响应 7F 22 31，能否仅凭 NRC 31 断定请求的 DID 不存在？只依据图谱候选解释。",
+      "report": null,
+      "required_tools": ["graph_search"],
+      "target_chunk_id": "chunk.week07.K015"
+    },
+    {
+      "id": "acceptance-actual-vs-expected",
+      "goal": "这个项目报告中 COMMUNICATION 验收项的 expected、actual、status、reason 分别是什么？只引用报告事实。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["project_evidence"]
+    },
+    {
+      "id": "diagnostic-data-vs-project-check",
+      "goal": "报告中的 COMMUNICATION 验收项通过，是否能证明 DcmDspData 已储存车窗位置的实时值？请区分报告事实、图谱候选解释和没有验证的运行值。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["graph_search", "project_evidence"],
+      "target_chunk_id": "chunk.week07.K021"
+    }
+  ],
+  "assessment": {
+    "run_policy": "Run each model once per case after freeze; preserve original outputs and raw traces. Changes require another cohort version.",
+    "tool_selection": "Complete using exactly the required read-only tools within budget; no duplicate or unregistered tool.",
+    "source_binding": "Preflight validates exact graph/report SHA and target chunk existence; required target must be retrieved; saved trace must verify offline.",
+    "answer": "No inferred DID absence from NRC 31, no dynamic DcmDspData or ECU result from static acceptance. Report fields must match MCP facts. Sentence-level human review remains separate.",
+    "citation_origin": "For Ollama native calls the Host binds all observed IDs; model does not select citation IDs. DeepSeek JSON action still declares IDs."
+  }
+}

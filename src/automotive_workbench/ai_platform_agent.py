@@ -19,9 +19,10 @@ from automotive_workbench.mcp_service import VERSION as MCP_EVIDENCE_VERSION
 from automotive_workbench.model_client import OllamaModelClient
 from automotive_workbench.project_explanation import canonical, digest
 
-VERSION = "ai-platform-readonly-agent-0.3"
+VERSION = "ai-platform-readonly-agent-0.4"
 LEGACY_VERSION = "ai-platform-readonly-agent-0.1"
 STRICT_NATIVE_VERSION = "ai-platform-readonly-agent-0.2"
+HOST_BOUND_VERSION = "ai-platform-readonly-agent-0.3"
 MAX_MODEL_CALLS = 3
 MAX_TOOL_CALLS = 2
 MAX_TOTAL_TOKENS = 6000
@@ -166,7 +167,9 @@ def _native_action(name: str, arguments: dict[str, Any], available: list[str],
         raise ValueError("Invalid native Agent arguments")
     if name in {"graph_search", "project_evidence"} and set(arguments) == {"query"}:
         value = {"action": name, "query": arguments["query"], "answer": "", "evidence_ids": []}
-    elif name == "finish" and host_bound and set(arguments) == {"answer"}:
+    elif name == "finish" and host_bound and "answer" in arguments:
+        # A finish call has no executable parameters. Only the answer is used;
+        # the Host records the complete observation inventory independently.
         value = {"action": name, "query": "", "answer": arguments["answer"],
                  "evidence_ids": observed}
     elif name == "finish" and not host_bound and set(arguments) == {"answer", "evidence_ids"}:
@@ -373,8 +376,9 @@ def run_readonly_agent(root: Path, *, goal: str, model: str, provider: str,
 
 
 def verify_trace(trace: dict[str, Any]) -> bool:
-    if (trace.get("contract_version") not in {LEGACY_VERSION, STRICT_NATIVE_VERSION, VERSION}
-            or (trace.get("contract_version") == VERSION
+    if (trace.get("contract_version") not in {LEGACY_VERSION, STRICT_NATIVE_VERSION,
+                                                HOST_BOUND_VERSION, VERSION}
+            or (trace.get("contract_version") in {HOST_BOUND_VERSION, VERSION}
                 and trace.get("protocol") not in {"ollama_native_host_bound", "json_action"})
             or (trace.get("protocol") == "ollama_native_host_bound"
                 and trace.get("citation_origin") != "host_observation_inventory")
