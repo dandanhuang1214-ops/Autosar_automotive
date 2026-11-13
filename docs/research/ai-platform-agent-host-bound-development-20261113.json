@@ -1,0 +1,37 @@
+{
+  "format": "ai-platform-readonly-agent-host-bound-development-0.3",
+  "frozen_before_full_agent_run": true,
+  "purpose": "First complete local run of host-associated observation inventory on new development questions; no claim about held-out answer quality.",
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "project_report_sha256": "8d82549975c0d91eece9de658cd6e1016edb7d3eea34ea0aa38c738276b35460",
+  "model": "qwen3.5:2b",
+  "cases": [
+    {
+      "id": "implicit-commit-name",
+      "goal": "教学示例中 Runnable 结束后的隐式写入提交 Rte_CommitImplicitWrite() 是标准 RTE API 吗？只根据图谱候选资料说明。",
+      "report": null,
+      "required_tools": ["graph_search"],
+      "target_chunk_id": "chunk.did-rte-runtime.K015"
+    },
+    {
+      "id": "project-check-reason",
+      "goal": "请从这个项目报告给出 COMMUNICATION 检查的 status 与 reason 两个字段。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["project_evidence"]
+    },
+    {
+      "id": "receive-event-versus-static",
+      "goal": "这个项目报告的 COMMUNICATION 检查通过，能否证明每收到一帧 CAN 报文都执行一次 DataReceivedEvent 对应的 Runnable？请分开写项目事实和图谱候选资料。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["graph_search", "project_evidence"],
+      "target_chunk_id": "chunk.did-rte-runtime.K021"
+    }
+  ],
+  "assessment": {
+    "run_policy": "One complete Agent run per case. Keep original failures, raw function calls and saved traces. Do not rerun this cohort after changes.",
+    "tool_selection": "Required read-only tool set exactly, no unregistered or repeated tool, finish within three model/two tool calls.",
+    "source_binding": "Graph and report SHA match, listed target chunk exists before model contact and appears in returned observation, saved trace verifies offline.",
+    "answer": "Keep static project facts distinct from candidate graph explanations and make unproven CAN runtime behavior explicit; independent sentence review remains required.",
+    "citation_origin": "Host attaches the complete inventory of actual observations; do not describe these IDs as model-selected citations."
+  }
+}

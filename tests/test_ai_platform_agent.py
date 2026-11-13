@@ -93,16 +93,18 @@ class AgentPathTests(unittest.TestCase):
             client = NativeScriptedClient([
                 ("project_evidence", {"query": "project status"}),
                 ("graph_search", {"query": "CanIf 0x22"}),
-                ("finish", {"answer": "项目事实与图谱候选分开。", "evidence_ids": ["o1", "o2"]}),
+                ("finish", {"answer": "项目事实与图谱候选分开。"}),
             ])
             trace = run_readonly_agent(root, goal="联合核对", model="qwen3.5:2b",
                                        provider="ollama", ollama_url="http://127.0.0.1:11434",
                                        report=report, mcp_url="http://127.0.0.1:8768/mcp",
                                        client=client, project_loader=load)
             self.assertEqual(trace["status"], "completed_unassessed")
-            self.assertEqual(trace["protocol"], "ollama_native_tool_call")
+            self.assertEqual(trace["protocol"], "ollama_native_host_bound")
+            self.assertEqual(trace["citation_origin"], "host_observation_inventory")
             self.assertEqual([item["tool"] for item in trace["observations"]],
                              ["project_evidence", "graph_search"])
+            self.assertEqual(trace["events"][-1]["action"]["evidence_ids"], ["o1", "o2"])
             self.assertEqual(trace["usage"]["model_calls"], 3)
             self.assertTrue(verify_trace(trace))
 
