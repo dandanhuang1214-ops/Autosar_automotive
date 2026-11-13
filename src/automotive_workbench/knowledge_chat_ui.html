@@ -110,6 +110,7 @@
     .graph-item p { font-size: 12px; color: var(--muted); margin: 5px 0 0; }
     .candidate { color: var(--amber); font-size: 11px; font-weight: 800; }
     .source-item a { color: var(--accent-dark); font-weight: 700; }
+    .message.agent .source-item pre { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
     .notice { border-radius: 9px; background: var(--amber-bg); color: #684500; padding: 10px 11px; font-size: 12px; margin: 12px 0; }
     .memory-list { list-style: none; padding: 0; margin: 14px 0 0; }
     .memory-list li { border-top: 1px solid var(--line); padding: 11px 0; font-size: 13px; overflow-wrap: anywhere; }
@@ -120,6 +121,7 @@
     body.general-chat .inspector { display: none; }
     body.general-chat #engineeringContext, body.general-chat #graphContext,
     body.general-chat #evidenceBadges, body.general-chat #useModelWrap { display: none; }
+    body.agent-chat #useModelWrap { display: none; }
     .chat-mode { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
     .chat-mode label { margin: 0; }
     .chat-mode select { width: auto; min-width: 160px; }
@@ -474,7 +476,7 @@
         <p class="eyebrow">AI PLATFORM</p>
         <h2 id="chatTitle" class="chat-title" tabindex="-1">直接开始对话</h2>
         <p id="chatDescription" class="subtle" style="margin-bottom:0">普通聊天直接调用所选模型。工程资料和工具按需使用。</p>
-        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="evidence">工程证据问答</option></select><span id="knowledgeBadge" class="knowledge-badge" role="status" aria-atomic="true">知识库自动检索</span><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
+        <div class="chat-mode"><label for="chatMode">对话方式</label><select id="chatMode"><option value="general">普通聊天</option><option value="agent">只读 Agent</option><option value="evidence">工程证据问答</option></select><span id="knowledgeBadge" class="knowledge-badge" role="status" aria-atomic="true">知识库自动检索</span><button id="manageMemory" class="button ghost small" type="button">管理长期记忆</button></div>
         <div class="badges"><span id="modelBadge" class="badge">模型待调用</span><span id="memoryBadge" class="badge">长期记忆 0 条</span><span id="evidenceBadges"><span id="graphBadge" class="badge warn">图谱未导入</span> <span id="projectBadge" class="badge">未选择工程报告</span></span></div>
       </div>
       <div id="messages" class="conversation" aria-live="polite">
@@ -632,12 +634,14 @@
       if (focusHeading) $(view === 'chat' ? 'chatTitle' : view === 'project' ? 'projectViewTitle' : 'dataViewTitle').focus();
     }
     function setChatMode(mode) {
-      const general = mode !== 'evidence';
-      $('chatMode').value = general ? 'general' : 'evidence';
+      const general = mode === 'general';
+      const agent = mode === 'agent';
+      $('chatMode').value = general ? 'general' : agent ? 'agent' : 'evidence';
       document.body.classList.toggle('general-chat', general);
-      $('chatTitle').textContent = general ? '直接开始对话' : '工程问题，从证据开始';
-      $('chatDescription').textContent = general ? `普通聊天直接调用${generalModelLabel}。工程资料和工具按需使用。` : '项目事实、图谱线索和模型草稿分别呈现。';
-      $('question').placeholder = general ? `输入问题，与${generalModelLabel}对话` : '例如：CanIf 与 CanTp 在图谱中是什么关系？';
+      document.body.classList.toggle('agent-chat', agent);
+      $('chatTitle').textContent = general ? '直接开始对话' : agent ? '让 Agent 检查证据' : '工程问题，从证据开始';
+      $('chatDescription').textContent = general ? `普通聊天直接调用${generalModelLabel}。工程资料和工具按需使用。` : agent ? '模型自主选择图谱或 MCP 项目事实工具；每步可追溯，结论待审阅。' : '项目事实、图谱线索和模型草稿分别呈现。';
+      $('question').placeholder = general ? `输入问题，与${generalModelLabel}对话` : agent ? '描述工程目标；若需项目事实，请先填写工程报告路径并配置 MCP。' : '例如：CanIf 与 CanTp 在图谱中是什么关系？';
       closeInspector();
     }
     $('chatMode').onchange = () => { setChatMode($('chatMode').value); refresh().catch(showError); };
@@ -693,7 +697,34 @@
       $('messages').scrollTop = $('messages').scrollHeight;
       return box;
     }
+    function agentStatusText(result) {
+      if (result.status === 'completed_unassessed') return 'Agent 已完成只读步骤；请核对来源和结论。';
+      if (result.status === 'blocked') return '模型或证据服务暂不可用；本轮没有形成结论。';
+      if (result.reason?.startsWith('model_declined:')) return '模型选择拒答；本轮没有形成结论。';
+      return '模型的工具请求未通过受限规则；本轮没有形成结论。';
+    }
     function renderAssistant(result) {
+      if (result.mode === 'agent') {
+        const completed = result.status === 'completed_unassessed';
+        const box = renderMessage('assistant', result.answer || agentStatusText(result), 'agent');
+        box.querySelector('.message-label').textContent = completed ? `${generalModelLabel} 只读 Agent · 结论待审阅` : '只读 Agent · 未完成';
+        const meta = el('div', undefined, 'model-meta');
+        const usage = result.usage || {};
+        meta.append(el('span', `${usage.model_calls || 0} 次模型调用 · ${usage.tool_calls || 0} 次工具调用 · 输入 ${usage.input_tokens || 0} / 输出 ${usage.output_tokens || 0} token · ${((usage.elapsed_ms || 0) / 1000).toFixed(1)} 秒`));
+        if (result.trace_id) meta.append(el('div', `本机运行记录：${result.trace_id}`));
+        const details = el('details'); details.append(el('summary', `查看工具步骤与来源 · ${(result.observations || []).length} 条`));
+        for (const item of result.observations || []) {
+          const row = el('div', undefined, 'source-item');
+          row.append(el('strong', `${item.id} · ${item.tool} · ${item.query}`));
+          if (item.tool === 'graph_search') {
+            row.append(el('p', `图谱 ${item.result.graph_sha256} · 候选 ${item.result.sources.length} 条`));
+            for (const source of item.result.sources) row.append(el('p', `${source.chunk_id} · ${source.document_id} · ${source.excerpt}`));
+          } else row.append(el('pre', JSON.stringify({ report_sha256: item.result.report_sha256, project_status: item.result.project_status, facts: item.result.facts }, null, 2)));
+          details.append(row);
+        }
+        meta.append(details); box.append(meta);
+        return box;
+      }
       if (result.mode === 'general') {
         const succeeded = result.status === 'answered';
         const stopped = result.status === 'cancelled';
@@ -789,6 +820,15 @@
       }
     }
     function showEvidence(result, selectedBox = null, reveal = false) {
+      if (result.mode === 'agent') {
+        currentEvidence = null;
+        projectHash = result.project_sha256 || '';
+        $('projectBadge').textContent = projectHash ? '工程证据已读取' : '未读取工程报告';
+        $('modelBadge').textContent = result.status === 'completed_unassessed' ? 'Agent 已完成 · 结论待审阅' : 'Agent 未完成';
+        $('modelBadge').classList.toggle('warn', result.status !== 'completed_unassessed');
+        $('knowledgeBadge').textContent = (result.observations || []).some(item => item.tool === 'graph_search') ? '知识图谱候选已读取' : '本轮未读取图谱';
+        return;
+      }
       if (result.mode === 'general') {
         currentEvidence = null; projectHash = '';
         $('modelBadge').textContent = result.status === 'answered' ? `${generalModelLabel} ${result.model?.name || ''} 已回答` : result.status === 'cancelled' ? '生成已停止' : `${generalModelLabel} 调用失败`;
@@ -855,9 +895,10 @@
       $('messages').replaceChildren();
       if (!data.messages.length) { const empty = el('div', undefined, 'empty'); empty.id = 'emptyState'; empty.innerHTML = $('chatMode').value === 'general' ? '<div class="symbol" aria-hidden="true">AI</div><h3>有什么想聊的？</h3><p class="subtle">直接输入问题即可。模型离线时会明确提示，回答旁会显示调用时间和耗时。</p>' : '<div class="symbol" aria-hidden="true">01</div><h3>开始一次有依据的分析</h3><p class="subtle">输入工程问题，工作台会把项目事实、图谱候选和模型草稿分开呈现。可以从下面的问题开始。</p><div class="suggestions"><button type="button" data-prompt="SWC 到 CAN 的链路有哪些证据？">SWC 到 CAN 的链路有哪些证据？</button><button type="button" data-prompt="这个工程的通信状态证明了什么？">工程通信状态证明了什么？</button></div>'; $('messages').append(empty); bindSuggestions(); }
       for (const message of data.messages) { if (message.role === 'user') renderMessage('user', message.content); else renderAssistant(message.detail || {}); }
+      const currentMode = $('chatMode').value;
       const latest = [...data.messages].reverse().find(message => message.role === 'assistant' &&
-        ($('chatMode').value === 'general' ? message.detail?.mode === 'general' : message.detail?.mode !== 'general'));
-      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll(`.message.assistant.${$('chatMode').value === 'general' ? 'general' : 'evidence'}`)].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = `${generalModelLabel} 待调用`; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
+        (currentMode === 'evidence' ? !['general', 'agent'].includes(message.detail?.mode) : message.detail?.mode === currentMode));
+      if (latest) showEvidence(latest.detail || {}, [...document.querySelectorAll(`.message.assistant.${currentMode}`)].at(-1)); else { currentEvidence = null; projectHash = ''; $('projectBadge').textContent = '未选择工程报告'; $('modelBadge').textContent = `${generalModelLabel} 待调用`; $('modelBadge').classList.remove('warn'); $('evidenceCount').textContent = '等待提问'; renderEvidencePanel(); }
       renderMemories(data.memories || []);
       $('memoryBadge').textContent = `长期记忆 ${(data.memories || []).filter(item => item.scope === 'global').length} 条`;
     }
@@ -958,14 +999,17 @@
       const question = $('question').value.trim(); if (!question) { feedback('chatStatus', '请先输入问题。', true); $('question').focus(); return; }
       const mode = $('chatMode').value;
       const button = $('askBtn'); button.disabled = true; button.textContent = '正在回答…';
-      feedback('chatStatus', mode === 'general' ? `正在检索知识库并调用${generalModelLabel}…` : '正在重放工程报告并查找图谱线索…');
+      $('messages').setAttribute('aria-busy', 'true');
+      feedback('chatStatus', mode === 'general' ? `正在检索知识库并调用${generalModelLabel}…` : mode === 'agent' ? 'Agent 正在选择只读工具并核验证据，最多进行三轮模型调用…' : '正在重放工程报告并查找图谱线索…');
       try {
         if (mode === 'general') { await streamGeneral(question); return; }
-        const result = await api('/api/chat', { session_id: sessionId, question, mode, report: mode === 'evidence' ? $('report').value.trim() : '', use_model: mode === 'evidence' ? $('useModel').checked : true });
+        const result = mode === 'agent'
+          ? await api('/api/agent/run', { session_id: sessionId, goal: question, report: $('report').value.trim() })
+          : await api('/api/chat', { session_id: sessionId, question, mode, report: $('report').value.trim(), use_model: $('useModel').checked });
         $('question').value = '';
         await refresh();
-        feedback('chatStatus', mode === 'general' ? result.status === 'answered' ? `${generalModelLabel} 已返回回答。` : `${generalModelLabel} 未返回可用回答，请检查服务。` : result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。');
-      } catch (error) { feedback('chatStatus', error.message, true); await refresh().catch(showError); } finally { streamingRequestId = ''; $('stopBtn').hidden = true; $('stopBtn').disabled = false; $('chatMode').disabled = false; $('newSession').disabled = false; button.disabled = false; button.textContent = '发送'; }
+        feedback('chatStatus', mode === 'agent' ? agentStatusText(result) : result.status === 'model_unavailable' ? 'Ollama 未返回可用回答；仅显示证据摘要。' : result.model_requested && !result.model_attempted ? '没有匹配证据，本次未调用 Ollama。' : result.draft ? '已收到 Ollama 草稿；请人工审阅。' : '证据摘要已更新。');
+      } catch (error) { feedback('chatStatus', error.message, true); await refresh().catch(showError); } finally { $('messages').removeAttribute('aria-busy'); streamingRequestId = ''; $('stopBtn').hidden = true; $('stopBtn').disabled = false; $('chatMode').disabled = false; $('newSession').disabled = false; button.disabled = false; button.textContent = '发送'; }
     };
     $('question').onkeydown = event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); $('askBtn').click(); } };
     $('saveMemory').onclick = async () => { try { const scope = $('memoryScope').value === 'global' ? 'global' : projectHash; if (!scope) throw Error('先选择工程报告并提问，再保存当前工程记忆。'); await api('/api/memory', { scope, content: $('memory').value }); $('memory').value = ''; feedback('memoryStatus', '已保存长期记忆。'); await refresh(); } catch (error) { feedback('memoryStatus', error.message, true); } };

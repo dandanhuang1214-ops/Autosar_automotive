@@ -1,0 +1,35 @@
+{
+  "format": "ai-platform-readonly-agent-cohort-0.1",
+  "frozen_before_agent_implementation": true,
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "project_report_sha256": "8d82549975c0d91eece9de658cd6e1016edb7d3eea34ea0aa38c738276b35460",
+  "cases": [
+    {
+      "id": "graph-only",
+      "goal": "在 First Frame 示例 10 1B 中，长度字段指向多少字节的 UDS 负载？只引用相关候选片段。",
+      "report": null,
+      "required_tools": ["graph_search"],
+      "target_chunk_id": "chunk.week07.K002"
+    },
+    {
+      "id": "project-only",
+      "goal": "这个项目报告的 COMMUNICATION 验收状态和对应证据是什么？只报告项目中已有的事实。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["project_evidence"]
+    },
+    {
+      "id": "combined",
+      "goal": "结合这个项目报告的 COMMUNICATION 结果，说明 CanIf 是否负责解析 UDS 0x22；分开写项目事实与知识图谱候选资料。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["graph_search", "project_evidence"],
+      "target_chunk_id": "chunk.week07.K005"
+    }
+  ],
+  "assessment": {
+    "tool_selection": "Required tool set called without unregistered or repeated calls; order is free.",
+    "engineering_facts": "Project status and pointers must match the replayed MCP report; no CFG, CAN runtime, or physical ECU claim.",
+    "graph_boundary": "Graph excerpts remain candidates and cannot establish the project's test result.",
+    "answer": "No unsupported causal or protocol detail; unknowns remain explicit.",
+    "metrics": ["model_calls", "tool_calls", "input_tokens", "output_tokens", "elapsed_ms", "first_byte_ms_if_streamed", "estimated_cost_if_price_verified"]
+  }
+}

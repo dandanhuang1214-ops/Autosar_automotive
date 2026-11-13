@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from automotive_workbench.explanation_services import parse_json
 from automotive_workbench.explanation_services import Endpoint
+from automotive_workbench.ai_platform_agent import ask_agent
 from automotive_workbench.ai_chat import (
     CHAT_KEEP_ALIVE_CHOICES, _chat_keep_alive, _chat_provider, ask_general,
     ask_general_stream,
@@ -156,11 +157,11 @@ class Handler(BaseHTTPRequestHandler):
                 request_id = str(body.get("request_id", ""))
                 session_id = str(body.get("session_id", ""))
                 with self.server.chat_lock:
-                    active = self.server.active_chats.get(request_id)
-                    if active is None or active["session_id"] != session_id:
+                    active_request = self.server.active_chats.get(request_id)
+                    if active_request is None or active_request["session_id"] != session_id:
                         raise ValueError("Active chat request not found")
-                    active["cancel"].set()
-                    client = active.get("client")
+                    active_request["cancel"].set()
+                    client = active_request.get("client")
                 if client is not None:
                     try:
                         client.cancel_stream()
@@ -254,6 +255,18 @@ class Handler(BaseHTTPRequestHandler):
                                  use_model=body.get("use_model") is True, evidence_loader=loader)
                 else:
                     raise ValueError("Unknown chat mode")
+            elif self.path == "/api/agent/run":
+                report = body.get("report")
+                if report is not None and not isinstance(report, str):
+                    raise ValueError("Agent report path must be a string")
+                result = ask_agent(
+                    self.server.root, self.server.db_path,
+                    session_id=str(body.get("session_id", "")),
+                    goal=body.get("goal", ""), model=self.server.model,
+                    provider=self.server.provider, ollama_url=self.server.ollama_url,
+                    report=Path(report) if report else None,
+                    mcp_url=self.server.mcp_url,
+                )
             elif self.path == "/api/project/propose":
                 project = body.get("project")
                 requirement = body.get("requirement")

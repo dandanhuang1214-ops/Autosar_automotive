@@ -32,19 +32,24 @@ class DeepSeekTransportTest(unittest.TestCase):
     def test_completion_normalizes_usage_without_recording_key(self) -> None:
         raw = json.dumps({"id": "chat-1", "model": "deepseek-flash", "choices": [{
             "message": {"role": "assistant", "content": "有据回答。"}, "finish_reason": "stop"}],
-            "usage": {"prompt_tokens": 12, "completion_tokens": 4}}).encode()
+            "usage": {"prompt_tokens": 12, "completion_tokens": 4,
+                      "prompt_cache_hit_tokens": 2, "prompt_cache_miss_tokens": 10}}).encode()
         opener = Opener(raw)
         with patch("automotive_workbench.deepseek_chat.build_opener", return_value=opener):
             client = DeepSeekChatClient("test-secret")
             result = client.complete({"model": "deepseek-flash", "messages": [
-                {"role": "user", "content": "问题"}], "stream": False})
+                {"role": "user", "content": "问题"}], "stream": False,
+                                      "max_output_tokens": 400, "json_mode": True})
         self.assertEqual(result["message"]["content"], "有据回答。")
         self.assertEqual(result["prompt_eval_count"], 12)
         self.assertEqual(result["eval_count"], 4)
         self.assertEqual(result["response_id"], "chat-1")
+        self.assertEqual((result["prompt_cache_hit_tokens"], result["prompt_cache_miss_tokens"]), (2, 10))
         sent = json.loads(opener.request.data)
         self.assertEqual(sent["thinking"], {"type": "disabled"})
         self.assertEqual(sent["model"], "deepseek-flash")
+        self.assertEqual(sent["max_tokens"], 400)
+        self.assertEqual(sent["response_format"], {"type": "json_object"})
         self.assertNotIn("test-secret", json.dumps(client.records))
 
     def test_stream_requires_done_and_preserves_usage(self) -> None:

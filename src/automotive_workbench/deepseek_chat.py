@@ -25,11 +25,16 @@ class DeepSeekChatClient:
     def _request(self, payload: dict[str, Any]) -> Request:
         if payload.get("model") not in MODELS:
             raise ValueError("Unsupported DeepSeek model")
+        max_tokens = payload.get("max_output_tokens", 2048)
+        if type(max_tokens) is not int or not 1 <= max_tokens <= 2048:
+            raise ValueError("Invalid DeepSeek output token limit")
         body: dict[str, Any] = {
             "model": payload["model"], "messages": payload["messages"],
-            "thinking": {"type": "disabled"}, "max_tokens": 2048,
+            "thinking": {"type": "disabled"}, "max_tokens": max_tokens,
             "stream": payload["stream"],
         }
+        if payload.get("json_mode") is True:
+            body["response_format"] = {"type": "json_object"}
         if payload["stream"]:
             body["stream_options"] = {"include_usage": True}
         self.records.append({"path": "/chat/completions", "method": "POST",
@@ -72,6 +77,9 @@ class DeepSeekChatClient:
                     "message": {"role": "assistant", "content": message["content"]},
                     "prompt_eval_count": usage.get("prompt_tokens"),
                     "eval_count": usage.get("completion_tokens"),
+                    "prompt_cache_hit_tokens": usage.get("prompt_cache_hit_tokens"),
+                    "prompt_cache_miss_tokens": usage.get("prompt_cache_miss_tokens"),
+                    "system_fingerprint": value.get("system_fingerprint"),
                     "response_id": value.get("id")}
         except HTTPError as exc:
             record["http_status"] = exc.code
@@ -136,7 +144,9 @@ class DeepSeekChatClient:
                    "response_id": response_id, "message": {"role": "assistant", "content": ""},
                    "done": True, "done_reason": finish,
                    "prompt_eval_count": usage.get("prompt_tokens"),
-                   "eval_count": usage.get("completion_tokens")}
+                   "eval_count": usage.get("completion_tokens"),
+                   "prompt_cache_hit_tokens": usage.get("prompt_cache_hit_tokens"),
+                   "prompt_cache_miss_tokens": usage.get("prompt_cache_miss_tokens")}
         except HTTPError as exc:
             record["http_status"] = exc.code
             record["error"] = f"deepseek_http_{exc.code}"
