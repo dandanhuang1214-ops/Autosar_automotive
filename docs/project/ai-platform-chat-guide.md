@@ -4,6 +4,8 @@
 
 AI 平台与 Automotive Workbench 按产品职责分开。AI 平台首页是普通聊天；Workbench 是后续可选的工程资料与工具来源。当前工程证据问答仍可在“对话方式”中切换，旧 `/api/chat` 请求不带 `mode` 时保持原 `evidence` 行为。
 
+当前本地默认模型（2026-11-18）为已安装的 `qwen3.5:4b`，包括 Ollama 普通聊天和工程路径的 `--local-model` 默认；DeepSeek 普通聊天默认仍为 `deepseek-flash`。原 2B 试验记录均为历史证据，不代表当前默认可用模型。[本机工具模型对照](../research/ollama-claude-tools-20261118.md)另列。
+
 ## 启动与验收
 
 在仓库根目录运行：
@@ -11,7 +13,7 @@ AI 平台与 Automotive Workbench 按产品职责分开。AI 平台首页是普�
 ```bash
 PYTHONPATH=src .venv/bin/python -m automotive_workbench.knowledge_chat_server \
   --data output/knowledge-chat --port 8767 \
-  --ollama-url http://127.0.0.1:11434 --model qwen3.5:2b
+  --ollama-url http://127.0.0.1:11434 --model qwen3.5:4b
 ```
 
 打开 `http://127.0.0.1:8767/`。首页“普通聊天”不要求工程报告或知识图谱；发送消息会调用 Ollama `/api/tags`、`/api/version`、`/api/chat` 并再次核对模型 digest。回答旁显示本地时间格式的调用时刻和端到端耗时；展开可看 Ollama 自报的总耗时、加载、输入处理与生成耗时。模型离线或回答不完整时显示调用失败，不拿证据摘要冒充模型回答。原始传输和请求快照保存在 `--data/runs/`，属于本机私有数据。
@@ -42,7 +44,7 @@ Chat 0.1 的 `/api/chat` 完整 JSON 合约仍保留，供旧调用方使用。C
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m automotive_workbench.knowledge_chat_server \
-  --data output/knowledge-chat --port 8767 --model qwen3.5:2b --sync-graph-site
+  --data output/knowledge-chat --port 8767 --model qwen3.5:4b --sync-graph-site
 ```
 
 首次真实同步已从站点版本 5 取回图谱 `c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f`，包含 66 节点、90 关系、71 条主张与 71 片段；来源 Markdown 的哈希通过图谱声明核对，本机快照在忽略目录 `output/knowledge-chat/`。普通聊天不要求用户选择资料：每题自动在活动图谱的标签、别名、标题和摘要中检索；2026-11-07 后最多取 2 节点、4 条关联片段，并显示文档、片段、候选状态和来源原文链接。图谱主张仍是候选资料；模型引用内容的语义准确性需要独立核对，单凭编号存在不等于已验证。显式旧 `--knowledge-url` 仍保留兼容，启动新 Chat 时应移除旧命令中的 `--knowledge-url http://127.0.0.1:18080`。

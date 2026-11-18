@@ -36,6 +36,7 @@ from automotive_workbench.mcp_evidence_client import (
 from automotive_workbench.site_graph_sync import sync_site_graph
 
 HTML = Path(__file__).with_name("knowledge_chat_ui.html").read_text(encoding="utf-8")
+DEFAULT_LOCAL_MODEL = "qwen3.5:4b"
 
 
 class WorkspaceServer(ThreadingHTTPServer):
@@ -51,7 +52,7 @@ class WorkspaceServer(ThreadingHTTPServer):
         self.provider = _chat_provider(provider, model)
         if provider == "deepseek" and not os.environ.get("DEEPSEEK_API_KEY", "").strip():
             raise ValueError("DEEPSEEK_API_KEY is required for DeepSeek provider")
-        self.local_model = local_model or (model if provider == "ollama" else "qwen3.5:2b")
+        self.local_model = local_model or (model if provider == "ollama" else DEFAULT_LOCAL_MODEL)
         self.ollama_url = ollama_url
         self.chat_keep_alive = _chat_keep_alive(chat_keep_alive)
         self.knowledge_url = Endpoint(knowledge_url, 4).url if knowledge_url else None
@@ -310,8 +311,8 @@ def main() -> None:
     parser.add_argument("--data", type=Path, default=Path("output/knowledge-chat"))
     parser.add_argument("--port", type=int, default=8767)
     parser.add_argument("--provider", choices=("ollama", "deepseek"), default="ollama")
-    parser.add_argument("--model", help="General chat model (default: qwen3.5:2b or deepseek-flash)")
-    parser.add_argument("--local-model", default="qwen3.5:2b",
+    parser.add_argument("--model", help="General chat model (default: qwen3.5:4b or deepseek-flash)")
+    parser.add_argument("--local-model", default=DEFAULT_LOCAL_MODEL,
                         help="Ollama model for existing engineering evidence/project paths")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     parser.add_argument("--chat-keep-alive", choices=CHAT_KEEP_ALIVE_CHOICES, default="2m",
@@ -322,7 +323,7 @@ def main() -> None:
     parser.add_argument("--sync-graph-site", action="store_true",
                         help="Refresh the owner's private automotive graph Site before serving")
     args = parser.parse_args()
-    model = args.model or ("deepseek-flash" if args.provider == "deepseek" else "qwen3.5:2b")
+    model = args.model or ("deepseek-flash" if args.provider == "deepseek" else DEFAULT_LOCAL_MODEL)
     site_token = os.environ.pop("AUTOMOTIVE_GRAPH_SITE_TOKEN", "")
     if args.sync_graph_site or site_token:
         if not site_token:
