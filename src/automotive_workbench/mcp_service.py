@@ -3,15 +3,35 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 from automotive_workbench.project_ai_workflow import catalog, create_candidate, validate
 from automotive_workbench.project_ecuc import verify as verify_project
-from automotive_workbench.project_explanation import build_request
+from automotive_workbench.project_explanation import build_request, digest, read
 
 VERSION = "workbench-mcp-project-evidence-0.1"
+
+
+def _requirement_facts(report: Path, report_sha256: str) -> list[dict[str, Any]]:
+    """Expose exact fields of the report already replayed by build_request."""
+    raw = report.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != report_sha256:
+        raise ValueError("Project report changed after replay")
+    document = read(report)
+    if report.read_bytes() != raw:
+        raise ValueError("Project report changed during fact extraction")
+    facts = []
+    for index, item in enumerate(document.get("requirements", [])):
+        for key in ("id", "expected", "actual", "status", "reason"):
+            if key in item:
+                fact = {"source_kind": "project", "artifact_id": "project-report",
+                        "source_sha256": report_sha256,
+                        "pointer": f"/requirements/{index}/{key}", "value": item[key]}
+                facts.append({"fact_id": digest(fact), **fact})
+    return facts
 
 
 def _report_path(root: Path, value: str) -> Path:
@@ -72,13 +92,14 @@ def build_server(root: Path, *, enable_project_actions: bool = False) -> Any:
         """Return replay-verified project facts for a question; no model conclusion."""
         report = _report_path(allowed_root, report_path)
         request = build_request(report, question)
+        facts = [*request["facts"], *_requirement_facts(report, request["report_sha256"])]
         return {"schema_version": VERSION, "report_path": str(report),
                 "request_id": request["request_id"], "question": request["question"],
                 "report_sha256": request["report_sha256"],
                 "project_status": request["project_status"],
                 "boundary": request["boundary"],
-                "available_fact_count": len(request["facts"]),
-                "facts": request["facts"][:16]}
+                "available_fact_count": len(facts),
+                "facts": facts[:16]}
 
     if enable_project_actions:
         @server.tool(annotations=read_only)

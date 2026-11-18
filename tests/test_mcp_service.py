@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import json
 import shutil
 import tempfile
 import unittest
@@ -51,6 +52,11 @@ class McpServiceTests(unittest.TestCase):
                 self.assertEqual(payload["project_status"], "passed")
                 self.assertGreater(payload["available_fact_count"], 0)
                 self.assertLessEqual(len(payload["facts"]), 16)
+                report = json.loads(self.report.read_text(encoding="utf-8"))
+                exposed = {item["pointer"]: item["value"] for item in payload["facts"]}
+                for field in ("id", "expected", "actual", "status", "reason"):
+                    self.assertEqual(exposed[f"/requirements/0/{field}"],
+                                     report["requirements"][0][field])
                 self.assertTrue(all(item.annotations.read_only_hint for item in tools.tools))
 
         asyncio.run(exercise())

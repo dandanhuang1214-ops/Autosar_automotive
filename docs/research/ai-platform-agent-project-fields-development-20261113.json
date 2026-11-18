@@ -1,0 +1,20 @@
+{
+  "format": "ai-platform-readonly-agent-project-fields-development-0.1",
+  "frozen_before_model_run": true,
+  "purpose": "Targeted regression after the heldout revealed missing report fields; this is not an independent heldout quality score.",
+  "models": ["deepseek-flash"],
+  "graph_sha256": "c5ec7ffa61365ee0d179911b846dd26799eab014ea675a0b701facabd642489f",
+  "project_report_sha256": "8d82549975c0d91eece9de658cd6e1016edb7d3eea34ea0aa38c738276b35460",
+  "cases": [
+    {
+      "id": "reported-acceptance-fields",
+      "goal": "请从当前项目报告的事实中逐字列出 COMMUNICATION 验收项的 expected、actual、status、reason，并指出这些字段的 JSON 指针。若工具没有给出任何一个字段，请说该字段未知。",
+      "report": "ai-project-final-20261103/project-tasks/4d446e303d8941378534b0bf1a4cfd25/validation/bundle/project-report.json",
+      "required_tools": ["project_evidence"]
+    }
+  ],
+  "assessment": {
+    "run_policy": "One run after the fixed MCP service starts; keep output and trace. Do not use to revise heldout v2 scores.",
+    "expected": "Four values must come from exact /requirements/0 pointers in the report-bound MCP facts, with no graph or invented fields."
+  }
+}
