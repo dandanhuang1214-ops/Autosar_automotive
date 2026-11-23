@@ -9,12 +9,13 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.project_ai_workflow import catalog, create_candidate, validate
-from automotive_workbench.project_explanation import (
-    build_request,
-    digest,
-    read,
-    verify_project_report as verify_project,
+from automotive_workbench.project_declared_evidence import (
+    REPORT_VERSION as DECLARED_REPORT_VERSION,
+    build_declared_request,
+    verify_declared_report,
 )
+from automotive_workbench.project_ecuc import verify as verify_project
+from automotive_workbench.project_explanation import build_request, digest, read
 
 VERSION = "workbench-mcp-project-evidence-0.1"
 
@@ -87,7 +88,9 @@ def build_server(root: Path, *, enable_project_actions: bool = False) -> Any:
     def verify_project_report(report_path: str) -> dict[str, Any]:
         """Verify a project report and return its recorded engineering status and hash."""
         report = _report_path(allowed_root, report_path)
-        result = verify_project(report)
+        declared = read(report).get("schema_version") == DECLARED_REPORT_VERSION
+        verifier = verify_declared_report if declared else verify_project
+        result = verifier(report)
         return {"schema_version": "workbench-mcp-project-verification-0.1",
                 "report_path": str(report), **result}
 
@@ -95,7 +98,9 @@ def build_server(root: Path, *, enable_project_actions: bool = False) -> Any:
     def project_evidence(report_path: str, question: str) -> dict[str, Any]:
         """Return replay-verified project facts for a question; no model conclusion."""
         report = _report_path(allowed_root, report_path)
-        request = build_request(report, question)
+        declared = read(report).get("schema_version") == DECLARED_REPORT_VERSION
+        builder = build_declared_request if declared else build_request
+        request = builder(report, question)
         facts = [*request["facts"], *_requirement_facts(report, request["report_sha256"])]
         return {"schema_version": VERSION, "report_path": str(report),
                 "request_id": request["request_id"], "question": request["question"],

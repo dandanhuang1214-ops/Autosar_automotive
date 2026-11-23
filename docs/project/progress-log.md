@@ -18,7 +18,7 @@
 
 ## 当前总览（2026-11-13）
 
-本机固定链路回读实现（2026-11-23）：MCP 复用证据包校验和项目声明来源核对，支持公开样例的 `project-acceptance-0.3` 报告，并保留原 ECUC 回读。独立 HTTP 服务实际返回车窗 passed、scale-failure failed、ECUC 0.6 passed，各 16 条事实，报告 SHA 与本地文件一致。网页在 Ollama 不可用时保留证据并返回 model_unavailable，在 MCP 停服时返回 HTTP 400，重启后用同一报告恢复 HTTP 200，证据一致。本机原始证据位于忽略目录 `output/local-fixed-recovery-kcige12y/`。此条只记录本机实现和联调，远端 CI 另记。下一步完成实施验收，再核对冻结来源和真实本机 Qwen 的固定解释题。
+本机固定链路回读实现（2026-11-23）：MCP 复用证据包校验和项目声明来源核对，支持公开样例的 `project-acceptance-0.3` 报告，并保留原 ECUC 回读。独立 HTTP 服务实际返回车窗 passed、scale-failure failed、ECUC 0.6 passed，各 16 条事实，报告 SHA 与本地文件一致。网页在 Ollama 不可用时保留证据并返回 model_unavailable，在 MCP 停服时返回 HTTP 400，重启后用同一报告恢复 HTTP 200，证据一致。本机原始证据位于忽略目录 `output/local-fixed-recovery-a_ul6mnz/`。首次实现 `5cdd138` 改动了四项历史评测绑定的冻结代码，[run `45194412740`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/45194412740) 已出现必需 job 失败。修订稿将 0.3 回读移入独立适配器，恢复冻结实现，修订稿的远端 CI 另记。下一步完成实施验收，再核对冻结来源和真实本机 Qwen 的固定解释题。
 
 架构定稿与本机基线（2026-11-23）：用户确认 [ADR 0002](../adr/0002-declared-workflows-and-read-only-harness.md)。固定项目声明驱动 Workbench 执行和验收，DaVinci 首版手工导出、Workbench 自动回读，Agent harness 首版仅供只读核验和解释。本机 virtual 复跑车窗正常项目退出 0、状态 passed，scale-failure 退出 2、状态 failed、通信阶段 skipped，两份证据包离线复验均通过。独立 Streamable HTTP MCP 成功核验 ECUC 0.6 样例报告 SHA、状态并返回事实。MCP 拒绝两份公开样例的 0.3 报告，定位为当前回读只接受 ECUC 0.6–0.9。下一步补齐 0.3 的只读回读，再验证停服与恢复。本条只记录本机证据和架构决定，未执行本轮 DaVinci 验证或远端 CI。
 

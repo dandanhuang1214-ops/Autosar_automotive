@@ -7,10 +7,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from automotive_workbench.evidence_bundle import verify_evidence_bundle
-from automotive_workbench.project_declared import validate_declared_sources
-from automotive_workbench.project_ecuc import verify as verify_ecuc
-from automotive_workbench.project_review import load_project_report, run_project_review
+from automotive_workbench.project_ecuc import verify
+from automotive_workbench.project_review import run_project_review
 
 POLICY = "project-fact-selection-0.1"
 BOUNDARY = (
@@ -45,35 +43,6 @@ def read(path: Path) -> dict[str, Any]:
     return value
 
 
-def verify_project_report(report: Path) -> dict[str, Any]:
-    """Check a declared communication bundle or replay a supported ECUC report."""
-    raw = report.read_bytes()
-    document = read(report)
-    if document.get("schema_version") != "project-acceptance-0.3":
-        return verify_ecuc(report)
-
-    bundle = report.parent
-    delivery = bundle.parent
-    if report.name != "project-report.json" or bundle.name != "bundle":
-        raise ValueError("Declared communication report requires the portable bundle layout")
-    with tempfile.TemporaryDirectory(prefix="workbench-project-evidence-") as temporary:
-        verified = verify_evidence_bundle(
-            bundle, delivery / "manifest.json", Path(temporary), base=delivery,
-        )
-    if verified["status"] != "passed":
-        raise ValueError("Declared communication evidence bundle failed verification")
-    if canonical(load_project_report(report)) != canonical(document):
-        raise ValueError("Declared communication report changed during verification")
-    validate_declared_sources(report, document)
-    if report.read_bytes() != raw or canonical(json.loads(raw)) != canonical(document):
-        raise ValueError("Declared communication report changed during verification")
-    return {
-        "status": "passed",
-        "project_status": document["status"],
-        "report_sha256": hashlib.sha256(raw).hexdigest(),
-    }
-
-
 def build_request(report: Path, question: str) -> dict[str, Any]:
     """Replay the bundle and export only already audited assertion facts."""
     if not isinstance(question, str) or not question.strip() or len(question) > 4000:
@@ -81,7 +50,7 @@ def build_request(report: Path, question: str) -> dict[str, Any]:
     if report.is_symlink() or not report.is_file():
         raise ValueError("Project report must be a regular non-symlink file")
     initial = report.read_bytes()
-    verification = verify_project_report(report)
+    verification = verify(report)  # Limited to replayable ECUC project 0.6--0.9.
     with tempfile.TemporaryDirectory(prefix="workbench-explanation-") as temporary:
         output = Path(temporary) / "review"
         reviewed = run_project_review(report, output)
@@ -103,7 +72,7 @@ def build_request(report: Path, question: str) -> dict[str, Any]:
             }
             facts.append({"fact_id": digest(fact), **fact})
     # Recheck the complete dependency closure, not merely the top-level bytes.
-    if verify_project_report(report) != verification or report.read_bytes() != initial:
+    if verify(report) != verification or report.read_bytes() != initial:
         raise ValueError("Project evidence changed during fact extraction")
     body = {
         "schema_version": "project-explanation-request-0.1",
