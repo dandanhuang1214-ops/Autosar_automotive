@@ -62,7 +62,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 4. 把复跑证据补进 P25 演示材料，再按相同方法覆盖第二个公开项目。
 5. 用户已取得 DaVinci Developer Classic 与 Configurator Classic（CFG）许可。固定链路基线跑通后，在工程副本上用 Developer 导出 SWC 和显式信号映射，用匹配的 BSW Package 在 CFG 执行原生校验并保存结果。Workbench 复用[跨工具映射和语义比较](davinci-mapping-bridge.md)，核对 SWC 端口、SystemSignal 与 ECUC 通信链，记录受影响的验收项。先核对本机工具版本、许可可用性和项目所需命令，再跑一处受控的前后变更。生成安排在对应配置的原生校验通过后，记录生成日志和产物，运行证据另行实测。
 
-**当前门是公开样例的只读回读验收。** 车窗和 scale-failure 的 `project-acceptance-0.3` 报告已在本机通过实际 HTTP MCP 回读，报告 SHA 和原有项目状态一致，ECUC 0.6 也复验通过。网页对 MCP 停服明确报错，重启后恢复同一报告的事实。实现提交的远端结果见进度账本。此门通过后，继续校验冻结来源 ID，使用真实本机 Qwen 完成固定解释题的逐句来源核对，再推进 DaVinci 工程副本的原生校验基线。P31 保持暂停，P25 人工演示与外部反馈继续待办。
+**公开样例的只读回读门已通过。** 车窗和 scale-failure 的 `project-acceptance-0.3` 报告已在本机通过实际 HTTP MCP 回读，报告 SHA 和原有项目状态一致，ECUC 0.6 也复验通过。网页对 MCP 停服明确报错，重启后恢复同一报告的事实。实现 `e7dee20` 的 [core-ci run `45196029292`](https://github.com/dandanhuang1214-ops/Autosar_automotive/actions/runs/45196029292) 七 job 成功。下一步校验冻结来源 ID，使用真实本机 Qwen 完成固定解释题的逐句来源核对，再推进 DaVinci 工程副本的原生校验基线。P31 保持暂停，P25 人工演示与外部反馈继续待办。
 
 2026-11-23 本机 Claude Code 模型路由支持：VS Code 扩展使用的 Haiku→Qwen、Sonnet→DeepSeek、Opus→Ministral 已按用户指定配置并重启代理；16K context 后 Qwen 在扩展自带客户端的新短会话完成真实只读目录工具调用，并以受限 Bash 命令访问已知官方网址取得 HTTP 200。Opus→Ministral 工具调用已通，但一题误读工具结果；Qwen 内置网页搜索/抓取仍没有可核对结果，不能标搜索验收。细节见[本机核查](../research/claude-code-local-routing-20261123.md)。此项不改变当前 AI 平台 Agent 的来源 ID、本地动作可靠性、新留出及逐句审阅主门，也不改变 Workbench P31、P25 状态。
 
