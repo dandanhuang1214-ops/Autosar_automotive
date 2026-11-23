@@ -52,6 +52,18 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：AI 平台 Agent 主线（Workbench P31 本轮不做，P25 人工验收待完成）
 
+### 近期计划：Workbench 本机固定链路（2026-11-23）
+
+近期目标是让个人 Workbench 在 Windows/WSL 上可重复启动、运行既定工程流程并复验结果。首条链路复用公开车窗项目和现有入口：固定项目声明 → `run-project` → 项目报告与证据包 → 本地只读 MCP 核对报告 SHA、状态和事实。CLI 是工程执行入口，网页用现有接口展示结果，模型只负责解释已取得的证据。通用网页搜索和开放式工具选择移出近期验收范围。
+
+1. 盘点并记录这条链路实际需要的进程、启动和停止命令、数据根目录以及就绪检查。沿用现有 CLI、网页和 MCP 服务。只有启用模型解释时才启动 Ollama。
+2. 从干净的本机服务状态跑公开车窗项目，再跑既有 scale-failure 负例。保存命令、输入版本、退出码、报告 SHA 和复验结果。正常项目应通过，故障项目应显示失败和对应证据，报告复验应能重放两者。
+3. 分别验证 Ollama 不可用、MCP 不可用与 MCP 恢复。Ollama 不可用时工程 CLI 仍能运行、报告仍可查看。使用 MCP 的网页路径应明确报告 MCP 不可用，恢复后可再次核对同一报告。补齐来源 ID 和报告 SHA 预检，并对真实本地 Qwen 的少量固定解释题做逐句来源核对。
+4. 把复跑证据补进 P25 演示材料，再按相同方法覆盖第二个公开项目。
+5. 用户已取得 DaVinci Developer Classic 与 Configurator Classic（CFG）许可。固定链路基线跑通后，在工程副本上用 Developer 导出 SWC 和显式信号映射，用匹配的 BSW Package 在 CFG 执行原生校验并保存结果。Workbench 复用[跨工具映射和语义比较](davinci-mapping-bridge.md)，核对 SWC 端口、SystemSignal 与 ECUC 通信链，记录受影响的验收项。先核对本机工具版本、许可可用性和项目所需命令，再跑一处受控的前后变更。生成安排在对应配置的原生校验通过后，记录生成日志和产物，运行证据另行实测。
+
+**当前门是公开样例的只读回读验收。** 车窗和 scale-failure 的 `project-acceptance-0.3` 报告已在本机通过实际 HTTP MCP 回读，报告 SHA 和原有项目状态一致，ECUC 0.6 也复验通过。网页对 MCP 停服明确报错，重启后恢复同一报告的事实。实现提交的远端结果见进度账本。此门通过后，继续校验冻结来源 ID，使用真实本机 Qwen 完成固定解释题的逐句来源核对，再推进 DaVinci 工程副本的原生校验基线。P31 保持暂停，P25 人工演示与外部反馈继续待办。
+
 2026-11-23 本机 Claude Code 模型路由支持：VS Code 扩展使用的 Haiku→Qwen、Sonnet→DeepSeek、Opus→Ministral 已按用户指定配置并重启代理；16K context 后 Qwen 在扩展自带客户端的新短会话完成真实只读目录工具调用，并以受限 Bash 命令访问已知官方网址取得 HTTP 200。Opus→Ministral 工具调用已通，但一题误读工具结果；Qwen 内置网页搜索/抓取仍没有可核对结果，不能标搜索验收。细节见[本机核查](../research/claude-code-local-routing-20261123.md)。此项不改变当前 AI 平台 Agent 的来源 ID、本地动作可靠性、新留出及逐句审阅主门，也不改变 Workbench P31、P25 状态。
 
 2026-11-18 用户要求将当前 Workbench/AI 平台网页入口的默认本地文本模型从已删除的 `qwen3.5:2b` 改为现存 `qwen3.5:4b`，并为 Claude SDK→Ollama 的工具、网页搜索、Skill/MCP 接法拉取新候选。默认配置、`--local-model` 回退和启动示例已改为 4B；[受控实测](../research/ollama-claude-tools-20261118.md)中，`ministral-3:3b` 在 Anthropic 兼容接口的 Generate-Arxml skill 检查、网页搜索、MCP 风格报告三项首轮均选对工具，但自由回答有无依据扩写，完整 Skill 在 4096 context 下部分 CPU 卸载，故仅保留为本地试用候选，不标正式 Agent 质量验收。新默认的工程回归与实现提交/远端 CI 仍按进度账本核对；本项是 AI 平台 Agent 主线的模型环境支持工作，不替代来源 ID 校验、本地动作可靠性、新留出和逐句审阅主门。Workbench P31 与 P25 状态不变。

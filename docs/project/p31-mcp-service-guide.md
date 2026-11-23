@@ -6,7 +6,7 @@
 
 2026-11-03 查阅 [MCP 2026-07-28 版本说明](https://blog.modelcontextprotocol.io/posts/2026-07-28/)、[Python SDK 入门](https://py.sdk.modelcontextprotocol.io/get-started/first-steps/)、[安装](https://py.sdk.modelcontextprotocol.io/get-started/installation/)、[运行与传输](https://py.sdk.modelcontextprotocol.io/run/)及[客户端传输](https://py.sdk.modelcontextprotocol.io/client/transports/)。首版采用官方 Python SDK 2.3 的 `MCPServer`/`Client`，本机网页与独立服务之间使用 Streamable HTTP；命令行工具可用 stdio。采用当前 2026-07-28 模式调用，依赖放在可选的 `mcp` extra，核心 wheel 不要求 MCP。决策见 [ADR 0001](../adr/0001-workbench-mcp-host-boundary.md)。
 
-网页 Host 保留会话、用户记忆、图谱候选与 Ollama 草稿；MCP 服务仅重放 ECUC 项目包并返回结构化事实。`verify_project_report` 给出重放状态和报告 SHA；`project_evidence` 给出问题绑定的报告 SHA、项目状态、事实及证据边界。两工具均标记只读。报告须为配置根目录下的绝对普通文件，项目包现有验证器拒绝符号链接并检查库存。网页指定 `--mcp-url` 后仅通过 MCP 读取项目证据，服务不可用时返回错误，不使用直读降级。未指定时原网页路径保持兼容。
+网页 Host 保留会话、用户记忆、图谱候选与 Ollama 草稿。MCP 服务重放 ECUC 0.6–0.9 项目包，也支持声明式通信 `project-acceptance-0.3`。0.3 要求原始 `bundle/project-report.json` 和同级交付根目录的 `manifest.json`，并核对证据包完整性和声明来源。回读保留报告中的项目状态，故障项目的证据包也可复验通过。`verify_project_report` 返回核验状态和报告 SHA，`project_evidence` 返回同一份报告的状态、结构化事实和来源指针。两工具均为只读。报告须为配置根目录下的绝对普通文件。网页配置 `--mcp-url` 后通过 MCP 读取证据，服务不可用时显示错误，重启后可以回读同一份报告。
 
 ## 运行
 

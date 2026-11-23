@@ -1,5 +1,44 @@
 # Workbench Architecture
 
+## 本机固定链路架构基线（2026-11-23）
+
+已确认采用项目声明驱动的固定工程链路和只读 Agent harness。落地顺序见[本机固定链路计划](project/roadmap.md#近期计划workbench-本机固定链路2026-11-23)，边界依据见 [ADR 0002](adr/0002-declared-workflows-and-read-only-harness.md)。
+
+```mermaid
+flowchart TD
+    U["工程人员"] --> C["Workbench CLI · 固定项目声明"]
+    C --> W["Workbench 应用层 · 执行、校验、比较"]
+    D["Windows · Developer / CFG / Generate-Arxml"] -->|"ARXML、配置、原生报告"| W
+    W -->|"已声明的运行场景"| R["WSL · SocketCAN / OpenBSW<br/>本机及 CI · virtual"]
+    R -->|"原始运行记录"| W
+    W --> E["项目报告与证据包"]
+    E --> M["Workbench MCP · 回读与事实查询"]
+    M --> H["网页 Host · 查看证据"]
+    H -.->|"可选解释"| O["Ollama / Qwen"]
+    X["Claude Code · 可选客户端"] -.->|"只读工具"| M
+```
+
+### 工程权责
+
+| 层 | 职责 |
+| --- | --- |
+| Windows 工程工具 | Developer 负责 SWC 设计和导出，CFG 负责 BSW 配置、原生校验和生成。Generate-Arxml 在适用链路生成约定的输入。先用隔离工程副本导出文件和日志。 |
+| Workbench 应用层 | 读取明确的项目声明和验收条件，调用已有检查与执行入口。保留厂商工具原始输出，形成 Workbench 项目报告和可复验证据包。 |
+| 运行环境 | Windows/CI 的 virtual 验证受支持的虚拟场景。WSL 上的 SocketCAN/OpenBSW 提供独立执行证据。报告记录实际后端、输入和执行条件。 |
+| MCP 与网页 Host | MCP 复用 Workbench 的项目核验和事实查询。网页负责选择报告、呈现状态、用户确认和可选模型驱动的解释。已存在的显式项目候选/验证入口沿用 [ADR 0001](adr/0001-workbench-mcp-host-boundary.md) 的职责边界。 |
+
+### Harness 的范围
+
+**工程工作流**由项目声明指定输入、阶段和验收条件。**Agent harness**由 Workbench Host 负责报告绑定、工具参数校验、执行预算、原始结果留存和答案来源核对。首版给模型开放只读报告复验和事实查询。工程人员从 CLI 或现有明确确认的验证入口触发同一执行器。首版由工程人员在 DaVinci 工程副本导出文件和日志，Workbench 自动回读。固定步骤具备稳定复跑证据后，再评估接入实际验证过的 CLI。
+
+### 用三个场景检验边界
+
+1. Developer 映射可以闭合，但 CFG 原生校验失败。报告须同时呈现映射结果和 CFG 错误，生成按该流程的校验门处理。
+2. MCP 或 Ollama 不可用。CLI 仍可按独立的正常入口生成和复验工程证据。配置了 MCP 的网页请求显示其故障。模型离线时，可选解释不可用。
+3. 单条信号映射变化。用保存的前后输入做语义比较，标记受影响验收项需要重跑，由新执行记录赋予新的验收结论。
+
+## 已实现的架构与证据约束
+
 P16 的 `generation_gate` 将 Generate-Arxml 导出视为应用层输入：在创建输出前验证 DOCX/contract/issues 哈希，记录完整 findings 与生产者 revision 声明。project 0.2 的 generation 阶段与 canonical/mapping 并列参与运行门控，上游失败不能被局部映射通过覆盖。显式重放脚本在 git archive 隔离副本执行生产者；核心 CLI 仅消费导出文件，不依赖外部 DOCX/Excel 库。
 
 P15 增加项目应用层：`run-project` 读取显式输入与验收条件，将输入按字节归档，再调用既有 canonical/DBC、DBC/intent 校验和 communication chain。静态失败时停止运行阶段；项目级结论保留底层失败与后端阻断，逐验收项记录报告 hash / JSON Pointer，输出静态 HTML 和 JSON，并复用 P5 索引和复验。此层不执行项目声明的任意命令，不替换各运行内核；首个工作流限定为公开车窗通信模型。详见 [项目工作流](project-workflow.md)。

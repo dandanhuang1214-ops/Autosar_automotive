@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import importlib.util
 import json
 import shutil
@@ -13,6 +14,7 @@ from pathlib import Path
 from automotive_workbench.can_io import BusConfig
 from automotive_workbench.mcp_evidence_client import validate_endpoint
 from automotive_workbench.project_workflow import run_project
+from scripts.check_installed_projects import prepare_examples
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "examples/ecuc_acceptance/transmitter.project.json"
@@ -66,6 +68,54 @@ class McpServiceTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "outside the configured root"):
             _report_path(self.root, str(PROJECT))
+
+    def test_declared_communication_reports_preserve_status_and_reject_changed_evidence(self) -> None:
+        from mcp import Client
+        from automotive_workbench.mcp_service import build_server
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            prepare_examples(ROOT, root / "inputs")
+            cases = {"window": "passed", "scale-failure": "failed"}
+            for name in cases:
+                run_project(root / "inputs" / name / "project.json", root / name,
+                            BusConfig("virtual", f"mcp-{name}"))
+
+            async def exercise() -> None:
+                async with Client(build_server(root), mode="2026-07-28",
+                                  read_timeout_seconds=30) as client:
+                    for name, expected in cases.items():
+                        bundle = root / name / "bundle"
+                        report = bundle / "project-report.json"
+                        digest = hashlib.sha256(report.read_bytes()).hexdigest()
+                        arguments = {"report_path": str(report)}
+                        replay = await client.call_tool("verify_project_report", arguments)
+                        self.assertFalse(replay.is_error)
+                        self.assertEqual(replay.structured_content["status"], "passed")
+                        self.assertEqual(replay.structured_content["project_status"], expected)
+                        self.assertEqual(replay.structured_content["report_sha256"], digest)
+                        facts = await client.call_tool("project_evidence", {
+                            **arguments, "question": "通信验收状态是什么？",
+                        })
+                        self.assertFalse(facts.is_error)
+                        self.assertEqual(facts.structured_content["report_sha256"], digest)
+                        self.assertEqual(facts.structured_content["project_status"], expected)
+                        cited = {fact["pointer"]: fact["value"] for fact in facts.structured_content["facts"]
+                                 if fact["source_sha256"] == digest}
+                        self.assertEqual(cited["/status"], expected)
+                        self.assertEqual(cited["/stages/communication/status"],
+                                         "passed" if expected == "passed" else "skipped")
+
+                        source = bundle / "inputs" / "dbc.dbc"
+                        source.write_bytes(source.read_bytes() + b"\n")
+                        tampered = await client.call_tool("verify_project_report", arguments)
+                        self.assertTrue(tampered.is_error)
+                        tampered_facts = await client.call_tool("project_evidence", {
+                            **arguments, "question": "通信验收状态是什么？",
+                        })
+                        self.assertTrue(tampered_facts.is_error)
+
+            asyncio.run(exercise())
 
     def test_web_host_only_accepts_loopback_mcp_endpoint(self) -> None:
         self.assertEqual(validate_endpoint("http://127.0.0.1:8768/mcp"),

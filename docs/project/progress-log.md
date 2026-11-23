@@ -18,6 +18,14 @@
 
 ## 当前总览（2026-11-13）
 
+本机固定链路回读实现（2026-11-23）：MCP 复用证据包校验和项目声明来源核对，支持公开样例的 `project-acceptance-0.3` 报告，并保留原 ECUC 回读。独立 HTTP 服务实际返回车窗 passed、scale-failure failed、ECUC 0.6 passed，各 16 条事实，报告 SHA 与本地文件一致。网页在 Ollama 不可用时保留证据并返回 model_unavailable，在 MCP 停服时返回 HTTP 400，重启后用同一报告恢复 HTTP 200，证据一致。本机原始证据位于忽略目录 `output/local-fixed-recovery-kcige12y/`。此条只记录本机实现和联调，远端 CI 另记。下一步完成实施验收，再核对冻结来源和真实本机 Qwen 的固定解释题。
+
+架构定稿与本机基线（2026-11-23）：用户确认 [ADR 0002](../adr/0002-declared-workflows-and-read-only-harness.md)。固定项目声明驱动 Workbench 执行和验收，DaVinci 首版手工导出、Workbench 自动回读，Agent harness 首版仅供只读核验和解释。本机 virtual 复跑车窗正常项目退出 0、状态 passed，scale-failure 退出 2、状态 failed、通信阶段 skipped，两份证据包离线复验均通过。独立 Streamable HTTP MCP 成功核验 ECUC 0.6 样例报告 SHA、状态并返回事实。MCP 拒绝两份公开样例的 0.3 报告，定位为当前回读只接受 ECUC 0.6–0.9。下一步补齐 0.3 的只读回读，再验证停服与恢复。本条只记录本机证据和架构决定，未执行本轮 DaVinci 验证或远端 CI。
+
+计划调整（2026-11-23）：近期验收聚焦 Workbench 本机服务和固定工程链路，先复用公开车窗项目跑通项目执行、证据包和只读 MCP 回读，再复跑既有 scale-failure 负例和依赖停服恢复。Qwen 解释作为可独立验证的可选层，通用网页搜索移出近期验收范围。下一步按[本机固定链路计划](roadmap.md#近期计划workbench-本机固定链路2026-11-23)核对进程与启动命令，并保存正常和故障两组本机复跑证据。此条记录计划，尚未执行本轮验收。P31 继续暂停，P25 人工演示与外部反馈待办。
+
+许可更新（2026-11-23）：用户已取得 DaVinci Developer Classic 与 Configurator Classic 许可。[固定链路计划](roadmap.md#近期计划workbench-本机固定链路2026-11-23)加入工程副本上的真实 Developer 导出、CFG 原生校验与 Workbench 证据回读。现有隔离工程原生报告有 25 个错误、59 个警告，生成阶段为 ERROR。固定链路基线和负例复跑后，核对实际工具版本、许可可用性与 BSW Package，再建立新的原生校验基线。本条是计划调整，尚未执行新一轮商业工具验收。
+
 本机路由支持记录（2026-11-23）：按用户要求将 VS Code Claude Code 的 Haiku→`qwen3.5:4b`、Sonnet→`deepseek-v4-pro`、Opus→`ministral-3:3b` 写入 Windows 用户配置及 LiteLLM 代理，并为两个本地模型设置 16K context。原配置已备份；代理模型列表与实际 Ollama context 核对通过。用 VS Code 扩展自带 Claude Code 2.1.330 做只读实测：Qwen 对指定文件与自然目录问题均真正调用 `Glob` 并返回存在的文件名；受限 `Bash(curl.exe *)` 对已知 Ollama 官方网址取得 HTTP 200；Ministral 在 Opus 别名下真正调用 `Glob`，却把已返回的文件误答为不存在。Qwen 内置 `WebSearch`/`WebFetch` 未取得可核对的网页结果，不能宣称搜索能力通过。详见[本机路由核查](../research/claude-code-local-routing-20261123.md)。该项只完成本机路由、文件工具和已知网址命令访问的开发验证，不宣称 VS Code 图形会话、Ministral 内容质量或网页搜索验收；无仓库实现提交和远端实现 CI。下一主任务仍为 AI 平台 Agent 的来源 ID 校验、本地动作可靠性、新留出和逐句审阅；Workbench P31 继续暂停，P25 人工门待完成。
 
 实施记录（2026-11-18，默认模型与本地工具候选；提交前）：用户已从 Docker Ollama 删除 `qwen3.5:2b` 和 `qwen3:4b-instruct-2507-q4_K_M`，要求 Workbench 网页入口默认改用现存 `qwen3.5:4b`，并为 Claude SDK 路由到 Ollama 的工具/搜索/Skill/MCP 接法试拉新模型。`knowledge_chat_server.py` 的 Ollama 普通聊天默认、DeepSeek 模式的本地工程模型回退和 `--local-model` 默认统一改为 4B，启动示例同步；显式 `--model`/`--local-model` 仍可覆盖。Docker 已拉取 `ministral-3:3b`，模型卷由 5.853 GB 增至 8.807 GB；在 4096 context 时 67% GPU / 33% CPU。按[实测记录](../research/ollama-claude-tools-20261118.md)，Anthropic `/v1/messages` 三项工具选择 3/3，Generate-Arxml skill 的真实 DOCX inspection 报告为 3 open issues、14 model errors、7 CORE ERROR，模型严格字段回答正确且未请求生成；无约束回答存在无依据扩写，尚无真实 Claude SDK/MCP/网页搜索闭环验收。同题 `qwen3.5:4b` 误选网页搜索。相关网页/Agent 专项 24 项在可绑定本机回环的环境下通过；全量 588 tests 通过（2 项环境跳过），Ruff 与 diff check 通过。实现提交及其远端 CI 待本轮收尾核对；不能把本地成功记为远端验收。此项仅是当前 AI 平台 Agent 主线的支持工作，下一主门仍为来源 ID 校验、本地动作可靠性、新留出和逐句审阅；Workbench P31、P25 人工门维持原状态。

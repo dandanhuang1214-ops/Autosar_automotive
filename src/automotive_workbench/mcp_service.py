@@ -9,8 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from automotive_workbench.project_ai_workflow import catalog, create_candidate, validate
-from automotive_workbench.project_ecuc import verify as verify_project
-from automotive_workbench.project_explanation import build_request, digest, read
+from automotive_workbench.project_explanation import (
+    build_request,
+    digest,
+    read,
+    verify_project_report as verify_project,
+)
 
 VERSION = "workbench-mcp-project-evidence-0.1"
 
@@ -81,7 +85,7 @@ def build_server(root: Path, *, enable_project_actions: bool = False) -> Any:
 
     @server.tool(annotations=read_only)
     def verify_project_report(report_path: str) -> dict[str, Any]:
-        """Replay an ECUC project report and return its engineering status and hash."""
+        """Verify a project report and return its recorded engineering status and hash."""
         report = _report_path(allowed_root, report_path)
         result = verify_project(report)
         return {"schema_version": "workbench-mcp-project-verification-0.1",
