@@ -52,7 +52,7 @@ P22 商业工具许可或公开导出不可用时，完成公开 ARXML 导入和
 
 ## 当前执行：AI 平台 Agent 主线（Workbench P31 本轮不做，P25 人工验收待完成）
 
-2026-11-23 本机 Claude Code 模型路由支持：VS Code 扩展使用的 Haiku→Qwen、Sonnet→DeepSeek、Opus→Ministral 已按用户指定配置并重启代理；16K context 后 Qwen 在扩展自带客户端的新短会话完成真实只读目录工具调用。Opus→Ministral 工具调用已通，但一题误读工具结果；Qwen 网页搜索/抓取仍没有可核对结果，不能标联网验收。细节见[本机核查](../research/claude-code-local-routing-20261123.md)。此项不改变当前 AI 平台 Agent 的来源 ID、本地动作可靠性、新留出及逐句审阅主门，也不改变 Workbench P31、P25 状态。
+2026-11-23 本机 Claude Code 模型路由支持：VS Code 扩展使用的 Haiku→Qwen、Sonnet→DeepSeek、Opus→Ministral 已按用户指定配置并重启代理；16K context 后 Qwen 在扩展自带客户端的新短会话完成真实只读目录工具调用，并以受限 Bash 命令访问已知官方网址取得 HTTP 200。Opus→Ministral 工具调用已通，但一题误读工具结果；Qwen 内置网页搜索/抓取仍没有可核对结果，不能标搜索验收。细节见[本机核查](../research/claude-code-local-routing-20261123.md)。此项不改变当前 AI 平台 Agent 的来源 ID、本地动作可靠性、新留出及逐句审阅主门，也不改变 Workbench P31、P25 状态。
 
 2026-11-18 用户要求将当前 Workbench/AI 平台网页入口的默认本地文本模型从已删除的 `qwen3.5:2b` 改为现存 `qwen3.5:4b`，并为 Claude SDK→Ollama 的工具、网页搜索、Skill/MCP 接法拉取新候选。默认配置、`--local-model` 回退和启动示例已改为 4B；[受控实测](../research/ollama-claude-tools-20261118.md)中，`ministral-3:3b` 在 Anthropic 兼容接口的 Generate-Arxml skill 检查、网页搜索、MCP 风格报告三项首轮均选对工具，但自由回答有无依据扩写，完整 Skill 在 4096 context 下部分 CPU 卸载，故仅保留为本地试用候选，不标正式 Agent 质量验收。新默认的工程回归与实现提交/远端 CI 仍按进度账本核对；本项是 AI 平台 Agent 主线的模型环境支持工作，不替代来源 ID 校验、本地动作可靠性、新留出和逐句审阅主门。Workbench P31 与 P25 状态不变。
 
